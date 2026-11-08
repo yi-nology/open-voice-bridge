@@ -284,4 +284,4 @@ CI 在 Linux 上执行测试与构建，并对 macOS / Windows 做交叉编译�
 第三方依赖许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
 UI 与产品方向受到 [nijez/open-voice-bridge](https://github.com/nijez/open-voice-bridge)
-的启发；本仓库是独立的 Go 实现，与小米官方无关。设备名称与商标归其各自所有者。
+的启发；遥控器产品照片仅用于设备识别，不在 GPL 授权范围内（见第三方说明）；本仓库是独立的 Go 实现，与小米官方无关。设备名称与商标归其各自所有者。

@@ -18,3 +18,9 @@ The UI design was inspired by
 [nijez/open-voice-bridge](https://github.com/nijez/open-voice-bridge)
 (GPL-3.0); this repository is an independent Go implementation and is not
 affiliated with Xiaomi.
+## Device photo
+
+`web/assets/RC003-remote-photo.png` is a product photo used only to identify the
+device in the local UI. It is not covered by this project's GPL-3.0 license and
+remains the property of its respective owner. Replace it with your own asset if
+you redistribute this project in a context that requires a clear asset license.
