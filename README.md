@@ -133,7 +133,8 @@ Linux 下除蓝牙配对，还需要让 agent 能打开对应 evdev 设备；rem
 ### 4. 安装服务
 
 ```bash
-make install-user                 # 用户级 agent（systemd --user + linger 由环境决定）
+make install-user                 # 用户级 agent
+loginctl enable-linger "$USER"    # 可选：未登录也随开机启动
 sudo make install-remap           # root remap helper，监听 Unix socket
 sudo make install-logrotate       # 可选：日志轮转
 ```
