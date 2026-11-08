@@ -1,0 +1,20 @@
+{
+  "id": "apple-siri-remote-1",
+  "name": "Apple Siri Remote (1st gen)",
+  "transport": "hidraw-apple",
+  "capabilities": ["keys"],
+  "match": {
+    "vendor": "004c",
+    "product": "026d",
+    "names": ["Siri Remote"]
+  },
+  "keys": {
+    "home": "tv",
+    "volumeup": "volup",
+    "volumedown": "voldown",
+    "playpause": "playpause",
+    "siri": "siri",
+    "compose": "menu",
+    "enter": "click"
+  }
+}

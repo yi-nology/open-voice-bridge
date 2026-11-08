@@ -1,0 +1,1031 @@
+openapi: 3.0.3
+info:
+    title: Open Voice Bridge API
+    description: Local RC003 and external input bridge API
+    version: 0.1.0
+paths:
+    /healthz:
+        get:
+            summary: Health
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.Health
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/HealthResp'
+    /readyz:
+        get:
+            summary: Ready
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.Ready
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ReadyResp'
+    /api/status:
+        get:
+            summary: Status
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.Status
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusResp'
+    /api/apply:
+        post:
+            summary: Apply
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.Apply
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                mapping:
+                                    type: object
+                                    additionalProperties:
+                                        type: string
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+    /api/capture/start:
+        post:
+            summary: CaptureStart
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.CaptureStart
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+    /api/capture/stop:
+        post:
+            summary: CaptureStop
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.CaptureStop
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+    /api/reconnect:
+        post:
+            summary: Reconnect
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.Reconnect
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+    /api/restart-mic:
+        post:
+            summary: RestartMic
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.RestartMic
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+    /api/asr/switch:
+        post:
+            summary: SwitchASR
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.SwitchASR
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                provider:
+                                    type: string
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+    /api/asr/config:
+        get:
+            summary: GetASRConfig
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.GetASRConfig
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ASRConfigResp'
+        post:
+            summary: UpdateASRConfig
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.UpdateASRConfig
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                provider:
+                                    type: string
+                                fallback:
+                                    type: array
+                                    items:
+                                        type: string
+                                language:
+                                    type: string
+                                providers:
+                                    type: object
+                                    additionalProperties:
+                                        $ref: '#/components/schemas/ProviderConfig'
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+    /api/asr/test:
+        post:
+            summary: TestASR
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.TestASR
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                provider:
+                                    type: string
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ASRTestResp'
+    /api/keymap/profiles:
+        get:
+            summary: KeymapProfiles
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.KeymapProfiles
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/KeymapProfilesResp'
+    /api/keymap/apply:
+        post:
+            summary: ApplyKeymapProfile
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.ApplyKeymapProfile
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                profile:
+                                    type: string
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+    /api/keymap/save:
+        post:
+            summary: SaveKeymapProfile
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.SaveKeymapProfile
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                name:
+                                    type: string
+                                mapping:
+                                    type: object
+                                    additionalProperties:
+                                        type: string
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+    /api/keymap/delete:
+        post:
+            summary: DeleteKeymapProfile
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.DeleteKeymapProfile
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                name:
+                                    type: string
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+    /api/devices:
+        get:
+            summary: GetDevices
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.GetDevices
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DevicesResp'
+    /api/devices/discover:
+        get:
+            summary: DiscoverDevices
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.DiscoverDevices
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DiscoveredResp'
+    /api/devices/select:
+        post:
+            summary: SelectDevice
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.SelectDevice
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                id:
+                                    type: string
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+    /api/devices/toggle:
+        post:
+            summary: ToggleDevice
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.ToggleDevice
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                id:
+                                    type: string
+                                enabled:
+                                    type: boolean
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+    /api/devices/save:
+        post:
+            summary: SaveDevice
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.SaveDevice
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                id:
+                                    type: string
+                                name:
+                                    type: string
+                                address:
+                                    type: string
+                                profile:
+                                    type: string
+                                enabled:
+                                    type: boolean
+                                vendor:
+                                    type: string
+                                product:
+                                    type: string
+                                name_match:
+                                    type: array
+                                    items:
+                                        type: string
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+    /api/devices/connect:
+        post:
+            summary: ConnectDevice
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.ConnectDevice
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                id:
+                                    type: string
+                                connect:
+                                    type: boolean
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+    /api/devices/delete:
+        post:
+            summary: DeleteDevice
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.DeleteDevice
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                id:
+                                    type: string
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+    /api/llm/config:
+        get:
+            summary: GetLLMConfig
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.GetLLMConfig
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/LLMConfigResp'
+        post:
+            summary: UpdateLLMConfig
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.UpdateLLMConfig
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                enabled:
+                                    type: boolean
+                                provider:
+                                    type: string
+                                base_url:
+                                    type: string
+                                model:
+                                    type: string
+                                api_key_file:
+                                    type: string
+                                mode:
+                                    type: string
+                                prompt:
+                                    type: string
+                                timeout_seconds:
+                                    type: integer
+                                    format: int32
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+    /api/llm/test:
+        post:
+            summary: TestLLM
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.TestLLM
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                provider:
+                                    type: string
+                                live:
+                                    type: boolean
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/LLMTestResp'
+    /api/llm/key:
+        post:
+            summary: SaveLLMKey
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.SaveLLMKey
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                key:
+                                    type: string
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+    /api/history:
+        get:
+            summary: GetHistory
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.GetHistory
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/HistoryResp'
+    /api/history/delete:
+        post:
+            summary: DeleteHistory
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.DeleteHistory
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                id:
+                                    type: string
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+    /api/history/clear:
+        post:
+            summary: ClearHistory
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.ClearHistory
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+    /api/text/config:
+        get:
+            summary: GetTextConfig
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.GetTextConfig
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TextConfigResp'
+        post:
+            summary: UpdateTextConfig
+            tags:
+                - XiaomiRemoteApi
+            operationId: XiaomiRemoteApi.UpdateTextConfig
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                dictionary:
+                                    type: array
+                                    items:
+                                        $ref: '#/components/schemas/TextReplacement'
+                                snippets:
+                                    type: array
+                                    items:
+                                        $ref: '#/components/schemas/TextSnippet'
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/OperationResp'
+components:
+    schemas:
+        HealthResp:
+            type: object
+            properties:
+                ok:
+                    type: boolean
+        ReadyResp:
+            type: object
+            properties:
+                ok:
+                    type: boolean
+                keyd_active:
+                    type: boolean
+                remote_present:
+                    type: boolean
+                ble_connected:
+                    type: boolean
+                atvv_ready:
+                    type: boolean
+                asr_ready:
+                    type: boolean
+                helper_error:
+                    type: string
+                asr_error:
+                    type: string
+                mic_healthy:
+                    type: boolean
+        StatusResp:
+            type: object
+            properties:
+                ok:
+                    type: boolean
+                address:
+                    type: string
+                keyd_active:
+                    type: boolean
+                remote_present:
+                    type: boolean
+                mapping:
+                    type: object
+                    additionalProperties:
+                        type: string
+                config:
+                    type: string
+                mic_active:
+                    type: boolean
+                ble_connected:
+                    type: boolean
+                atvv_ready:
+                    type: boolean
+                asr_backend:
+                    type: string
+                asr_local:
+                    type: boolean
+                last_text:
+                    type: string
+                asr_provider:
+                    type: string
+                asr_providers:
+                    type: array
+                    items:
+                        type: string
+                keymap_profile:
+                    type: string
+                keymap_profiles:
+                    type: array
+                    items:
+                        type: string
+                agent_autostart:
+                    type: boolean
+                remap_autostart:
+                    type: boolean
+                capturing:
+                    type: boolean
+                helper_error:
+                    type: string
+                asr_error:
+                    type: string
+                mic_healthy:
+                    type: boolean
+                last_latency_ms:
+                    type: integer
+                    format: int64
+        OperationResp:
+            type: object
+            properties:
+                ok:
+                    type: boolean
+                error:
+                    type: string
+                config:
+                    type: string
+                event:
+                    type: string
+                output:
+                    type: string
+        ProviderConfig:
+            type: object
+            properties:
+                type:
+                    type: string
+                api_key_file:
+                    type: string
+                base_url:
+                    type: string
+                model:
+                    type: string
+                language:
+                    type: string
+                binary:
+                    type: string
+                model_path:
+                    type: string
+                threads:
+                    type: integer
+                    format: int32
+                args:
+                    type: array
+                    items:
+                        type: string
+                timeout_seconds:
+                    type: integer
+                    format: int32
+        ASRConfigResp:
+            type: object
+            properties:
+                ok:
+                    type: boolean
+                provider:
+                    type: string
+                fallback:
+                    type: array
+                    items:
+                        type: string
+                language:
+                    type: string
+                providers:
+                    type: object
+                    additionalProperties:
+                        $ref: '#/components/schemas/ProviderConfig'
+                asr_error:
+                    type: string
+        Diagnostic:
+            type: object
+            properties:
+                provider:
+                    type: string
+                ok:
+                    type: boolean
+                detail:
+                    type: string
+        ASRTestResp:
+            type: object
+            properties:
+                ok:
+                    type: boolean
+                provider:
+                    type: string
+                diagnostics:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Diagnostic'
+        KeymapProfilesResp:
+            type: object
+            properties:
+                ok:
+                    type: boolean
+                profile:
+                    type: string
+                profiles:
+                    type: object
+                    additionalProperties:
+                        type: object
+                        additionalProperties:
+                            type: string
+        DeviceInfo:
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                address:
+                    type: string
+                profile:
+                    type: string
+                enabled:
+                    type: boolean
+                active:
+                    type: boolean
+                connected:
+                    type: boolean
+                capabilities:
+                    type: array
+                    items:
+                        type: string
+                vendor:
+                    type: string
+                product:
+                    type: string
+                name_match:
+                    type: array
+                    items:
+                        type: string
+                paired:
+                    type: boolean
+                battery:
+                    type: integer
+                    format: int32
+        ProfileInfo:
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                transport:
+                    type: string
+                capabilities:
+                    type: array
+                    items:
+                        type: string
+        DevicesResp:
+            type: object
+            properties:
+                ok:
+                    type: boolean
+                active:
+                    type: string
+                devices:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/DeviceInfo'
+                profiles:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ProfileInfo'
+        DiscoveredDevice:
+            type: object
+            properties:
+                address:
+                    type: string
+                name:
+                    type: string
+                vendor:
+                    type: string
+                product:
+                    type: string
+                profile:
+                    type: string
+                capabilities:
+                    type: array
+                    items:
+                        type: string
+                configured:
+                    type: boolean
+                paired:
+                    type: boolean
+                connected:
+                    type: boolean
+                battery:
+                    type: integer
+                    format: int32
+        DiscoveredResp:
+            type: object
+            properties:
+                ok:
+                    type: boolean
+                devices:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/DiscoveredDevice'
+        LLMConfig:
+            type: object
+            properties:
+                enabled:
+                    type: boolean
+                provider:
+                    type: string
+                base_url:
+                    type: string
+                model:
+                    type: string
+                api_key_file:
+                    type: string
+                mode:
+                    type: string
+                prompt:
+                    type: string
+                timeout_seconds:
+                    type: integer
+                    format: int32
+        LLMPreset:
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                base_url:
+                    type: string
+                model:
+                    type: string
+                model_hint:
+                    type: string
+                key_hint:
+                    type: string
+                description:
+                    type: string
+        LLMConfigResp:
+            type: object
+            properties:
+                ok:
+                    type: boolean
+                config:
+                    $ref: '#/components/schemas/LLMConfig'
+                presets:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/LLMPreset'
+        LLMDiagnostic:
+            type: object
+            properties:
+                ok:
+                    type: boolean
+                detail:
+                    type: string
+        LLMTestResp:
+            type: object
+            properties:
+                ok:
+                    type: boolean
+                diagnostics:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/LLMDiagnostic'
+        HistoryEntry:
+            type: object
+            properties:
+                id:
+                    type: string
+                text:
+                    type: string
+                raw_text:
+                    type: string
+                provider:
+                    type: string
+                language:
+                    type: string
+                address:
+                    type: string
+                processed:
+                    type: boolean
+                at:
+                    type: string
+                latency_ms:
+                    type: integer
+                    format: int64
+        HistoryResp:
+            type: object
+            properties:
+                ok:
+                    type: boolean
+                entries:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/HistoryEntry'
+        TextReplacement:
+            type: object
+            properties:
+                from:
+                    type: string
+                to:
+                    type: string
+        TextSnippet:
+            type: object
+            properties:
+                trigger:
+                    type: string
+                text:
+                    type: string
+        TextConfig:
+            type: object
+            properties:
+                dictionary:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/TextReplacement'
+                snippets:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/TextSnippet'
+        TextConfigResp:
+            type: object
+            properties:
+                ok:
+                    type: boolean
+                config:
+                    $ref: '#/components/schemas/TextConfig'

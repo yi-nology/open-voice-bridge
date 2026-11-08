@@ -1,0 +1,285 @@
+# Open Voice Bridge · 小遥
+
+> Turn a Bluetooth remote — and, soon, a phone — into a local voice input device for Linux.
+
+[![CI](https://github.com/yi-nology/open-voice-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/yi-nology/open-voice-bridge/actions/workflows/ci.yml)
+[![Go](https://img.shields.io/badge/Go-1.27-00ADD8?logo=go)](go.mod)
+[![License](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)](#requirements)
+
+小遥把小米蓝牙遥控器变成一套可长期运行的本地语音输入服务：按住语音键说话，识别结果直接进入当前焦点窗口，同时以歌词样式显示在字幕屏；按键可以完全重映射，不依赖厂商 App。整个管理界面只监听 `127.0.0.1`，API Key 只以文件路径形式保存。
+
+<p align="center">
+  <img src="docs/assets/overview-desktop.jpg" alt="桌面端概览" width="920">
+</p>
+
+<p align="center">
+  <img src="docs/assets/overview-mobile.jpg" alt="手机尺寸下的概览" width="300">
+</p>
+
+## 特性
+
+- **BLE / ATVV 语音**：小米 RC003 / Remote 2 Pro、RC001 / Remote 2、ARN9 等 `2717:32b8` 设备开箱即用；通用 ATVV 遥控器可选 Generic 配置。
+- **完整按键重映射**：root helper 独占 evdev 并通过 uinput 注入，支持命名预设、自定义映射、捕获模式与热插拔。
+- **可插拔 ASR**：MiMo、OpenAI 兼容接口、whisper.cpp、本地命令；支持 fallback 链与热切换。
+- **可选文本后处理**：MiniMax、火山方舟、OpenAI、DeepSeek 或任意 OpenAI 兼容服务；失败时保留原文。
+- **个人词典与语音短语**：本地纠正专名、把触发词替换成模板文本。
+- **歌词式字幕**：毛玻璃深色屏、逐句高亮、聆听状态、全屏。
+- **本地历史**：JSONL 保存最近 200 条，支持搜索、复制、删除与 JSON 导出，不上传。
+- **状态与可观测性**：概览、快速检查、最近识别、ASR 耗时、麦克风节点健康；`/metrics` 暴露 BLE、ATVV、麦克风、转写数与时延直方图。
+- **多设备**：同时接入多个已启用设备，按 profile 匹配；BlueZ 电量与连接状态。
+- **未来的手机输入**：手机作为麦克风 + 虚拟按键的设计已完成，见 [设计稿](docs/design/external-input-sources.md)（尚未实现）。
+
+## 界面
+
+| 按键映射 |
+| --- |
+| ![按键映射](docs/assets/keymap.jpg) |
+
+桌面端采用侧栏 + 分组设置；手机尺寸下自动收成一行导航、单列状态卡和整行主操作。设置页只保留「接入 / 模型与凭据 / 高级选项」三组。
+
+## 工作原理
+
+```
+物理遥控器
+  │ BLE / ATVV (16 kHz ADPCM)
+  ▼
+BlueZ ──► agent ──► PipeWire 虚拟麦克风 (XiaomiRemoteMic)
+              │
+              ├──► ASR（MiMo / OpenAI 兼容 / whisper.cpp / 本地命令）
+              │        │
+              │        ├──► 文本规则 / 词典 / 语音短语
+              │        ├──► 可选 LLM 改写
+              │        ├──► 粘贴到当前焦点窗口（X11 / Wayland）
+              │        ├──► 字幕 SSE 与历史
+              │        └──► Prometheus 指标
+              │
+              └──► 按键：root remap (evdev → uinput)
+
+浏览器（仅 127.0.0.1:8787）──► 管理 UI / SSE / API
+```
+
+`internal/agent` 管理 BLE 会话与语音切分；`internal/asr` 是可插拔识别层；
+`internal/audio` 维护 `pw-loopback` / `pw-cat`，并在节点丢失时自动重启。
+手机/虚拟输入源的设计方向是把音频与按键抽象成 `InputSource`，复用同一条
+识别与粘贴链路，详见设计稿。
+
+## 支持设备
+
+| 设备 | 语音 | 按键 | Profile |
+| --- | --- | --- | --- |
+| 小米遥控器 2 Pro（RC003-MS） | ✅ ATVV | ✅ | `rc003` |
+| 小米遥控器 2（RC001-MS） | ✅ ATVV | ✅ | `rc003` |
+| 小米/米家语音遥控器（ARN9） | ✅ ATVV | ✅ | `rc003` |
+| Google / Android TV / Fire TV / NVIDIA 等 ATVV 遥控器 | ✅ ATVV | 视 evdev 而定 | `generic-atvv` |
+| Apple Siri Remote 1 代（A1513 / A1962） | ❌ | ✅ | `apple-siri-remote-1` |
+
+同名设备按 VID/PID（`2717:32b8`）和名称匹配；其他 ATVV 设备可在「设备」页选择 Generic 配置。
+
+## 环境要求
+
+- Linux（验证环境：Raspberry Pi 500 / Debian 13，PipeWire + BlueZ + systemd）
+- Go 1.27 或更新版本（仅构建需要）
+- X11 或 XWayland（`xsel` 粘贴）；Wayland 原生环境可选 `wtype`
+- root 权限仅用于安装 remap 服务
+- 首次配对需要 `bluetoothctl`
+
+## 快速开始
+
+### 1. 构建
+
+```bash
+git clone https://github.com/yi-nology/open-voice-bridge.git
+cd open-voice-bridge
+make build
+./bin/xiaomi-remote doctor
+```
+
+`make build` 产出 `bin/xiaomi-remote`（已被 `.gitignore` 忽略）。
+
+### 2. 配置
+
+```bash
+mkdir -p ~/.config/xiaomi-remote
+cp conf/config.example.json ~/.config/xiaomi-remote/config.json
+chmod 600 ~/.config/xiaomi-remote/config.json
+```
+
+把 `address` 改成你的遥控器蓝牙地址（示例里是占位地址 `AA:BB:CC:DD:EE:FF`），
+并按需调整 ASR provider。完整字段见 [conf/config.example.json](conf/config.example.json)。
+
+MiMo 云端识别需要把 API Key 放在单独文件（默认 `~/.config/xiaomi-mimo/api_key`）：
+
+```bash
+install -d -m 700 ~/.config/xiaomi-mimo
+printf '%s' '你的 MiMo API Key' > ~/.config/xiaomi-mimo/api_key
+chmod 600 ~/.config/xiaomi-mimo/api_key
+```
+
+服务只读取文件，不会通过网页回显 Key 内容。
+
+### 3. 配对遥控器
+
+```bash
+bluetoothctl
+> scan on
+> pair AA:BB:CC:DD:EE:FF     # 换成你的地址
+> trust AA:BB:CC:DD:EE:FF
+> connect AA:BB:CC:DD:EE:FF
+```
+
+Linux 下除蓝牙配对，还需要让 agent 能打开对应 evdev 设备；remap 服务负责独占与注入。
+
+### 4. 安装服务
+
+```bash
+make install-user                 # 用户级 agent（systemd --user + linger 由环境决定）
+sudo make install-remap           # root remap helper，监听 Unix socket
+sudo make install-logrotate       # 可选：日志轮转
+```
+
+`install-*` 会把 `deploy/` 模板里的 `@ROOT@` / `@USER@` 替换为当前检出路径与用户，
+因此仓库可以放在任意目录。
+
+### 5. 打开界面
+
+```bash
+systemctl --user status xiaomi-remote-go
+./bin/xiaomi-remote doctor
+xdg-open http://127.0.0.1:8787
+```
+
+第一次使用建议按首页的「准备步骤」走一遍：确认遥控器、按键映射、麦克风桥接、
+语音识别都就绪，然后按住遥控器语音键说一句话。识别结果会粘贴到当前焦点窗口，
+并出现在「字幕」页与「历史」页。
+
+## 配置说明
+
+配置文件默认位于 `~/.config/xiaomi-remote/config.json`，JSON 格式。
+
+| 字段 | 说明 |
+| --- | --- |
+| `address` | 默认/回退蓝牙地址；多设备时以 `devices` 为准 |
+| `ui_addr` | 管理界面监听地址，**必须**是 `127.0.0.1` / `localhost` / `::1` |
+| `helper_socket` | root remap 的 Unix socket，默认 `/run/xiaomi-remote-helper.sock` |
+| `max_utterance_seconds` | 单次录音上限，5–60 秒 |
+| `paste_enabled` | 识别完成后是否自动粘贴 |
+| `devices[]` | `id`、`name`、`address`、`profile`、`enabled`、匹配规则 |
+| `active_device` | 当前主设备 ID |
+| `keymap.profile` / `keymap.profiles` | 当前按键预设与命名预设集合 |
+| `asr.provider` / `asr.fallback` | 当前 ASR 配置名与故障回退顺序 |
+| `asr.providers{}` | `type`（`mimo` / `openai` / `whispercpp` / `command`）、模型、Base URL、密钥文件、超时等 |
+| `llm` | 是否启用改写、provider、模型、Base URL、Key 文件、模式与超时 |
+| `text.dictionary` / `text.snippets` | 本地词典纠错与语音短语 |
+
+密钥永远只以**文件路径**保存；服务端不会把 Key 内容写入日志或 API 响应。
+
+### ASR 预设
+
+界面内置 MiMo、OpenAI Whisper、OpenAI 兼容、本地 whisper.cpp、本地命令五种模板。
+选择模板会新建或切换到对应配置，不会覆盖已有配置。
+
+### 文本后处理
+
+支持 MiniMax、火山方舟（Ark）、OpenAI、DeepSeek 与自定义 OpenAI 兼容服务。
+改写失败时会保留原始识别结果，不影响粘贴。
+
+## 按键映射
+
+- 内置 `coding` / `minimal` 等预设，可在界面另存命名预设。
+- 点击实物照片定位按键，选择目标动作（原生、快捷键、宏、系统动作）。
+- 「开始捕获」期间按键只显示、不注入，结束后自动恢复映射。
+- 电源键默认映射为 Escape；设为「原生」会触发系统关机。
+
+## Web / API 开发
+
+- REST API 由 Thrift IDL 定义：[idl/xiaomi_remote.thrift](idl/xiaomi_remote.thrift)
+- 生成的 OpenAPI：[docs/openapi.yaml](docs/openapi.yaml)
+- 管理 UI 与 SSE：`biz/handler/ui`，静态资源与单页在 `web/`
+- 修改 IDL 后：
+
+```bash
+make idl       # 需要 hz + thriftgo
+make openapi   # 需要 thrift2openapi
+```
+
+指标端点：`http://127.0.0.1:8787/metrics`，包含 Go 运行时指标与
+`xiaomi_remote_ble_connected`、`xiaomi_remote_mic_healthy`、
+`xiaomi_remote_transcripts_total`、`xiaomi_remote_asr_duration_seconds` 等。
+
+## 目录结构
+
+```text
+.
+├── main.go / router.go        # CLI 入口与 hz 路由注册
+├── biz/                       # Hertz handlers、router、生成的 API model
+├── idl/                       # Thrift IDL（接口唯一来源）
+├── internal/
+│   ├── agent/                 # BLE 会话、语音切分、转写管线
+│   ├── asr/                   # MiMo / OpenAI / whisper.cpp / 命令
+│   ├── atvv/                  # ATVV 协议与 ADPCM 解码
+│   ├── audio/                 # PipeWire 虚拟麦克风与看门狗
+│   ├── bluez/                 # BlueZ D-Bus 状态
+│   ├── config/                # 配置加载、迁移与校验
+│   ├── device/                # 设备 profile 注册表
+│   ├── helper/                # root remap 的 Unix socket 客户端
+│   ├── history/               # JSONL 历史
+│   ├── llm/                   # OpenAI 兼容改写
+│   ├── paste/                 # X11 / Wayland 粘贴
+│   ├── remap/                 # root evdev → uinput remapper
+│   └── text/                  # 词典与短语规则
+├── web/                       # 内嵌 UI（ui.html + assets）
+├── conf/                      # 示例配置
+├── deploy/                    # systemd / logrotate 模板
+├── docs/                      # OpenAPI、设计稿、截图
+└── script/                    # install / bootstrap / soak
+```
+
+## 开发与测试
+
+```bash
+make check     # gofmt + go test + go vet
+make build
+make soak      # 可选：DURATION=300 script/soak.sh
+```
+
+CI 在 Linux 上执行测试与构建，并对 macOS / Windows 做交叉编译检查（语音与按键的
+平台实现仅在对应系统启用）。
+
+更多约定见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+## 故障排查
+
+| 现象 | 排查 |
+| --- | --- |
+| `doctor` 报遥控器未找到 | 确认 `bluetoothctl` 已 `pair` / `trust` / `connect`；确认 VID/PID `2717:32b8` 或名称匹配 |
+| 界面显示已连接但没有声音 | `pw-dump \| grep xiaomi` 查看 `xiaomi_mic_sink` / `xiaomi_mic`；日志出现 `virtual mic node missing` 会自动重建 |
+| 识别成功但没有文字 | 确认目标输入框有焦点；X11 需要 `xsel`；Wayland 原生需 `wtype`；检查 `paste_enabled` |
+| `readyz` 为 503 | 查看返回里的 `mic_healthy` / `asr_ready` / `helper_error`；先跑 `doctor` |
+| 云端识别 401 | 检查 API Key 文件存在且权限 `0600`；确认 provider / Base URL / 模型名 |
+| 按键无反应 | `systemctl status xiaomi-remote-remap`；确认 `/dev/uinput` 权限与 remap 服务 |
+| 日志 | `agent.log`、`journalctl --user -u xiaomi-remote-go`、`journalctl -u xiaomi-remote-remap` |
+
+## 隐私与安全
+
+- 管理 UI / API 只监听回环地址，并校验请求 Host 与 Origin。
+- API Key、令牌只保存在本地文件，权限建议 `0600`，不会出现在日志与网页回显中。
+- 语音与文本只会发往你配置的 ASR / LLM 服务；项目本身没有遥测。
+- root remap 只监听本地 Unix socket，作用域限于按键注入。
+- 安全问题请按 [SECURITY.md](SECURITY.md) 私下报告。
+
+## 路线图
+
+- 手机 / 虚拟设备作为外部输入源（麦克风 + 虚拟按键，设计已就绪）
+- 每次输入的应用感知模式（邮件、代码、聊天分别改写）
+- 更多本地 ASR 与流式识别
+- Windows / macOS 的语音链路
+- 历史音频回放与更细的输入源管理
+
+## 许可与致谢
+
+本项目以 **GPL-3.0-only** 发布，见 [LICENSE](LICENSE) 与 [COPYRIGHT](COPYRIGHT)。
+第三方依赖许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
+UI 与产品方向受到 [nijez/open-voice-bridge](https://github.com/nijez/open-voice-bridge)
+的启发；本仓库是独立的 Go 实现，与小米官方无关。设备名称与商标归其各自所有者。

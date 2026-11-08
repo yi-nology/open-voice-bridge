@@ -1,0 +1,29 @@
+# build output and local artifacts
+/bin/
+/probe
+*.log
+*.out
+*.test
+*.prof
+
+# local configuration, keys and certificates
+/config.json
+*.key
+*.pem
+*.crt
+.env
+.env.*
+
+# runtime data
+/outputs/
+/history.jsonl
+/agent.log
+
+# editor / agent state
+.qoder/
+.idea/
+.vscode/
+.DS_Store
+
+# local design explorations (not part of the public tree)
+/design-preview/

@@ -1,0 +1,117 @@
+{
+  "address": "AA:BB:CC:DD:EE:FF",
+  "ui_addr": "127.0.0.1:8787",
+  "helper_socket": "/run/xiaomi-remote-helper.sock",
+  "keyd_config": "/etc/keyd/xiaomi.conf",
+  "max_utterance_seconds": 30,
+  "paste_enabled": true,
+  "asr": {
+    "provider": "mimo",
+    "fallback": [],
+    "language": "auto",
+    "providers": {
+      "mimo": {
+        "type": "mimo",
+        "api_key_file": "~/.config/xiaomi-mimo/api_key",
+        "model": "mimo-v2.5-asr",
+        "language": "auto",
+        "timeout_seconds": 35
+      },
+      "openai": {
+        "type": "openai",
+        "base_url": "https://api.openai.com/v1",
+        "api_key_file": "~/.config/xiaomi-remote/openai.key",
+        "model": "whisper-1",
+        "language": "auto",
+        "timeout_seconds": 60
+      },
+      "local-whisper-server": {
+        "type": "openai",
+        "base_url": "http://127.0.0.1:8080/v1",
+        "model": "whisper-1",
+        "language": "auto",
+        "timeout_seconds": 120
+      },
+      "whispercpp": {
+        "type": "whispercpp",
+        "binary": "~/whisper.cpp/build/bin/whisper-cli",
+        "model_path": "~/whisper.cpp/models/ggml-base.bin",
+        "language": "auto",
+        "threads": 4,
+        "timeout_seconds": 120
+      },
+      "sherpa": {
+        "type": "command",
+        "binary": "sherpa-onnx-offline",
+        "model_path": "~/models/sherpa-onnx",
+        "language": "auto",
+        "args": [
+          "--tokens=~/models/sherpa-onnx/tokens.txt",
+          "--paraformer=~/models/sherpa-onnx/model.onnx",
+          "{audio}"
+        ],
+        "timeout_seconds": 120
+      }
+    }
+  },
+  "keymap": {
+    "profile": "coding",
+    "profiles": {
+      "coding": {
+        "back": "esc",
+        "compose": "native",
+        "down": "native",
+        "enter": "native",
+        "f5": "f24",
+        "grave": "noop",
+        "home": "macro(leftalt+tab)",
+        "left": "native",
+        "power": "esc",
+        "right": "native",
+        "up": "native",
+        "volumedown": "native",
+        "volumeup": "native"
+      },
+      "media": {
+        "back": "esc",
+        "compose": "previoussong",
+        "down": "native",
+        "enter": "playpause",
+        "f5": "f24",
+        "grave": "mute",
+        "home": "nextsong",
+        "left": "native",
+        "power": "esc",
+        "right": "native",
+        "up": "native",
+        "volumedown": "native",
+        "volumeup": "native"
+      },
+      "minimal": {
+        "back": "esc",
+        "compose": "native",
+        "down": "native",
+        "enter": "native",
+        "f5": "f24",
+        "grave": "noop",
+        "home": "native",
+        "left": "native",
+        "power": "esc",
+        "right": "native",
+        "up": "native",
+        "volumedown": "native",
+        "volumeup": "native"
+      }
+    }
+  },
+  "active_device": "rc003",
+  "devices": [
+    {
+      "id": "rc003",
+      "name": "Xiaomi RC003",
+      "address": "AA:BB:CC:DD:EE:FF",
+      "profile": "rc003",
+      "enabled": true
+    }
+  ]
+}

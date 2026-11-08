@@ -1,0 +1,3237 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#eef0f3">
+<title>小遥 Remote Studio · 小米遥控器</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232a2a2e'/%3E%3Crect x='13' y='7' width='6' height='11' rx='3' fill='white'/%3E%3Cpath d='M9 16a7 7 0 0 0 14 0M16 23v3' stroke='white' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --panel: #ffffff;
+    --panel2: #f2f2f5;
+    --line: #e4e4e9;
+    --text: #1d1d1f;
+    --muted: #6e6e73;
+    --blue: #0a84ff;
+    --blue-soft: #e8f2ff;
+    --green: #34c759;
+    --red: #ff3b30;
+    --orange: #ff9f0a;
+  }
+  * { box-sizing: border-box; }
+  html { scrollbar-width: thin; scrollbar-color: #c9c9d1 transparent; }
+  html, body { margin: 0; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #d2d2d9; border-radius: 6px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #bcbcc6; background-clip: content-box; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::selection { background: rgba(10,132,255,.18); }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible {
+    outline: 2px solid rgba(10,132,255,.55); outline-offset: 2px;
+  }
+  .btn:active { transform: translateY(.5px); }
+  body {
+    background:
+      radial-gradient(1100px 460px at 50% -160px, #ffffff 0%, rgba(255,255,255,0) 70%),
+      #eef0f3;
+    color: var(--text);
+    font: 13px/1.45 -apple-system, "SF Pro SC", "PingFang SC", "Noto Sans CJK SC", system-ui, sans-serif;
+    min-height: 100vh;
+  }
+  .window {
+    max-width: 1200px; margin: 22px auto; background: #fff;
+    border-radius: 18px; border: 1px solid #dcdce2;
+    box-shadow: 0 30px 80px -20px rgba(20,28,45,.22), 0 1px 2px rgba(20,28,45,.06);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    min-height: calc(100vh - 44px);
+  }
+  .titlebar {
+    position: relative;
+    display: flex; align-items: center; gap: 14px;
+    padding: 0 18px; height: 56px;
+    background: rgba(255,255,255,.88);
+    backdrop-filter: saturate(160%) blur(14px);
+    border-bottom: 1px solid var(--line);
+  }
+  .dots { display: flex; gap: 8px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.red { background: #ff5f57; }
+  .dot.yellow { background: #febc2e; }
+  .dot.green { background: #28c840; }
+  .brand { display: flex; align-items: center; gap: 9px; }
+  .brand-mark {
+    width: 28px; height: 28px; border-radius: 8px; flex: 0 0 28px;
+    background: linear-gradient(160deg, #2a2a2e, #57575f);
+    display: grid; place-items: center; color: #fff;
+  }
+  .brand-mark svg { width: 14px; height: 14px; }
+  .brand-name { font-size: 13.5px; font-weight: 600; letter-spacing: .2px; }
+  .brand-caption { font-size: 10px; color: var(--muted); margin-top: 1px; }
+  .crumb { font-size: 11.5px; color: var(--muted); margin-left: 8px; }
+  .tabs {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    display: none; gap: 4px; padding: 3px;
+    background: var(--panel2); border-radius: 10px;
+  }
+  .tab-btn {
+    border: 0; background: transparent; color: var(--muted);
+    padding: 5px 14px; border-radius: 8px; font: inherit; cursor: pointer;
+  }
+  .tab-btn.active {
+    background: #fff; color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,.10), 0 0 0 .5px rgba(0,0,0,.04);
+  }
+  .tab-btn:hover:not(.active), .config-tab:hover:not(.active) { background: rgba(255,255,255,.55); color: var(--text); }
+  .chips { display: flex; gap: 6px; align-items: center; margin-left: auto; }
+  .chip::before {
+    content: ""; display: inline-block; width: 5px; height: 5px; border-radius: 50%;
+    background: currentColor; margin-right: 6px; vertical-align: 1px;
+  }
+  .chip {
+    font-size: 11.5px; padding: 4px 10px; border-radius: 999px;
+    background: var(--panel2); color: var(--muted); border: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  .chip.good { color: #1a7f37; background: #eaf7ee; border-color: #cdebd6; }
+  .chip.bad { color: #b42318; background: #fdecea; border-color: #f6cfcb; }
+  .chip.warn { color: #8a5a00; background: #fff5e5; border-color: #ffe2b3; }
+
+  .shell { display: grid; grid-template-columns: 224px minmax(0, 1fr); flex: 1; }
+  .sidebar {
+    background: #fbfbfd; border-right: 1px solid var(--line);
+    padding: 16px 12px 14px; display: flex; flex-direction: column; gap: 2px;
+  }
+  .side-label {
+    font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+    color: #9a9aa2; padding: 0 10px; margin: 16px 0 6px;
+  }
+  .side-label:first-child { margin-top: 0; }
+  .side-item {
+    display: flex; align-items: center; gap: 9px; width: 100%;
+    border: 0; background: transparent; text-align: left; cursor: pointer;
+    padding: 7px 10px; border-radius: 8px; font-size: 12.5px; color: #3a3a3f;
+  }
+  .side-item svg { width: 15px; height: 15px; opacity: .6; }
+  .side-item:hover { background: #f1f1f4; }
+  .side-item.active { background: #e9e9ee; color: var(--text); font-weight: 600; }
+  .side-item.active svg { opacity: 1; }
+  .side-foot {
+    margin-top: auto; padding: 12px 10px 2px; border-top: 1px solid #f0f0f3;
+    font-size: 10.5px; color: var(--muted); display: flex; align-items: center; gap: 6px;
+  }
+  .side-foot i { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+  main { max-width: none; margin: 0; padding: 26px 30px 32px; }
+  .tab { display: none; }
+  .tab.active { display: block; animation: tabIn .18s ease; }
+  @keyframes tabIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+
+  .enable-card {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px; background: #f7f7f9;
+    border: 1px solid #e8e8ec; border-radius: 12px;
+  }
+  .check { position: relative; width: 18px; height: 18px; flex: 0 0 auto; margin-top: 1px; }
+  .check input {
+    position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%;
+    margin: 0; cursor: pointer;
+  }
+  .check .box {
+    display: block; width: 18px; height: 18px; border-radius: 4px;
+    border: 1px solid #b9b9c0; background: #fff; position: relative;
+  }
+  .check input:checked + .box { background: var(--blue); border-color: var(--blue); }
+  .check .box:after {
+    content: ""; position: absolute; left: 6px; top: 2px; width: 5px; height: 10px;
+    border: solid #fff; border-width: 0 2px 2px 0;
+    transform: rotate(45deg); opacity: 0;
+  }
+  .check input:checked + .box:after { opacity: 1; }
+  .enable-main { min-width: 0; flex: 1; }
+  .enable-top { display: flex; align-items: baseline; gap: 16px; }
+  .enable-card h2 { margin: 0; font-size: 14px; font-weight: 600; }
+  .enable-status { margin-left: auto; color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .enable-desc { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+  .status-strip { display: none; }
+
+  .mapping-grid {
+    display: grid; grid-template-columns: 340px 1fr; gap: 16px;
+    margin-top: 16px;
+  }
+  @media (max-width: 900px) { .mapping-grid { grid-template-columns: 1fr; } }
+  .panel {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 14px; padding: 16px;
+  }
+  .panel-head { display: flex; align-items: flex-start; margin-bottom: 12px; }
+  .panel-head h3 { margin: 0; font-size: 14px; font-weight: 600; }
+  .panel-head p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+  .panel-head .spacer { margin-left: auto; }
+
+  .btn {
+    border: 1px solid var(--line); background: #fff; color: var(--text);
+    padding: 6px 12px; border-radius: 8px; font: inherit; cursor: pointer; white-space: nowrap;
+  }
+  .btn:hover { background: #fafafa; }
+  .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .btn.primary:hover { background: #007aff; }
+  .btn.small { padding: 4px 9px; font-size: 12px; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* ---- remote illustration ---- */
+  .remote-wrap { display: flex; justify-content: center; }
+  .remote {
+    position: relative; width: 236px; height: 560px; border-radius: 34px;
+    background: linear-gradient(150deg, #fafafc 0%, #e7e7ec 42%, #d6d6dc 100%);
+    border: 1px solid #c7c7ce;
+    box-shadow: inset 0 1px 0 #fff, inset 0 -2px 6px rgba(0,0,0,.06),
+                0 18px 36px rgba(0,0,0,.14);
+  }
+  .remote:before {
+    content: ""; position: absolute; inset: 7px; border-radius: 28px;
+    border: 1px solid rgba(255,255,255,.7); pointer-events: none;
+  }
+  .remote .brand {
+    position: absolute; bottom: 30px; left: 0; right: 0; text-align: center;
+    color: #8a8a90; font-size: 10px; letter-spacing: 2px;
+  }
+  .remote .nfc {
+    position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%);
+    width: 22px; height: 22px; border: 1.5px solid #b6b6bd; border-radius: 6px;
+    display: grid; place-items: center; color: #9a9aa2; font-size: 10px;
+  }
+  button.rk {
+    position: absolute; border: 1px solid #bdbdc5; cursor: pointer;
+    background: linear-gradient(180deg, #f6f6f8, #dedee4);
+    color: #4a4a52; border-radius: 50%; padding: 0;
+    display: grid; place-items: center; font: inherit;
+    transition: box-shadow .12s, border-color .12s, background .12s;
+  }
+  button.rk:hover { border-color: #9a9aa4; }
+  button.rk.selected {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(10,132,255,.22), 0 0 18px rgba(10,132,255,.35);
+  }
+  button.rk.pressed {
+    background: linear-gradient(180deg, #cfe6ff, #a9d2ff);
+    border-color: var(--blue);
+    box-shadow: 0 0 0 4px rgba(10,132,255,.28), 0 0 24px rgba(10,132,255,.5);
+  }
+  .remote .power { left: 30px; top: 26px; width: 36px; height: 36px; font-size: 15px; }
+  .remote .voice { right: 30px; top: 26px; width: 36px; height: 36px; font-size: 14px; }
+  .dpad {
+    position: absolute; left: 50%; top: 86px; transform: translateX(-50%);
+    width: 166px; height: 166px; border-radius: 50%;
+    background: radial-gradient(circle at 50% 42%, #3a3a40 0%, #202026 62%, #111114 100%);
+    border: 1px solid #0d0d10;
+    box-shadow: inset 0 2px 8px rgba(255,255,255,.10), 0 6px 14px rgba(0,0,0,.18);
+  }
+  .dpad:after {
+    content: ""; position: absolute; inset: 40px; border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,.12);
+  }
+  .dpad .rk { width: 40px; height: 40px; background: transparent; border: 0; color: #dfe6f5; }
+  .dpad .rk:hover { background: rgba(255,255,255,.07); }
+  .dpad .rk.selected, .dpad .rk.pressed {
+    color: #fff; background: rgba(10,132,255,.22);
+    box-shadow: 0 0 0 2px rgba(10,132,255,.8), 0 0 18px rgba(10,132,255,.55);
+  }
+  .dpad .up { left: 63px; top: 4px; }
+  .dpad .down { left: 63px; bottom: 4px; }
+  .dpad .left { left: 4px; top: 63px; }
+  .dpad .right { right: 4px; top: 63px; }
+  .dpad .ok {
+    left: 53px; top: 53px; width: 60px; height: 60px;
+    background: radial-gradient(circle at 50% 35%, #303038, #151518);
+    border: 1.5px solid rgba(120,160,255,.45); color: #eaf2ff; font-size: 12px;
+  }
+  .nav-cluster {
+    position: absolute; left: 34px; right: 34px; top: 282px;
+    display: grid; grid-template-columns: 48px 48px;
+    grid-template-rows: repeat(3, 48px); gap: 12px;
+    justify-content: space-between;
+  }
+  .nav-cluster .rk { position: static; width: 48px; height: 48px; font-size: 11px; }
+  .nav-cluster [data-key="back"] { grid-area: 1 / 1; }
+  .nav-cluster [data-key="home"] { grid-area: 2 / 1; }
+  .nav-cluster [data-key="compose"] { grid-area: 3 / 1; }
+  .nav-cluster [data-key="volumeup"] { grid-area: 1 / 2; }
+  .nav-cluster [data-key="volumedown"] { grid-area: 2 / 2; }
+  .nav-cluster [data-key="grave"] { grid-area: 3 / 2; }
+  .nav-cluster .vol { display: contents; }
+  .vol .rk { position: static; width: 48px; height: 48px; border-radius: 16px; font-size: 16px; }
+  .remote .hint-mini {
+    position: absolute; bottom: 8px; left: 0; right: 0; text-align: center;
+    color: #9a9aa2; font-size: 10px;
+  }
+
+  /* ---- photo + hotspots (RC003) ---- */
+  .photo-panel { background: #f7f7f9; border: 1px solid #e8e8ec; }
+  .remote-photo {
+    position: relative; width: 300px; max-width: 100%;
+    aspect-ratio: 508 / 1030; margin: 0 auto;
+    border-radius: 12px; overflow: hidden;
+    background: #f0f0f2; border: 1px solid rgba(0,0,0,.10);
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  }
+  .remote-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .hotspot {
+    position: absolute;
+    left: calc(var(--x) - var(--w) / 2);
+    top: calc(var(--y) - var(--h) / 2);
+    width: var(--w); height: var(--h);
+    border-radius: 999px; border: 2px solid transparent;
+    background: transparent; cursor: pointer; padding: 0;
+    transition: background .12s, border-color .12s, box-shadow .12s;
+  }
+  .hotspot:hover { background: rgba(10,132,255,.08); border-color: rgba(10,132,255,.25); }
+  .hotspot.selected {
+    background: rgba(10,132,255,.24); border-color: var(--blue);
+    box-shadow: 0 0 0 2px rgba(10,132,255,.12);
+  }
+  .hotspot.pressed {
+    background: rgba(255,159,10,.28); border-color: var(--orange);
+    box-shadow: 0 0 0 3px rgba(255,159,10,.16);
+  }
+  .photo-hint {
+    margin: 10px 4px 0; text-align: center; color: var(--muted);
+    font-size: 11px; line-height: 1.5;
+  }
+
+  /* ---- key list ---- */
+  .key-list { max-height: 620px; overflow: auto; padding-right: 4px; }
+  .key-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 9px 12px; margin-bottom: 7px;
+    background: var(--panel2); border: 1px solid transparent;
+    border-radius: 11px; cursor: pointer;
+    transition: background .12s, border-color .12s, box-shadow .12s;
+  }
+  .key-row:hover { background: #ededf0; }
+  .key-row.selected {
+    background: var(--blue-soft); border-color: #b8d9ff;
+    box-shadow: 0 0 0 1px rgba(10,132,255,.10);
+  }
+  .key-row.pressed {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(10,132,255,.16);
+  }
+  .key-chip {
+    width: 42px; height: 42px; flex: 0 0 auto; border-radius: 10px;
+    background: #e9e9ee; color: #4b4b53; display: grid; place-items: center;
+    font-size: 12px; font-weight: 600; text-align: center; line-height: 1.1;
+  }
+  .key-row.selected .key-chip { background: var(--blue); color: #fff; }
+  .key-meta { min-width: 120px; }
+  .key-name { font-size: 13.5px; font-weight: 500; }
+  .key-hid { font-size: 11px; color: var(--muted); font-family: ui-monospace, monospace; }
+  .key-row select {
+    margin-left: auto; width: 210px; padding: 6px 30px 6px 10px;
+    border: 1px solid #e3e3e7; border-radius: 8px;
+    background-color: #f2f2f4; color: var(--text); font: inherit; cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M1 1l4 4 4-4' fill='none' stroke='%236e6e73' stroke-width='1.5' stroke-linecap='round'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+  @media (max-width: 640px) {
+    .key-row select { width: 150px; }
+    .key-meta { min-width: 80px; }
+  }
+  .save-status { min-height: 18px; color: var(--muted); font-size: 11.5px; margin-top: 8px; }
+  .save-status.ok { color: #1a7f37; }
+  .save-status.err { color: #b42318; }
+
+  .banner {
+    display: none; margin-top: 14px; padding: 10px 14px;
+    background: #fff5e5; border: 1px solid #ffe2b3; color: #8a5a00;
+    border-radius: 10px; font-size: 12.5px;
+  }
+  .banner.show { display: block; }
+  .log {
+    display: none; margin-top: 10px; max-height: 150px; overflow: auto;
+    background: #fff; border: 1px solid var(--line); border-radius: 10px;
+    padding: 8px 12px; font: 11.5px/1.7 ui-monospace, monospace; color: #6e6e73;
+  }
+  .log.show { display: block; }
+  .log .down { color: #0b5cad; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; align-items: start; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 14px; padding: 14px 16px;
+  }
+  .card h3 { margin: 0 0 4px; font-size: 13px; font-weight: 600; }
+  .card .value { font-size: 13px; color: var(--muted); }
+  .card .value.good { color: #1a7f37; }
+  .card .value.bad { color: #b42318; }
+  .card .value.warn { color: #b26a00; }
+  .card .sub { margin-top: 6px; font-size: 11.5px; color: var(--muted); }
+  #asr-select {
+    width: 100%; margin-top: 8px; padding: 6px 10px;
+    border: 1px solid var(--line); border-radius: 8px;
+    background: #f2f2f4; color: var(--text); font: inherit;
+  }
+  #keymap-profile {
+    margin-left: auto; padding: 6px 10px;
+    border: 1px solid var(--line); border-radius: 8px;
+    background: #f2f2f4; color: var(--text); font: inherit;
+  }
+  .model-grid {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px; margin-top: 4px;
+  }
+  .model-grid label {
+    display: flex; flex-direction: column; gap: 4px;
+    color: var(--muted); font-size: 11.5px;
+  }
+  .model-grid label[hidden] { display: none; }
+  .model-grid input, .model-grid select, .model-grid textarea {
+    padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px;
+    background: #f2f2f4; color: var(--text); font: inherit;
+  }
+  .model-grid textarea { resize: vertical; min-height: 44px; font-family: ui-monospace, monospace; font-size: 12px; }
+  .model-grid .wide { grid-column: 1 / -1; }
+  @media (max-width: 720px) { .model-grid { grid-template-columns: 1fr; } }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .msg { min-height: 18px; margin-top: 10px; color: var(--muted); font-size: 12px; white-space: pre-line; }
+  .msg.ok { color: #1a7f37; }
+  .msg.err, .sub.err { color: #b42318; }
+  pre.config {
+    margin: 14px 0 0; padding: 12px; background: var(--panel2);
+    border: 1px solid var(--line); border-radius: 10px;
+    font: 11.5px/1.55 ui-monospace, monospace; color: #5b5b63; overflow: auto;
+  }
+  .note { color: var(--muted); font-size: 12px; margin: 6px 0 0; }
+  .perm-list { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 12.5px; }
+  .perm-list li { margin: 5px 0; }
+
+  .subtitle-shell { display: flex; flex-direction: column; gap: 10px; }
+  .subtitle-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .subtitle-title { font-weight: 600; font-size: 13px; }
+  .subtitle-hint { color: var(--muted); font-size: 12px; }
+  .subtitle-scene {
+    position: relative; isolation: isolate; overflow: hidden; border-radius: 26px;
+    min-height: 70vh; padding: 18px;
+    background:
+      radial-gradient(58% 52% at 10% 8%, rgba(74,112,255,.38) 0%, transparent 66%),
+      radial-gradient(52% 50% at 92% 86%, rgba(16,176,158,.28) 0%, transparent 68%),
+      radial-gradient(46% 46% at 54% 108%, rgba(142,74,255,.26) 0%, transparent 68%),
+      linear-gradient(135deg, #060910 0%, #0c111e 55%, #05070d 100%);
+    box-shadow: 0 24px 70px rgba(4,8,20,.45);
+  }
+  .subtitle-orb {
+    position: absolute; border-radius: 50%; pointer-events: none;
+    filter: blur(78px); opacity: .36; z-index: 0;
+  }
+  .subtitle-orb.a {
+    width: 420px; height: 420px; left: -130px; top: -130px;
+    background: radial-gradient(circle at 35% 35%, #8aa8ff 0%, #4f6dff 45%, rgba(79,109,255,0) 72%);
+    animation: glassFloatA 22s ease-in-out infinite alternate;
+  }
+  .subtitle-orb.b {
+    width: 360px; height: 360px; right: -100px; top: 12%;
+    background: radial-gradient(circle at 40% 40%, #6ff3df 0%, #17c4b2 48%, rgba(23,196,178,0) 72%);
+    animation: glassFloatB 26s ease-in-out infinite alternate;
+  }
+  .subtitle-orb.c {
+    width: 320px; height: 320px; left: 32%; bottom: -150px;
+    background: radial-gradient(circle at 45% 40%, #d3a5ff 0%, #8a4dff 46%, rgba(138,77,255,0) 74%);
+    animation: glassFloatC 30s ease-in-out infinite alternate;
+  }
+  .subtitle-stage {
+    position: relative; z-index: 2; min-height: 64vh; border-radius: 20px;
+    display: flex; align-items: center; justify-content: center; padding: 32px 28px;
+    background: linear-gradient(145deg, rgba(18,24,38,.58) 0%, rgba(8,11,20,.46) 48%, rgba(14,19,32,.52) 100%);
+    border: 1px solid rgba(255,255,255,.2);
+    -webkit-backdrop-filter: blur(42px) saturate(150%);
+    backdrop-filter: blur(42px) saturate(150%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.2),
+      inset 0 -1px 0 rgba(0,0,0,.42),
+      0 30px 90px rgba(0,0,0,.5);
+    --subtitle-size: 32px;
+  }
+  .subtitle-stage::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background:
+      linear-gradient(118deg, rgba(255,255,255,.1) 0%, transparent 28%, transparent 72%, rgba(255,255,255,.05) 100%),
+      radial-gradient(55% 38% at 50% 0%, rgba(255,255,255,.1), transparent 70%);
+    opacity: .85;
+  }
+  .subtitle-lines {
+    position: relative; z-index: 1; width: 100%; max-height: 64vh; overflow-y: auto; scrollbar-width: none;
+    display: flex; flex-direction: column; gap: 20px; padding: 28vh 0;
+  }
+  .subtitle-lines::-webkit-scrollbar { display: none; }
+  .subtitle-line {
+    font-size: var(--subtitle-size); line-height: 1.45; font-weight: 600;
+    color: rgba(255,255,255,.38); text-align: center;
+    transform: scale(.96); transition: color .25s ease, transform .25s ease, opacity .25s ease;
+    text-shadow: 0 1px 0 rgba(0,0,0,.18);
+  }
+  .subtitle-line.active {
+    color: #fff; transform: scale(1);
+    text-shadow: 0 0 30px rgba(150,190,255,.55), 0 2px 18px rgba(0,0,0,.22);
+  }
+  .subtitle-line .meta {
+    display: block; margin-top: 7px; font-size: 11px; font-weight: 400;
+    color: rgba(255,255,255,.36); letter-spacing: .04em;
+  }
+  .subtitle-empty {
+    position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,.62); font-size: 15px; text-align: center; padding: 24px;
+    text-shadow: 0 1px 12px rgba(0,0,0,.25);
+  }
+  .subtitle-scene:fullscreen { border-radius: 0; min-height: 100vh; padding: 24px; }
+  .subtitle-scene:fullscreen .subtitle-stage { min-height: calc(100vh - 48px); }
+  .subtitle-scene:fullscreen .subtitle-lines { max-height: calc(100vh - 110px); padding: 40vh 0; }
+  @keyframes glassFloatA { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(80px,60px,0) scale(1.12); } }
+  @keyframes glassFloatB { from { transform: translate3d(0,0,0) scale(1.05); } to { transform: translate3d(-70px,50px,0) scale(.94); } }
+  @keyframes glassFloatC { from { transform: translate3d(0,0,0) scale(.96); } to { transform: translate3d(50px,-60px,0) scale(1.1); } }
+  @media (prefers-reduced-motion: reduce) {
+    .tab.active, .mic-orb, .orb-ring, .guided-eyebrow i { animation: none !important; transition: none !important; }
+    .subtitle-orb { animation: none; }
+  }
+
+  .device-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .device-row {
+    display: flex; align-items: center; gap: 12px; padding: 11px 13px;
+    border: 1px solid var(--line); border-radius: 12px; background: var(--panel2);
+  }
+  .device-row.active { border-color: rgba(0,122,255,.45); box-shadow: 0 0 0 2px rgba(0,122,255,.08); }
+  .device-main { flex: 1; min-width: 0; }
+  .device-name { font-weight: 600; font-size: 13px; }
+  .device-meta { color: var(--muted); font-size: 11.5px; margin-top: 3px; overflow-wrap: anywhere; }
+  .device-badge {
+    display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 10.5px;
+    background: #e8f1ff; color: #1768d6; margin-left: 6px;
+  }
+  .device-badge.connected { background: #e6f7ee; color: #1a7f37; }
+  .device-badge.warn { background: #fff3e0; color: #b25a00; }
+  .device-badge.battery { background: #f0f0f4; color: #555; }
+  .device-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .device-form { margin-top: 18px; padding-top: 15px; border-top: 1px solid var(--line); }
+  .check-line { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; }
+  .model-grid label.check-line { flex-direction: row; justify-content: flex-start; align-items: center; }
+
+  .history-row { align-items: flex-start; }
+  .history-text { font-size: 13px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .history-meta { color: var(--muted); font-size: 11px; margin-top: 5px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .history-actions { display: flex; gap: 6px; }
+  .history-search { width: 220px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px; background: #f2f2f4; font: inherit; }
+
+  .subtitle-live {
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px;
+    border-radius: 999px; background: rgba(255,255,255,.6); border: 1px solid var(--line);
+    font-size: 11.5px; color: var(--muted); white-space: nowrap;
+  }
+  .subtitle-live i { width: 7px; height: 7px; border-radius: 50%; background: #9aa0aa; }
+  .subtitle-live.listening { color: #1a7f37; background: #e9f8ef; border-color: #bfe6cd; }
+  .subtitle-live.listening i { background: #1a7f37; animation: livePulse 1.2s ease-out infinite; }
+  @keyframes livePulse {
+    0% { box-shadow: 0 0 0 0 rgba(26,127,55,.45); }
+    70% { box-shadow: 0 0 0 7px rgba(26,127,55,0); }
+    100% { box-shadow: 0 0 0 0 rgba(26,127,55,0); }
+  }
+
+  .rule-list { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 6px; }
+  .rule-row { display: flex; gap: 8px; align-items: flex-start; }
+  .rule-row input, .rule-row textarea {
+    padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px;
+    background: #f2f2f4; color: var(--text); font: inherit;
+  }
+  .rule-row .rule-from { width: 30%; }
+  .rule-row .rule-to { flex: 1; }
+  .rule-row textarea { flex: 1; min-height: 38px; resize: vertical; }
+
+  .config-nav {
+    display: flex; gap: 4px; padding: 4px; margin-bottom: 12px;
+    background: var(--panel2); border-radius: 10px; overflow-x: auto; scrollbar-width: none;
+  }
+  .config-nav::-webkit-scrollbar { display: none; }
+  .config-tab {
+    border: 0; background: transparent; color: var(--muted); padding: 6px 14px;
+    border-radius: 8px; font: inherit; cursor: pointer; white-space: nowrap;
+  }
+  .config-tab.active {
+    background: #fff; color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 0 0 .5px rgba(0,0,0,.04);
+  }
+  .cfg-panel { display: none; }
+  .cfg-panel.active { display: block; }
+
+  details.adv {
+    border-top: 1px dashed var(--line); padding-top: 9px; margin-top: 2px;
+  }
+  details.adv > summary {
+    display: flex; align-items: center; gap: 6px; cursor: pointer;
+    list-style: none; color: var(--muted); font-size: 12px;
+  }
+  details.adv > summary::-webkit-details-marker { display: none; }
+  details.adv > summary::before {
+    content: "▸"; font-size: 10px; transition: transform .15s ease;
+  }
+  details.adv[open] > summary::before { transform: rotate(90deg); }
+  details.adv .adv-body {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px; margin-top: 10px;
+  }
+
+  /* ---- guided overview (C direction, A palette) ---- */
+  .guided {
+    display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: center;
+    background: linear-gradient(180deg, #fbfbfc, #f6f6f8);
+    border: 1px solid var(--line); border-radius: 18px; padding: 22px 24px;
+    box-shadow: 0 1px 2px rgba(20,28,45,.04), 0 14px 34px -28px rgba(20,28,45,.35);
+  }
+  .guided-eyebrow {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 10px; letter-spacing: .14em; color: #9a9aa2; font-weight: 600;
+  }
+  .guided-eyebrow i { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+  .guided-copy h2 {
+    margin: 10px 0 8px; font-size: 26px; line-height: 1.34;
+    letter-spacing: -.02em; font-weight: 650;
+  }
+  .guided-copy p { margin: 0; max-width: 440px; font-size: 12.5px; line-height: 1.8; color: var(--muted); }
+  .guided-actions { display: flex; align-items: center; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  .guided-meta { font-size: 11.5px; color: #9a9aa2; }
+  .guided-visual { position: relative; height: 196px; display: grid; place-items: center; }
+  .orb-ring { position: absolute; width: 184px; height: 184px; border-radius: 50%; border: 1px dashed #dcdfe6; }
+  .orb-ring::before { content: ""; position: absolute; inset: 18px; border-radius: 50%; border: 1px solid #e8eaef; }
+  .mic-orb {
+    width: 118px; height: 118px; border-radius: 50%;
+    background: radial-gradient(circle at 38% 30%, #ffffff 0%, #eef6ff 55%, #dcecff 100%);
+    box-shadow: 0 24px 44px -24px rgba(10,132,255,.45), inset 0 2px 5px #fff;
+    display: grid; place-items: center; color: #2f6fb3;
+  }
+  .mic-orb svg { width: 38px; height: 38px; }
+  .mic-orb { transition: transform .35s ease, box-shadow .35s ease; }
+  body.listening .mic-orb {
+    transform: scale(1.04);
+    box-shadow: 0 0 0 9px rgba(10,132,255,.10), 0 26px 50px -24px rgba(10,132,255,.65), inset 0 2px 5px #fff;
+  }
+  body.listening .orb-ring { border-color: rgba(10,132,255,.4); animation: listenRing 1.5s ease-out infinite; }
+  body.listening .guided-eyebrow i { background: var(--blue); animation: listenDot 1.3s ease-out infinite; }
+  @keyframes listenRing {
+    0% { transform: scale(.96); opacity: .9; }
+    70% { transform: scale(1.05); opacity: .22; }
+    100% { transform: scale(.96); opacity: .9; }
+  }
+  @keyframes listenDot {
+    0% { box-shadow: 0 0 0 0 rgba(10,132,255,.45); }
+    70% { box-shadow: 0 0 0 6px rgba(10,132,255,0); }
+    100% { box-shadow: 0 0 0 0 rgba(10,132,255,0); }
+  }
+  .orb-chip {
+    position: absolute; background: rgba(255,255,255,.94); border: 1px solid var(--line);
+    border-radius: 10px; padding: 6px 9px; box-shadow: 0 10px 20px -16px rgba(20,28,45,.35);
+  }
+  .orb-chip span { display: block; font-size: 9px; letter-spacing: .08em; color: #9a9aa2; }
+  .orb-chip b { font-size: 11.5px; font-weight: 600; }
+  .orb-chip.chip-a { top: 10px; right: 0; }
+  .orb-chip.chip-b { bottom: 12px; left: 0; }
+
+  .panel.ready { padding: 0; border: 0; background: transparent; }
+  .panel.ready .panel-head { display: none; }
+  .panel.ready .device-list { margin-top: 0; }
+
+  .recent-list { display: flex; flex-direction: column; }
+  .recent-row { display: flex; gap: 12px; padding: 11px 16px; align-items: flex-start; }
+  .recent-row + .recent-row { border-top: 1px solid #f2f2f5; }
+  .recent-row time { font: 10.5px ui-monospace, monospace; color: #9a9aa2; flex: 0 0 44px; padding-top: 2px; }
+  .recent-row .txt {
+    flex: 1; min-width: 0; font-size: 12.5px; line-height: 1.6; color: #333;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  #conn-last {
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .recent-row .tag { font-size: 10px; color: #1a7f37; background: #eaf7ee; border-radius: 5px; padding: 2px 6px; white-space: nowrap; }
+  .recent-row .dur { font: 10px ui-monospace, monospace; color: #9a9aa2; padding-top: 3px; white-space: nowrap; }
+  .recent-empty { padding: 16px; font-size: 12px; color: var(--muted); }
+  .recent-count { font-size: 11px; color: #9a9aa2; margin-right: 10px; white-space: nowrap; }
+
+  /* ---- config as settings groups (A direction) ---- */
+  #cfg-asr > .card, #cfg-llm > .card, #cfg-text > .card {
+    background: transparent; border: 0; padding: 0; box-shadow: none;
+  }
+  #cfg-asr > .card > h3, #cfg-llm > .card > h3, #cfg-text > .card > h3 {
+    font-size: 19px; margin: 0 0 4px; letter-spacing: -.01em;
+  }
+  #cfg-asr .model-grid, #cfg-llm .model-grid {
+    display: flex; flex-direction: column; gap: 0; margin-top: 14px;
+    background: #fff; border: 1px solid var(--line); border-radius: 14px;
+    overflow: hidden; padding: 0;
+  }
+  #cfg-asr .model-grid > label, #cfg-llm .model-grid > label {
+    flex-direction: row; align-items: center; justify-content: space-between;
+    gap: 16px; padding: 12px 16px; font-size: 12.5px; color: var(--text);
+    border-top: 1px solid #f2f2f5;
+  }
+  #cfg-asr .model-grid > label:first-child, #cfg-llm .model-grid > label:first-child { border-top: 0; }
+  #cfg-asr .model-grid input, #cfg-asr .model-grid select,
+  #cfg-llm .model-grid input, #cfg-llm .model-grid select {
+    width: 300px; max-width: 55%; padding: 6px 9px;
+    border: 1px solid #dcdce2; border-radius: 8px; background: #f7f7f9; font: inherit; font-size: 12px;
+  }
+  #cfg-llm .model-grid > label.check-line { justify-content: flex-start; gap: 9px; }
+  #cfg-llm .model-grid > label.check-line input { width: 15px; height: 15px; max-width: none; }
+  #cfg-asr .model-grid > label.wide, #cfg-llm .model-grid > label.wide {
+    flex-direction: column; align-items: stretch; gap: 6px;
+  }
+  #cfg-asr .model-grid > label.wide input, #cfg-asr .model-grid > label.wide textarea,
+  #cfg-llm .model-grid > label.wide input, #cfg-llm .model-grid > label.wide textarea {
+    width: 100%; max-width: none;
+  }
+  #cfg-asr details.adv, #cfg-llm details.adv {
+    border-top: 1px solid #f2f2f5; border-radius: 0; margin: 0; padding: 0;
+  }
+  #cfg-asr details.adv > summary, #cfg-llm details.adv > summary { padding: 12px 16px; }
+  #cfg-asr details.adv .adv-body, #cfg-llm details.adv .adv-body {
+    display: flex; flex-direction: column; gap: 0; margin: 0; padding: 0;
+  }
+  #cfg-asr details.adv .adv-body label, #cfg-llm details.adv .adv-body label {
+    flex-direction: row; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 10px 16px; border-top: 1px solid #f7f7f9; font-size: 12px;
+  }
+  #cfg-asr details.adv .adv-body label.wide, #cfg-llm details.adv .adv-body label.wide {
+    flex-direction: column; align-items: stretch;
+  }
+  #cfg-asr details.adv .adv-body input, #cfg-llm details.adv .adv-body input {
+    width: 300px; max-width: 55%;
+  }
+  #cfg-asr details.adv .adv-body label.wide input, #cfg-asr details.adv .adv-body label.wide textarea,
+  #cfg-llm details.adv .adv-body label.wide input, #cfg-llm details.adv .adv-body label.wide textarea {
+    width: 100%; max-width: none;
+  }
+  #cfg-text .rule-list {
+    background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px;
+  }
+  @media (min-width: 721px) { .cfg-panel .actions .btn.primary { order: 2; } }
+
+  @media (min-width: 901px) {
+    .tabs { display: none; }
+    .config-nav { display: none; }
+    .window { height: calc(100vh - 44px); min-height: 560px; }
+    .shell { min-height: 0; }
+    main { overflow: auto; }
+    .sidebar { overflow: auto; }
+  }
+  @media (max-width: 900px) {
+    .window { height: auto; min-height: calc(100vh - 44px); }
+    .shell { display: block; }
+    .sidebar { display: none; }
+    main { overflow: visible; }
+    .titlebar { flex-wrap: wrap; height: auto; padding: 10px 14px; gap: 10px; }
+    .crumb, .chips { display: none; }
+    .tabs {
+      position: static; transform: none; display: flex; order: 3;
+      width: 100%; max-width: 100%; justify-content: flex-start;
+      overflow-x: auto; scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab-btn { padding: 5px 10px; font-size: 12px; }
+    main { padding: 18px 16px 26px; }
+    .guided { grid-template-columns: minmax(0, 1fr) 220px; padding: 18px; gap: 14px; }
+    .guided-copy h2 { font-size: 22px; }
+    .guided-visual { height: 170px; }
+    .orb-ring { width: 158px; height: 158px; }
+    .mic-orb { width: 100px; height: 100px; }
+  }
+
+  @media (max-width: 720px) {
+    body { background: #fff; }
+    .window { margin: 0; border-radius: 0; min-height: 100vh; border: 0; box-shadow: none; }
+    .titlebar { padding: 8px 10px; gap: 8px; }
+    .dots { display: none; }
+    main { padding: 12px; }
+    .cards { grid-template-columns: 1fr; gap: 8px; }
+    .cards > .card {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center; column-gap: 10px; padding: 10px 12px;
+    }
+    .cards > .card h3 { margin: 0; font-size: 12.5px; }
+    .cards > .card .value { font-size: 12.5px; text-align: right; }
+    .cards > .card .sub { grid-column: 1 / -1; margin-top: 3px; font-size: 11px; }
+    #asr-select { grid-column: 1 / -1; margin-top: 6px; }
+    .panel { padding: 12px; }
+    .config-nav {
+      position: sticky; top: 0; z-index: 5; margin: 0 -12px 10px;
+      border-radius: 0; padding: 6px 12px; background: rgba(242,242,244,.92);
+      backdrop-filter: blur(12px);
+    }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .actions > select { grid-column: 1 / -1; width: 100%; }
+    .actions .btn { width: 100%; }
+    .actions .btn.primary { grid-column: 1 / -1; order: -1; }
+    .actions .btn:only-of-type { grid-column: 1 / -1; }
+    .panel-head { flex-wrap: wrap; gap: 8px; }
+    .panel-head .spacer { display: none; }
+    .panel-head > div:first-child { flex: 1 1 100%; }
+    details.adv .adv-body { grid-template-columns: 1fr; }
+    .subtitle-toolbar { gap: 6px; }
+    .subtitle-hint { display: none; }
+    .history-search { width: 100%; }
+    .titlebar { flex-wrap: nowrap; }
+    .brand { flex: 0 0 auto; gap: 0; }
+    .brand-name, .brand-caption { display: none; }
+    .tabs { order: 0; width: auto; flex: 1; min-width: 0; }
+    .panel-head > .btn { margin-left: auto; }
+    .guided { grid-template-columns: minmax(0, 1fr) 96px; gap: 8px; padding: 14px; }
+    .guided-eyebrow-long { display: none; }
+    .guided-copy h2 { font-size: 19px; margin: 8px 0 6px; }
+    .guided-copy p { display: none; }
+    .guided-long { display: none; }
+    .guided-actions { margin-top: 12px; gap: 6px; }
+    .guided-meta { display: none; }
+    .guided-visual { height: 122px; }
+    .orb-ring { width: 112px; height: 112px; }
+    .orb-ring::before { inset: 12px; }
+    .mic-orb { width: 78px; height: 78px; }
+    .mic-orb svg { width: 26px; height: 26px; }
+    .orb-chip { display: none; }
+    .recent-row { padding: 10px 12px; gap: 8px; }
+    #cfg-asr .model-grid > label, #cfg-llm .model-grid > label,
+    #cfg-asr details.adv .adv-body label, #cfg-llm details.adv .adv-body label {
+      flex-direction: column; align-items: stretch; gap: 6px;
+    }
+    #cfg-llm .model-grid label.check-line { flex-direction: row; align-items: center; }
+    #cfg-asr .model-grid input, #cfg-asr .model-grid select,
+    #cfg-llm .model-grid input, #cfg-llm .model-grid select,
+    #cfg-asr details.adv .adv-body input, #cfg-llm details.adv .adv-body input {
+      width: 100%; max-width: none;
+    }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="ic-remote" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="4"/><circle cx="12" cy="7" r="1.4"/><circle cx="12" cy="12" r="3"/><path d="M12 17.5h.01"/></symbol>
+  <symbol id="ic-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+  <symbol id="ic-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="3"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></symbol>
+  <symbol id="ic-bt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10-5 4V3l5 4L7 17"/></symbol>
+  <symbol id="ic-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+  <symbol id="ic-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></symbol>
+  <symbol id="ic-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 11h10M4 16h13"/></symbol>
+  <symbol id="ic-cc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M9 10a2.5 2.5 0 1 0 0 4M17 10a2.5 2.5 0 1 0 0 4"/></symbol>
+  <symbol id="ic-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8"/><path d="M3.5 3v5h5M12 8v4.5l3 1.8"/></symbol>
+  <symbol id="ic-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.6-3 8-7 10-4-2-7-5.4-7-10V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+</svg>
+
+<div class="window">
+<header class="titlebar">
+  <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+  <div class="brand">
+    <span class="brand-mark"><svg><use href="#ic-remote"/></svg></span>
+    <div>
+      <div class="brand-name">小遥</div>
+      <div class="brand-caption">Remote Studio</div>
+    </div>
+  </div>
+  <div class="crumb" id="crumb">概览</div>
+  <div class="chips">
+    <span id="chip-remote" class="chip">遥控器 …</span>
+    <span id="chip-keyd" class="chip">映射 …</span>
+    <span id="chip-mic" class="chip">语音 …</span>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab-btn active" data-tab="connection">概览</button>
+    <button class="tab-btn" data-tab="keys">按键</button>
+    <button class="tab-btn" data-tab="devices">设备</button>
+    <button class="tab-btn" data-tab="subtitle">字幕</button>
+    <button class="tab-btn" data-tab="history">历史</button>
+    <button class="tab-btn" data-tab="permissions">权限</button>
+  </div>
+</header>
+
+<div class="shell">
+<aside class="sidebar">
+  <p class="side-label">遥控器</p>
+  <button class="side-item active" data-cfg="overview"><svg><use href="#ic-grid"/></svg>概览</button>
+  <button class="side-item" data-tab="keys"><svg><use href="#ic-key"/></svg>按键映射</button>
+  <button class="side-item" data-tab="devices"><svg><use href="#ic-bt"/></svg>设备</button>
+  <p class="side-label">语音</p>
+  <button class="side-item" data-cfg="asr"><svg><use href="#ic-mic"/></svg>语音识别</button>
+  <button class="side-item" data-cfg="llm"><svg><use href="#ic-spark"/></svg>文本模型</button>
+  <button class="side-item" data-cfg="text"><svg><use href="#ic-text"/></svg>词典短语</button>
+  <p class="side-label">其他</p>
+  <button class="side-item" data-tab="subtitle"><svg><use href="#ic-cc"/></svg>字幕</button>
+  <button class="side-item" data-tab="history"><svg><use href="#ic-history"/></svg>历史</button>
+  <button class="side-item" data-tab="permissions"><svg><use href="#ic-shield"/></svg>权限</button>
+  <div class="side-foot"><i></i><span id="side-status">服务运行中</span></div>
+</aside>
+
+<main>
+  <!-- ================= KEYS ================= -->
+  <section id="tab-keys" class="tab">
+    <div class="enable-card">
+      <label class="check">
+        <input id="enabled" type="checkbox" checked>
+        <span class="box"></span>
+      </label>
+      <div class="enable-main">
+        <div class="enable-top">
+          <h2>启用 RC003 自定义按键映射</h2>
+          <span id="status-right" class="enable-status">按键状态：正在读取…</span>
+        </div>
+        <p class="enable-desc">优先独占 RC003；系统不允许独占时使用兼容监听，不影响其他键盘。</p>
+      </div>
+    </div>
+
+    <div class="mapping-grid">
+      <div class="panel photo-panel">
+        <div class="remote-photo" id="remote">
+          <img src="/assets/RC003-remote-photo.png" alt="Xiaomi RC003 remote">
+          <button class="hotspot" data-key="power" style="--x:38.6%;--y:9.9%;--w:15%;--h:7.2%" title="电源键"></button>
+          <button class="hotspot" data-key="f5" style="--x:63.0%;--y:9.9%;--w:15%;--h:7.2%" title="语音键"></button>
+          <button class="hotspot" data-key="up" style="--x:50.2%;--y:17.9%;--w:18%;--h:6.5%" title="上"></button>
+          <button class="hotspot" data-key="left" style="--x:36.2%;--y:24.6%;--w:15%;--h:8.0%" title="左"></button>
+          <button class="hotspot" data-key="enter" style="--x:50.2%;--y:24.6%;--w:19%;--h:9.5%" title="确定"></button>
+          <button class="hotspot" data-key="right" style="--x:63.8%;--y:24.6%;--w:15%;--h:8.0%" title="右"></button>
+          <button class="hotspot" data-key="down" style="--x:50.2%;--y:31.7%;--w:18%;--h:6.5%" title="下"></button>
+          <button class="hotspot" data-key="back" style="--x:40.6%;--y:38.9%;--w:17%;--h:8.0%" title="返回"></button>
+          <button class="hotspot" data-key="volumeup" style="--x:60.4%;--y:39.0%;--w:16%;--h:8.0%" title="音量 +"></button>
+          <button class="hotspot" data-key="home" style="--x:40.6%;--y:47.9%;--w:17%;--h:8.0%" title="主页"></button>
+          <button class="hotspot" data-key="volumedown" style="--x:60.4%;--y:48.0%;--w:16%;--h:8.0%" title="音量 −"></button>
+          <button class="hotspot" data-key="compose" style="--x:40.6%;--y:56.9%;--w:17%;--h:8.0%" title="菜单"></button>
+          <button class="hotspot" data-key="grave" style="--x:60.4%;--y:56.9%;--w:17%;--h:8.0%" title="TV"></button>
+        </div>
+        <p class="photo-hint">点击实物按键定位映射；包括语音键在内均可自定义快捷键。</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>按键动作</h3>
+            <p>点击左侧按键定位；修改后自动保存。</p>
+          </div>
+          <div class="spacer"></div>
+          <select id="keymap-profile" title="按键预设"></select>
+          <button id="capture-btn" class="btn small">开始捕获</button>
+          <button id="reset" class="btn small">恢复默认</button>
+        </div>
+        <div id="key-list" class="key-list"></div>
+        <div id="save-status" class="save-status"></div>
+        <div class="actions" style="margin-top:8px">
+          <button id="profile-save" class="btn small">保存为预设</button>
+          <button id="profile-delete" class="btn small">删除预设</button>
+        </div>
+        <p class="note">提示：修改按键会保存为「自定义」预设，不会改动内置预设；可用「保存为预设」另存命名方案。电源键设为「原生」会触发系统关机，建议保持 Escape 或无动作。</p>
+        <pre id="config-preview" class="config" style="display:none"></pre>
+      </div>
+    </div>
+
+    <div id="capture-banner" class="banner">
+      捕获中：按键只显示，不注入应用；电源键也安全。结束后自动恢复映射。
+    </div>
+    <div id="log" class="log"></div>
+  </section>
+
+  <!-- ================= CONNECTION ================= -->
+  <section id="tab-connection" class="tab active">
+    <div class="config-nav" role="tablist">
+      <button class="config-tab" data-cfg="asr">语音识别</button>
+      <button class="config-tab" data-cfg="llm">文本模型</button>
+      <button class="config-tab" data-cfg="text">词典短语</button>
+    </div>
+    <div id="cfg-overview" class="cfg-panel active">
+    <section class="guided">
+      <div class="guided-copy">
+        <div class="guided-eyebrow"><i></i><span class="guided-eyebrow-long">XIAOMI REMOTE 2 PRO · </span><span id="guided-state">已就绪</span></div>
+        <h2><span class="guided-long">把光标放进输入框，</span><br class="guided-long">按住语音键直接说话。</h2>
+        <p>识别结果会输入到当前应用，同时出现在字幕里。不用切换窗口，也不用先打开这个页面。</p>
+        <div class="guided-actions">
+          <button class="btn primary" id="guided-subtitle">打开字幕屏</button>
+          <button class="btn" id="guided-settings">语音设置</button>
+          <span class="guided-meta" id="guided-meta">MiMo · 就绪</span>
+        </div>
+      </div>
+      <div class="guided-visual" aria-hidden="true">
+        <div class="orb-ring"></div>
+        <div class="mic-orb"><svg><use href="#ic-mic"/></svg></div>
+        <div class="orb-chip chip-a"><span>语音识别</span><b id="guided-asr">MiMo</b></div>
+        <div class="orb-chip chip-b"><span>音频</span><b>16 kHz</b></div>
+      </div>
+    </section>
+
+    <div class="cards">
+      <div class="card">
+        <h3>遥控器</h3>
+        <div id="conn-remote" class="value">…</div>
+        <div class="sub" id="conn-address">…</div>
+      </div>
+      <div class="card">
+        <h3>按键映射</h3>
+        <div id="conn-keyd" class="value">…</div>
+        <div class="sub">Go remapper；捕获时暂停，结束后自动恢复</div>
+      </div>
+      <div class="card">
+        <h3>麦克风桥接</h3>
+        <div id="conn-mic" class="value">…</div>
+        <div class="sub">XiaomiRemoteMic → PipeWire</div>
+      </div>
+      <div class="card">
+        <h3>语音识别</h3>
+        <div id="conn-asr" class="value">…</div>
+        <div class="sub">MiMo / OpenAI 兼容 / whisper.cpp 本地</div>
+        <select id="asr-select" title="切换语音识别 provider"></select>
+        <div class="sub" id="conn-last">语音输入前请先点进目标输入框</div>
+      </div>
+      <div class="card">
+        <h3>开机自启</h3>
+        <div id="conn-autostart" class="value">…</div>
+        <div class="sub">systemd 用户 agent + 系统 remap 服务</div>
+      </div>
+    </div>
+
+    <div class="panel" id="quickstart" style="margin-top:14px;">
+      <div class="panel-head">
+        <div><h3>准备步骤</h3><p>按顺序完成下面几项，就可以按住遥控器语音键直接出字和字幕。</p></div>
+        <div class="spacer"></div>
+        <button id="quickstart-toggle" class="btn small">展开</button>
+        <button id="quickstart-dismiss" class="btn small">隐藏</button>
+      </div>
+      <div id="quickstart-list" class="device-list"></div>
+    </div>
+
+    <div class="panel recent-panel" id="overview-recent-panel" style="margin-top:14px;">
+      <div class="panel-head">
+        <div><h3>最近识别</h3><p>来自本机历史，内容不会离开这台机器</p></div>
+        <div class="spacer"></div>
+        <span id="overview-recent-count" class="recent-count"></span>
+        <button class="btn small" id="overview-recent-all">查看全部</button>
+      </div>
+      <div id="overview-recent" class="recent-list"></div>
+    </div>
+    </div>
+
+    <div id="cfg-asr" class="cfg-panel">
+    <div class="card">
+      <h3>语音识别模型</h3>
+      <p class="sub">云端服务选好接入方式后填模型和密钥文件路径；本地模型填 Binary 与 Model Path。也可以先用下方模板一键套用。</p>
+      <div class="model-grid">
+        <label>配置名称<select id="model-provider"></select></label>
+        <label data-field="type">接入方式
+          <select id="model-type">
+            <option value="mimo">MiMo（小米）</option>
+            <option value="openai">OpenAI 兼容</option>
+            <option value="whispercpp">whisper.cpp 本地</option>
+            <option value="command">本地命令</option>
+          </select>
+        </label>
+        <label data-field="model">Model<input id="model-model" placeholder="mimo-v2.5-asr / whisper-1"></label>
+        <label data-field="base_url">Base URL<input id="model-base-url" placeholder="https://.../v1 或 http://127.0.0.1:8080/v1"></label>
+        <label data-field="api_key_file">密钥文件路径<input id="model-api-key-file" placeholder="~/.config/.../api_key" title="云端服务从这个文件读取 API Key，权限建议 0600"></label>
+        <label data-field="binary">Binary<input id="model-binary" placeholder="whisper-cli / sherpa-onnx-offline"></label>
+        <label data-field="model_path">Model Path<input id="model-model-path" placeholder="~/whisper.cpp/models/ggml-base.bin"></label>
+        <label data-field="threads">Threads<input id="model-threads" type="number" min="0"></label>
+        <details class="adv wide">
+          <summary>高级选项（超时、语言、命令参数、故障回退）</summary>
+          <div class="adv-body">
+            <label data-field="timeout_seconds">Timeout (s)<input id="model-timeout" type="number" min="0"></label>
+            <label data-field="language">Language<input id="model-language" placeholder="auto"></label>
+            <label data-field="args" class="wide">Args（每行一个参数，支持 {audio} {model} {language}）
+              <textarea id="model-args" rows="2" placeholder="{audio}"></textarea>
+            </label>
+            <label data-field="fallback" class="wide">Fallback（逗号分隔）<input id="model-fallback" placeholder="local-whisper, whispercpp"></label>
+          </div>
+        </details>
+      </div>
+      <div class="actions">
+        <select id="asr-preset" title="语音识别快速模板" style="padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:#f2f2f4;font:inherit"></select>
+        <button id="btn-asr-add" class="btn">新增配置</button>
+        <button id="btn-asr-delete" class="btn">删除此配置</button>
+        <button id="btn-asr-save" class="btn primary">保存并启用</button>
+        <button id="btn-asr-test" class="btn">检查配置</button>
+      </div>
+      <div id="asr-config-msg" class="msg"></div>
+    </div>
+    </div>
+    <div id="cfg-llm" class="cfg-panel">
+    <div class="card">
+      <h3>文本大模型（润色 / 翻译）</h3>
+      <p class="sub">语音识别完成后可选调用 OpenAI 兼容大模型整理文本；调用失败会保留原始识别结果。</p>
+      <div class="model-grid">
+        <label class="check-line"><input id="llm-enabled" type="checkbox"> 启用文本后处理</label>
+        <label>服务商<select id="llm-provider"></select></label>
+        <label>Model<input id="llm-model" placeholder="MiniMax-M3.1-Flash / ep-... / gpt-4o-mini"></label>
+        <label>Base URL<input id="llm-base-url" placeholder="https://api.minimaxi.com/v1"></label>
+        <label>Mode
+          <select id="llm-mode">
+            <option value="cleanup">润色（去口头语 + 标点）</option>
+            <option value="format">整理段落</option>
+            <option value="translate">翻译成英文</option>
+          </select>
+        </label>
+        <label class="wide">API Key（保存到 Key File，0600）<input id="llm-api-key" type="password" autocomplete="off" placeholder="sk-..."></label>
+        <details class="adv wide">
+          <summary>高级选项（Key 文件路径、超时、System Prompt）</summary>
+          <div class="adv-body">
+            <label class="wide">API Key File<input id="llm-api-key-file" placeholder="~/.config/xiaomi-remote/llm.key"></label>
+            <label>Timeout (s)<input id="llm-timeout" type="number" min="1" value="20"></label>
+            <label class="wide">自定义 System Prompt（留空使用预设）<textarea id="llm-prompt" rows="2" placeholder="只输出处理后的文本"></textarea></label>
+          </div>
+        </details>
+      </div>
+      <div class="actions">
+        <button id="btn-llm-save" class="btn primary">保存大模型配置</button>
+        <button id="btn-llm-test" class="btn">检查配置</button>
+        <button id="btn-llm-ping" class="btn">连通测试（会调用一次模型）</button>
+      </div>
+      <div id="llm-config-msg" class="msg"></div>
+    </div>
+    </div>
+    <div id="cfg-text" class="cfg-panel">
+    <div class="card">
+      <h3>个人词典与语音短语</h3>
+      <p class="sub">词典把识别错的专名/术语纠正；语音短语把一句触发词替换成模板文本。都在本地生效。</p>
+      <h4 style="margin:12px 0 0;font-size:12px;">词典纠错</h4>
+      <div id="dictionary-list" class="rule-list"></div>
+      <button id="dictionary-add" class="btn small">新增词条</button>
+      <h4 style="margin:14px 0 0;font-size:12px;">语音短语</h4>
+      <div id="snippet-list" class="rule-list"></div>
+      <button id="snippet-add" class="btn small">新增短语</button>
+      <div class="actions">
+        <button id="text-save" class="btn primary">保存词典与短语</button>
+      </div>
+      <div id="text-config-msg" class="msg"></div>
+    </div>
+    </div>
+    <div id="conn-footer">
+    <div class="actions">
+      <button id="btn-refresh" class="btn primary">刷新状态</button>
+      <button id="btn-reconnect" class="btn">重新连接遥控器</button>
+      <button id="btn-restart-mic" class="btn">重启麦克风桥接</button>
+    </div>
+    <div id="conn-msg" class="msg"></div>
+    <p class="note">语音链路与按键映射互相独立：捕获按键时，按住语音键仍然可以说话输入。</p>
+    </div>
+  </section>
+
+  <!-- ================= PERMISSIONS ================= -->
+  <section id="tab-permissions" class="tab">
+    <div class="panel">
+      <div class="panel-head"><div><h3>系统权限与服务</h3>
+        <p>网页本身以普通用户运行；只有下面这个 root 助手拥有额外权限。</p></div></div>
+      <ul class="perm-list">
+        <li><b>xiaomi-remote-remap.service</b>（root）：Go 按键 remapper，独占遥控器 evdev 并通过 uinput 注入映射按键。</li>
+        <li><b>xiaomi-remote-go.service</b>（用户）：Go agent，负责 BLE/ATVV、ASR、PipeWire 和网页 UI，监听 127.0.0.1:8787。</li>
+        <li><b>开机自启</b>：用户 agent 通过 systemd + linger 在登录前启动，root remap 随系统启动；<code>xiaomi-remote doctor</code> 可检查启用状态。</li>
+        <li><b>keyd.service / xiaomi-remote-helper.service</b>（旧实现，已停用，保留回退）。</li>
+        <li><b>xiaomi-mic.service / xiaomi-remote-ui.service</b>（旧 Python 版，已停用，保留回退）。</li>
+      </ul>
+      <p class="note" style="margin-top:12px;">
+        ASR provider 可在侧边栏「语音识别」中编辑并热切换，也可直接修改
+        <code>~/.config/xiaomi-remote/config.json</code> 的 <code>asr</code> 段；
+        支持 MiMo、OpenAI 兼容接口、本地 whisper.cpp 和任意本地命令，并可配置 fallback 链。
+      </p>
+      <p class="note" style="margin-top:12px;">
+        捕获模式会暂停按键注入并独占遥控器设备，因此捕获期间按键只显示、不进入桌面；电源键也安全。结束捕获或关闭网页后会自动恢复映射。
+      </p>
+      <pre class="config" id="perm-config"></pre>
+    </div>
+  </section>
+
+  <!-- ================= SUBTITLES ================= -->
+  <section id="tab-subtitle" class="tab">
+    <div class="subtitle-shell">
+      <div class="subtitle-toolbar">
+        <span class="subtitle-title">语音字幕</span>
+        <span class="subtitle-hint">识别结果会像歌词一样滚动</span>
+        <span id="subtitle-live" class="subtitle-live"><i></i><span>等待语音</span></span>
+        <div class="spacer" style="flex:1"></div>
+        <button id="subtitle-smaller" class="btn small">A−</button>
+        <button id="subtitle-larger" class="btn small">A+</button>
+        <button id="subtitle-clear" class="btn small">清空</button>
+        <button id="subtitle-copy" class="btn small">复制</button>
+        <button id="subtitle-fullscreen" class="btn small primary">全屏</button>
+      </div>
+      <div id="subtitle-scene" class="subtitle-scene">
+        <span class="subtitle-orb a"></span>
+        <span class="subtitle-orb b"></span>
+        <span class="subtitle-orb c"></span>
+        <div id="subtitle-stage" class="subtitle-stage">
+          <div id="subtitle-empty" class="subtitle-empty">按住语音键说话，字幕会像歌词一样出现在这里</div>
+          <div id="subtitle-lines" class="subtitle-lines"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DEVICES ================= -->
+  <section id="tab-devices" class="tab">
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <h3>遥控器设备</h3>
+          <p>管理已配置的遥控器，选择当前语音设备；按键 remap 会同时接入所有启用的设备。已在系统蓝牙中配对并连接遥控器后，再点“扫描已连接设备”。</p>
+          <p class="note">支持小米蓝牙遥控器 1 / 2 / 2 Pro（ARN9 / RC001-MS / RC003-MS）；Google / Android TV / Fire TV / NVIDIA 等 ATVV 遥控器可选 Generic ATVV（部分型号会自动推荐）；Apple Siri Remote 1 代（A1513 / A1962）可选 Apple Siri Remote，目前仅按键，不含 Siri 语音。</p>
+        </div>
+        <div class="spacer"></div>
+        <button id="device-scan" class="btn small primary">扫描已连接设备</button>
+        <button id="device-refresh" class="btn small">刷新</button>
+      </div>
+      <div id="discovered-title" class="note" style="display:none">已连接的蓝牙输入设备</div>
+      <div id="discovered-list" class="device-list"></div>
+      <div id="device-list" class="device-list"></div>
+      <div class="device-form">
+        <h3 id="device-form-title">添加设备</h3>
+        <div class="model-grid">
+          <label>ID<input id="device-id" placeholder="rc003-2"></label>
+          <label>名称<input id="device-name" placeholder="客厅遥控器"></label>
+          <label>蓝牙地址<input id="device-address" placeholder="AA:BB:CC:DD:EE:FF"></label>
+          <label>Profile<select id="device-profile"></select></label>
+          <label>Vendor<input id="device-vendor" placeholder="2717"></label>
+          <label>Product<input id="device-product" placeholder="32b8"></label>
+          <label class="wide">名称匹配（逗号或换行分隔）<input id="device-names" placeholder="MI RC, Bluetooth Remote"></label>
+          <label class="check-line"><input id="device-enabled" type="checkbox" checked> 启用</label>
+        </div>
+        <div class="actions">
+          <button id="device-save" class="btn primary">保存设备</button>
+          <button id="device-delete" class="btn">删除当前</button>
+          <button id="device-reset" class="btn">新建设备</button>
+        </div>
+        <div id="device-msg" class="msg"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= HISTORY ================= -->
+  <section id="tab-history" class="tab">
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <h3>听写历史</h3>
+          <p>本机保存最近 200 条识别记录，可搜索、复制或删除；不会上传。</p>
+        </div>
+        <div class="spacer"></div>
+        <input id="history-search" class="history-search" placeholder="搜索历史…">
+        <button id="history-refresh" class="btn small">刷新</button>
+        <button id="history-export" class="btn small">导出</button>
+        <button id="history-clear" class="btn small">清空</button>
+      </div>
+      <div id="history-list" class="device-list"></div>
+      <div id="history-msg" class="msg"></div>
+    </div>
+  </section>
+</main>
+</div>
+</div>
+
+<script>
+const KEYS = [
+  {key: "power",      chip: "电源", name: "电源键",   hid: "0x66", def: "esc"},
+  {key: "up",         chip: "上",   name: "上键",     hid: "0x52", def: "native"},
+  {key: "left",       chip: "左",   name: "左键",     hid: "0x50", def: "native"},
+  {key: "enter",      chip: "OK",   name: "确定键",   hid: "0x28", def: "native"},
+  {key: "right",      chip: "右",   name: "右键",     hid: "0x4F", def: "native"},
+  {key: "down",       chip: "下",   name: "下键",     hid: "0x51", def: "native"},
+  {key: "back",       chip: "返回", name: "返回键",   hid: "0xF1", def: "esc"},
+  {key: "volumeup",   chip: "+",    name: "音量 +",   hid: "0x80", def: "native"},
+  {key: "home",       chip: "主页", name: "主页键",   hid: "0x4A", def: "macro(leftalt+tab)"},
+  {key: "volumedown", chip: "−",    name: "音量 −",   hid: "0x81", def: "native"},
+  {key: "compose",    chip: "菜单", name: "菜单键",   hid: "0x65", def: "native"},
+  {key: "grave",      chip: "TV",   name: "TV 键",    hid: "0x35", def: "noop"},
+  {key: "f5",         chip: "语音", name: "语音键",   hid: "0x3E", def: "f24"},
+];
+
+const ACTION_GROUPS = [
+  {label: "键盘", items: [
+    ["native", "原生（不映射）"], ["esc", "Escape"], ["enter", "Return"],
+    ["tab", "Tab"], ["space", "空格"], ["backspace", "Backspace"],
+    ["delete", "Delete"], ["leftmeta", "Super / Win"], ["compose", "菜单键"],
+  ]},
+  {label: "组合键", items: [
+    ["macro(leftalt+tab)", "Alt + Tab（切窗口）"],
+    ["macro(leftctrl+c)", "Ctrl + C"], ["macro(leftctrl+v)", "Ctrl + V"],
+    ["macro(leftctrl+z)", "Ctrl + Z"],
+    ["macro(leftctrl+shift+p)", "Ctrl + Shift + P"],
+    ["macro(leftmeta+d)", "Super + D"],
+  ]},
+  {label: "媒体 / 其他", items: [
+    ["playpause", "播放 / 暂停"], ["volumeup", "系统音量 +"],
+    ["volumedown", "系统音量 −"], ["mute", "静音"],
+    ["noop", "无动作"], ["f24", "F24（语音键专用）"],
+  ]},
+];
+
+const DEFAULTS = Object.fromEntries(KEYS.map(item => [item.key, item.def]));
+const SAFE_OFF = Object.fromEntries(KEYS.map(item => [item.key, "native"]));
+SAFE_OFF.power = "esc";
+SAFE_OFF.f5 = "f24";
+
+let mapping = {...DEFAULTS};
+let enabled = true;
+let capturing = false;
+let selectedKey = null;
+let saveTimer = null;
+let dirty = false;
+let saveBusy = false;
+let asrOptionsLoaded = false;
+let asrProviderSignature = "";
+let keymapProfileSignature = "";
+let subtitleFont = 32;
+try {
+  subtitleFont = Number(localStorage.getItem("xiaomiSubtitleFont")) || 32;
+} catch (error) {}
+let deviceItems = [];
+let deviceProfiles = [];
+let editingDeviceId = "";
+let deviceFormInitialized = false;
+const subtitleKeys = new Set();
+const subtitleLinesEl = document.getElementById("subtitle-lines");
+const subtitleEmpty = document.getElementById("subtitle-empty");
+const subtitleStage = document.getElementById("subtitle-stage");
+const subtitleScene = document.getElementById("subtitle-scene");
+
+const selects = {};
+
+const NATIVE_LABEL = {
+  power: "原生（关机风险）", up: "方向上", down: "方向下", left: "方向左",
+  right: "方向右", enter: "Return", back: "原生返回",
+  volumeup: "系统音量 +", home: "原生主页", volumedown: "系统音量 −",
+  compose: "菜单键", grave: "原生 TV", f5: "原生 F5",
+};
+
+function optionList(select, value, key) {
+  for (const group of ACTION_GROUPS) {
+    const og = document.createElement("optgroup");
+    og.label = group.label;
+    for (const [val, label] of group.items) {
+      const option = document.createElement("option");
+      option.value = val;
+      option.textContent = val === "native" ? (NATIVE_LABEL[key] || label) : label;
+      if (val === value) option.selected = true;
+      og.appendChild(option);
+    }
+    select.appendChild(og);
+  }
+}
+
+function renderKeyList() {
+  const list = document.getElementById("key-list");
+  list.innerHTML = "";
+  for (const item of KEYS) {
+    const row = document.createElement("div");
+    row.className = "key-row";
+    row.dataset.key = item.key;
+
+    const chip = document.createElement("div");
+    chip.className = "key-chip";
+    chip.textContent = item.chip;
+
+    const meta = document.createElement("div");
+    meta.className = "key-meta";
+    const name = document.createElement("div");
+    name.className = "key-name";
+    name.textContent = item.name;
+    const hid = document.createElement("div");
+    hid.className = "key-hid";
+    hid.textContent = "HID " + item.hid;
+    meta.append(name, hid);
+
+    const select = document.createElement("select");
+    select.dataset.key = item.key;
+    optionList(select, mapping[item.key] || item.def, item.key);
+    select.addEventListener("change", () => {
+      mapping[item.key] = select.value;
+      dirty = true;
+      scheduleSave();
+      selectKey(item.key, false);
+    });
+    selects[item.key] = select;
+
+    row.append(chip, meta, select);
+    row.addEventListener("click", (event) => {
+      if (event.target === select) return;
+      selectKey(item.key, true);
+    });
+    list.appendChild(row);
+  }
+}
+
+function selectKey(key, scroll) {
+  selectedKey = key;
+  document.querySelectorAll(".key-row").forEach(row => {
+    row.classList.toggle("selected", row.dataset.key === key);
+  });
+  document.querySelectorAll("#remote [data-key]").forEach(button => {
+    button.classList.toggle("selected", button.dataset.key === key);
+  });
+  if (scroll) {
+    const row = document.querySelector(`.key-row[data-key="${key}"]`);
+    if (row) row.scrollIntoView({block: "nearest", behavior: "smooth"});
+  }
+}
+
+function setEnabledState(on) {
+  enabled = on;
+  document.getElementById("enabled").checked = on;
+  for (const key in selects) selects[key].disabled = !on;
+  const right = document.getElementById("status-right");
+  if (right) {
+    right.textContent = on
+      ? "按键状态：修改后自动保存"
+      : "按键状态：自定义映射已关闭（电源仍为 Esc，语音键保持 F24）";
+  }
+}
+
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  document.getElementById("save-status").textContent = "修改待保存…";
+  document.getElementById("save-status").className = "save-status";
+  saveTimer = setTimeout(applyMapping, 600);
+}
+
+function collectMapping() {
+  if (!enabled) return {...SAFE_OFF};
+  return collectMappingValues();
+}
+
+function collectMappingValues() {
+  const result = {};
+  for (const item of KEYS) {
+    result[item.key] = selects[item.key] ? selects[item.key].value : item.def;
+  }
+  return result;
+}
+
+async function applyMapping() {
+  if (!dirty && !saveBusy) return;
+  if (capturing) {
+    document.getElementById("save-status").textContent = "捕获中，结束后会自动保存";
+    return;
+  }
+  if (saveBusy) return;
+  saveBusy = true;
+  document.getElementById("save-status").textContent = "保存中…";
+  document.getElementById("save-status").className = "save-status";
+  try {
+    const res = await fetch("/api/apply", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({mapping: collectMapping()}),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      dirty = false;
+      document.getElementById("save-status").textContent = "已保存并生效";
+      document.getElementById("save-status").className = "save-status ok";
+      const preview = document.getElementById("config-preview");
+      preview.textContent = data.config || "";
+      document.getElementById("perm-config").textContent = data.config || "";
+      localStorage.setItem("xiaomiMapping", JSON.stringify(mapping));
+      localStorage.setItem("xiaomiEnabled", enabled ? "1" : "0");
+      loadStatus(false);
+    } else {
+      document.getElementById("save-status").textContent = "保存失败：" + errorText(data, "未知错误");
+      document.getElementById("save-status").className = "save-status err";
+    }
+  } catch (error) {
+    document.getElementById("save-status").textContent = "保存失败：" + error;
+    document.getElementById("save-status").className = "save-status err";
+  } finally {
+    saveBusy = false;
+  }
+}
+
+function resetDefaults() {
+  mapping = {...DEFAULTS};
+  for (const item of KEYS) {
+    if (selects[item.key]) selects[item.key].value = mapping[item.key];
+  }
+  dirty = true;
+  scheduleSave();
+  setEnabledState(true);
+}
+
+function setCaptureUi(active) {
+  capturing = active;
+  document.getElementById("capture-btn").textContent = active ? "结束捕获" : "开始捕获";
+  document.getElementById("capture-btn").className = active ? "btn small primary" : "btn small";
+  document.getElementById("capture-banner").classList.toggle("show", active);
+  document.getElementById("log").classList.toggle("show", active);
+  document.getElementById("chip-mic").classList.remove("warn");
+  if (active) document.getElementById("chip-mic").classList.add("warn");
+  const right = document.getElementById("status-right");
+  if (right && active) right.textContent = "按键状态：捕获中 · 注入已暂停";
+}
+
+async function toggleCapture() {
+  const url = capturing ? "/api/capture/stop" : "/api/capture/start";
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: "{}",
+  });
+  const data = await res.json();
+  if (data.ok) {
+    setCaptureUi(!capturing);
+    if (!capturing && dirty) scheduleSave();
+  } else {
+    document.getElementById("save-status").textContent = "捕获失败：" + errorText(data, "未知错误");
+    document.getElementById("save-status").className = "save-status err";
+  }
+}
+
+function highlight(key, down) {
+  const remoteButton = document.querySelector(`#remote [data-key="${key}"]`);
+  const row = document.querySelector(`.key-row[data-key="${key}"]`);
+  if (remoteButton) remoteButton.classList.toggle("pressed", down);
+  if (row) row.classList.toggle("pressed", down);
+  if (down) {
+    selectKey(key, true);
+  }
+}
+
+function logKey(key, value) {
+  const box = document.getElementById("log");
+  const item = KEYS.find(entry => entry.key === key);
+  const row = document.createElement("div");
+  const time = new Date().toLocaleTimeString("zh-CN", {hour12: false});
+  row.className = value ? "down" : "";
+  row.textContent = `${time}  ${item ? item.name : key}  ${value ? "按下" : "松开"}`;
+  box.prepend(row);
+  while (box.children.length > 12) box.removeChild(box.lastChild);
+}
+
+function errorText(data, fallback) {
+  if (!data) return fallback || "";
+  return data.message || data.error || data.output || fallback || "";
+}
+
+function setChip(id, text, cls) {
+  const chip = document.getElementById(id);
+  chip.textContent = text;
+  chip.classList.remove("good", "bad", "warn");
+  if (cls) chip.classList.add(cls);
+}
+
+function updateConnection(status) {
+  lastStatus = status;
+  renderQuickstart(status);
+  const remote = document.getElementById("conn-remote");
+  remote.textContent = status.remote_present ? "已连接" : "未连接";
+  remote.className = "value " + (status.remote_present ? "good" : "bad");
+  document.getElementById("conn-address").textContent = status.address || "";
+  const keyd = document.getElementById("conn-keyd");
+  keyd.textContent = status.keyd_active ? "运行中" : "已暂停";
+  keyd.className = "value " + (status.keyd_active ? "good" : "bad");
+  const micHealthy = status.mic_healthy !== false;
+  const mic = document.getElementById("conn-mic");
+  mic.textContent = status.mic_active ? (micHealthy ? "运行中" : "节点恢复中") : "未运行";
+  mic.className = "value " + (status.mic_active && micHealthy ? "good" : (status.mic_active ? "warn" : "bad"));
+  const asr = document.getElementById("conn-asr");
+  asr.textContent = status.asr_error ? "配置不可用" : (status.asr_backend || "未知");
+  asr.className = "value " + (status.asr_error ? "bad" : "good");
+  const last = document.getElementById("conn-last");
+  if (last) {
+    if (status.asr_error) {
+      last.textContent = status.asr_error;
+      last.className = "sub err";
+    } else {
+      last.textContent = status.last_text
+        ? "最近识别：" + status.last_text
+        : "语音输入前请先点进目标输入框";
+      last.className = "sub";
+    }
+  }
+  const asrSelect = document.getElementById("asr-select");
+  if (asrSelect && Array.isArray(status.asr_providers)) {
+    const signature = status.asr_providers.join(",");
+    if (!asrOptionsLoaded || signature !== asrProviderSignature) {
+      asrSelect.innerHTML = "";
+      for (const name of status.asr_providers) {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        asrSelect.appendChild(option);
+      }
+      asrOptionsLoaded = true;
+      asrProviderSignature = signature;
+    }
+    if (status.asr_provider) asrSelect.value = status.asr_provider;
+  }
+  const profileSelect = document.getElementById("keymap-profile");
+  if (profileSelect && Array.isArray(status.keymap_profiles)) {
+    const signature = status.keymap_profiles.join(",");
+    if (signature !== keymapProfileSignature) {
+      profileSelect.innerHTML = "";
+      for (const name of status.keymap_profiles) {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name === "custom" ? "自定义" : name;
+        profileSelect.appendChild(option);
+      }
+      keymapProfileSignature = signature;
+    }
+    if (status.keymap_profile) profileSelect.value = status.keymap_profile;
+  }
+  const autostart = document.getElementById("conn-autostart");
+  if (autostart) {
+    autostart.textContent =
+      "agent " + (status.agent_autostart ? "已启用" : "未启用") +
+      " · remap " + (status.remap_autostart ? "已启用" : "未启用");
+    autostart.className = "value " + (status.agent_autostart && status.remap_autostart ? "good" : "bad");
+  }
+  setChip("chip-remote", status.remote_present ? "遥控器已连接" : "遥控器未连接",
+          status.remote_present ? "good" : "bad");
+  setChip("chip-keyd", status.keyd_active ? "映射运行中" : "捕获中",
+          status.keyd_active ? "good" : "warn");
+  setChip("chip-mic",
+    status.mic_active ? (micHealthy ? "语音就绪" : "音频节点异常") : "语音未运行",
+    status.mic_active ? (micHealthy ? "good" : "warn") : "bad");
+  const coreReady = !!(status.remote_present && status.keyd_active && status.mic_active && micHealthy && !status.asr_error);
+  const guidedState = document.getElementById("guided-state");
+  const guidedAsr = document.getElementById("guided-asr");
+  const guidedMeta = document.getElementById("guided-meta");
+  if (guidedState) guidedState.textContent = coreReady ? "已就绪" : "待检查";
+  if (guidedAsr) guidedAsr.textContent = status.asr_error ? "需检查" : ((status.asr_backend || "未知").split(" ")[0] || "未知");
+  if (guidedMeta) {
+    const latency = Number(status.last_latency_ms) || 0;
+    guidedMeta.textContent = status.asr_error
+      ? "识别配置需检查"
+      : ((status.asr_backend || "ASR") + (latency > 0 ? " · " + latency + " ms" : (coreReady ? " · 就绪" : " · 待检查")));
+  }
+  const sideStatus = document.getElementById("side-status");
+  if (sideStatus) sideStatus.textContent = status.remote_present ? "遥控器在线" : "等待遥控器";
+  const sideDot = document.querySelector(".side-foot i");
+  if (sideDot) sideDot.style.background = status.remote_present ? "var(--green)" : "var(--orange)";
+  document.getElementById("perm-config").textContent = status.config || "";
+  const right = document.getElementById("status-right");
+  if (right && enabled) {
+    right.textContent = "按键状态：" +
+      (status.keyd_active ? "映射运行中" : "捕获中") +
+      " · " + (status.remote_present ? "遥控器已连接" : "遥控器未连接");
+  }
+  if (status.capturing && !capturing) setCaptureUi(true);
+  if (!status.capturing && capturing) setCaptureUi(false);
+}
+
+async function loadStatus(initial, syncMapping) {
+  try {
+    const res = await fetch("/api/status");
+    const status = await res.json();
+    updateConnection(status);
+    if (syncMapping && status.mapping) {
+      mapping = {...DEFAULTS, ...status.mapping};
+      for (const key of Object.keys(DEFAULTS)) {
+        if (selects[key]) selects[key].value = mapping[key] || DEFAULTS[key];
+      }
+      dirty = false;
+      document.getElementById("save-status").textContent = "已应用预设";
+      document.getElementById("save-status").className = "save-status ok";
+    }
+    if (initial) {
+      mapping = {...DEFAULTS, ...(status.mapping || {})};
+      const safe = JSON.stringify(SAFE_OFF);
+      const current = JSON.stringify({...DEFAULTS, ...(status.mapping || {})});
+      const storedMapping = localStorage.getItem("xiaomiMapping");
+      const storedEnabled = localStorage.getItem("xiaomiEnabled");
+      enabled = storedEnabled === null ? current !== safe : storedEnabled === "1";
+      if (storedMapping && enabled) {
+        try {
+          const parsed = JSON.parse(storedMapping);
+          for (const key in parsed) if (key in DEFAULTS) mapping[key] = parsed[key];
+        } catch (error) {}
+      }
+      renderKeyList();
+      setEnabledState(enabled);
+      if (enabled) {
+        const right = document.getElementById("status-right");
+        if (right) {
+          right.textContent = "按键状态：" +
+            (status.keyd_active ? "映射运行中" : "捕获中") +
+            " · " + (status.remote_present ? "遥控器已连接" : "遥控器未连接");
+        }
+      }
+      if (status.last_text && subtitleLinesEl && subtitleLinesEl.children.length === 0) {
+        addSubtitle(status.last_text, "", {dedupeText: true});
+      }
+      selectKey("enter", false);
+      const preview = document.getElementById("config-preview");
+      preview.textContent = status.config || "";
+    }
+  } catch (error) {
+    setChip("chip-keyd", "无法连接助手", "bad");
+  }
+}
+
+function subtitleKey(text, at) {
+  return (at || "") + "|" + text;
+}
+
+function subtitleTime(at) {
+  const date = at ? new Date(at) : new Date();
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleTimeString("zh-CN", {hour12: false});
+}
+
+function applySubtitleFont() {
+  if (subtitleStage) subtitleStage.style.setProperty("--subtitle-size", subtitleFont + "px");
+  try { localStorage.setItem("xiaomiSubtitleFont", String(subtitleFont)); } catch (error) {}
+}
+
+function persistSubtitles() {
+  if (!subtitleLinesEl) return;
+  const items = [...subtitleLinesEl.querySelectorAll(".subtitle-line")].slice(-80).map(line => ({
+    text: line.querySelector(".subtitle-text")?.textContent || "",
+    at: line.dataset.at || "",
+  }));
+  try { localStorage.setItem("xiaomiSubtitles", JSON.stringify(items)); } catch (error) {}
+}
+
+function addSubtitle(text, at, options = {}) {
+  if (!subtitleLinesEl) return;
+  text = (text || "").trim();
+  if (!text) return;
+  const key = subtitleKey(text, at);
+  if (subtitleKeys.has(key)) return;
+  if (options.dedupeText) {
+    const last = subtitleLinesEl.lastElementChild;
+    if (last && last.querySelector(".subtitle-text")?.textContent === text) return;
+  }
+  subtitleKeys.add(key);
+  const line = document.createElement("div");
+  line.className = "subtitle-line";
+  line.dataset.key = key;
+  line.dataset.at = at || "";
+  const body = document.createElement("span");
+  body.className = "subtitle-text";
+  body.textContent = text;
+  const meta = document.createElement("span");
+  meta.className = "meta";
+  meta.textContent = subtitleTime(at);
+  line.append(body, meta);
+  subtitleLinesEl.querySelectorAll(".subtitle-line.active").forEach(item => item.classList.remove("active"));
+  line.classList.add("active");
+  subtitleLinesEl.appendChild(line);
+  while (subtitleLinesEl.children.length > 80) {
+    const first = subtitleLinesEl.firstElementChild;
+    subtitleKeys.delete(first.dataset.key);
+    first.remove();
+  }
+  if (subtitleEmpty) subtitleEmpty.style.display = "none";
+  if (options.scroll !== false && document.getElementById("tab-subtitle").classList.contains("active")) {
+    line.scrollIntoView({block: "center", behavior: "smooth"});
+  }
+  persistSubtitles();
+}
+
+function loadSubtitles() {
+  applySubtitleFont();
+  let items = [];
+  try { items = JSON.parse(localStorage.getItem("xiaomiSubtitles") || "[]"); } catch (error) {}
+  if (!Array.isArray(items)) items = [];
+  for (const item of items.slice(-80)) {
+    if (item && item.text) addSubtitle(item.text, item.at, {scroll: false});
+  }
+  const active = subtitleLinesEl?.querySelector(".subtitle-line.active");
+  if (active) active.scrollIntoView({block: "center"});
+}
+
+function clearSubtitles() {
+  if (!subtitleLinesEl) return;
+  subtitleLinesEl.innerHTML = "";
+  subtitleKeys.clear();
+  if (subtitleEmpty) subtitleEmpty.style.display = "";
+  try { localStorage.removeItem("xiaomiSubtitles"); } catch (error) {}
+}
+
+function copySubtitles() {
+  if (!subtitleLinesEl) return;
+  const text = [...subtitleLinesEl.querySelectorAll(".subtitle-text")]
+    .map(item => item.textContent).join("\n");
+  if (!text) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).catch(() => {});
+  }
+}
+
+function deviceMessage(text, cls) {
+  const node = document.getElementById("device-msg");
+  if (!node) return;
+  node.textContent = text || "";
+  node.className = "msg " + (cls || "");
+}
+
+function populateDeviceProfiles(selected) {
+  const select = document.getElementById("device-profile");
+  if (!select) return;
+  const current = selected || select.value;
+  select.innerHTML = "";
+  for (const profile of deviceProfiles) {
+    const option = document.createElement("option");
+    option.value = profile.id;
+    option.textContent = profile.name + " (" + profile.id + ")";
+    select.appendChild(option);
+  }
+  if (current) select.value = current;
+}
+
+function renderDevices(items) {
+  const list = document.getElementById("device-list");
+  if (!list) return;
+  list.innerHTML = "";
+  if (!items.length) {
+    const empty = document.createElement("div");
+    empty.className = "note";
+    empty.textContent = "还没有配置设备。";
+    list.appendChild(empty);
+    return;
+  }
+  for (const item of items) {
+    const row = document.createElement("div");
+    row.className = "device-row" + (item.active ? " active" : "");
+    const main = document.createElement("div");
+    main.className = "device-main";
+    const name = document.createElement("div");
+    name.className = "device-name";
+    name.textContent = item.name || item.id;
+    if (item.active) {
+      const badge = document.createElement("span");
+      badge.className = "device-badge";
+      badge.textContent = "当前语音";
+      name.appendChild(badge);
+    }
+    if (item.connected) {
+      const badge = document.createElement("span");
+      badge.className = "device-badge connected";
+      badge.textContent = "已连接";
+      name.appendChild(badge);
+    } else if (item.paired === false) {
+      const badge = document.createElement("span");
+      badge.className = "device-badge warn";
+      badge.textContent = "未配对";
+      name.appendChild(badge);
+    }
+    if (typeof item.battery === "number" && item.battery >= 0) {
+      const badge = document.createElement("span");
+      badge.className = "device-badge battery";
+      badge.textContent = item.battery + "%";
+      name.appendChild(badge);
+    }
+    const meta = document.createElement("div");
+    meta.className = "device-meta";
+    const profileInfo = deviceProfiles.find(profile => profile.id === item.profile);
+    meta.textContent = [item.address, profileInfo?.name || item.profile, (item.capabilities || []).join(" / ")].filter(Boolean).join(" · ");
+    main.append(name, meta);
+    const actions = document.createElement("div");
+    actions.className = "device-actions";
+    const edit = document.createElement("button");
+    edit.className = "btn small";
+    edit.textContent = "编辑";
+    edit.addEventListener("click", () => fillDeviceForm(item));
+    actions.appendChild(edit);
+    if (!item.active && (item.capabilities || []).includes("voice")) {
+      const select = document.createElement("button");
+      select.className = "btn small primary";
+      select.textContent = "设为语音";
+      select.addEventListener("click", () => deviceRequest("/api/devices/select", {id: item.id}, "已切换语音设备"));
+      actions.appendChild(select);
+    }
+    if (!item.connected) {
+      const connect = document.createElement("button");
+      connect.className = "btn small";
+      connect.textContent = "连接";
+      connect.addEventListener("click", async () => {
+        await deviceRequest("/api/devices/connect", {id: item.id, connect: true}, "正在连接设备");
+        setTimeout(loadDevices, 1500);
+      });
+      actions.appendChild(connect);
+    } else if (!item.active) {
+      const disconnect = document.createElement("button");
+      disconnect.className = "btn small";
+      disconnect.textContent = "断开";
+      disconnect.addEventListener("click", () => deviceRequest("/api/devices/connect", {id: item.id, connect: false}, "已断开设备"));
+      actions.appendChild(disconnect);
+    }
+    const toggle = document.createElement("button");
+    toggle.className = "btn small";
+    toggle.textContent = item.enabled ? "停用" : "启用";
+    if (item.active) toggle.disabled = true;
+    toggle.addEventListener("click", () => deviceRequest("/api/devices/toggle", {id: item.id, enabled: !item.enabled}, item.enabled ? "已停用设备" : "已启用设备"));
+    actions.appendChild(toggle);
+    row.append(main, actions);
+    list.appendChild(row);
+  }
+}
+
+function renderDiscovered(items) {
+  const list = document.getElementById("discovered-list");
+  const title = document.getElementById("discovered-title");
+  if (!list) return;
+  list.innerHTML = "";
+  const available = items.filter(item => !item.configured);
+  if (!available.length) {
+    if (title) title.style.display = "none";
+    return;
+  }
+  if (title) title.style.display = "";
+  for (const item of available) {
+    const row = document.createElement("div");
+    row.className = "device-row";
+    const main = document.createElement("div");
+    main.className = "device-main";
+    const name = document.createElement("div");
+    name.className = "device-name";
+    const profileInfo = deviceProfiles.find(profile => profile.id === item.profile);
+    name.textContent = profileInfo?.name || item.name || "未知设备";
+    if (item.profile) {
+      const badge = document.createElement("span");
+      badge.className = "device-badge";
+      badge.textContent = item.profile;
+      name.appendChild(badge);
+    }
+    if (item.connected) {
+      const badge = document.createElement("span");
+      badge.className = "device-badge connected";
+      badge.textContent = "已连接";
+      name.appendChild(badge);
+    } else if (item.paired) {
+      const badge = document.createElement("span");
+      badge.className = "device-badge warn";
+      badge.textContent = "已配对未连接";
+      name.appendChild(badge);
+    } else {
+      const badge = document.createElement("span");
+      badge.className = "device-badge warn";
+      badge.textContent = "未配对";
+      name.appendChild(badge);
+    }
+    if (typeof item.battery === "number" && item.battery >= 0) {
+      const badge = document.createElement("span");
+      badge.className = "device-badge battery";
+      badge.textContent = item.battery + "%";
+      name.appendChild(badge);
+    }
+    const meta = document.createElement("div");
+    meta.className = "device-meta";
+    meta.textContent = [item.address, item.vendor && item.product ? item.vendor + ":" + item.product : "", (item.capabilities || []).join(" / ")].filter(Boolean).join(" · ");
+    main.append(name, meta);
+    const actions = document.createElement("div");
+    actions.className = "device-actions";
+    if (item.configured) {
+      const added = document.createElement("span");
+      added.className = "note";
+      added.textContent = "已添加";
+      actions.appendChild(added);
+    } else {
+      const add = document.createElement("button");
+      add.className = "btn small primary";
+      add.textContent = "添加";
+      add.addEventListener("click", () => addDiscoveredDevice(item));
+      actions.appendChild(add);
+    }
+    row.append(main, actions);
+    list.appendChild(row);
+  }
+}
+
+async function loadDiscovery() {
+  if (!deviceProfiles.length) await loadDevices();
+  try {
+    const res = await fetch("/api/devices/discover");
+    const data = await res.json();
+    if (!data.ok) {
+      deviceMessage(errorText(data, "扫描失败"), "err");
+      return;
+    }
+    const devices = data.devices || [];
+    renderDiscovered(devices);
+    if (!devices.length) {
+      deviceMessage("未发现已连接的蓝牙输入设备，请先在系统蓝牙中配对连接。", "");
+    } else if (devices.every(item => item.configured)) {
+      deviceMessage("已连接的设备都已经添加。", "ok");
+    }
+  } catch (error) {
+    deviceMessage("扫描失败：" + error, "err");
+  }
+}
+
+async function addDiscoveredDevice(item) {
+  const profile = item.profile || "generic-ble-hid";
+  const suffix = (item.address || "").replace(/:/g, "").slice(-6).toLowerCase();
+  const id = profile + "-" + (suffix || Date.now().toString(36));
+  const profileInfo = deviceProfiles.find(entry => entry.id === profile);
+  await deviceRequest("/api/devices/save", {
+    id,
+    name: profileInfo?.name || item.name || id,
+    address: item.address,
+    profile,
+    enabled: true,
+    vendor: item.vendor || "",
+    product: item.product || "",
+    name_match: [],
+  }, "设备已添加");
+  await loadDiscovery();
+}
+
+async function loadDevices() {
+  try {
+    const res = await fetch("/api/devices");
+    const data = await res.json();
+    if (!data.ok) {
+      deviceMessage(errorText(data, "加载设备失败"), "err");
+      return;
+    }
+    deviceItems = data.devices || [];
+    deviceProfiles = data.profiles || [];
+    populateDeviceProfiles();
+    renderDevices(deviceItems);
+    if (!deviceFormInitialized) {
+      deviceFormInitialized = true;
+      resetDeviceForm();
+    }
+  } catch (error) {
+    deviceMessage("加载设备失败：" + error, "err");
+  }
+}
+
+function fillDeviceForm(item) {
+  editingDeviceId = item.id;
+  document.getElementById("device-form-title").textContent = "编辑设备 " + item.id;
+  document.getElementById("device-id").value = item.id;
+  document.getElementById("device-id").disabled = true;
+  document.getElementById("device-name").value = item.name || "";
+  document.getElementById("device-address").value = item.address || "";
+  populateDeviceProfiles(item.profile);
+  document.getElementById("device-vendor").value = item.vendor || "";
+  document.getElementById("device-product").value = item.product || "";
+  document.getElementById("device-names").value = (item.name_match || []).join(", ");
+  document.getElementById("device-enabled").checked = !!item.enabled;
+  deviceMessage("", "");
+}
+
+function resetDeviceForm() {
+  editingDeviceId = "";
+  document.getElementById("device-form-title").textContent = "添加设备";
+  document.getElementById("device-id").value = "";
+  document.getElementById("device-id").disabled = false;
+  document.getElementById("device-name").value = "";
+  document.getElementById("device-address").value = "";
+  const preferred = deviceProfiles.find(profile => profile.id === "rc003") || deviceProfiles[0];
+  populateDeviceProfiles(preferred?.id);
+  document.getElementById("device-vendor").value = "";
+  document.getElementById("device-product").value = "";
+  document.getElementById("device-names").value = "";
+  document.getElementById("device-enabled").checked = true;
+  deviceMessage("", "");
+}
+
+async function deviceRequest(url, payload, success) {
+  deviceMessage("处理中…", "");
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      deviceMessage(errorText(data, "操作失败"), "err");
+      return;
+    }
+    deviceMessage(success, "ok");
+    await loadDevices();
+    await loadStatus(false);
+  } catch (error) {
+    deviceMessage("操作失败：" + error, "err");
+  }
+}
+
+async function saveDevice() {
+  const profile = document.getElementById("device-profile").value;
+  const address = document.getElementById("device-address").value.trim().toUpperCase();
+  let id = editingDeviceId || document.getElementById("device-id").value.trim().toLowerCase();
+  if (!profile) {
+    deviceMessage("请选择设备 Profile", "err");
+    return;
+  }
+  if (!/^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/.test(address)) {
+    deviceMessage("蓝牙地址格式应为 AA:BB:CC:DD:EE:FF", "err");
+    return;
+  }
+  if (!id) {
+    const suffix = address.replace(/:/g, "").slice(-6).toLowerCase();
+    id = profile + "-" + suffix;
+    document.getElementById("device-id").value = id;
+  }
+  if (!/^[a-z0-9][a-z0-9_-]{0,31}$/.test(id)) {
+    deviceMessage("设备 ID 只能使用小写字母、数字、_ 或 -，最长 32 位", "err");
+    return;
+  }
+  if (!editingDeviceId && deviceItems.some(item => item.id === id)) {
+    if (!confirm("设备 ID " + id + " 已存在，覆盖它？")) return;
+  }
+  const names = document.getElementById("device-names").value
+    .split(/[,\n]/).map(item => item.trim()).filter(Boolean);
+  const payload = {
+    id,
+    name: document.getElementById("device-name").value.trim() || id,
+    address,
+    profile,
+    enabled: document.getElementById("device-enabled").checked,
+    vendor: document.getElementById("device-vendor").value.trim(),
+    product: document.getElementById("device-product").value.trim(),
+    name_match: names,
+  };
+  await deviceRequest("/api/devices/save", payload, "设备已保存");
+  if (deviceItems.some(item => item.id === id && item.active)) {
+    await deviceRequest("/api/devices/select", {id}, "已应用当前设备");
+  }
+}
+
+async function deleteDevice() {
+  const id = editingDeviceId || document.getElementById("device-id").value.trim();
+  if (!id) return;
+  if (!confirm("删除设备 " + id + "？")) return;
+  await deviceRequest("/api/devices/delete", {id}, "设备已删除");
+  resetDeviceForm();
+}
+
+let historyEntries = [];
+
+function historyMessage(text, cls) {
+  const node = document.getElementById("history-msg");
+  if (!node) return;
+  node.textContent = text || "";
+  node.className = "msg " + (cls || "");
+}
+
+function renderHistory() {
+  const list = document.getElementById("history-list");
+  if (!list) return;
+  const query = document.getElementById("history-search").value.trim().toLowerCase();
+  list.innerHTML = "";
+  const items = historyEntries.filter(entry => !query || (entry.text || "").toLowerCase().includes(query) || (entry.raw_text || "").toLowerCase().includes(query));
+  if (!items.length) {
+    const empty = document.createElement("div");
+    empty.className = "note";
+    empty.textContent = query ? "没有匹配的历史记录。" : "还没有听写记录。";
+    list.appendChild(empty);
+    return;
+  }
+  for (const entry of items) {
+    const row = document.createElement("div");
+    row.className = "device-row history-row";
+    const main = document.createElement("div");
+    main.className = "device-main";
+    const text = document.createElement("div");
+    text.className = "history-text";
+    text.textContent = entry.text || "";
+    const meta = document.createElement("div");
+    meta.className = "history-meta";
+    const at = entry.at ? new Date(entry.at).toLocaleString("zh-CN", {hour12: false}) : "";
+    meta.textContent = [at, entry.provider, entry.latency_ms ? entry.latency_ms + " ms" : "", entry.processed ? "已润色" : "", entry.address].filter(Boolean).join(" · ");
+    main.append(text, meta);
+    const actions = document.createElement("div");
+    actions.className = "history-actions";
+    const copy = document.createElement("button");
+    copy.className = "btn small";
+    copy.textContent = "复制";
+    copy.addEventListener("click", () => {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(entry.text || "").then(() => historyMessage("已复制", "ok")).catch(() => {});
+      }
+    });
+    const remove = document.createElement("button");
+    remove.className = "btn small";
+    remove.textContent = "删除";
+    remove.addEventListener("click", () => deleteHistory(entry.id));
+    actions.append(copy, remove);
+    row.append(main, actions);
+    list.appendChild(row);
+  }
+}
+
+async function loadHistory() {
+  try {
+    const res = await fetch("/api/history");
+    const data = await res.json();
+    if (!data.ok) {
+      historyMessage(errorText(data, "加载历史失败"), "err");
+      return;
+    }
+    historyEntries = data.entries || [];
+    renderHistory();
+    historyMessage("", "");
+  } catch (error) {
+    historyMessage("加载历史失败：" + error, "err");
+  }
+}
+
+async function deleteHistory(id) {
+  const res = await fetch("/api/history/delete", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({id}),
+  });
+  const data = await res.json();
+  if (!data.ok) {
+    historyMessage("删除失败：" + errorText(data), "err");
+    return;
+  }
+  await loadHistory();
+}
+
+function setListening(active) {
+  const node = document.getElementById("subtitle-live");
+  if (node) {
+    node.classList.toggle("listening", !!active);
+    const label = node.querySelector("span");
+    if (label) label.textContent = active ? "正在聆听…" : "等待语音";
+  }
+  document.body.classList.toggle("listening", !!active);
+  if (lastStatus) {
+    setChip("chip-mic",
+      active ? "正在聆听…" : (lastStatus.mic_active ? "语音就绪" : "语音未运行"),
+      active ? "warn" : (lastStatus.mic_active ? "good" : "bad"));
+  }
+  const state = document.getElementById("guided-state");
+  if (state) {
+    if (active) {
+      state.textContent = "正在聆听…";
+    } else if (lastStatus) {
+      const ready = lastStatus.remote_present && lastStatus.keyd_active && lastStatus.mic_active && !lastStatus.asr_error;
+      state.textContent = ready ? "已就绪" : "待检查";
+    } else {
+      state.textContent = "已就绪";
+    }
+  }
+}
+
+let activeConfig = "overview";
+const TAB_LABELS = { connection: "概览", keys: "按键映射", devices: "设备", subtitle: "字幕", history: "历史", permissions: "权限" };
+const CFG_LABELS = { overview: "概览", asr: "语音识别", llm: "文本模型", text: "词典短语" };
+
+function syncNav() {
+  const activeTab = document.querySelector(".tab-btn.active");
+  const tab = activeTab ? activeTab.dataset.tab : "connection";
+  document.querySelectorAll(".side-item").forEach(item => {
+    let on = false;
+    if (item.dataset.tab) on = item.dataset.tab === tab;
+    else if (item.dataset.cfg) on = tab === "connection" && item.dataset.cfg === activeConfig;
+    item.classList.toggle("active", on);
+    if (on) item.setAttribute("aria-current", "page");
+    else item.removeAttribute("aria-current");
+  });
+  const crumb = document.getElementById("crumb");
+  const label = tab === "connection" ? (CFG_LABELS[activeConfig] || "概览") : (TAB_LABELS[tab] || "");
+  if (crumb) crumb.textContent = label;
+  document.title = "小遥 · " + label;
+  const footer = document.getElementById("conn-footer");
+  if (footer) footer.hidden = tab !== "connection" || activeConfig !== "overview";
+  const configNav = document.querySelector(".config-nav");
+  if (configNav) configNav.style.display = activeConfig === "overview" ? "none" : "";
+}
+
+function showConfigPanel(name) {
+  activeConfig = name;
+  document.querySelectorAll(".config-tab").forEach(button => {
+    button.classList.toggle("active", button.dataset.cfg === name);
+  });
+  document.querySelectorAll(".cfg-panel").forEach(panel => {
+    panel.classList.toggle("active", panel.id === "cfg-" + name);
+  });
+  syncNav();
+}
+
+function openConfigPanel(name) {
+  goTab("connection");
+  showConfigPanel(name);
+  if (name === "asr") loadASRConfig();
+  if (name === "llm") loadLLMConfig();
+  if (name === "text") loadTextConfig();
+}
+
+document.querySelectorAll(".config-tab").forEach(button => {
+  button.addEventListener("click", () => {
+    showConfigPanel(button.dataset.cfg);
+    window.scrollTo(0, 0);
+    const mainEl = document.querySelector("main");
+    if (mainEl) mainEl.scrollTop = 0;
+    if (button.dataset.cfg === "asr") loadASRConfig();
+    if (button.dataset.cfg === "llm") loadLLMConfig();
+    if (button.dataset.cfg === "text") loadTextConfig();
+  });
+});
+
+document.querySelectorAll(".side-item").forEach(item => {
+  item.addEventListener("click", () => {
+    if (item.dataset.cfg) openConfigPanel(item.dataset.cfg);
+    else if (item.dataset.tab) goTab(item.dataset.tab);
+  });
+});
+
+const guidedSubtitle = document.getElementById("guided-subtitle");
+if (guidedSubtitle) guidedSubtitle.addEventListener("click", () => goTab("subtitle"));
+const guidedSettings = document.getElementById("guided-settings");
+if (guidedSettings) guidedSettings.addEventListener("click", () => openConfigPanel("asr"));
+const recentAll = document.getElementById("overview-recent-all");
+if (recentAll) recentAll.addEventListener("click", () => goTab("history"));
+
+async function loadOverviewRecent() {
+  const list = document.getElementById("overview-recent");
+  if (!list) return;
+  try {
+    const res = await fetch("/api/history");
+    const data = await res.json();
+    const entries = (data.entries || []).slice(0, 3);
+    const count = document.getElementById("overview-recent-count");
+    list.innerHTML = "";
+    if (count) count.textContent = entries.length ? "最近 " + entries.length + " 条" : "暂无记录";
+    if (!entries.length) {
+      const empty = document.createElement("div");
+      empty.className = "recent-empty";
+      empty.textContent = "还没有听写记录。把光标放进输入框，按住语音键说一句试试。";
+      list.appendChild(empty);
+      return;
+    }
+    for (const entry of entries) {
+      const row = document.createElement("div");
+      row.className = "recent-row";
+      const time = document.createElement("time");
+      if (entry.at) {
+        const at = new Date(entry.at);
+        const sameDay = at.toDateString() === new Date().toDateString();
+        time.textContent = (sameDay ? "" : (at.getMonth() + 1) + "/" + at.getDate() + " ") + at.toTimeString().slice(0, 5);
+      }
+      const text = document.createElement("div");
+      text.className = "txt";
+      text.textContent = entry.text || "";
+      row.append(time, text);
+      if (entry.latency_ms) {
+        const dur = document.createElement("span");
+        dur.className = "dur";
+        dur.textContent = entry.latency_ms + " ms";
+        row.appendChild(dur);
+      }
+      if (entry.processed) {
+        const tag = document.createElement("span");
+        tag.className = "tag";
+        tag.textContent = "已润色";
+        row.appendChild(tag);
+      }
+      list.appendChild(row);
+    }
+  } catch (error) {}
+}
+
+const initialConfig = new URLSearchParams(location.search).get("cfg");
+if (["overview", "asr", "llm", "text"].includes(initialConfig)) {
+  showConfigPanel(initialConfig);
+}
+
+function connectEvents() {
+  const source = new EventSource("/events");
+  source.onmessage = (event) => {
+    let data;
+    try { data = JSON.parse(event.data); } catch (error) { return; }
+    if (data.event === "key") {
+      highlight(data.key, data.value === 1);
+      logKey(data.key, data.value === 1);
+      if (data.value === 0) {
+        setTimeout(() => highlight(data.key, false), 150);
+      }
+    } else if (data.event === "listening") {
+      setListening(data.active);
+    } else if (data.event === "transcript") {
+      addSubtitle(data.text, data.at);
+      setTimeout(loadOverviewRecent, 500);
+    } else if (data.event === "capture_started") {
+      setCaptureUi(true);
+      setChip("chip-keyd", "捕获中 · 注入已暂停", "warn");
+    } else if (data.event === "capture_stopped" || data.event === "capture_closed") {
+      setCaptureUi(false);
+      loadStatus(false);
+      if (dirty) scheduleSave();
+    }
+  };
+  source.onerror = () => {
+    setListening(false);
+    setTimeout(connectEvents, 3000);
+  };
+}
+
+document.querySelectorAll(".tab-btn").forEach(button => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(item => item.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(item => item.classList.remove("active"));
+    button.classList.add("active");
+    document.getElementById("tab-" + button.dataset.tab).classList.add("active");
+    window.scrollTo(0, 0);
+    const mainEl = document.querySelector("main");
+    if (mainEl) mainEl.scrollTop = 0;
+    if (button.dataset.tab === "connection") {
+      showConfigPanel("overview");
+      loadStatus(false);
+      loadASRConfig();
+      loadLLMConfig();
+      loadTextConfig();
+    } else if (button.dataset.tab === "devices") {
+      loadDevices();
+      loadDiscovery();
+    } else if (button.dataset.tab === "history") {
+      loadHistory();
+    } else if (button.dataset.tab === "subtitle") {
+      const active = subtitleLinesEl?.querySelector(".subtitle-line.active");
+      if (active) active.scrollIntoView({block: "center"});
+    }
+    syncNav();
+  });
+});
+
+const initialTab = new URLSearchParams(location.search).get("tab");
+if (["connection", "keys", "devices", "subtitle", "history", "permissions"].includes(initialTab)) {
+  const initialButton = document.querySelector(`.tab-btn[data-tab="${initialTab}"]`);
+  if (initialButton) initialButton.click();
+}
+if (initialConfig && ["overview", "asr", "llm", "text"].includes(initialConfig)) {
+  showConfigPanel(initialConfig);
+}
+
+document.querySelectorAll("#remote [data-key]").forEach(button => {
+  button.addEventListener("click", () => selectKey(button.dataset.key, true));
+});
+
+document.getElementById("enabled").addEventListener("change", (event) => {
+  setEnabledState(event.target.checked);
+  if (event.target.checked) {
+    const stored = localStorage.getItem("xiaomiMapping");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        for (const key in parsed) {
+          if (key in DEFAULTS && selects[key]) {
+            selects[key].value = parsed[key];
+            mapping[key] = parsed[key];
+          }
+        }
+      } catch (error) {}
+    }
+  }
+  dirty = true;
+  scheduleSave();
+});
+
+document.getElementById("capture-btn").addEventListener("click", toggleCapture);
+document.getElementById("reset").addEventListener("click", resetDefaults);
+
+document.getElementById("btn-refresh").addEventListener("click", async () => {
+  await loadStatus(false);
+  document.getElementById("conn-msg").textContent = "状态已刷新。";
+  document.getElementById("conn-msg").className = "msg ok";
+});
+
+document.getElementById("btn-reconnect").addEventListener("click", async () => {
+  const msg = document.getElementById("conn-msg");
+  msg.textContent = "正在连接遥控器…";
+  msg.className = "msg";
+  const res = await fetch("/api/reconnect", {method: "POST", headers: {"Content-Type": "application/json"}, body: "{}"});
+  const data = await res.json();
+  msg.textContent = data.ok ? "连接成功。" : ("连接失败：" + errorText(data).slice(0, 160));
+  msg.className = "msg " + (data.ok ? "ok" : "err");
+  loadStatus(false);
+});
+
+document.getElementById("btn-restart-mic").addEventListener("click", async () => {
+  const msg = document.getElementById("conn-msg");
+  msg.textContent = "正在重启麦克风桥接…";
+  msg.className = "msg";
+  const res = await fetch("/api/restart-mic", {method: "POST", headers: {"Content-Type": "application/json"}, body: "{}"});
+  const data = await res.json();
+  msg.textContent = data.ok ? "麦克风桥接已重启。" : ("重启失败：" + errorText(data));
+  msg.className = "msg " + (data.ok ? "ok" : "err");
+  setTimeout(() => loadStatus(false), 800);
+});
+
+const asrSelect = document.getElementById("asr-select");
+if (asrSelect) {
+  asrSelect.addEventListener("change", async () => {
+    const msg = document.getElementById("conn-msg");
+    msg.textContent = "正在切换语音识别…";
+    msg.className = "msg";
+    const res = await fetch("/api/asr/switch", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({provider: asrSelect.value}),
+    });
+    const data = await res.json();
+    msg.textContent = data.ok ? ("已切换到 " + asrSelect.value) : ("切换失败：" + errorText(data));
+    msg.className = "msg " + (data.ok ? "ok" : "err");
+    setTimeout(() => loadStatus(false), 600);
+  });
+}
+
+// ---- keymap profiles ----
+const keymapProfileSelect = document.getElementById("keymap-profile");
+if (keymapProfileSelect) {
+  keymapProfileSelect.addEventListener("change", async () => {
+    const status = document.getElementById("save-status");
+    status.textContent = "正在应用预设…";
+    status.className = "save-status";
+    const res = await fetch("/api/keymap/apply", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({profile: keymapProfileSelect.value}),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      status.textContent = "已应用预设 " + keymapProfileSelect.value;
+      status.className = "save-status ok";
+      await loadStatus(false, true);
+    } else {
+      status.textContent = "应用失败：" + errorText(data);
+      status.className = "save-status err";
+    }
+  });
+}
+
+document.getElementById("profile-save").addEventListener("click", async () => {
+  const status = document.getElementById("save-status");
+  const name = prompt("预设名称（小写字母、数字、_ 或 -）", "my-profile");
+  if (!name) return;
+  const target = name.trim();
+  if ([...keymapProfileSelect.options].some(option => option.value === target)) {
+    if (!confirm("预设 " + target + " 已存在，覆盖它？")) return;
+  }
+  status.textContent = "正在保存预设…";
+  status.className = "save-status";
+  try {
+    const res = await fetch("/api/keymap/save", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({name: name.trim(), mapping: collectMappingValues()}),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      status.textContent = "保存预设失败：" + errorText(data);
+      status.className = "save-status err";
+      return;
+    }
+    status.textContent = "已保存并应用预设 " + name.trim();
+    status.className = "save-status ok";
+    await loadStatus(false, true);
+  } catch (error) {
+    status.textContent = "保存预设失败：" + error;
+    status.className = "save-status err";
+  }
+});
+
+document.getElementById("profile-delete").addEventListener("click", async () => {
+  const status = document.getElementById("save-status");
+  const name = keymapProfileSelect.value;
+  if (!name) return;
+  if (!confirm("删除预设 " + name + "？")) return;
+  const res = await fetch("/api/keymap/delete", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({name}),
+  });
+  const data = await res.json();
+  if (!data.ok) {
+    status.textContent = "删除预设失败：" + errorText(data);
+    status.className = "save-status err";
+    return;
+  }
+  status.textContent = "已删除预设 " + name;
+  status.className = "save-status ok";
+  await loadStatus(false);
+});
+
+// ---- ASR presets ----
+const ASR_PRESETS = [
+  {id: "mimo", label: "MiMo 云端", type: "mimo", model: "mimo-v2.5-asr", base: "", language: "auto"},
+  {id: "openai", label: "OpenAI Whisper", type: "openai", model: "whisper-1", base: "https://api.openai.com/v1", language: "auto"},
+  {id: "openai-compatible", label: "OpenAI 兼容 ASR", type: "openai", model: "whisper-1", base: "http://127.0.0.1:8080/v1", language: "auto"},
+  {id: "whispercpp", label: "本地 whisper.cpp", type: "whispercpp", model: "", base: "", binary: "whisper-cli", modelPath: "~/whisper.cpp/models/ggml-base.bin", language: "auto"},
+  {id: "command", label: "本地命令 ASR", type: "command", model: "", base: "", binary: "sherpa-onnx-offline", language: "auto"},
+];
+
+function populateASRPresets() {
+  const select = document.getElementById("asr-preset");
+  if (!select) return;
+  select.innerHTML = '<option value="">选择快速模板…</option>';
+  for (const preset of ASR_PRESETS) {
+    const option = document.createElement("option");
+    option.value = preset.id;
+    option.textContent = preset.label;
+    select.appendChild(option);
+  }
+}
+
+function applyASRPreset(id) {
+  const preset = ASR_PRESETS.find(item => item.id === id);
+  if (!preset || !asrConfigData) return;
+  const providers = asrConfigData.providers || (asrConfigData.providers = {});
+  const exists = !!providers[preset.id];
+  if (!exists) {
+    providers[preset.id] = {
+      type: preset.type,
+      model: preset.model || "",
+      base_url: preset.base || "",
+      binary: preset.binary || "",
+      model_path: preset.modelPath || "",
+      language: preset.language || "auto",
+    };
+    unsavedASR.add(preset.id);
+  }
+  asrConfigData.provider = preset.id;
+  populateModelProviders();
+  modelProvider.value = preset.id;
+  fillModelFields(preset.id);
+  syncModelFields();
+  modelMessage(exists
+    ? "已切换到配置「" + preset.id + "」，按需修改后保存"
+    : "已按模板新建配置「" + preset.id + "」，填好 Key 或路径后保存并启用", "ok");
+}
+
+// ---- quick start checklist ----
+let lastStatus = null;
+let quickstartExpanded = false;
+
+function goTab(name) {
+  const button = document.querySelector(`.tab-btn[data-tab="${name}"]`);
+  if (button) button.click();
+}
+
+function quickRow(label, ok, detail, actionLabel, action) {
+  const row = document.createElement("div");
+  row.className = "device-row";
+  const main = document.createElement("div");
+  main.className = "device-main";
+  const name = document.createElement("div");
+  name.className = "device-name";
+  name.textContent = label;
+  const badge = document.createElement("span");
+  badge.className = "device-badge " + (ok ? "connected" : "warn");
+  badge.textContent = ok ? "就绪" : "待处理";
+  name.appendChild(badge);
+  const meta = document.createElement("div");
+  meta.className = "device-meta";
+  meta.textContent = detail;
+  main.append(name, meta);
+  const actions = document.createElement("div");
+  actions.className = "device-actions";
+  if (actionLabel) {
+    const button = document.createElement("button");
+    button.className = "btn small";
+    button.textContent = actionLabel;
+    button.addEventListener("click", action);
+    actions.appendChild(button);
+  }
+  row.append(main, actions);
+  return row;
+}
+
+function renderQuickstart(status) {
+  const panel = document.getElementById("quickstart");
+  const list = document.getElementById("quickstart-list");
+  if (!panel || !list) return;
+  if (localStorage.getItem("xiaomiQuickstartHidden") === "1") {
+    panel.style.display = "none";
+    return;
+  }
+  panel.style.display = "";
+  list.innerHTML = "";
+  const title = panel.querySelector(".panel-head h3");
+  const desc = panel.querySelector(".panel-head p");
+  const toggle = document.getElementById("quickstart-toggle");
+  const dismiss = document.getElementById("quickstart-dismiss");
+  const remoteReady = !!(status.remote_present && status.ble_connected);
+  const mapReady = !!status.keyd_active;
+  const micReady = !!status.mic_active && status.mic_healthy !== false;
+  const asrReady = !status.asr_error && !!status.asr_provider;
+  const llmReady = !!llmConfigData?.config?.enabled;
+  const coreReady = remoteReady && mapReady && micReady && asrReady;
+  panel.classList.toggle("ready", coreReady && !quickstartExpanded);
+
+  if (coreReady && !quickstartExpanded) {
+    title.textContent = "核心链路已就绪";
+    desc.textContent = "遥控器、按键映射、麦克风桥接与语音识别都正常。";
+    toggle.hidden = true;
+    dismiss.hidden = true;
+    list.appendChild(quickRow("可以开始语音输入", true,
+      "把光标放进任意输入框，按住遥控器语音键说话。",
+      "查看详情", () => {
+        quickstartExpanded = true;
+        renderQuickstart(lastStatus || {});
+      }));
+    return;
+  }
+
+  title.textContent = "快速开始";
+  desc.textContent = "按顺序完成下面几项，就可以按住遥控器语音键直接出字和字幕。";
+  toggle.hidden = !coreReady;
+  toggle.textContent = "收起";
+  dismiss.hidden = false;
+  list.appendChild(quickRow("1. 遥控器已连接", remoteReady, remoteReady ? "BLE 已连接，按键和语音都可用" : "先在系统蓝牙中配对/连接，再到设备页扫描", "去设备", () => goTab("devices")));
+  list.appendChild(quickRow("2. 按键映射运行", mapReady, mapReady ? "remap 正在运行" : "映射服务未就绪", "查看按键", () => goTab("keys")));
+  list.appendChild(quickRow("3. 麦克风桥接", micReady, micReady ? "虚拟麦克风已就绪" : "麦克风桥接未运行，可尝试重启", "去修复", async () => {
+    await fetch("/api/restart-mic", {method: "POST", headers: {"Content-Type": "application/json"}, body: "{}"});
+    setTimeout(() => loadStatus(false), 1200);
+  }));
+  list.appendChild(quickRow("4. 语音识别", asrReady, asrReady ? "ASR 就绪：" + (status.asr_backend || "") : (status.asr_error || "请配置 ASR 模型"), "去配置", () => { goTab("connection"); showConfigPanel("asr"); }));
+  list.appendChild(quickRow("5. 文本润色（可选）", llmReady, llmReady ? "已启用大模型后处理" : "未启用，不影响基础听写", "去配置", () => {
+    goTab("connection");
+    showConfigPanel("llm");
+  }));
+  list.appendChild(quickRow("6. 字幕预览", true, "按住语音键说一句，打开字幕页查看歌词效果", "去字幕", () => goTab("subtitle")));
+}
+
+document.getElementById("quickstart-toggle").addEventListener("click", () => {
+  quickstartExpanded = !quickstartExpanded;
+  renderQuickstart(lastStatus || {});
+});
+
+document.getElementById("quickstart-dismiss").addEventListener("click", () => {
+  localStorage.setItem("xiaomiQuickstartHidden", "1");
+  document.getElementById("quickstart").style.display = "none";
+});
+
+// ---- dictionary and snippets ----
+let textConfigData = null;
+
+function textMessage(text, cls) {
+  const node = document.getElementById("text-config-msg");
+  if (!node) return;
+  node.textContent = text || "";
+  node.className = "msg " + (cls || "");
+}
+
+function dictionaryRow(from = "", to = "") {
+  const row = document.createElement("div");
+  row.className = "rule-row";
+  const source = document.createElement("input");
+  source.className = "rule-from";
+  source.placeholder = "识别错误";
+  source.value = from;
+  const target = document.createElement("input");
+  target.className = "rule-to";
+  target.placeholder = "正确写法";
+  target.value = to;
+  const remove = document.createElement("button");
+  remove.className = "btn small";
+  remove.textContent = "删除";
+  remove.addEventListener("click", () => row.remove());
+  row.append(source, target, remove);
+  return row;
+}
+
+function snippetRow(trigger = "", text = "") {
+  const row = document.createElement("div");
+  row.className = "rule-row";
+  const source = document.createElement("input");
+  source.className = "rule-from";
+  source.placeholder = "触发词，如：收货地址";
+  source.value = trigger;
+  const target = document.createElement("textarea");
+  target.className = "rule-to";
+  target.rows = 2;
+  target.placeholder = "插入的模板文本";
+  target.value = text;
+  const remove = document.createElement("button");
+  remove.className = "btn small";
+  remove.textContent = "删除";
+  remove.addEventListener("click", () => row.remove());
+  row.append(source, target, remove);
+  return row;
+}
+
+function renderTextConfig(cfg) {
+  const dictionary = document.getElementById("dictionary-list");
+  const snippets = document.getElementById("snippet-list");
+  if (!dictionary || !snippets) return;
+  dictionary.innerHTML = "";
+  snippets.innerHTML = "";
+  for (const item of cfg.dictionary || []) dictionary.appendChild(dictionaryRow(item.from, item.to));
+  for (const item of cfg.snippets || []) snippets.appendChild(snippetRow(item.trigger, item.text));
+  if (!dictionary.children.length) dictionary.appendChild(dictionaryRow());
+  if (!snippets.children.length) snippets.appendChild(snippetRow());
+}
+
+async function loadTextConfig() {
+  try {
+    const res = await fetch("/api/text/config");
+    const data = await res.json();
+    if (!data.ok) {
+      textMessage(errorText(data, "加载词典失败"), "err");
+      return;
+    }
+    textConfigData = data;
+    renderTextConfig(data.config || {});
+    textMessage("", "");
+  } catch (error) {
+    textMessage("加载词典失败：" + error, "err");
+  }
+}
+
+function collectTextConfig() {
+  const dictionary = [];
+  for (const row of document.querySelectorAll("#dictionary-list .rule-row")) {
+    const from = row.querySelector(".rule-from").value.trim();
+    const to = row.querySelector(".rule-to").value;
+    if (from) dictionary.push({from, to});
+  }
+  const snippets = [];
+  for (const row of document.querySelectorAll("#snippet-list .rule-row")) {
+    const trigger = row.querySelector(".rule-from").value.trim();
+    const text = row.querySelector(".rule-to").value;
+    if (trigger) snippets.push({trigger, text});
+  }
+  return {dictionary, snippets};
+}
+
+async function saveTextConfig() {
+  textMessage("正在保存…", "");
+  try {
+    const res = await fetch("/api/text/config", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(collectTextConfig()),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      textMessage("保存失败：" + errorText(data), "err");
+      return;
+    }
+    textMessage("词典与短语已保存并生效", "ok");
+    await loadTextConfig();
+  } catch (error) {
+    textMessage("保存失败：" + error, "err");
+  }
+}
+
+// ---- LLM post-processing config ----
+let llmConfigData = null;
+
+function llmMessage(text, cls) {
+  const node = document.getElementById("llm-config-msg");
+  if (!node) return;
+  node.textContent = text || "";
+  node.className = "msg " + (cls || "");
+}
+
+function llmPreset(id) {
+  return (llmConfigData?.presets || []).find(item => item.id === id);
+}
+
+function populateLLMProviders(selected) {
+  const select = document.getElementById("llm-provider");
+  if (!select || !llmConfigData) return;
+  select.innerHTML = "";
+  for (const preset of llmConfigData.presets || []) {
+    const option = document.createElement("option");
+    option.value = preset.id;
+    option.textContent = preset.name;
+    select.appendChild(option);
+  }
+  if (selected) select.value = selected;
+}
+
+function fillLLMFields(cfg) {
+  if (!cfg) return;
+  document.getElementById("llm-enabled").checked = !!cfg.enabled;
+  populateLLMProviders(cfg.provider);
+  document.getElementById("llm-base-url").value = cfg.base_url || "";
+  document.getElementById("llm-model").value = cfg.model || "";
+  document.getElementById("llm-api-key-file").value = cfg.api_key_file || "";
+  document.getElementById("llm-mode").value = cfg.mode || "cleanup";
+  document.getElementById("llm-prompt").value = cfg.prompt || "";
+  document.getElementById("llm-timeout").value = cfg.timeout_seconds || 20;
+  const preset = llmPreset(cfg.provider);
+  if (preset) {
+    document.getElementById("llm-model").placeholder = preset.model_hint || "";
+    document.getElementById("llm-api-key").placeholder = preset.key_hint || "sk-...";
+  }
+}
+
+async function loadLLMConfig() {
+  try {
+    const res = await fetch("/api/llm/config");
+    const data = await res.json();
+    if (!data.ok) {
+      llmMessage(errorText(data, "加载大模型配置失败"), "err");
+      return;
+    }
+    llmConfigData = data;
+    fillLLMFields(data.config || {});
+    llmMessage("", "");
+    if (lastStatus) renderQuickstart(lastStatus);
+  } catch (error) {
+    llmMessage("加载大模型配置失败：" + error, "err");
+  }
+}
+
+// ---- ASR model config ----
+let asrConfigData = null;
+const unsavedASR = new Set();
+const modelProvider = document.getElementById("model-provider");
+const modelFields = {
+  type: document.getElementById("model-type"),
+  model: document.getElementById("model-model"),
+  base_url: document.getElementById("model-base-url"),
+  api_key_file: document.getElementById("model-api-key-file"),
+  binary: document.getElementById("model-binary"),
+  model_path: document.getElementById("model-model-path"),
+  threads: document.getElementById("model-threads"),
+  timeout_seconds: document.getElementById("model-timeout"),
+  language: document.getElementById("model-language"),
+  args: document.getElementById("model-args"),
+};
+
+const modelFieldMap = {
+  mimo: ["type", "model", "base_url", "api_key_file", "timeout_seconds", "language", "fallback"],
+  openai: ["type", "model", "base_url", "api_key_file", "timeout_seconds", "language", "fallback"],
+  whispercpp: ["type", "binary", "model_path", "threads", "timeout_seconds", "language", "fallback"],
+  command: ["type", "binary", "model_path", "args", "timeout_seconds", "language", "fallback"],
+};
+
+function syncModelFields() {
+  const type = modelFields.type.value;
+  const visible = new Set(modelFieldMap[type] || Object.keys(modelFields).concat(["fallback"]));
+  document.querySelectorAll(".model-grid [data-field]").forEach(label => {
+    label.hidden = !visible.has(label.dataset.field);
+  });
+}
+
+function modelMessage(text, cls) {
+  const msg = document.getElementById("asr-config-msg");
+  if (!msg) return;
+  msg.textContent = text;
+  msg.className = "msg " + (cls || "");
+}
+
+function populateModelProviders() {
+  if (!modelProvider || !asrConfigData) return;
+  modelProvider.innerHTML = "";
+  for (const name of Object.keys(asrConfigData.providers || {})) {
+    const option = document.createElement("option");
+    option.value = name;
+    option.textContent = name;
+    modelProvider.appendChild(option);
+  }
+  if (asrConfigData.provider) modelProvider.value = asrConfigData.provider;
+}
+
+function fillModelFields(name) {
+  if (!asrConfigData) return;
+  const provider = (asrConfigData.providers || {})[name] || {};
+  modelFields.type.value = provider.type || (name === "mimo" ? "mimo" : "openai");
+  modelFields.model.value = provider.model || "";
+  modelFields.base_url.value = provider.base_url || "";
+  modelFields.api_key_file.value = provider.api_key_file || "";
+  modelFields.binary.value = provider.binary || "";
+  modelFields.model_path.value = provider.model_path || "";
+  modelFields.threads.value = provider.threads || 0;
+  modelFields.timeout_seconds.value = provider.timeout_seconds || 0;
+  modelFields.language.value = provider.language || asrConfigData.language || "auto";
+  modelFields.args.value = (provider.args || []).join("\n");
+  document.getElementById("model-fallback").value = (asrConfigData.fallback || []).join(", ");
+  syncModelFields();
+}
+
+async function loadASRConfig() {
+  try {
+    const res = await fetch("/api/asr/config");
+    asrConfigData = await res.json();
+    if (!asrConfigData.providers) asrConfigData.providers = {};
+    populateModelProviders();
+    fillModelFields(modelProvider.value || asrConfigData.provider);
+    const active = asrConfigData.provider || "";
+    const live = (asrConfigData.providers || {})[active] || {};
+    modelMessage(active
+      ? "当前生效：" + active + "（" + (live.model || live.type || "未配置") + "）"
+      : "还没有可用的识别配置", active ? "ok" : "err");
+  } catch (error) {
+    modelMessage("加载模型配置失败：" + error, "err");
+  }
+}
+
+if (modelProvider) {
+  modelProvider.addEventListener("change", () => fillModelFields(modelProvider.value));
+}
+if (modelFields.type) {
+  modelFields.type.addEventListener("change", syncModelFields);
+}
+
+document.getElementById("btn-asr-add").addEventListener("click", () => {
+  if (!asrConfigData) return;
+  const name = prompt("新配置名称（例如 local-whisper）");
+  if (!name) return;
+  if (asrConfigData.providers[name]) {
+    alert("配置名已存在");
+    return;
+  }
+  asrConfigData.providers[name] = {
+    type: "openai",
+    model: "whisper-1",
+    base_url: "http://127.0.0.1:8080/v1",
+    language: "auto",
+  };
+  unsavedASR.add(name);
+  asrConfigData.provider = name;
+  populateModelProviders();
+  modelProvider.value = name;
+  fillModelFields(name);
+  modelMessage("已新增 " + name + "，编辑后点保存", "ok");
+});
+
+document.getElementById("btn-asr-delete").addEventListener("click", () => {
+  if (!asrConfigData || !modelProvider.value) return;
+  const name = modelProvider.value;
+  if (!confirm("删除配置 " + name + "？")) return;
+  delete asrConfigData.providers[name];
+  unsavedASR.delete(name);
+  asrConfigData.fallback = (asrConfigData.fallback || []).filter(item => item !== name);
+  if (asrConfigData.provider === name) {
+    asrConfigData.provider = Object.keys(asrConfigData.providers)[0] || "";
+  }
+  populateModelProviders();
+  if (asrConfigData.provider) modelProvider.value = asrConfigData.provider;
+  fillModelFields(modelProvider.value);
+  modelMessage("已删除 " + name + "，点保存生效", "ok");
+});
+
+document.getElementById("btn-asr-save").addEventListener("click", async () => {
+  if (!asrConfigData || !modelProvider.value) {
+    modelMessage("没有可保存的 Provider", "err");
+    return;
+  }
+  const name = modelProvider.value;
+  const provider = asrConfigData.providers[name] || {};
+  provider.type = modelFields.type.value.trim();
+  provider.model = modelFields.model.value.trim();
+  provider.base_url = modelFields.base_url.value.trim();
+  provider.api_key_file = modelFields.api_key_file.value.trim();
+  provider.binary = modelFields.binary.value.trim();
+  provider.model_path = modelFields.model_path.value.trim();
+  provider.threads = Number(modelFields.threads.value) || 0;
+  provider.timeout_seconds = Number(modelFields.timeout_seconds.value) || 0;
+  provider.language = modelFields.language.value.trim() || "auto";
+  const args = modelFields.args.value.split("\n").map(item => item.trim()).filter(Boolean);
+  if (args.length) {
+    provider.args = args;
+  } else {
+    delete provider.args;
+  }
+  asrConfigData.providers[name] = provider;
+  asrConfigData.provider = name;
+  asrConfigData.fallback = document.getElementById("model-fallback").value
+    .split(",").map(item => item.trim()).filter(Boolean);
+  modelMessage("正在保存…", "");
+  try {
+    const res = await fetch("/api/asr/config", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(asrConfigData),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      modelMessage("保存失败：" + errorText(data), "err");
+      return;
+    }
+    modelMessage("模型配置已保存并生效", "ok");
+    unsavedASR.delete(name);
+    await loadStatus(false);
+    await loadASRConfig();
+  } catch (error) {
+    modelMessage("保存失败：" + error, "err");
+  }
+});
+
+document.getElementById("btn-asr-test").addEventListener("click", async () => {
+  if (!modelProvider.value) return;
+  if (unsavedASR.has(modelProvider.value)) {
+    modelMessage("这个配置还没保存，先点「保存并启用」再检查", "err");
+    return;
+  }
+  modelMessage("正在检查 " + modelProvider.value + " …", "");
+  try {
+    const res = await fetch("/api/asr/test", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({provider: modelProvider.value}),
+    });
+    const data = await res.json();
+    const lines = (data.diagnostics || []).map(item =>
+      (item.ok ? "OK  " : "FAIL") + "  [" + item.provider + "] " + item.detail
+    );
+    modelMessage(
+      lines.join("\n") || "没有诊断结果",
+      lines.some(line => line.startsWith("FAIL")) ? "err" : "ok"
+    );
+  } catch (error) {
+    modelMessage("检查失败：" + error, "err");
+  }
+});
+
+document.getElementById("subtitle-smaller").addEventListener("click", () => {
+  subtitleFont = Math.max(18, subtitleFont - 2);
+  applySubtitleFont();
+});
+document.getElementById("subtitle-larger").addEventListener("click", () => {
+  subtitleFont = Math.min(64, subtitleFont + 2);
+  applySubtitleFont();
+});
+document.getElementById("subtitle-clear").addEventListener("click", clearSubtitles);
+document.getElementById("subtitle-copy").addEventListener("click", copySubtitles);
+document.getElementById("subtitle-fullscreen").addEventListener("click", () => {
+  if (!subtitleScene) return;
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(() => {});
+  } else if (subtitleScene.requestFullscreen) {
+    const request = subtitleScene.requestFullscreen();
+    if (request && request.catch) request.catch(() => {});
+  }
+});
+document.getElementById("device-refresh").addEventListener("click", loadDevices);
+document.getElementById("device-scan").addEventListener("click", loadDiscovery);
+document.getElementById("device-reset").addEventListener("click", resetDeviceForm);
+document.getElementById("device-save").addEventListener("click", saveDevice);
+document.getElementById("device-delete").addEventListener("click", deleteDevice);
+loadDevices();
+const asrPreset = document.getElementById("asr-preset");
+populateASRPresets();
+if (asrPreset) {
+  asrPreset.addEventListener("change", () => {
+    if (asrPreset.value) applyASRPreset(asrPreset.value);
+  });
+}
+
+const llmProvider = document.getElementById("llm-provider");
+if (llmProvider) {
+  llmProvider.addEventListener("change", () => {
+    const preset = llmPreset(llmProvider.value);
+    if (!preset) return;
+    document.getElementById("llm-base-url").value = preset.base_url || "";
+    document.getElementById("llm-model").value = preset.model || "";
+    document.getElementById("llm-model").placeholder = preset.model_hint || "";
+    document.getElementById("llm-api-key").placeholder = preset.key_hint || "sk-...";
+    llmMessage(preset.description || "", "");
+  });
+}
+
+document.getElementById("btn-llm-save").addEventListener("click", async () => {
+  if (!llmConfigData) await loadLLMConfig();
+  const apiKey = document.getElementById("llm-api-key").value.trim();
+  const payload = {
+    enabled: document.getElementById("llm-enabled").checked,
+    provider: document.getElementById("llm-provider").value,
+    base_url: document.getElementById("llm-base-url").value.trim(),
+    model: document.getElementById("llm-model").value.trim(),
+    api_key_file: document.getElementById("llm-api-key-file").value.trim(),
+    mode: document.getElementById("llm-mode").value,
+    prompt: document.getElementById("llm-prompt").value,
+    timeout_seconds: Number(document.getElementById("llm-timeout").value) || 20,
+  };
+  if (payload.enabled && (!payload.base_url || !payload.model)) {
+    llmMessage("启用后必须填写 Base URL 和 Model", "err");
+    return;
+  }
+  llmMessage("正在保存…", "");
+  try {
+    const res = await fetch("/api/llm/config", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      llmMessage("保存失败：" + errorText(data), "err");
+      return;
+    }
+    if (apiKey) {
+      const keyRes = await fetch("/api/llm/key", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({key: apiKey}),
+      });
+      const keyData = await keyRes.json();
+      if (!keyData.ok) {
+        llmMessage("配置已保存，但 API Key 保存失败：" + errorText(keyData), "err");
+        return;
+      }
+      document.getElementById("llm-api-key").value = "";
+    }
+    llmMessage("大模型配置已保存并生效", "ok");
+    await loadLLMConfig();
+    await loadStatus(false);
+  } catch (error) {
+    llmMessage("保存失败：" + error, "err");
+  }
+});
+
+async function testLLM(live) {
+  const provider = document.getElementById("llm-provider").value;
+  llmMessage(live ? "正在做连通测试…" : "正在检查配置…", "");
+  try {
+    const res = await fetch("/api/llm/test", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({provider, live}),
+    });
+    const data = await res.json();
+    const lines = (data.diagnostics || []).map(item => (item.ok ? "OK  " : "FAIL") + "  " + item.detail);
+    llmMessage(lines.join("\n") || "没有诊断结果", lines.some(line => line.startsWith("FAIL")) ? "err" : "ok");
+  } catch (error) {
+    llmMessage("检查失败：" + error, "err");
+  }
+}
+document.getElementById("btn-llm-test").addEventListener("click", () => testLLM(false));
+document.getElementById("btn-llm-ping").addEventListener("click", () => testLLM(true));
+
+
+document.getElementById("history-refresh").addEventListener("click", loadHistory);
+document.getElementById("history-search").addEventListener("input", renderHistory);
+document.getElementById("history-export").addEventListener("click", () => {
+  if (!historyEntries.length) {
+    historyMessage("没有可导出的记录", "");
+    return;
+  }
+  const blob = new Blob([JSON.stringify(historyEntries, null, 2)], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "xiaomi-history-" + new Date().toISOString().slice(0, 10) + ".json";
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  historyMessage("已导出 " + historyEntries.length + " 条记录", "ok");
+});
+document.getElementById("history-clear").addEventListener("click", async () => {
+  if (!confirm("清空全部听写历史？")) return;
+  const res = await fetch("/api/history/clear", {method: "POST", headers: {"Content-Type": "application/json"}, body: "{}"});
+  const data = await res.json();
+  if (!data.ok) {
+    historyMessage("清空失败：" + errorText(data), "err");
+    return;
+  }
+  await loadHistory();
+  historyMessage("历史已清空", "ok");
+});
+document.getElementById("dictionary-add").addEventListener("click", () => {
+  document.getElementById("dictionary-list").appendChild(dictionaryRow());
+});
+document.getElementById("snippet-add").addEventListener("click", () => {
+  document.getElementById("snippet-list").appendChild(snippetRow());
+});
+document.getElementById("text-save").addEventListener("click", saveTextConfig);
+loadTextConfig();
+loadLLMConfig();
+loadASRConfig();
+loadSubtitles();
+loadOverviewRecent();
+syncNav();
+loadStatus(true);
+connectEvents();
+setInterval(() => { if (!document.hidden) loadStatus(false); }, 15000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) loadStatus(false); });
+</script>
+</body>
+</html>
