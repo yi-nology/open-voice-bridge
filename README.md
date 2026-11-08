@@ -95,7 +95,8 @@ make build
 ./bin/xiaomi-remote doctor
 ```
 
-`make build` 产出 `bin/xiaomi-remote`（已被 `.gitignore` 忽略）。
+`make build` 产出 `bin/xiaomi-remote`（已被 `.gitignore` 忽略）。二进制名沿用
+`xiaomi-remote`，以兼容已有 systemd 服务与脚本；项目对外名称是 Open Voice Bridge。
 
 ### 2. 配置
 
