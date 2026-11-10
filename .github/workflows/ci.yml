@@ -12,6 +12,8 @@ jobs:
   test:
     name: Test (linux)
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -35,6 +37,19 @@ jobs:
         with:
           name: test-output
           path: test-output.txt
+      - name: Publish race diagnostics
+        if: failure()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            echo "CI test/race failure output for commit ${GITHUB_SHA}:"
+            echo '```text'
+            tail -c 60000 test-output.txt
+            echo '```'
+          } > comment.md
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/comments" -F body=@comment.md || echo "publish failed"
       - name: Coverage summary
         if: success()
         run: go tool cover -func=coverage.out | tail -1
