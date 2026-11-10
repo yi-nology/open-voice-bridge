@@ -268,15 +268,27 @@
     color: #9a9aa2; font-size: 10px;
   }
 
-  /* ---- photo + hotspots (RC003) ---- */
+  /* ---- photo + hotspots (per-device figure) ---- */
   .photo-panel { background: #f7f7f9; border: 1px solid #e8e8ec; }
+  .figure-toggle {
+    display: flex; gap: 6px; justify-content: center; margin: 2px 0 10px;
+  }
+  .figure-btn {
+    font: inherit; font-size: 11px; padding: 4px 12px; border-radius: 999px;
+    border: 1px solid var(--line, #e8e8ec); background: #fff; color: var(--muted);
+    cursor: pointer; transition: background .12s, color .12s, border-color .12s;
+  }
+  .figure-btn:hover { border-color: rgba(10,132,255,.35); color: var(--blue); }
+  .figure-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
   .remote-photo {
-    position: relative; width: 300px; max-width: 100%;
-    aspect-ratio: 508 / 1030; margin: 0 auto;
+    position: relative;
+    width: var(--figure-w, 300px); max-width: 100%;
+    aspect-ratio: var(--figure-ratio, 508 / 1030); margin: 0 auto;
     border-radius: 12px; overflow: hidden;
     background: #f0f0f2; border: 1px solid rgba(0,0,0,.10);
     box-shadow: 0 1px 3px rgba(0,0,0,.08);
   }
+  .remote-photo[hidden] { display: none; }
   .remote-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .hotspot {
     position: absolute;
@@ -899,16 +911,21 @@
       </label>
       <div class="enable-main">
         <div class="enable-top">
-          <h2>启用 RC003 自定义按键映射</h2>
+          <h2>启用遥控器自定义按键映射</h2>
           <span id="status-right" class="enable-status">按键状态：正在读取…</span>
         </div>
-        <p class="enable-desc">优先独占 RC003；系统不允许独占时使用兼容监听，不影响其他键盘。</p>
+        <p class="enable-desc">优先独占遥控器（RC003 / ARN9）；系统不允许独占时使用兼容监听，不影响其他键盘。</p>
       </div>
     </div>
 
     <div class="mapping-grid">
       <div class="panel photo-panel">
-        <div class="remote-photo" id="remote">
+        <div class="figure-toggle" role="tablist" aria-label="遥控器型号">
+          <button class="figure-btn" data-model="rc003" role="tab">遥控器 2 Pro</button>
+          <button class="figure-btn" data-model="arn9" role="tab">ARN9</button>
+        </div>
+        <div id="remote">
+        <div class="remote-photo" data-model="rc003" style="--figure-w:300px;--figure-ratio:508 / 1030">
           <img src="/assets/RC003-remote-photo.png" alt="Xiaomi RC003 remote">
           <button class="hotspot" data-key="power" style="--x:38.6%;--y:9.9%;--w:15%;--h:7.2%" title="电源键"></button>
           <button class="hotspot" data-key="f5" style="--x:63.0%;--y:9.9%;--w:15%;--h:7.2%" title="语音键"></button>
@@ -923,6 +940,22 @@
           <button class="hotspot" data-key="volumedown" style="--x:60.4%;--y:48.0%;--w:16%;--h:8.0%" title="音量 −"></button>
           <button class="hotspot" data-key="compose" style="--x:40.6%;--y:56.9%;--w:17%;--h:8.0%" title="菜单"></button>
           <button class="hotspot" data-key="grave" style="--x:60.4%;--y:56.9%;--w:17%;--h:8.0%" title="TV"></button>
+        </div>
+        <div class="remote-photo" data-model="arn9" hidden style="--figure-w:172px;--figure-ratio:218 / 770">
+          <img src="/assets/ARN9-remote-photo.png" alt="Xiaomi ARN9 remote">
+          <button class="hotspot" data-key="power" style="--x:50%;--y:7.2%;--w:20%;--h:5.8%" title="电源键"></button>
+          <button class="hotspot" data-key="f5" style="--x:50%;--y:14.6%;--w:20%;--h:5.8%" title="语音键"></button>
+          <button class="hotspot" data-key="up" style="--x:50%;--y:22.5%;--w:22%;--h:5.2%" title="上"></button>
+          <button class="hotspot" data-key="left" style="--x:32.5%;--y:28.5%;--w:15%;--h:5.2%" title="左"></button>
+          <button class="hotspot" data-key="enter" style="--x:50%;--y:28.5%;--w:19%;--h:6.4%" title="确定"></button>
+          <button class="hotspot" data-key="right" style="--x:67.5%;--y:28.5%;--w:15%;--h:5.2%" title="右"></button>
+          <button class="hotspot" data-key="down" style="--x:50%;--y:34.5%;--w:22%;--h:5.2%" title="下"></button>
+          <button class="hotspot" data-key="home" style="--x:32.5%;--y:44%;--w:19%;--h:5.4%" title="主页"></button>
+          <button class="hotspot" data-key="back" style="--x:50%;--y:44%;--w:19%;--h:5.4%" title="返回"></button>
+          <button class="hotspot" data-key="compose" style="--x:67.5%;--y:44%;--w:19%;--h:5.4%" title="菜单"></button>
+          <button class="hotspot" data-key="volumeup" style="--x:50%;--y:50.3%;--w:19%;--h:5.2%" title="音量 +"></button>
+          <button class="hotspot" data-key="volumedown" style="--x:50%;--y:56.5%;--w:19%;--h:5.2%" title="音量 −"></button>
+        </div>
         </div>
         <p class="photo-hint">点击实物按键定位映射；包括语音键在内均可自定义快捷键。</p>
       </div>
@@ -1586,9 +1619,10 @@ async function toggleCapture() {
 }
 
 function highlight(key, down) {
-  const remoteButton = document.querySelector(`#remote [data-key="${key}"]`);
+  document.querySelectorAll(`#remote [data-key="${key}"]`).forEach(remoteButton => {
+    remoteButton.classList.toggle("pressed", down);
+  });
   const row = document.querySelector(`.key-row[data-key="${key}"]`);
-  if (remoteButton) remoteButton.classList.toggle("pressed", down);
   if (row) row.classList.toggle("pressed", down);
   if (down) {
     selectKey(key, true);
@@ -2090,6 +2124,7 @@ async function loadDevices() {
     deviceProfiles = data.profiles || [];
     populateDeviceProfiles();
     renderDevices(deviceItems);
+    syncRemoteFigureToActive();
     if (!deviceFormInitialized) {
       deviceFormInitialized = true;
       resetDeviceForm();
@@ -2870,6 +2905,46 @@ if (initialConfig && ["overview", "asr", "llm", "text"].includes(initialConfig))
 document.querySelectorAll("#remote [data-key]").forEach(button => {
   button.addEventListener("click", () => selectKey(button.dataset.key, true));
 });
+
+const REMOTE_FIGURE_KEY = "remote-figure";
+let remoteFigurePinned = false;
+
+function setRemoteFigure(model, pinned) {
+  document.querySelectorAll("#remote .remote-photo").forEach(figure => {
+    figure.hidden = figure.dataset.model !== model;
+  });
+  document.querySelectorAll(".figure-btn").forEach(button => {
+    button.classList.toggle("active", button.dataset.model === model);
+  });
+  if (pinned) {
+    remoteFigurePinned = true;
+    try { localStorage.setItem(REMOTE_FIGURE_KEY, model); } catch (error) {}
+  }
+}
+
+document.querySelectorAll(".figure-btn").forEach(button => {
+  button.addEventListener("click", () => setRemoteFigure(button.dataset.model, true));
+});
+
+// Follow the active device until the user picks a figure explicitly.
+function syncRemoteFigureToActive() {
+  if (remoteFigurePinned) return;
+  const active = deviceItems.find(item => item.active) || deviceItems[0];
+  const label = ((active && (active.name + " " + active.id)) || "").toLowerCase();
+  const model = label.includes("arn9") || label.includes("小米蓝牙语音遥控器") ? "arn9" : "rc003";
+  setRemoteFigure(model, false);
+}
+
+(function initRemoteFigure() {
+  let saved = null;
+  try { saved = localStorage.getItem(REMOTE_FIGURE_KEY); } catch (error) {}
+  if (saved === "rc003" || saved === "arn9") {
+    remoteFigurePinned = true;
+    setRemoteFigure(saved, false);
+    return;
+  }
+  setRemoteFigure("rc003", false);
+})();
 
 document.getElementById("enabled").addEventListener("change", (event) => {
   setEnabledState(event.target.checked);
