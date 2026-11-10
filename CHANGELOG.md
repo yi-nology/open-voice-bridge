@@ -71,6 +71,25 @@ tracked item-by-item in `docs/design/evolution-roadmap.md`):
   released for other sources, and the admin panel says so. A revoked device's
   in-flight sentence is discarded, not transcribed.
 
+Privacy fixes from the same audit (SEC-02):
+
+- The recognised sentence is no longer written to the log. `recognized` records
+  character count, language, provider, input source and latency, and a Bluetooth
+  address appears as vendor prefix plus last octet (`AA:BB:CC:**:**:FF`) - enough
+  to tell two remotes apart, not enough to identify one.
+- Two quieter leak paths closed. An ASR/LLM provider's error body is reduced to
+  the HTTP status plus the machine-readable `error.type`/`error.code`, because a
+  content-policy rejection quotes the text it rejected; and the stderr of a
+  user-configured command ASR front-end, where such tools often print recognised
+  speech, is only written at debug level while the error keeps its size.
+- `agent.log` moved out of the git checkout to
+  `~/.local/state/xiaomi-remote/agent.log`, so it cannot be committed or shipped
+  with a repository archive. logrotate follows the same path, resolved for the
+  service user even when `make install-logrotate` runs under sudo.
+- `internal/agent/log_test.go` asserts the promise against a captured log sink:
+  the transcript must stay out of it, including when the LLM stage fails and when
+  the BLE address is switched.
+
 ## 0.1.1 — 2026-11-10
 
 Maintenance and quality baseline.

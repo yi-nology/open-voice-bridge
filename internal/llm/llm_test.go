@@ -84,6 +84,32 @@ func TestOpenAIHTTPError(t *testing.T) {
 	}
 }
 
+// TestOpenAIHTTPErrorOmitsBody pins the rule that a provider body never rides
+// into an error: a rejected request commonly quotes the text that tripped the
+// filter, and errors are logged by the caller (SEC-02).
+func TestOpenAIHTTPErrorOmitsBody(t *testing.T) {
+	const secret = "你好世界"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"error":{"type":"invalid_request_error","code":"content_filter","message":"rejected: ` + secret + `"}}`))
+	}))
+	defer server.Close()
+	processor, err := NewOpenAI(OpenAIConfig{BaseURL: server.URL, Model: "m"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = processor.Process(context.Background(), secret)
+	if err == nil {
+		t.Fatal("want an error")
+	}
+	if strings.Contains(err.Error(), secret) || strings.Contains(err.Error(), "rejected") {
+		t.Fatalf("error carries provider prose: %v", err)
+	}
+	if !strings.Contains(err.Error(), "400") || !strings.Contains(err.Error(), "content_filter") {
+		t.Fatalf("error lost the diagnosis: %v", err)
+	}
+}
+
 func TestOpenAIPing(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(`{"choices":[{"message":{"content":"OK"}}]}`))

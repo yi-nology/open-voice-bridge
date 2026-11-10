@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/yi-nology/open-voice-bridge/internal/atvv"
+	"github.com/yi-nology/open-voice-bridge/internal/redact"
 )
 
 // OpenAIConfig works with OpenAI, Groq, and local servers that implement
@@ -112,7 +113,7 @@ func (o *OpenAI) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 		return Result{}, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return Result{}, oeerrors.Errorf("transcription HTTP %d: %s", resp.StatusCode, truncate(string(data), 300))
+		return Result{}, oeerrors.Errorf("transcription HTTP %d%s", resp.StatusCode, redact.ProviderSuffix(data))
 	}
 	var parsed struct {
 		Text string `json:"text"`

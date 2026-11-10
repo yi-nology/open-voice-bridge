@@ -97,8 +97,10 @@ func (p *SpeechPipeline) Transcribe(u Utterance) (Transcript, bool) {
 	}
 	processed := p.applyText(ctx, rawText)
 	log.Info("recognized",
-		"text", processed,
+		"chars", len([]rune(processed)),
+		"language", result.Language,
 		"provider", result.Provider,
+		"source", u.Ref.Kind,
 		"latency", result.Latency.Round(time.Millisecond),
 	)
 	transcript := Transcript{
@@ -131,7 +133,7 @@ func (p *SpeechPipeline) applyText(parent context.Context, input string) string 
 		processed, err := processor.Process(ctx, output)
 		cancel()
 		if err != nil {
-			log.Warn("LLM post-process failed", "err", err)
+			log.Warn("LLM post-process failed", "err", redactText(err.Error(), output))
 		} else if strings.TrimSpace(processed) != "" {
 			log.Info("text post-processed", "original", len(output), "processed", len(processed))
 			output = processed
@@ -149,4 +151,19 @@ func (p *SpeechPipeline) applyPaste(_ context.Context, processed string) {
 	if err := p.pasteText(pasteCtx, processed); err != nil {
 		log.Warn("paste failed", "err", err)
 	}
+}
+
+// redactText cuts the sentence just processed out of a message before it is
+// logged. Error strings from a remote service are untrusted text: a rejected
+// request often quotes what it rejected, and here that is the transcript, which
+// SECURITY.md promises is never written to the log file (SEC-02). The rest of
+// the message - status codes, provider wording - stays, because a log line that
+// says only "llm failed" gets the transcript added back the next time someone
+// debugs.
+func redactText(message, transcript string) string {
+	transcript = strings.TrimSpace(transcript)
+	if transcript == "" {
+		return message
+	}
+	return strings.ReplaceAll(message, transcript, "<transcript>")
 }

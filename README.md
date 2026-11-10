@@ -260,12 +260,13 @@ CI 在 Linux 上执行测试与构建，并对 macOS / Windows 做交叉编译�
 | `readyz` 为 503 | 查看返回里的 `mic_healthy` / `asr_ready` / `helper_error`；先跑 `doctor` |
 | 云端识别 401 | 检查 API Key 文件存在且权限 `0600`；确认 provider / Base URL / 模型名 |
 | 按键无反应 | `systemctl status xiaomi-remote-remap`；确认 `/dev/uinput` 权限与 remap 服务 |
-| 日志 | `agent.log`、`journalctl --user -u xiaomi-remote-go`、`journalctl -u xiaomi-remote-remap` |
+| 日志 | `~/.local/state/xiaomi-remote/agent.log`、`journalctl --user -u xiaomi-remote-go`、`journalctl -u xiaomi-remote-remap` |
 
 ## 隐私与安全
 
 - 管理 UI / API 只监听回环地址，并校验请求 Host 与 Origin。
 - API Key、令牌只保存在本地文件，权限建议 `0600`，不会出现在日志与网页回显中。
+- 日志只记字符数、语言、提供商与耗时，不记转写正文；蓝牙地址只记厂商段与末段（`AA:BB:CC:**:**:FF`）。日志文件默认在 `~/.local/state/xiaomi-remote/agent.log`，不落在代码仓库里。
 - 语音与文本只会发往你配置的 ASR / LLM 服务；项目本身没有遥测。
 - root remap 只监听本地 Unix socket，作用域限于按键注入。
 - 安全问题请按 [SECURITY.md](SECURITY.md) 私下报告。

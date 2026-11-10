@@ -153,3 +153,69 @@ func TestCommandProviderTranscribes(t *testing.T) {
 		t.Fatalf("text = %q", result.Text)
 	}
 }
+
+// TestProviderHTTPErrorOmitsBody pins the rule that a provider body never rides
+// into an error: a rejected request commonly quotes the text that tripped the
+// filter, and errors are logged (SEC-02). The status and the machine-readable
+// codes stay, so a broken configuration is still explainable.
+func TestProviderHTTPErrorOmitsBody(t *testing.T) {
+	const secret = "你好世界"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"error":{"type":"invalid_request_error","code":"content_filter","message":"rejected: ` + secret + `"}}`))
+	}))
+	defer server.Close()
+
+	keyFile := filepath.Join(t.TempDir(), "key")
+	if err := os.WriteFile(keyFile, []byte("test-key"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	mimo, err := NewMimo(keyFile, "", "", server.URL)
+	if err != nil {
+		t.Fatalf("new mimo: %v", err)
+	}
+	openai, err := NewOpenAI(OpenAIConfig{BaseURL: server.URL + "/v1", Model: "whisper-1"})
+	if err != nil {
+		t.Fatalf("new openai: %v", err)
+	}
+	for name, engine := range map[string]Engine{"mimo": mimo, "openai": openai} {
+		_, err := engine.Transcribe(context.Background(), Audio{Samples: toneSamples(16000), SampleRate: 16000})
+		if err == nil {
+			t.Fatalf("%s: want an error", name)
+		}
+		if strings.Contains(err.Error(), secret) {
+			t.Fatalf("%s error echoes the response body: %v", name, err)
+		}
+		if strings.Contains(err.Error(), "rejected") {
+			t.Fatalf("%s error carries provider prose: %v", name, err)
+		}
+		if !strings.Contains(err.Error(), "400") || !strings.Contains(err.Error(), "content_filter") {
+			t.Fatalf("%s error lost the diagnosis: %v", name, err)
+		}
+	}
+}
+
+// TestCommandErrorOmitsStderr covers the same leak through a user-supplied ASR
+// command, whose stderr can carry the recognised speech.
+func TestCommandErrorOmitsStderr(t *testing.T) {
+	dir := t.TempDir()
+	script := filepath.Join(dir, "loud-asr.sh")
+	body := "#!/bin/sh\necho 'partial result: 你好世界' >&2\nexit 3\n"
+	if err := os.WriteFile(script, []byte(body), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	command, err := NewCommand(CommandConfig{Binary: script, Args: []string{"{audio}"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = command.Transcribe(context.Background(), Audio{Samples: toneSamples(8000), SampleRate: 16000})
+	if err == nil {
+		t.Fatal("want an error")
+	}
+	if strings.Contains(err.Error(), "你好世界") {
+		t.Fatalf("error carries stderr: %v", err)
+	}
+	if !strings.Contains(err.Error(), "exit status 3") || !strings.Contains(err.Error(), "bytes") {
+		t.Fatalf("error lost the diagnosis: %v", err)
+	}
+}

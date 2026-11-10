@@ -7,6 +7,17 @@ TAGS ?= stdjson
 VERSION ?= dev
 ROOT := $(CURDIR)
 RUN_USER ?= $(if $(SUDO_USER),$(SUDO_USER),$(shell id -un))
+# The agent's own log lives in the user's state dir, never in the checkout: a
+# log line is one careless "text=..." away from holding transcripts, and a file
+# inside the repository gets read, attached and committed (SEC-02). install-logrotate
+# runs under sudo, where $(HOME) is root's, so the home is looked up for the
+# service user instead.
+RUN_HOME := $(shell getent passwd $(RUN_USER) 2>/dev/null | cut -d: -f6)
+ifeq ($(RUN_HOME),)
+RUN_HOME := $(HOME)
+endif
+LOG_DIR := $(RUN_HOME)/.local/state/xiaomi-remote
+LOG_FILE := $(LOG_DIR)/agent.log
 BIN := bin/xiaomi-remote
 USER_UNIT := $(HOME)/.config/systemd/user/xiaomi-remote-go.service
 SYSTEM_UNIT := /etc/systemd/system/xiaomi-remote-remap.service
@@ -38,7 +49,9 @@ soak:
 
 install-user:
 	mkdir -p $(dir $(USER_UNIT))
-	sed -e 's|@ROOT@|$(ROOT)|g' -e 's|@USER@|$(RUN_USER)|g' deploy/xiaomi-remote-go.service > $(USER_UNIT)
+	sed -e 's|@ROOT@|$(ROOT)|g' -e 's|@USER@|$(RUN_USER)|g' \
+		-e 's|@LOG_DIR@|$(LOG_DIR)|g' -e 's|@LOG_FILE@|$(LOG_FILE)|g' \
+		deploy/xiaomi-remote-go.service > $(USER_UNIT)
 	chmod 644 $(USER_UNIT)
 	systemctl --user daemon-reload
 	systemctl --user enable --now xiaomi-remote-go.service
@@ -51,5 +64,7 @@ install-remap:
 	systemctl enable --now xiaomi-remote-remap.service
 
 install-logrotate:
-	sed -e 's|@ROOT@|$(ROOT)|g' -e 's|@USER@|$(RUN_USER)|g' deploy/logrotate-xiaomi-remote-go > /etc/logrotate.d/xiaomi-remote-go
+	sed -e 's|@ROOT@|$(ROOT)|g' -e 's|@USER@|$(RUN_USER)|g' \
+		-e 's|@LOG_FILE@|$(LOG_FILE)|g' \
+		deploy/logrotate-xiaomi-remote-go > /etc/logrotate.d/xiaomi-remote-go
 	chmod 644 /etc/logrotate.d/xiaomi-remote-go

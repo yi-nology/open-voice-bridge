@@ -145,7 +145,7 @@ main.go ──┬──> internal/agent ──┬──> internal/bluez ──> 
 ## 8. 错误处理与可观测性口径
 
 - 每个 goroutine 有唯一 owner，owner 负责在 ctx 取消时收摊；`async.GoSafe` 只用于 owner 已登记的任务。
-- 结构化日志字段白名单：`provider`、`len`、`gen`、`ms`、`device_kind`、`code`。黑名单：转写正文、音频、token、ticket、配对码、（默认）LAN 地址。
+- 结构化日志字段白名单：`chars`、`language`、`provider`、`source`、`latency`、`rate`、`code`、`device`、`path`、`retry_in`、`err`。黑名单：转写正文、音频字节、token、ticket、配对码、完整蓝牙地址、（默认）LAN 地址。三条落地规则：地址只以 `redact.MAC` 的脱敏形态出现（厂商段 + 末段）；提供商响应体一律经 `redact.ProviderSuffix` 收敛成 `type/code`，散文丢掉、状态码留下，因为被拒的请求常会引用它拒绝的那段话，而那段话就是转写；用户自己配置的 ASR 命令的 stderr 只写 debug，错误串里只留字节数。转写正文还有一道兜底：`agent.redactText` 在记录 LLM 失败前把正在处理的那句话从错误串里挖掉（SEC-02）。
 - 指标统一前缀并补齐手机面：现在 6 个 `xiaomi_remote_*` 指标里手机相关为零；`readyz` 与 `doctor` 共享同一张检查表，避免"人说没就绪、机器说就绪"。
 - 失败要分层可读：`readyz` 返回核心必需项与可选项两组（手机-only 用户不该因为没 root helper 就永久 503）。
 

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -12,6 +11,8 @@ import (
 	"time"
 
 	oeerrors "github.com/oekit/pkg/errors"
+
+	"github.com/yi-nology/open-voice-bridge/internal/redact"
 )
 
 type OpenAIConfig struct {
@@ -89,7 +90,10 @@ func (o *OpenAI) Process(ctx context.Context, text string) (string, error) {
 		return "", err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return "", oeerrors.Errorf("llm HTTP %d: %s", resp.StatusCode, truncate(string(data), 300))
+		// The body is provider prose and a rejected request often quotes the
+		// text it rejected, which here is a transcript. Errors get logged, so
+		// only the status and the machine-readable codes are kept (SEC-02).
+		return "", oeerrors.Errorf("llm HTTP %d%s", resp.StatusCode, redact.ProviderSuffix(data))
 	}
 	var parsed struct {
 		Choices []struct {
@@ -146,11 +150,4 @@ func decodeContent(raw json.RawMessage) string {
 		return b.String()
 	}
 	return ""
-}
-
-func truncate(value string, limit int) string {
-	if len(value) <= limit {
-		return value
-	}
-	return value[:limit] + fmt.Sprintf("... (%d bytes)", len(value))
 }

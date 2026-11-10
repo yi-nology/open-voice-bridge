@@ -84,7 +84,17 @@ func (c *Command) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	if err := cmd.Run(); err != nil {
-		return Result{}, oeerrors.Errorf("%s failed: %w (%s)", c.cfg.Binary, err, stderr.String())
+		// stderr comes from a command the user configured themselves, and ASR
+		// front-ends do print recognised speech there, so the text must not
+		// ride along in an error that gets logged. The size stays in the
+		// message; the content is only written at debug level, for whoever is
+		// debugging their own wrapper (SEC-02).
+		logged := stderr.String()
+		if logged != "" {
+			log.Debug("ASR command stderr", "binary", c.cfg.Binary, "stderr", logged)
+		}
+		return Result{}, oeerrors.Errorf("%s failed: %w (stderr %d bytes, see debug log)",
+			c.cfg.Binary, err, len(logged))
 	}
 	text := strings.TrimSpace(stdout.String())
 	if text == "" {

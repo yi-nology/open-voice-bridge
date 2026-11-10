@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/yi-nology/open-voice-bridge/internal/atvv"
+	"github.com/yi-nology/open-voice-bridge/internal/redact"
 )
 
 const (
@@ -129,7 +130,9 @@ func (m *Mimo) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 		return Result{}, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return Result{}, oeerrors.Errorf("MiMo HTTP %d: %s", resp.StatusCode, truncate(string(data), 300))
+		// Only the status and the machine-readable codes are kept: a provider
+		// body is untrusted text, and errors end up in the log file (SEC-02).
+		return Result{}, oeerrors.Errorf("MiMo HTTP %d%s", resp.StatusCode, redact.ProviderSuffix(data))
 	}
 	var parsed struct {
 		Choices []struct {
@@ -170,11 +173,4 @@ func decodeContent(raw json.RawMessage) string {
 		return strings.TrimSpace(builder.String())
 	}
 	return ""
-}
-
-func truncate(s string, limit int) string {
-	if len(s) <= limit {
-		return s
-	}
-	return s[:limit]
 }

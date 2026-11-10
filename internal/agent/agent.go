@@ -22,6 +22,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/keys"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
 	"github.com/yi-nology/open-voice-bridge/internal/paste"
+	"github.com/yi-nology/open-voice-bridge/internal/redact"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
 
@@ -367,7 +368,7 @@ func (a *Agent) connectLoop() {
 			}
 			continue
 		}
-		log.Info("ATVV bridge ready", "address", a.cfg.Address)
+		log.Info("ATVV bridge ready", "address", redact.MAC(a.cfg.Address))
 		backoff = time.Second
 		select {
 		case <-a.ctx.Done():
@@ -406,7 +407,7 @@ func (a *Agent) SetAddress(address string) error {
 	a.addrMu.Lock()
 	a.address = address
 	a.addrMu.Unlock()
-	log.Info("BLE address switched", "address", address)
+	log.Info("BLE address switched", "address", redact.MAC(address))
 	return a.Reconnect()
 }
 

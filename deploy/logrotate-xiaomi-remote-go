@@ -1,4 +1,4 @@
-@ROOT@/agent.log {
+@LOG_FILE@ {
     su @USER@ @USER@
     size 5M
     rotate 3
