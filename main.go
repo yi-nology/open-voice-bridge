@@ -128,6 +128,54 @@ func boolGauge(ag *agent.Agent, key string) float64 {
 	return 0
 }
 
+// phoneSpeech adapts the shared transcription chain to the phone listener's
+// narrow interface. It lives in package main so internal/phone never has to
+// import internal/agent, and both input sources provably run one chain.
+type phoneSpeech struct {
+	pipeline *agent.SpeechPipeline
+}
+
+func (s phoneSpeech) TranscribeUtterance(_ context.Context, samples []int16, meta phone.UtteranceMeta) (phone.UtteranceResult, bool) {
+	transcript, ok := s.pipeline.Transcribe(samples, agent.SourceRef{
+		Kind:    string(input.KindPhone),
+		Address: meta.Address,
+	})
+	if !ok {
+		return phone.UtteranceResult{}, false
+	}
+	return phone.UtteranceResult{
+		Text:      transcript.Text,
+		RawText:   transcript.RawText,
+		Provider:  transcript.Provider,
+		Processed: transcript.Processed,
+		LatencyMS: transcript.Latency.Milliseconds(),
+		At:        transcript.At,
+	}, true
+}
+
+// speakingLabel turns a microphone transition into the desktop pill's copy.
+func speakingLabel(state input.AudioState, devices []input.Status) (bool, string, string) {
+	if !state.Speaking || state.Owner == "" {
+		return false, "", ""
+	}
+	if state.Owner == input.RemoteID {
+		for _, device := range devices {
+			if device.ID == input.RemoteID {
+				return true, "remote", device.Name
+			}
+		}
+		return true, "remote", "遥控器"
+	}
+	for _, device := range devices {
+		if device.ID == state.Owner {
+			return true, "phone", device.Name
+		}
+	}
+	// An owner that dropped out of the list still counts as speaking; the pill
+	// must not go quiet just because a label is missing.
+	return true, "phone", state.Owner
+}
+
 func runAgent(args []string, stderr io.Writer) int {
 	fs, path := flagSet("agent", stderr)
 	if _, code := cli.ParseFlags(fs, args); code != cli.ExitOK {
@@ -228,10 +276,12 @@ func runAgent(args []string, stderr io.Writer) int {
 			} else {
 				phoneStore = store
 				phoneServer = phone.NewServer(store, phone.NewKeyInjector(helperClient), inputHub, phone.ServerConfig{
-					Addr:       cfg.Phone.Addr,
-					TLSMode:    cfg.Phone.TLS,
-					CertDir:    filepath.Dir(*path),
-					MaxClients: cfg.Phone.MaxClients,
+					Addr:                cfg.Phone.Addr,
+					TLSMode:             cfg.Phone.TLS,
+					CertDir:             filepath.Dir(*path),
+					MaxClients:          cfg.Phone.MaxClients,
+					MaxUtteranceSeconds: cfg.Phone.MaxUtteranceSeconds,
+					Transcriber:         phoneSpeech{pipeline: ag.Speech()},
 				})
 			}
 		}
@@ -317,6 +367,7 @@ func runAgent(args []string, stderr io.Writer) int {
 		uiServer := ui.New(deps)
 		customUI = uiServer
 		apihandler.SetBackend(uiServer)
+		micOwner := inputHub.Watch()
 		async.GoSafe(func() {
 			for {
 				select {
@@ -351,8 +402,14 @@ func runAgent(args []string, stderr io.Writer) int {
 						"latency_ms": transcript.Latency.Milliseconds(),
 						"at":         transcript.At.Format(time.RFC3339),
 					})
-				case active := <-ag.Listening():
-					uiServer.Publish(map[string]any{"event": "listening", "active": active})
+				case state := <-micOwner:
+					active, source, name := speakingLabel(state, inputHub.Sources())
+					uiServer.Publish(map[string]any{
+						"event":       "listening",
+						"active":      active,
+						"source":      source,
+						"source_name": name,
+					})
 				}
 			}
 		})

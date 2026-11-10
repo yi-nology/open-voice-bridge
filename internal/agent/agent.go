@@ -60,7 +60,6 @@ type Agent struct {
 
 	reconnectCh chan struct{}
 	transcripts chan Transcript
-	listening   chan bool
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -91,7 +90,6 @@ func New(cfg config.Config, engine asr.Engine, sink audio.Sink) *Agent {
 		watcher:     keys.NewF24Watcher(),
 		reconnectCh: make(chan struct{}, 1),
 		transcripts: make(chan Transcript, 16),
-		listening:   make(chan bool, 4),
 		maxSample:   cfg.MaxUtterance * atvv.SampleRate,
 	}
 	a.pipeline = a.newPipeline()
@@ -125,6 +123,11 @@ func (a *Agent) newPipeline() *SpeechPipeline {
 	}
 }
 
+// Speech exposes the shared transcription chain so another input source (the
+// phone listener) can run an utterance through exactly the same path as the
+// BLE remote: same engine, same rules, same subtitle and history sink.
+func (a *Agent) Speech() *SpeechPipeline { return a.pipeline }
+
 // recordTranscript updates the agent's last-result fields and forwards the
 // utterance to the subtitle stream.
 func (a *Agent) recordTranscript(transcript Transcript) {
@@ -138,9 +141,6 @@ func (a *Agent) recordTranscript(transcript Transcript) {
 
 // Transcripts yields finalized utterances for the subtitle stream.
 func (a *Agent) Transcripts() <-chan Transcript { return a.transcripts }
-
-// Listening reports whether the active remote is currently capturing audio.
-func (a *Agent) Listening() <-chan bool { return a.listening }
 
 // SetHub registers the BLE remote as an input source. It is safe to leave the
 // hub unset; the agent behaves exactly as before when no hub is provided.
@@ -167,20 +167,14 @@ func (a *Agent) acquireMic() {
 	a.hub.AcquireAudioForce(input.RemoteID)
 }
 
-// releaseMic frees the microphone once the utterance has been transcribed.
-// Holding it across ASR keeps sources strictly one-at-a-time.
+// releaseMic frees the microphone when the capture closes, before ASR runs: the
+// pipeline already serializes transcription, so holding the claim across it would
+// keep phones at "busy" for the whole recognition window and buy nothing.
 func (a *Agent) releaseMic() {
 	if a.hub == nil {
 		return
 	}
 	a.hub.ReleaseAudio(input.RemoteID)
-}
-
-func (a *Agent) publishListening(active bool) {
-	select {
-	case a.listening <- active:
-	default:
-	}
 }
 
 func (a *Agent) publishTranscript(transcript Transcript) {
@@ -315,7 +309,6 @@ func (a *Agent) micOpen() {
 		return
 	}
 	log.Info("HID voice key -> MIC_OPEN")
-	a.publishListening(true)
 	async.GoSafe(func() {
 		if err := transport.WriteTX(session.MicOpenCommand()); err != nil {
 			log.Warn("MIC_OPEN failed", "err", err)
@@ -419,9 +412,9 @@ func (a *Agent) SetAddress(address string) error {
 }
 
 func (a *Agent) markDisconnected() {
-	a.publishListening(false)
-	// A capture cut short by a disconnect never reaches finalize, so the claim
-	// has to be dropped here or phones would find the microphone busy forever.
+	// A capture cut short by a disconnect never reaches the audio-stop path, so
+	// the claim has to be dropped here or phones would find the microphone busy
+	// forever.
 	a.releaseMic()
 	a.mu.Lock()
 	a.connected = false
@@ -465,11 +458,10 @@ func (a *Agent) handleControl(data []byte) {
 	case atvv.EventAudioStart:
 		log.Info("audio stream started")
 		a.acquireMic()
-		a.publishListening(true)
 		a.resetDictation()
 	case atvv.EventAudioStop:
 		log.Info("audio stream stopped")
-		a.publishListening(false)
+		a.releaseMic()
 		async.GoSafe(a.finalize)
 	}
 }
@@ -519,7 +511,6 @@ func (a *Agent) finalize() {
 		Kind:    string(input.KindRemote),
 		Address: a.currentAddress(),
 	})
-	a.releaseMic()
 }
 
 func (a *Agent) Reconnect() error {

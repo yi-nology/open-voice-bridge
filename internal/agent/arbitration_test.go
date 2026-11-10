@@ -1,33 +1,63 @@
 package agent
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
+	"github.com/yi-nology/open-voice-bridge/internal/atvv"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
 )
 
-func TestBLEAcquiresAndReleasesMicrophone(t *testing.T) {
+func TestBLEAudioStopReleasesTheMicrophoneBeforeASR(t *testing.T) {
 	hub := input.NewHub()
-	engine := &fakeEngine{result: asr.Result{Text: "你好", Provider: "fake", Latency: 20 * time.Millisecond}}
+	engine := &gatedEngine{
+		result:  asr.Result{Text: "你好", Provider: "gated", Latency: 20 * time.Millisecond},
+		started: make(chan struct{}, 1),
+		release: make(chan struct{}),
+	}
 	a := newFinalizeAgent(engine)
 	a.SetHub(hub)
+	a.session = atvv.NewSession()
 
-	a.acquireMic()
+	a.handleControl([]byte{atvv.OpAudioStart})
 	if owner := hub.AudioOwner(); owner != input.RemoteID {
-		t.Fatalf("owner = %q, want the remote to hold the mic", owner)
+		t.Fatalf("audio start must claim the mic, owner = %q", owner)
 	}
-
 	fillDictation(a, 1)
-	a.finalize()
 
+	a.handleControl([]byte{atvv.OpAudioStop})
 	if owner := hub.AudioOwner(); owner != "" {
-		t.Fatalf("finalize must release the mic, owner = %q", owner)
+		t.Fatalf("audio stop must free the mic, owner = %q", owner)
 	}
-	if engine.calls != 1 {
-		t.Fatalf("ASR calls = %d, want exactly one for the finalized utterance", engine.calls)
+	if !hub.AcquireAudio("phone-1") {
+		t.Fatal("a phone must be able to claim the mic while the remote transcribes")
 	}
+
+	close(engine.release)
+	select {
+	case <-engine.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("audio stop must still transcribe the buffered utterance")
+	}
+}
+
+// gatedEngine blocks inside Transcribe so a test can observe the microphone
+// state during the recognition window.
+type gatedEngine struct {
+	result  asr.Result
+	started chan struct{}
+	release chan struct{}
+}
+
+func (g *gatedEngine) Name() string                { return "gated" }
+func (g *gatedEngine) Local() bool                 { return true }
+func (g *gatedEngine) Close(context.Context) error { return nil }
+func (g *gatedEngine) Transcribe(context.Context, asr.Audio) (asr.Result, error) {
+	g.started <- struct{}{}
+	<-g.release
+	return g.result, nil
 }
 
 func TestBLEPreemptsPhoneAndSurvivesWithoutHub(t *testing.T) {

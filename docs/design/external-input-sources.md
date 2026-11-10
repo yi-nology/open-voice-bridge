@@ -159,6 +159,11 @@ BLE 链路把 `agent.finalize` 改为调用 `SpeechPipeline.Transcribe`；手机
   失败即 `busy`；BLE 在 `EventAudioStart` 走 `Hub.AcquireAudioForce`，
   永远不会因为手机正在说话而丢帧（RC003 是主路径）。
   遥控器断线时 `markDisconnected` 也会释放占用，否则一次掉线会让手机永久 `busy`。
+- 占用语义是「采集窗口」而不是「整条转写」：BLE 在 `EventAudioStop` 释放，手机在 `end`
+  或超时截断时释放，都发生在 ASR 之前。转写本身已被 `SpeechPipeline` 串行化，
+  把占用拖到识别结束只会让手机白白等待。
+- 桌面字幕的「正在说话」直接订阅 `Hub.Watch`，遥控器与手机共用这一条状态流；
+  SSE 的 `listening` 事件带 `source`（`remote` / `phone`）与 `source_name`。
 - 按键：BLE 与手机可同时注入，不做互斥；按键是瞬时事件。
 - 连接：最多 `max_clients` 个手机同时在线；超限拒绝并提示。
 - 断线：未结束的音频直接丢弃（不产生半句话），手机重连后需要重新按住说话。

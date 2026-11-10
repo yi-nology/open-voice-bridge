@@ -20,19 +20,6 @@ func TestPublishTranscript(t *testing.T) {
 	}
 }
 
-func TestPublishListening(t *testing.T) {
-	agent := &Agent{listening: make(chan bool, 1)}
-	agent.publishListening(true)
-	select {
-	case active := <-agent.Listening():
-		if !active {
-			t.Fatal("expected listening")
-		}
-	case <-time.After(time.Second):
-		t.Fatal("listening not published")
-	}
-}
-
 type fakeSink struct{ healthy bool }
 
 func (f fakeSink) Start(context.Context) error { return nil }
