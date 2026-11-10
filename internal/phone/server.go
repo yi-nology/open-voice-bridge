@@ -23,22 +23,26 @@ var log = logx.Delegating("phone")
 // ServerConfig tunes the standalone phone listener. It is separate from the
 // loopback management UI so a LAN exposure never inherits admin middleware.
 type ServerConfig struct {
-	Addr       string
-	TLSMode    string // "auto" | "off"
-	CertDir    string // used only when TLSMode == "auto"
-	MaxClients int
+	Addr                string
+	TLSMode             string // "auto" | "off"
+	CertDir             string // used only when TLSMode == "auto"
+	MaxClients          int
+	MaxUtteranceSeconds int // 0 falls back to 30
+	Transcriber         Transcriber
 }
 
 // Server serves the phone pairing endpoints, the WebSocket key channel and, in
 // later phases, the microphone stream. It only accepts paired devices and
 // enforces same-origin WebSocket handshakes.
 type Server struct {
-	store    *Store
-	injector *KeyInjector
-	hub      *input.Hub
-	certs    *CertificateManager
-	cfg      ServerConfig
-	srv      *http.Server
+	store       *Store
+	injector    *KeyInjector
+	hub         *input.Hub
+	certs       *CertificateManager
+	cfg         ServerConfig
+	transcriber Transcriber
+	maxSamples  int
+	srv         *http.Server
 
 	mu     sync.Mutex
 	conns  map[string]*activeConn
@@ -49,16 +53,33 @@ type activeConn struct {
 	deviceID string
 	ws       *websocket.Conn
 	source   *Source
+	buffer   *utteranceBuffer
+	writeMu  sync.Mutex
+}
+
+// send is the only writer on a connection. Transcription finishes on its own
+// goroutine, so without this lock a transcript frame and a key_ack could write
+// concurrently and the WebSocket library would report a data race.
+func (a *activeConn) send(ctx context.Context, payload any) {
+	a.writeMu.Lock()
+	defer a.writeMu.Unlock()
+	writeControl(ctx, a.ws, payload)
 }
 
 func NewServer(store *Store, injector *KeyInjector, hub *input.Hub, cfg ServerConfig) *Server {
+	maxUtterance := cfg.MaxUtteranceSeconds
+	if maxUtterance <= 0 {
+		maxUtterance = 30
+	}
 	s := &Server{
-		store:    store,
-		injector: injector,
-		hub:      hub,
-		cfg:      cfg,
-		conns:    map[string]*activeConn{},
-		closed:   make(chan struct{}),
+		store:       store,
+		injector:    injector,
+		hub:         hub,
+		cfg:         cfg,
+		transcriber: cfg.Transcriber,
+		maxSamples:  maxUtterance * sampleRate,
+		conns:       map[string]*activeConn{},
+		closed:      make(chan struct{}),
 	}
 	if cfg.TLSMode == "auto" && cfg.CertDir != "" {
 		s.certs = NewCertificateManager(cfg.CertDir)
@@ -209,7 +230,13 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 	defer s.unregister(active)
 
 	ctx := r.Context()
-	writeControl(ctx, conn, map[string]any{"type": "ready", "device_id": deviceID, "name": name})
+	active.send(ctx, map[string]any{
+		"type":              "ready",
+		"device_id":         deviceID,
+		"name":              name,
+		"mic_available":     s.transcriber != nil,
+		"max_audio_seconds": s.maxSamples / sampleRate,
+	})
 	s.serveConn(ctx, conn, active)
 }
 
@@ -221,51 +248,155 @@ func (s *Server) serveConn(ctx context.Context, conn *websocket.Conn, active *ac
 		}
 		switch typ {
 		case websocket.MessageText:
-			s.handleControl(ctx, conn, active, data)
+			s.handleControl(ctx, active, data)
 		case websocket.MessageBinary:
-			// Microphone audio is Phase 2; Phase 1 declines it explicitly.
-			writeControl(ctx, conn, errorFrame("not_ready", "microphone input is not enabled yet"))
+			s.handleAudio(ctx, active, data)
 		}
 	}
 }
 
 type controlMessage struct {
-	Type  string `json:"type"`
-	Key   string `json:"key,omitempty"`
-	Value *int   `json:"value,omitempty"`
-	T     int64  `json:"t,omitempty"`
+	Type     string `json:"type"`
+	Key      string `json:"key,omitempty"`
+	Value    *int   `json:"value,omitempty"`
+	T        int64  `json:"t,omitempty"`
+	Format   string `json:"format,omitempty"`
+	Rate     int    `json:"rate,omitempty"`
+	Channels int    `json:"channels,omitempty"`
 }
 
-func (s *Server) handleControl(ctx context.Context, conn *websocket.Conn, active *activeConn, data []byte) {
+func (s *Server) handleControl(ctx context.Context, active *activeConn, data []byte) {
 	var msg controlMessage
 	if err := json.Unmarshal(data, &msg); err != nil {
-		writeControl(ctx, conn, errorFrame("bad_message", "malformed json"))
+		active.send(ctx, errorFrame("bad_message", "malformed json"))
 		return
 	}
 	switch msg.Type {
 	case "key":
-		s.handleKey(ctx, conn, active, msg)
+		s.handleKey(ctx, active, msg)
 	case "ping":
-		writeControl(ctx, conn, map[string]any{"type": "pong", "t": msg.T})
-	case "start", "end":
-		writeControl(ctx, conn, errorFrame("not_ready", "microphone input is not enabled yet"))
+		active.send(ctx, map[string]any{"type": "pong", "t": msg.T})
+	case "start":
+		s.handleStart(ctx, active, msg)
+	case "end":
+		s.finishUtterance(ctx, active, false)
 	default:
-		writeControl(ctx, conn, errorFrame("bad_message", "unknown type"))
+		active.send(ctx, errorFrame("bad_message", "unknown type"))
 	}
 }
 
-func (s *Server) handleKey(ctx context.Context, conn *websocket.Conn, active *activeConn, msg controlMessage) {
+func (s *Server) handleKey(ctx context.Context, active *activeConn, msg controlMessage) {
 	if msg.Value == nil {
-		writeControl(ctx, conn, errorFrame("bad_message", "key value required"))
+		active.send(ctx, errorFrame("bad_message", "key value required"))
 		return
 	}
 	if err := s.injector.Inject(ctx, msg.Key, *msg.Value); err != nil {
+		// The rejected value is never logged, only the reason.
 		log.Warn("phone key injection denied", "device", active.deviceID, "key", msg.Key, "err", err)
-		writeControl(ctx, conn, errorFrame("denied", err.Error()))
+		active.send(ctx, errorFrame("denied", err.Error()))
 		return
 	}
 	active.source.touch()
-	writeControl(ctx, conn, map[string]any{"type": "key_ack", "key": msg.Key, "value": *msg.Value})
+	active.send(ctx, map[string]any{"type": "key_ack", "key": msg.Key, "value": *msg.Value})
+}
+
+// --- WebSocket microphone -------------------------------------------------
+
+// handleStart opens one hold-to-talk utterance: it validates the format, wins
+// the microphone through the hub and clears the buffer before any audio lands.
+func (s *Server) handleStart(ctx context.Context, active *activeConn, msg controlMessage) {
+	if s.transcriber == nil {
+		active.send(ctx, errorFrame("not_ready", "microphone input is not enabled yet"))
+		return
+	}
+	if active.source.isSpeaking() {
+		active.send(ctx, errorFrame("bad_state", "an utterance is already in progress"))
+		return
+	}
+	if msg.Format != "" && msg.Format != "pcm16" {
+		active.send(ctx, errorFrame("bad_format", "only pcm16 is supported"))
+		return
+	}
+	if msg.Rate != 0 && msg.Rate != sampleRate {
+		active.send(ctx, errorFrame("bad_format", "audio must be 16 kHz"))
+		return
+	}
+	if msg.Channels != 0 && msg.Channels != 1 {
+		active.send(ctx, errorFrame("bad_format", "audio must be mono"))
+		return
+	}
+	// Only one source owns the microphone at a time; the BLE remote may
+	// preempt this claim, which is why the buffer is cleared once we own it.
+	if s.hub != nil && !s.hub.AcquireAudio(active.deviceID) {
+		active.send(ctx, errorFrame("busy", "another source is speaking"))
+		return
+	}
+	active.buffer.reset()
+	active.source.setSpeaking(true)
+	active.send(ctx, map[string]any{"type": "listening", "active": true})
+}
+
+// handleAudio buffers one PCM frame. Frames arriving outside a recording
+// session are ignored: a client must not be able to inject audio that was
+// never requested.
+func (s *Server) handleAudio(ctx context.Context, active *activeConn, data []byte) {
+	if !active.source.isSpeaking() {
+		return
+	}
+	ok, full := active.buffer.append(data)
+	if !ok {
+		active.send(ctx, errorFrame("bad_frame", "malformed pcm frame"))
+		return
+	}
+	if full {
+		active.send(ctx, errorFrame("too_long", "utterance truncated at the maximum length"))
+		s.finishUtterance(ctx, active, true)
+	}
+}
+
+// finishUtterance closes the recording, releases the microphone and hands the
+// samples to ASR off the read loop, so a slow provider never stops the phone
+// from pressing keys.
+func (s *Server) finishUtterance(ctx context.Context, active *activeConn, truncated bool) {
+	if !active.source.isSpeaking() {
+		active.buffer.reset()
+		return
+	}
+	samples := active.buffer.take()
+	active.source.setSpeaking(false)
+	if s.hub != nil {
+		s.hub.ReleaseAudio(active.deviceID)
+	}
+	active.send(ctx, map[string]any{"type": "listening", "active": false})
+
+	transcriber := s.transcriber
+	meta := UtteranceMeta{
+		DeviceID: active.deviceID,
+		Name:     active.source.Name(),
+		Address:  active.source.Address(),
+	}
+	async.GoSafe(func() {
+		result, ok := transcriber.TranscribeUtterance(context.Background(), samples, meta)
+		// A fresh detached context: by the time ASR returns the read loop may
+		// already be gone, and a write on a closed connection is a no-op that
+		// writeControl logs at debug rather than a panic.
+		sendCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if !ok {
+			active.send(sendCtx, errorFrame("no_speech", "nothing recognised"))
+			return
+		}
+		active.send(sendCtx, map[string]any{
+			"type":       "transcript",
+			"text":       result.Text,
+			"raw_text":   result.RawText,
+			"provider":   result.Provider,
+			"processed":  result.Processed,
+			"latency_ms": result.LatencyMS,
+			"at":         result.At.Format(time.RFC3339),
+			"truncated":  truncated,
+		})
+	})
 }
 
 // --- connection registry (max clients, duplicate replacement) --------------
@@ -279,7 +410,12 @@ func (s *Server) register(deviceID string, ws *websocket.Conn, name, ip string) 
 	} else if s.cfg.MaxClients > 0 && len(s.conns) >= s.cfg.MaxClients {
 		return nil
 	}
-	active := &activeConn{deviceID: deviceID, ws: ws, source: newSource(deviceID, name, ip)}
+	active := &activeConn{
+		deviceID: deviceID,
+		ws:       ws,
+		source:   newSource(deviceID, name, ip),
+		buffer:   newUtteranceBuffer(s.maxSamples),
+	}
 	s.conns[deviceID] = active
 	if s.hub != nil {
 		s.hub.Register(active.source)

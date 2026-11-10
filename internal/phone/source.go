@@ -9,13 +9,14 @@ import (
 
 // Source is the hub-facing view of one connected phone. The server creates a
 // Source per live WebSocket, registers it with the InputHub so the desktop can
-// show "who is connected", and unregisters it on disconnect. Speaking stays
-// false in Phase 1 (keys only); Phase 2 flips it while a mic utterance streams.
+// show "who is connected", and unregisters it on disconnect.
 type Source struct {
-	mu        sync.Mutex
+	// id, name and address are fixed at construction and never rewritten, so
+	// they are read without the mutex.
 	id        string
 	name      string
 	address   string
+	mu        sync.Mutex
 	connected bool
 	speaking  bool
 	lastSeen  time.Time
@@ -40,6 +41,17 @@ func (s *Source) Status() input.Status {
 		Speaking:   s.speaking,
 		LastActive: s.lastSeen,
 	}
+}
+
+func (s *Source) Name() string    { return s.name }
+func (s *Source) Address() string { return s.address }
+
+// isSpeaking reports whether a hold-to-talk utterance is in flight, which is
+// what makes stray binary frames outside a session ignorable.
+func (s *Source) isSpeaking() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.speaking
 }
 
 func (s *Source) touch() {

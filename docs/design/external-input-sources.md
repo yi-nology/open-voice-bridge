@@ -138,8 +138,12 @@ BLE 链路把 `agent.finalize` 改为调用 `SpeechPipeline.Transcribe`；手机
    - 发送 `{"type":"start","format":"pcm16","rate":16000,"channels":1}`
    - AudioWorklet 采集 → 重采样 16 kHz → Int16 → 每 20 ms（640 B）发一个二进制帧
    - 松开发送 `{"type":"end"}`
-6. 服务端拼接为 `[]int16`，超过 `max_utterance_seconds` 自动截断并结束；小于 250 ms 丢弃（与现有 BLE 行为一致）。
-7. 音频进入 `SpeechPipeline`，结果通过 WS 回推 `{"type":"transcript",...}`，同时走原有的历史、SSE 字幕与桌面粘贴。
+6. 服务端拼接为 `[]int16`，超过 `max_utterance_seconds` 自动截断并结束；小于 250 ms 丢弃（与现有 BLE 行为一致，阈值只在 `SpeechPipeline` 里存一份）。
+7. 音频进入 `SpeechPipeline`（与遥控器同一条链）。回推顺序固定：先 `{"type":"listening","active":false}` 释放麦克风，再异步送 ASR，完成后回
+   `{"type":"transcript","text","raw_text","provider","processed","latency_ms","at","truncated"}`；
+   没有识别到内容时回 `{"type":"error","code":"no_speech"}`。
+   会话未开启（`start` 被拒或已结束）时到达的二进制帧直接丢弃，不回帧也不转写；转写走 `async.GoSafe`，慢供应商不阻塞按键通道。
+   同时走原有的历史、SSE 字幕与桌面粘贴。
 
 ### 5.2 虚拟按键
 
@@ -151,6 +155,10 @@ BLE 链路把 `agent.finalize` 改为调用 `SpeechPipeline.Transcribe`；手机
 ### 5.3 多源仲裁
 
 - 音频：全局同一时刻只允许一个 `start`；第二路返回 `{"type":"error","code":"busy"}`。桌面状态显示当前说话源。
+- 仲裁实现为「手机之间互斥、遥控器可抢占」：手机 `start` 走 `Hub.AcquireAudio`，
+  失败即 `busy`；BLE 在 `EventAudioStart` 走 `Hub.AcquireAudioForce`，
+  永远不会因为手机正在说话而丢帧（RC003 是主路径）。
+  遥控器断线时 `markDisconnected` 也会释放占用，否则一次掉线会让手机永久 `busy`。
 - 按键：BLE 与手机可同时注入，不做互斥；按键是瞬时事件。
 - 连接：最多 `max_clients` 个手机同时在线；超限拒绝并提示。
 - 断线：未结束的音频直接丢弃（不产生半句话），手机重连后需要重新按住说话。
@@ -187,18 +195,25 @@ BLE 链路把 `agent.finalize` 改为调用 `SpeechPipeline.Transcribe`；手机
 {"type":"ping","t":1730000000}
 ```
 
-二进制帧：小端 Int16 PCM，单声道 16 kHz。
+`start` 的 `format`/`rate`/`channels` 可省略（省略即按 16 kHz 单声道 pcm16 接受），
+给了就必须匹配：非 `pcm16`、非 16000、非单声道都返回 `bad_format`，不做静默重采样。
+
+二进制帧：小端 Int16 PCM，单声道 16 kHz；单帧上限 240 ms（3840 采样），超限返回 `bad_frame`。
 
 服务端 → 客户端：
 
 ```json
-{"type":"ready","device_id":"phone-1","name":"Pixel"}
+{"type":"ready","device_id":"phone-1","name":"Pixel","mic_available":true,"max_audio_seconds":30}
 {"type":"listening","active":true}
-{"type":"transcript","text":"...","raw_text":"...","processed":true,"latency_ms":1304,"at":"..."}
+{"type":"transcript","text":"...","raw_text":"...","provider":"...","processed":true,"latency_ms":1304,"at":"...","truncated":false}
 {"type":"key_ack","key":"enter","value":1}
-{"type":"error","code":"busy|too_long|unauthorized|rate_limited","message":"..."}
+{"type":"error","code":"busy|too_long|unauthorized|rate_limited|bad_format|bad_frame|bad_state|no_speech|not_ready|denied|bad_message","message":"..."}
 {"type":"pong","t":1730000000}
 ```
+
+`mic_available` 为 false 表示服务端没配转写链，手机页应隐藏按住说话按钮而不是每次按下都报错；
+`max_audio_seconds` 是服务端的整句硬上限。
+第二次 `start`（上一句未结束）返回 `bad_state`，不静默重开一句。
 
 ### 6.3 helper 注入协议
 
