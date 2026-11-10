@@ -3,7 +3,7 @@ module github.com/yi-nology/open-voice-bridge
 go 1.27.3
 
 require (
-	github.com/apache/thrift v0.13.0
+	github.com/apache/thrift v0.25.0
 	github.com/bendahl/uinput v1.7.0
 	github.com/cloudwego/hertz v0.10.6
 	github.com/coder/websocket v1.8.15
