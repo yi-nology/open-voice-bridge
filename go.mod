@@ -16,7 +16,7 @@ require (
 	github.com/oekit/middleware v0.13.13
 	github.com/oekit/pkg v0.37.1
 	github.com/prometheus/client_golang v1.25.0
-	golang.org/x/sys v0.49.0
+	golang.org/x/sys v0.50.0
 )
 
 require (
