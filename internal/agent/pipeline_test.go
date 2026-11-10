@@ -295,3 +295,95 @@ func TestHungProviderDoesNotBlockOtherSources(t *testing.T) {
 		t.Fatal("first call never returned after release")
 	}
 }
+
+// Common phrases (SayAll 对标): a phrase action inserts the nth snippet
+// through the same serialised paste as a transcript, so the two never
+// interleave keystrokes. Unbound slots must be a no-op.
+func TestInsertPhrasePastesTheNthSnippet(t *testing.T) {
+	rules, err := text.New(text.Config{Snippets: []text.Snippet{
+		{Trigger: "确认", Text: "好的，确认执行。"},
+		{Trigger: "继续", Text: "请继续。"},
+	}})
+	if err != nil {
+		t.Fatalf("rules: %v", err)
+	}
+	probe := &pipelineProbe{}
+	pipeline := buildPipeline(&fakeEngine{}, rules, probe, true)
+
+	got, ok := pipeline.InsertPhrase(2)
+	if !ok || got != "请继续。" {
+		t.Fatalf("InsertPhrase(2) = %q,%v want 请继续。", got, ok)
+	}
+	_, pasted := probe.snapshot()
+	if len(pasted) != 1 || pasted[0] != "请继续。" {
+		t.Fatalf("pasted = %v, want the phrase text", pasted)
+	}
+
+	if _, ok := pipeline.InsertPhrase(3); ok {
+		t.Fatal("slot 3 is unbound and must not report success")
+	}
+	_, pasted = probe.snapshot()
+	if len(pasted) != 1 {
+		t.Fatalf("unbound slot must not paste, got %v", pasted)
+	}
+	// Paste is off: the phrase resolves but nothing reaches the clipboard.
+	quiet := buildPipeline(&fakeEngine{}, rules, &pipelineProbe{}, false)
+	if _, ok := quiet.InsertPhrase(1); !ok {
+		t.Fatal("phrase lookup succeeds even when paste is disabled")
+	}
+}
+
+// phraseStub feeds phrase slots to the watcher without any evdev.
+type phraseStub struct{ ch chan int }
+
+func (p *phraseStub) Start(context.Context) error { return nil }
+func (p *phraseStub) Close(context.Context) error { return nil }
+func (p *phraseStub) C() <-chan struct{}          { return nil }
+func (p *phraseStub) Phrases() <-chan int         { return p.ch }
+
+// End to end over the watcher: a phrase key-down pastes the phrase and
+// surfaces a notice for the UI, while an unbound slot stays silent.
+func TestPhraseWatcherInsertsAndNotifies(t *testing.T) {
+	rules, err := text.New(text.Config{Snippets: []text.Snippet{
+		{Trigger: "确认", Text: "好的，确认执行。"},
+	}})
+	if err != nil {
+		t.Fatalf("rules: %v", err)
+	}
+	probe := &pipelineProbe{}
+	stub := &phraseStub{ch: make(chan int, 4)}
+	watcher := NewPhraseWatcher(stub, buildPipeline(&fakeEngine{}, rules, probe, true))
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		watcher.Run(ctx)
+	}()
+
+	stub.ch <- 1
+	select {
+	case event := <-watcher.Events():
+		if event.Slot != 1 || event.Text != "好的，确认执行。" {
+			t.Fatalf("event = %+v", event)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("no phrase event after a bound key")
+	}
+	if _, pasted := probe.snapshot(); len(pasted) != 1 {
+		t.Fatalf("pasted = %v", pasted)
+	}
+
+	stub.ch <- 8
+	select {
+	case event := <-watcher.Events():
+		t.Fatalf("unbound slot must not notify, got %+v", event)
+	case <-time.After(150 * time.Millisecond):
+	}
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("phrase watcher did not stop")
+	}
+}

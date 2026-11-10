@@ -54,6 +54,12 @@ var ActionCodes = map[string]int{
 	"delete": 111, "leftmeta": 125, "rightmeta": 126, "compose": 127,
 	"menu": 139, "playpause": 164, "nextsong": 163, "previoussong": 165,
 	"volumeup": 115, "volumedown": 114, "mute": 113, "f24": 194,
+	// phrase1..phrase8 are the common-phrase triggers (SayAll 对标). They are
+	// injected as F13–F20, the same kind of private signal the voice key
+	// already uses (F24): the agent's evdev watcher turns them into "insert
+	// the nth phrase", and desktops map them to bare F-keys nothing binds.
+	"phrase1": 183, "phrase2": 184, "phrase3": 185, "phrase4": 186,
+	"phrase5": 187, "phrase6": 188, "phrase7": 189, "phrase8": 190,
 }
 
 var MacroTokens = map[string]int{

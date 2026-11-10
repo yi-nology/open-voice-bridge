@@ -158,18 +158,19 @@
   .status-strip { display: none; }
 
   .mapping-grid {
-    display: grid; grid-template-columns: 340px 1fr; gap: 16px;
+    display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 16px;
     margin-top: 16px;
   }
   @media (max-width: 900px) { .mapping-grid { grid-template-columns: 1fr; } }
   .panel {
     background: var(--panel); border: 1px solid var(--line);
-    border-radius: 14px; padding: 16px;
+    border-radius: 14px; padding: 16px; min-width: 0;
   }
-  .panel-head { display: flex; align-items: flex-start; margin-bottom: 12px; }
+  .panel-head { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
   .panel-head h3 { margin: 0; font-size: 14px; font-weight: 600; }
   .panel-head p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
   .panel-head .spacer { margin-left: auto; }
+  .panel-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-left: auto; }
 
   .btn {
     border: 1px solid var(--line); background: #fff; color: var(--text);
@@ -489,6 +490,10 @@
     color: #fff; transform: scale(1);
     text-shadow: 0 0 30px rgba(150,190,255,.55), 0 2px 18px rgba(0,0,0,.22);
   }
+  .subtitle-line.phrase.active {
+    color: #cfe4ff;
+    text-shadow: 0 0 26px rgba(120,180,255,.6), 0 2px 18px rgba(0,0,0,.22);
+  }
   .subtitle-line .meta {
     display: block; margin-top: 7px; font-size: 11px; font-weight: 400;
     color: rgba(255,255,255,.36); letter-spacing: .04em;
@@ -571,6 +576,11 @@
 
   .rule-list { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 6px; }
   .rule-row { display: flex; gap: 8px; align-items: flex-start; }
+  .rule-row .rule-slot {
+    flex: 0 0 auto; margin-top: 8px; padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; line-height: 18px; white-space: nowrap;
+    color: var(--accent, #4c8dff); border: 1px solid currentColor;
+  }
   .rule-row input, .rule-row textarea {
     padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px;
     background: #f2f2f4; color: var(--text); font: inherit;
@@ -966,10 +976,11 @@
             <h3>按键动作</h3>
             <p>点击左侧按键定位；修改后自动保存。</p>
           </div>
-          <div class="spacer"></div>
-          <select id="keymap-profile" title="按键预设"></select>
-          <button id="capture-btn" class="btn small">开始捕获</button>
-          <button id="reset" class="btn small">恢复默认</button>
+          <div class="panel-tools">
+            <select id="keymap-profile" title="按键预设"></select>
+            <button id="capture-btn" class="btn small">开始捕获</button>
+            <button id="reset" class="btn small">恢复默认</button>
+          </div>
         </div>
         <div id="key-list" class="key-list"></div>
         <div id="save-status" class="save-status"></div>
@@ -1187,7 +1198,7 @@
     <div id="cfg-text" class="cfg-panel">
     <div class="card">
       <h3>个人词典与语音短语</h3>
-      <p class="sub">词典把识别错的专名/术语纠正；语音短语把一句触发词替换成模板文本。都在本地生效。</p>
+      <p class="sub">词典把识别错的专名/术语纠正；语音短语把一句触发词替换成模板文本。短语按顺序占用「常用语 1–8」，在按键映射里绑定后，按一下就直接上屏（只进当前焦点窗口，不进历史）。都在本地生效。</p>
       <h4 style="margin:12px 0 0;font-size:12px;">词典纠错</h4>
       <div id="dictionary-list" class="rule-list"></div>
       <button id="dictionary-add" class="btn small">新增词条</button>
@@ -1391,6 +1402,12 @@ const ACTION_GROUPS = [
     ["macro(leftctrl+z)", "Ctrl + Z"],
     ["macro(leftctrl+shift+p)", "Ctrl + Shift + P"],
     ["macro(leftmeta+d)", "Super + D"],
+  ]},
+  {label: "常用语", items: [
+    ["phrase1", "常用语 1（按下插入）"], ["phrase2", "常用语 2（按下插入）"],
+    ["phrase3", "常用语 3（按下插入）"], ["phrase4", "常用语 4（按下插入）"],
+    ["phrase5", "常用语 5（按下插入）"], ["phrase6", "常用语 6（按下插入）"],
+    ["phrase7", "常用语 7（按下插入）"], ["phrase8", "常用语 8（按下插入）"],
   ]},
   {label: "媒体 / 其他", items: [
     ["playpause", "播放 / 暂停"], ["volumeup", "系统音量 +"],
@@ -1839,6 +1856,7 @@ function addSubtitle(text, at, options = {}) {
   subtitleKeys.add(key);
   const line = document.createElement("div");
   line.className = "subtitle-line";
+  if (options.kind) line.classList.add(options.kind);
   line.dataset.key = key;
   line.dataset.at = at || "";
   const body = document.createElement("span");
@@ -2846,6 +2864,10 @@ function connectEvents() {
       addSubtitle(data.text, data.at);
       setTimeout(loadOverviewRecent, 500);
       setTimeout(loadStats, 500);
+    } else if (data.event === "phrase") {
+      // A common phrase is user-authored text, not speech: it shows up live
+      // with its own styling and never enters the history panel.
+      addSubtitle("〔常用语 " + data.slot + "〕 " + data.text, data.at, {kind: "phrase"});
     } else if (data.event === "capture_started") {
       setCaptureUi(true);
       setChip("chip-keyd", "捕获中 · 注入已暂停", "warn");
@@ -3270,7 +3292,7 @@ function dictionaryRow(from = "", to = "") {
   return row;
 }
 
-function snippetRow(trigger = "", text = "") {
+function snippetRow(trigger = "", text = "", slot = 0) {
   const row = document.createElement("div");
   row.className = "rule-row";
   const source = document.createElement("input");
@@ -3286,7 +3308,15 @@ function snippetRow(trigger = "", text = "") {
   remove.className = "btn small";
   remove.textContent = "删除";
   remove.addEventListener("click", () => row.remove());
-  row.append(source, target, remove);
+  if (slot > 0 && slot <= 8) {
+    const badge = document.createElement("span");
+    badge.className = "rule-slot";
+    badge.textContent = "常用语 " + slot;
+    badge.title = "按键映射里选「常用语 " + slot + "（按下插入）」，按一下就上屏这段文字";
+    row.append(badge, source, target, remove);
+  } else {
+    row.append(source, target, remove);
+  }
   return row;
 }
 
@@ -3297,7 +3327,9 @@ function renderTextConfig(cfg) {
   dictionary.innerHTML = "";
   snippets.innerHTML = "";
   for (const item of cfg.dictionary || []) dictionary.appendChild(dictionaryRow(item.from, item.to));
-  for (const item of cfg.snippets || []) snippets.appendChild(snippetRow(item.trigger, item.text));
+  (cfg.snippets || []).forEach((item, index) => {
+    snippets.appendChild(snippetRow(item.trigger, item.text, index + 1));
+  });
   if (!dictionary.children.length) dictionary.appendChild(dictionaryRow());
   if (!snippets.children.length) snippets.appendChild(snippetRow());
 }

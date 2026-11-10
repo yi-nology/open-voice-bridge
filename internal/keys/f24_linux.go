@@ -34,17 +34,19 @@ type inputEvent struct {
 }
 
 type f24Watcher struct {
-	ch     chan struct{}
-	ctx    context.Context
-	cancel context.CancelFunc
-	wg     sync.WaitGroup
+	ch      chan struct{}
+	phrases chan int
+	ctx     context.Context
+	cancel  context.CancelFunc
+	wg      sync.WaitGroup
 }
 
 func newF24Watcher() F24Watcher {
-	return &f24Watcher{ch: make(chan struct{}, 8)}
+	return &f24Watcher{ch: make(chan struct{}, 8), phrases: make(chan int, 8)}
 }
 
-func (w *f24Watcher) C() <-chan struct{} { return w.ch }
+func (w *f24Watcher) C() <-chan struct{}  { return w.ch }
+func (w *f24Watcher) Phrases() <-chan int { return w.phrases }
 
 func (w *f24Watcher) Start(ctx context.Context) error {
 	w.ctx, w.cancel = context.WithCancel(ctx)
@@ -117,9 +119,19 @@ func (w *f24Watcher) readLoop(fd int) {
 			if err := binary.Read(bytes.NewReader(buf[offset:offset+24]), binary.LittleEndian, &ev); err != nil {
 				continue
 			}
-			if ev.Type == evKey && ev.Code == keyF24 && ev.Value == keyDown {
+			if ev.Type != evKey || ev.Value != keyDown {
+				continue
+			}
+			if ev.Code == keyF24 {
 				select {
 				case w.ch <- struct{}{}:
+				default:
+				}
+				continue
+			}
+			if slot, ok := SlotForCode(int(ev.Code)); ok {
+				select {
+				case w.phrases <- slot:
 				default:
 				}
 			}

@@ -257,6 +257,10 @@ func runAgent(args []string, stderr io.Writer) int {
 			}
 			return err
 		}
+		// Common phrases ride the same synthetic-key channel as the voice key:
+		// the watcher pastes into the focused window and announces to the UI.
+		phraseWatcher := agent.NewPhraseWatcher(ag.Watcher(), ag.Speech())
+		phraseWatcher.Start(ctx)
 		app.AddResource("agent", func(closeCtx context.Context) error {
 			return ag.Close(closeCtx)
 		})
@@ -428,6 +432,15 @@ func runAgent(args []string, stderr io.Writer) int {
 						"active":      active,
 						"source":      source,
 						"source_name": name,
+					})
+				case phrase := <-phraseWatcher.Events():
+					// Common phrases are user-authored text, not speech: they
+					// show up live but never enter history or the log body.
+					uiServer.Publish(map[string]any{
+						"event": "phrase",
+						"slot":  phrase.Slot,
+						"text":  phrase.Text,
+						"at":    phrase.At.Format(time.RFC3339),
 					})
 				}
 			}

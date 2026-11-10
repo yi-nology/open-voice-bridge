@@ -28,6 +28,9 @@ type Rules struct {
 	pattern  *regexp.Regexp
 	repls    map[string]string // lowercased From -> To (literal)
 	snippets map[string]string
+	// phraseTexts keeps snippet texts in config order so the phrase actions
+	// (phrase1..phrase8) can address them by position.
+	phraseTexts []string
 }
 
 func Validate(cfg Config) error {
@@ -74,10 +77,22 @@ func New(cfg Config) (*Rules, error) {
 		pattern = regexp.MustCompile("(?i)(" + strings.Join(quoted, "|") + ")")
 	}
 	snippets := map[string]string{}
+	phraseTexts := make([]string, 0, len(cfg.Snippets))
 	for _, item := range cfg.Snippets {
 		snippets[normalizeTrigger(item.Trigger)] = item.Text
+		phraseTexts = append(phraseTexts, item.Text)
 	}
-	return &Rules{pattern: pattern, repls: repls, snippets: snippets}, nil
+	return &Rules{pattern: pattern, repls: repls, snippets: snippets, phraseTexts: phraseTexts}, nil
+}
+
+// SnippetAt returns the phrase bound to slot n (1-based), which is what the
+// phrase1..phrase8 key actions insert. It reports false when the slot is out
+// of range so an unbound key stays a no-op instead of pasting junk.
+func (r *Rules) SnippetAt(slot int) (string, bool) {
+	if r == nil || slot < 1 || slot > len(r.phraseTexts) {
+		return "", false
+	}
+	return r.phraseTexts[slot-1], true
 }
 
 func (r *Rules) Snippet(input string) (string, bool) {

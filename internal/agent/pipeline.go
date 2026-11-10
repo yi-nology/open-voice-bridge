@@ -178,6 +178,18 @@ func (p *SpeechPipeline) applyPaste(_ context.Context, processed string) {
 	}
 }
 
+// InsertPhrase pastes the phrase bound to slot n (1-based) into the focused
+// window — the "one key, one sentence" path of the common-phrase feature. It
+// reports false when the slot is unbound so a stale keymap stays a no-op.
+func (p *SpeechPipeline) InsertPhrase(slot int) (string, bool) {
+	phrase, ok := p.rules().SnippetAt(slot)
+	if !ok || phrase == "" {
+		return "", false
+	}
+	p.applyPaste(context.Background(), phrase)
+	return phrase, true
+}
+
 // redactText cuts the sentence just processed out of a message before it is
 // logged. Error strings from a remote service are untrusted text: a rejected
 // request often quotes what it rejected, and here that is the transcript, which
