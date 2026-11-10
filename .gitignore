@@ -1,5 +1,6 @@
 # build output and local artifacts
 /bin/
+/open-voice-bridge
 /probe
 *.log
 *.out

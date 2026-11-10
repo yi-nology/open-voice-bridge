@@ -465,6 +465,7 @@ func runRemap(args []string, stderr io.Writer) int {
 	mapping := fs.String("mapping", "/etc/xiaomi-remote/mapping.json", "mapping file")
 	socket := fs.String("socket", "/run/xiaomi-remote-helper.sock", "Unix socket")
 	group := fs.Int("group", 1000, "socket group id")
+	agentUID := fs.Int("agent-uid", 0, "uid allowed to run privileged commands besides root (0 = root only)")
 	if _, code := cli.ParseFlags(fs, args); code != cli.ExitOK {
 		return code
 	}
@@ -477,6 +478,7 @@ func runRemap(args []string, stderr io.Writer) int {
 		MappingPath: *mapping,
 		SocketPath:  *socket,
 		SocketGroup: *group,
+		AgentUID:    *agentUID,
 	})
 	app, err := bootstrap.New(
 		bootstrap.WithServiceName("xiaomi-remote-remap"),
