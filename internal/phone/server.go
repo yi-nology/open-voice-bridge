@@ -16,6 +16,7 @@ import (
 	"github.com/oekit/logx"
 
 	"github.com/yi-nology/open-voice-bridge/internal/input"
+	"github.com/yi-nology/open-voice-bridge/web"
 )
 
 var log = logx.Delegating("phone")
@@ -96,6 +97,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/phone/ping", s.handlePing)
 	mux.HandleFunc("/ws/phone", s.handleWS)
 	mux.HandleFunc("/phone", s.handlePhonePage)
+	mux.HandleFunc("/phone/app.js", servePhoneAsset("phone_app.js", "text/javascript; charset=utf-8"))
+	mux.HandleFunc("/phone/worklet.js", servePhoneAsset("phone_worklet.js", "text/javascript; charset=utf-8"))
+	mux.HandleFunc("/phone/app.css", servePhoneAsset("phone.css", "text/css; charset=utf-8"))
 	return mux
 }
 
@@ -199,11 +203,43 @@ func (s *Server) handlePing(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "device_id": deviceID})
 }
 
-// handlePhonePage serves the phone PWA shell. The full remote UI lands with
-// the desktop wiring task; this stub keeps the route live for Phase 1 tests.
+// phoneSecurityHeaders is deliberately NOT the admin UI's policy: that page
+// denies the microphone, this one must allow it for getUserMedia. WebSockets
+// need ws:/wss: spelled out because CSP treats them as separate schemes from
+// the page origin.
+func phoneSecurityHeaders(w http.ResponseWriter) {
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Referrer-Policy", "no-referrer")
+	w.Header().Set("Content-Security-Policy",
+		"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "+
+			"connect-src 'self' ws: wss:; media-src 'self'; worker-src 'self'; "+
+			"frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
+	w.Header().Set("Permissions-Policy", "microphone=(self), camera=(), geolocation=(), display-capture=()")
+	w.Header().Set("Cache-Control", "no-store")
+}
+
+func servePhoneAsset(name, contentType string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		data, err := web.FS.ReadFile(name)
+		if err != nil {
+			http.Error(w, "asset not found", http.StatusNotFound)
+			return
+		}
+		phoneSecurityHeaders(w)
+		w.Header().Set("Content-Type", contentType)
+		w.Write(data)
+	}
+}
+
 func (s *Server) handlePhonePage(w http.ResponseWriter, r *http.Request) {
+	data, err := web.FS.ReadFile("phone.html")
+	if err != nil {
+		http.Error(w, "phone page not found", http.StatusInternalServerError)
+		return
+	}
+	phoneSecurityHeaders(w)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write([]byte(phonePageStub))
+	w.Write(data)
 }
 
 // --- WebSocket key channel -------------------------------------------------
@@ -479,7 +515,3 @@ func bearerToken(r *http.Request) string {
 	}
 	return ""
 }
-
-const phonePageStub = `<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>Open Voice Bridge</title></head>
-<body><p>Phone remote pairing is live. The full remote UI arrives with the desktop input-source wiring.</p></body></html>`

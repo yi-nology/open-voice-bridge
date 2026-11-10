@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b1020">
+<title>Open Voice Bridge 手机遥控</title>
+<link rel="stylesheet" href="/phone/app.css">
+</head>
+<body>
+<header class="bar">
+  <span class="brand">Open Voice Bridge</span>
+  <span id="status" class="status">未连接</span>
+</header>
+
+<section id="pair" class="panel" hidden>
+  <h1>配对桌面端</h1>
+  <p class="hint">在桌面端「设备 → 输入源 → 手机配对」里点「生成配对码」，把 6 位码填进来。扫码或点链接会自动带上。</p>
+  <form id="pair-form" autocomplete="off">
+    <input id="pair-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="6 位配对码" required>
+    <input id="device-name" maxlength="40" placeholder="这台设备的名字（可选）">
+    <button type="submit" class="primary">配对</button>
+  </form>
+  <p id="pair-error" class="error"></p>
+</section>
+
+<section id="remote" class="panel" hidden>
+  <div class="level"><span id="level-bar"></span></div>
+  <p id="transcript" class="transcript" hidden></p>
+  <button id="talk" class="talk" type="button" hidden>按住说话</button>
+
+  <div class="dpad">
+    <button data-key="up" type="button" class="k up">▲</button>
+    <button data-key="left" type="button" class="k left">◀</button>
+    <button data-key="enter" type="button" class="k ok">OK</button>
+    <button data-key="right" type="button" class="k right">▶</button>
+    <button data-key="down" type="button" class="k down">▼</button>
+  </div>
+
+  <div class="row">
+    <button data-key="back" type="button">返回</button>
+    <button data-key="home" type="button">主页</button>
+    <button data-key="menu" type="button">菜单</button>
+  </div>
+  <div class="row">
+    <button data-key="volumedown" type="button">音量 −</button>
+    <button data-key="volumeup" type="button">音量 +</button>
+    <button data-key="power" type="button">电源</button>
+  </div>
+  <p id="device-label" class="sub"></p>
+</section>
+
+<div id="toast" class="toast"></div>
+<script src="/phone/app.js" defer></script>
+</body>
+</html>
