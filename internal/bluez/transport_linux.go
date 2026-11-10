@@ -17,10 +17,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/atvv"
 )
 
-var (
-	ErrUnsupported = oeerrors.New("Bluetooth transport not implemented on this platform")
-	log            = logx.Delegating("bluez")
-)
+var log = logx.Delegating("bluez")
 
 // links is the resolved ATVV characteristic set, built by Connect and published
 // in one assignment so readers never see a half-connected transport.

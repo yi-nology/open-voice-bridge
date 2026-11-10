@@ -1,13 +1,10 @@
-//go:build !linux
+//go:build !linux && !darwin
 
 package bluez
 
 import (
 	"context"
-	oeerrors "github.com/oekit/pkg/errors"
 )
-
-var ErrUnsupported = oeerrors.New("Bluetooth transport not implemented on this platform")
 
 type Transport struct {
 	disconnected chan struct{}

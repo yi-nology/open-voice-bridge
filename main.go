@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
-	"os/user"
 	"path/filepath"
 	"strings"
 	"time"
@@ -467,7 +465,6 @@ func runRemap(args []string, stderr io.Writer) int {
 	mapping := fs.String("mapping", "/etc/xiaomi-remote/mapping.json", "mapping file")
 	socket := fs.String("socket", "/run/xiaomi-remote-helper.sock", "Unix socket")
 	group := fs.Int("group", 1000, "socket group id")
-	agentUID := fs.Int("agent-uid", 0, "uid allowed to run privileged commands besides root (0 = root only)")
 	if _, code := cli.ParseFlags(fs, args); code != cli.ExitOK {
 		return code
 	}
@@ -480,7 +477,6 @@ func runRemap(args []string, stderr io.Writer) int {
 		MappingPath: *mapping,
 		SocketPath:  *socket,
 		SocketGroup: *group,
-		AgentUID:    *agentUID,
 	})
 	app, err := bootstrap.New(
 		bootstrap.WithServiceName("xiaomi-remote-remap"),
@@ -564,63 +560,7 @@ func runDoctor(args []string, stdout, stderr io.Writer) int {
 			}
 		}
 	}
-	doctorCtx, cancelDoctor := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancelDoctor()
-	if helperStatus, err := helper.New(cfg.HelperSocket).Call(doctorCtx, map[string]string{"cmd": "status"}); err != nil {
-		fmt.Fprintln(stdout, "FAIL: remap helper:", err)
-		failures++
-	} else {
-		fmt.Fprintf(stdout, "ok: remap helper (active=%v, remote_present=%v)\n",
-			helperStatus["keyd_active"], helperStatus["remote_present"])
-	}
-	for _, binary := range []string{"pw-cat", "pw-loopback", "xsel", "bluetoothctl"} {
-		if _, err := exec.LookPath(binary); err != nil {
-			fmt.Fprintln(stdout, "FAIL: missing", binary)
-			failures++
-		} else {
-			fmt.Fprintln(stdout, "ok:", binary)
-		}
-	}
-	for _, unit := range []struct {
-		label string
-		args  []string
-	}{
-		{"agent active", []string{"--user", "is-active", "xiaomi-remote-go"}},
-		{"agent autostart", []string{"--user", "is-enabled", "xiaomi-remote-go"}},
-		{"remap active", []string{"is-active", "xiaomi-remote-remap"}},
-		{"remap autostart", []string{"is-enabled", "xiaomi-remote-remap"}},
-	} {
-		out, err := exec.Command("systemctl", unit.args...).Output()
-		state := strings.TrimSpace(string(out))
-		if err != nil {
-			fmt.Fprintf(stdout, "WARN: %s: %s\n", unit.label, state)
-			continue
-		}
-		fmt.Fprintf(stdout, "ok: %s: %s\n", unit.label, state)
-	}
-	if current, err := user.Current(); err == nil {
-		out, err := exec.Command("loginctl", "show-user", current.Username, "-p", "Linger").Output()
-		if err == nil && strings.Contains(string(out), "Linger=yes") {
-			fmt.Fprintln(stdout, "ok: linger enabled (starts before login)")
-		} else {
-			fmt.Fprintln(stdout, "WARN: linger disabled; agent will not start until you log in")
-		}
-	}
-	if info, err := os.Stat("/dev/uinput"); err != nil {
-		fmt.Fprintln(stdout, "WARN: /dev/uinput missing:", err)
-	} else {
-		fmt.Fprintf(stdout, "ok: /dev/uinput (%s)\n", info.Mode())
-	}
-	if os.Getenv("DISPLAY") == "" {
-		fmt.Fprintln(stdout, "WARN: DISPLAY is empty; text injection will fail")
-	} else {
-		fmt.Fprintln(stdout, "ok: DISPLAY", os.Getenv("DISPLAY"))
-	}
-	if hasRemote() {
-		fmt.Fprintln(stdout, "ok: RC003 evdev device present")
-	} else {
-		fmt.Fprintln(stdout, "WARN: RC003 evdev device not found (bluetoothctl connect?)")
-	}
+	failures += doctorHostChecks(stdout, cfg)
 	if failures > 0 {
 		return 1
 	}
@@ -648,8 +588,4 @@ func warnKeyPerms(logger logx.Logger, path string) {
 	if info.Mode().Perm()&0o077 != 0 {
 		logger.Warn("MiMo API key is readable by group/other; chmod 600 recommended", "path", path)
 	}
-}
-
-func hasRemote() bool {
-	return remap.RemotePresent()
 }
