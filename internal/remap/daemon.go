@@ -440,7 +440,7 @@ func (d *Daemon) readLoop(ctx context.Context, fd int, path string) {
 				continue
 			}
 			value := int(event.Value)
-			if value != 0 && value != 1 {
+			if value < 0 || value > 2 {
 				continue
 			}
 			name := SourceName(int(event.Code))
@@ -524,11 +524,21 @@ func (d *Daemon) applyKey(sourceCode int, name string, value int) {
 			return
 		}
 		if codes, ok := MacroTokenCodes(action); ok {
-			if value == 1 {
+			switch value {
+			case 1:
 				for _, code := range codes {
 					d.emit(code, 1)
 				}
-			} else {
+			case 2:
+				// A held key re-executes the chord at the source's repeat
+				// rate (DOM-12): release it, then press again.
+				for index := len(codes) - 1; index >= 0; index-- {
+					d.emit(codes[index], 0)
+				}
+				for _, code := range codes {
+					d.emit(code, 1)
+				}
+			default:
 				for index := len(codes) - 1; index >= 0; index-- {
 					d.emit(codes[index], 0)
 				}
@@ -541,6 +551,18 @@ func (d *Daemon) applyKey(sourceCode int, name string, value int) {
 
 func (d *Daemon) emit(code, value int) {
 	if d.kb == nil {
+		return
+	}
+	if value == 2 {
+		// uinput has no repeat event and the library cannot write one; a
+		// repeat re-taps the key so a held button keeps acting at the
+		// source's repeat rate (DOM-12).
+		if err := d.kb.KeyUp(code); err != nil {
+			log.Warn("uinput release failed", "code", code, "err", err)
+		}
+		if err := d.kb.KeyDown(code); err != nil {
+			log.Warn("uinput emit failed", "code", code, "value", 1, "err", err)
+		}
 		return
 	}
 	var err error

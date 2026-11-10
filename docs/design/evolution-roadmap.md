@@ -32,12 +32,16 @@
 - **CON-07**：手机 HTTP Read/Write/Idle 超时；WS 每读 75s 空闲 deadline（客户端 15s 心跳×5）；服务端 30s ping，无 pong 即断开释放槽位。
 - **DOM-06 / I1**：`input.Preemptable` 接口；`AcquireAudioForce` 锁外通知被抢占源；手机原子停采（竞态-safe）、半句送达链路（DOM-04）、`preempted` 帧告知 UI；双源并发 e2e 测试。
 - **产品增量（SayAll Windows 对标）**：配置导出/导入（校验先行、失败不动盘、旧档 `.bak-时间戳` 备份、`restart_required` 口径）；一键诊断摘要（`GET /api/diagnostics`：版本/平台/ready/status/ASR 检查，MAC 脱敏 + HOME 路径打码）。
+- **DOM-10**：词典替换改字面插入（`$1` 不再被展开）+ 单遍 alternation 匹配，规则不链式叠加。
+- **DOM-11**：keymap 三处（Apply/ApplyKeymapProfile/SaveKeymapProfile）改"先落盘、后动 helper"，保存失败即闭合失败（daemon 不会跑到不存在的配置上）。
+- **DOM-12（半）**：长按 `value==2` 不再丢——键动作重按、宏重执行（按住连续执行）；死字段待产品决策。
+- **DOM-14**：历史 ID 严格唯一（同 tick 不撞车，Delete 不会误删多条）；`rewrite` 落盘补 `Sync`（掉电不再清空历史）；`Agent.SetHub` 上锁（`-race` 实测修复）。
 
 ### 待做顺序（越靠前越漏得多）
 
 1. **SEC-06 剩余半句**：`asr.command.args` 可夹带任意程序（`binary=/bin/sh args=["-c",...]`）——闸门是管理端 origin（已收紧）；若要再加一层：args 白名单或命令模板，交波 1 决定。
 2. **DOM-07**：手机按键通道同步调 helper（10s），卡住时同一连接的 PCM 也停——把按键注入挪出读循环或异步化。
-3. **DOM-09 ~ DOM-14**：输入源身份贯穿字幕与历史、字典替换去正则化、keymap 应用原子化（DOM-11 与导入/备份相邻，可同批）、`device.Profile` 死字段与长按重复、`Pair`/`serveConn`/`asrTimeout` 小硬伤、`SetHub` 与 `history.rewrite` 的可见性与 `Sync`。
+3. **DOM-09、DOM-13 与 DOM-12 残余**：输入源身份贯穿字幕与历史（DOM-09）；`Pair` 不消耗配对码/deviceID 撞车/`serveConn` 退出不关 ws（DOM-13，asrTimeout 半句已被 CON-03 解掉）；`Profile.Keys`/`Voice` 接线或删除（DOM-12 残余）。
 4. **产品增量（SayAll 对标，未做）**：常用语面板、组合动作宏、按键次数统计（需 root helper 计数回传）、按 App 自动切换键位方案（Linux 按 WM_CLASS）。
 5. **波 2（OPS）与波 3（打磨）**：按原清单。
 
@@ -86,11 +90,11 @@
 - [ ] **DOM-07** 手机按键通道同步调 helper（10 s 超时，`internal/phone/server.go:329`、`internal/helper/client.go:28`），卡住时同一连接的 PCM 也停。
 - [x] **DOM-08** `validatePhone` 只在 `Phone.Enabled` 时跑（`internal/config/config.go:488-491`），手机段关掉时任何非法值都能过装载与保存；`normalizePhone` 只填**零值**（`config.go:319-335`），所以负数与超限值会原样落盘。**订正**：原描述里"`maxSamples` 变负、每帧都满"经复核不成立——`NewServer` 已把 `<=0` 夹成 30（`internal/phone/server.go:70-74`），真正的危害是坏配置被静默持久化，等到用户打开手机输入才在启动时炸出错误，而那时他刚接受完"配好了"的引导。动作：无条件校验 + 显式拒绝负数（与 SEC-03 同一条 `validatePhone` 改，测试见 `TestPhoneValidatedEvenWhenDisabled`）。
 - [ ] **DOM-09** 手机句子丢身份：`SourceRef.Kind` 写了却没人读，`main.go:139` 忽略 `meta.Name`/`meta.DeviceID` → 字幕/历史只有 IP；两源上限口径还不同（`config.MaxUtterance` vs `Phone.MaxUtteranceSeconds`），BLE 超限静默截断而手机有 `too_long`（`agent.go:489-496` vs `phone/server.go`）。动作：统一标注与超限语义（I8）。
-- [ ] **DOM-10** 字典替换把 `To` 当正则模板（`internal/text/text.go:93`），含 `$1` 的替换文本会展开成不存在的分组；规则还会链式二次改写。动作：字面替换 + 规则不叠加。
-- [ ] **DOM-11** keymap 应用与落盘不原子：`biz/service/service.go:138-223` 先动 helper 再 `config.Save`，保存可能失败 → 运行中的守护进程对应一份存不出去的配置。
-- [ ] **DOM-12** `internal/device` 的 `Profile.Keys`/`Voice` 是死字段（`internal/device/device.go:26-37`），按型号预置表从未参与优先级；长按重复被丢（`internal/remap/daemon.go:405-407` 跳过 `value==2`）。
+- [x] **DOM-10** 字典替换把 `To` 当正则模板（`internal/text/text.go:93`），含 `$1` 的替换文本会展开成不存在的分组；规则还会链式二次改写。动作：字面替换 + 规则不叠加。
+- [x] **DOM-11** keymap 应用与落盘不原子：`biz/service/service.go:138-223` 先动 helper 再 `config.Save`，保存可能失败 → 运行中的守护进程对应一份存不出去的配置。
+- [ ] **DOM-12**（半完成）长按重复已修（`value==2` 触发重按 / 宏重执行，`daemon_inject_test.go` 覆盖）；剩余：`Profile.Keys`/`Voice` 死字段（`device.go:26-37`，JSON 预置表里有数据但无人读）——接线进按键名解析与音频默认值，还是删除，属产品决策。
 - [ ] **DOM-13** `Store.Pair` 在 `MaxDevices` 拒绝时不消耗配对码（`internal/phone/store.go:199`），也不防 deviceID 撞车（:204）；`serveConn` 退出时不关 ws（`internal/phone/server.go:276-292`）；`asrTimeout` 固定 180 s 而三提供商链可能更久（`pipeline.go:122`）。
-- [ ] **DOM-14** `Agent.SetHub` 裸写 `a.hub`（`internal/agent/agent.go:148`）对上周期的读；`history.rewrite` 改名缺 `Sync`（`internal/history/history.go:154-181`），掉电可清空历史，且 ID 用墙上时钟使 `Delete` 可能删多条。
+- [x] **DOM-14** `Agent.SetHub` 裸写 `a.hub`（`internal/agent/agent.go:148`）对上周期的读；`history.rewrite` 改名缺 `Sync`（`internal/history/history.go:154-181`），掉电可清空历史，且 ID 用墙上时钟使 `Delete` 可能删多条。
 
 ## 波 1 · 架构骨架（§3 依赖规则与 §4 单元）
 

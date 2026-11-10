@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 	"time"
+
+	"github.com/yi-nology/open-voice-bridge/internal/input"
 )
 
 func TestPublishTranscript(t *testing.T) {
@@ -41,4 +43,22 @@ func TestStatusReportsMicHealthAndLatency(t *testing.T) {
 	if agent.Status()["mic_healthy"] != false {
 		t.Fatal("expected unhealthy mic")
 	}
+}
+
+// DOM-14: SetHub may race readers (acquireMic/releaseMic run on the audio
+// path). Meaningful under -race.
+func TestSetHubConcurrentWithMicHooks(t *testing.T) {
+	a := &Agent{}
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for i := 0; i < 200; i++ {
+			a.SetHub(input.NewHub())
+		}
+	}()
+	for i := 0; i < 200; i++ {
+		a.acquireMic()
+		a.releaseMic()
+	}
+	<-done
 }

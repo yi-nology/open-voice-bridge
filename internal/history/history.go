@@ -4,6 +4,7 @@ package history
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
@@ -32,13 +33,16 @@ type Store struct {
 	limit        int
 	entries      []Entry
 	sinceCompact int
+	now          func() time.Time
+	lastStamp    string
+	seq          int
 }
 
 func New(path string, limit int) *Store {
 	if limit <= 0 {
 		limit = 200
 	}
-	store := &Store{path: path, limit: limit}
+	store := &Store{path: path, limit: limit, now: time.Now}
 	store.load()
 	return store
 }
@@ -70,14 +74,30 @@ func (s *Store) load() {
 	}
 }
 
+// nextIDLocked returns a strictly unique entry id (DOM-14): two appends in
+// one clock tick must never collide, because Delete removes every entry
+// carrying the id.
+func (s *Store) nextIDLocked() string {
+	stamp := s.now().Format("20060102-150405.000000000")
+	if stamp == s.lastStamp {
+		s.seq++
+	} else {
+		s.lastStamp, s.seq = stamp, 0
+	}
+	if s.seq == 0 {
+		return stamp
+	}
+	return fmt.Sprintf("%s-%02d", stamp, s.seq)
+}
+
 func (s *Store) Append(entry Entry) error {
+	s.mu.Lock()
 	if entry.ID == "" {
-		entry.ID = time.Now().Format("20060102-150405.000000000")
+		entry.ID = s.nextIDLocked()
 	}
 	if entry.At.IsZero() {
-		entry.At = time.Now()
+		entry.At = s.now()
 	}
-	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.entries = append(s.entries, entry)
 	if len(s.entries) > s.limit {
@@ -172,6 +192,12 @@ func (s *Store) rewrite() error {
 		}
 	}
 	if err := writer.Flush(); err != nil {
+		file.Close()
+		return err
+	}
+	// Without Sync a crash can rename a not-yet-durable tmp over the history
+	// and leave it empty (DOM-14).
+	if err := file.Sync(); err != nil {
 		file.Close()
 		return err
 	}

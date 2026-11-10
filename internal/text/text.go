@@ -24,13 +24,9 @@ type Config struct {
 	Snippets   []Snippet     `json:"snippets"`
 }
 
-type rule struct {
-	re *regexp.Regexp
-	to string
-}
-
 type Rules struct {
-	rules    []rule
+	pattern  *regexp.Regexp
+	repls    map[string]string // lowercased From -> To (literal)
 	snippets map[string]string
 }
 
@@ -63,17 +59,25 @@ func New(cfg Config) (*Rules, error) {
 	for key := range seen {
 		keys = append(keys, key)
 	}
+	// Longest first: at each position the longest entry wins.
 	sort.Slice(keys, func(i, j int) bool { return len(keys[i]) > len(keys[j]) })
-	rules := make([]rule, 0, len(keys))
+	quoted := make([]string, 0, len(keys))
+	repls := make(map[string]string, len(keys))
 	for _, key := range keys {
-		pattern := regexp.MustCompile("(?i)" + regexp.QuoteMeta(key))
-		rules = append(rules, rule{re: pattern, to: seen[key]})
+		quoted = append(quoted, regexp.QuoteMeta(key))
+		repls[strings.ToLower(key)] = seen[key]
+	}
+	// One alternation over all entries, applied in a single pass: every input
+	// span is rewritten exactly once, so rules can never stack (DOM-10).
+	var pattern *regexp.Regexp
+	if len(quoted) > 0 {
+		pattern = regexp.MustCompile("(?i)(" + strings.Join(quoted, "|") + ")")
 	}
 	snippets := map[string]string{}
 	for _, item := range cfg.Snippets {
 		snippets[normalizeTrigger(item.Trigger)] = item.Text
 	}
-	return &Rules{rules: rules, snippets: snippets}, nil
+	return &Rules{pattern: pattern, repls: repls, snippets: snippets}, nil
 }
 
 func (r *Rules) Snippet(input string) (string, bool) {
@@ -84,15 +88,19 @@ func (r *Rules) Snippet(input string) (string, bool) {
 	return value, ok
 }
 
+// Dictionary rewrites the recognised sentence. Replacements are inserted
+// literally — "$1" in a target is the characters, not a capture reference —
+// and each span is rewritten once (DOM-10).
 func (r *Rules) Dictionary(input string) string {
-	if r == nil {
+	if r == nil || r.pattern == nil {
 		return input
 	}
-	out := input
-	for _, item := range r.rules {
-		out = item.re.ReplaceAllString(out, item.to)
-	}
-	return out
+	return r.pattern.ReplaceAllStringFunc(input, func(match string) string {
+		if repl, ok := r.repls[strings.ToLower(match)]; ok {
+			return repl
+		}
+		return match
+	})
 }
 
 func normalizeTrigger(value string) string {

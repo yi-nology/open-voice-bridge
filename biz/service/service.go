@@ -136,10 +136,6 @@ func (s *Service) Status(ctx context.Context) map[string]any {
 }
 
 func (s *Service) Apply(ctx context.Context, mapping map[string]string) (map[string]any, error) {
-	result, err := s.helper.Call(ctx, map[string]any{"cmd": "apply", "mapping": mapping})
-	if err != nil {
-		return result, err
-	}
 	s.cfgMu.Lock()
 	if s.cfg.Keymap.Profiles == nil {
 		s.cfg.Keymap.Profiles = map[string]map[string]string{}
@@ -149,9 +145,12 @@ func (s *Service) Apply(ctx context.Context, mapping map[string]string) (map[str
 	saveErr := config.Save(s.path, s.cfg)
 	s.cfgMu.Unlock()
 	if saveErr != nil {
-		return result, saveErr
+		return nil, saveErr
 	}
-	return result, nil
+	// DOM-11: the helper only hears about a mapping that is already on disk;
+	// a failed save must not leave the daemon running a config that exists
+	// nowhere.
+	return s.helper.Call(ctx, map[string]any{"cmd": "apply", "mapping": mapping})
 }
 
 func (s *Service) Reconnect(ctx context.Context) error { return s.agent.Reconnect() }
@@ -208,18 +207,14 @@ func (s *Service) ApplyKeymapProfile(ctx context.Context, name string) (map[stri
 	if !ok {
 		return nil, oeerrors.Errorf("unknown keymap profile %q", name)
 	}
-	result, err := s.helper.Call(ctx, map[string]any{"cmd": "apply", "mapping": mapping})
-	if err != nil {
-		return result, err
-	}
 	s.cfgMu.Lock()
 	s.cfg.Keymap.Profile = name
 	saveErr := config.Save(s.path, s.cfg)
 	s.cfgMu.Unlock()
 	if saveErr != nil {
-		return result, saveErr
+		return nil, saveErr
 	}
-	return result, nil
+	return s.helper.Call(ctx, map[string]any{"cmd": "apply", "mapping": mapping})
 }
 
 func (s *Service) SaveKeymapProfile(ctx context.Context, name string, mapping map[string]string) (map[string]any, error) {
@@ -234,10 +229,6 @@ func (s *Service) SaveKeymapProfile(ctx context.Context, name string, mapping ma
 	if err := remap.Validate(cleaned); err != nil {
 		return nil, err
 	}
-	result, err := s.helper.Call(ctx, map[string]any{"cmd": "apply", "mapping": cleaned})
-	if err != nil {
-		return result, err
-	}
 	s.cfgMu.Lock()
 	if s.cfg.Keymap.Profiles == nil {
 		s.cfg.Keymap.Profiles = map[string]map[string]string{}
@@ -247,9 +238,9 @@ func (s *Service) SaveKeymapProfile(ctx context.Context, name string, mapping ma
 	saveErr := config.Save(s.path, s.cfg)
 	s.cfgMu.Unlock()
 	if saveErr != nil {
-		return result, saveErr
+		return nil, saveErr
 	}
-	return result, nil
+	return s.helper.Call(ctx, map[string]any{"cmd": "apply", "mapping": cleaned})
 }
 
 func (s *Service) DeleteKeymapProfile(ctx context.Context, name string) error {

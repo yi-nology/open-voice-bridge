@@ -54,6 +54,19 @@ features:
   summary (version/platform/ready/status/ASR checks; MAC addresses redacted,
   home paths scrubbed).
 
+Small correctness fixes (DOM-10/11/12/14):
+
+- Dictionary replacements insert literally — a "$1" in a target stays
+  literal — and rules no longer stack: each input span is rewritten once.
+- Keymap changes save the config before touching the root helper, so a
+  failed save can no longer leave the daemon on a mapping that exists
+  nowhere on disk.
+- A held remote key repeats again (kernel `value=2` events): key actions
+  re-tap at the source's repeat rate and macros re-execute per repeat.
+- History entry ids are unique even within one clock tick (Delete removes
+  exactly one entry), and the rewrite path fsyncs before the rename so a
+  crash cannot leave the history empty. `Agent.SetHub` is mutex-guarded.
+
 Phone as a second input source — Phase 1 (virtual remote control) and
 Phase 2 (phone microphone).
 

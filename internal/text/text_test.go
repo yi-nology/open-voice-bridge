@@ -36,3 +36,30 @@ func TestValidate(t *testing.T) {
 		t.Fatal("empty snippet text should fail")
 	}
 }
+
+// DOM-10: replacements are literal — a "$1" in the target must not be
+// expanded as a regex template — and rules must not stack: the output of one
+// entry is never re-matched by another.
+func TestDictionaryReplacementsAreLiteralAndDoNotStack(t *testing.T) {
+	rules, err := New(Config{Dictionary: []Replacement{
+		{From: "graft", To: "移植物$1"},
+		{From: "price", To: "$5"},
+		{From: "alpha", To: "beta"},
+		{From: "beta", To: "gamma"},
+	}})
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	cases := []struct{ in, want string }{
+		{"a graft here", "a 移植物$1 here"},
+		{"cost is $5? no, price", "cost is $5? no, $5"},
+		{"alpha beta", "beta gamma"}, // alpha→beta is not re-matched to gamma
+		{"ALPHA", "beta"},            // matching stays case-insensitive
+		{"alphaalpha", "betabeta"},   // every occurrence rewrites once
+	}
+	for _, tc := range cases {
+		if got := rules.Dictionary(tc.in); got != tc.want {
+			t.Fatalf("Dictionary(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+}

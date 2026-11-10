@@ -106,3 +106,26 @@ func TestDiagnosticsRedactsAddressAndHome(t *testing.T) {
 		t.Fatalf("version = %v", summary["version"])
 	}
 }
+
+// DOM-11: a keymap change must not reach the root helper before the config
+// saves. Otherwise a failed save leaves the daemon running a mapping that
+// exists nowhere on disk.
+func TestKeymapApplyFailsClosedWhenSaveFails(t *testing.T) {
+	svc := testService(t)
+	helper := svc.helper.(*fakeHelper)
+	// Rename-onto-a-directory makes config.Save fail after validation.
+	svc.path = t.TempDir()
+
+	if _, err := svc.Apply(context.Background(), map[string]string{"up": "up"}); err == nil {
+		t.Fatal("apply must fail when the config cannot be saved")
+	}
+	if applied := helper.appliedSnapshot(); len(applied) != 0 {
+		t.Fatalf("helper updated before the config saved: %v", applied)
+	}
+	if _, err := svc.SaveKeymapProfile(context.Background(), "custom-x", map[string]string{"up": "up"}); err == nil {
+		t.Fatal("save profile must fail when the config cannot be saved")
+	}
+	if applied := helper.appliedSnapshot(); len(applied) != 0 {
+		t.Fatalf("helper updated by SaveKeymapProfile before the config saved: %v", applied)
+	}
+}

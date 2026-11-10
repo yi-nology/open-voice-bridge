@@ -146,7 +146,10 @@ func (a *Agent) Transcripts() <-chan Transcript { return a.transcripts }
 // SetHub registers the BLE remote as an input source. It is safe to leave the
 // hub unset; the agent behaves exactly as before when no hub is provided.
 func (a *Agent) SetHub(hub *input.Hub) {
+	a.mu.Lock()
 	a.hub = hub
+	a.mu.Unlock()
+	// Register outside the lock: the hub calls back into Status (DOM-14).
 	if hub != nil {
 		hub.Register(remoteSource{a})
 	}
@@ -159,23 +162,32 @@ func (a *Agent) audioActive() bool {
 	return len(a.dictation) > 0
 }
 
+// currentHub reads the input hub under the agent lock (DOM-14).
+func (a *Agent) currentHub() *input.Hub {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.hub
+}
+
 // acquireMic claims the microphone for BLE dictation. The remote preempts: a
 // phone that started first must not cost the RC003 an utterance.
 func (a *Agent) acquireMic() {
-	if a.hub == nil {
+	hub := a.currentHub()
+	if hub == nil {
 		return
 	}
-	a.hub.AcquireAudioForce(input.RemoteID)
+	hub.AcquireAudioForce(input.RemoteID)
 }
 
 // releaseMic frees the microphone when the capture closes, before ASR runs: the
 // pipeline already serializes transcription, so holding the claim across it would
 // keep phones at "busy" for the whole recognition window and buy nothing.
 func (a *Agent) releaseMic() {
-	if a.hub == nil {
+	hub := a.currentHub()
+	if hub == nil {
 		return
 	}
-	a.hub.ReleaseAudio(input.RemoteID)
+	hub.ReleaseAudio(input.RemoteID)
 }
 
 func (a *Agent) publishTranscript(transcript Transcript) {

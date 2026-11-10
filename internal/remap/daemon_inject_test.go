@@ -5,9 +5,12 @@ package remap
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 	"testing"
 )
 
@@ -116,5 +119,92 @@ func TestDaemonDeniesUnauthenticatedPeer(t *testing.T) {
 		if resp["ok"] != false || resp["error"] != "denied" {
 			t.Fatalf("unauthenticated %v not denied: %+v", cmd["cmd"], resp)
 		}
+	}
+}
+
+type fakeKeyboard struct {
+	mu     sync.Mutex
+	events []string
+}
+
+func (f *fakeKeyboard) KeyDown(key int) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.events = append(f.events, fmt.Sprintf("down %d", key))
+	return nil
+}
+
+func (f *fakeKeyboard) KeyUp(key int) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.events = append(f.events, fmt.Sprintf("up %d", key))
+	return nil
+}
+
+func (f *fakeKeyboard) KeyPress(key int) error {
+	if err := f.KeyDown(key); err != nil {
+		return err
+	}
+	return f.KeyUp(key)
+}
+
+func (f *fakeKeyboard) FetchSyspath() (string, error) { return "", nil }
+
+func (f *fakeKeyboard) Close() error { return nil }
+
+func (f *fakeKeyboard) snapshot() []string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]string(nil), f.events...)
+}
+
+// DOM-12: the kernel keeps sending value=2 while a key is held. Dropping it
+// meant a held remote key never repeated; repeats re-tap the mapped action at
+// the source's repeat rate.
+func TestApplyKeyRepeatRetriggers(t *testing.T) {
+	kb := &fakeKeyboard{}
+	d := newInjectDaemon()
+	d.kb = kb
+	d.mapping = MergeDefaults(map[string]string{"up": "native", "home": "copy"})
+
+	d.applyKey(1, "up", 1)
+	d.applyKey(1, "up", 2)
+	d.applyKey(1, "up", 2)
+	d.applyKey(1, "up", 0)
+
+	want := []string{"down 1", "up 1", "down 1", "up 1", "down 1", "up 1"}
+	got := kb.snapshot()
+	if len(got) != len(want) {
+		t.Fatalf("events = %v, want %v", got, want)
+	}
+	for index := range want {
+		if got[index] != want[index] {
+			t.Fatalf("events = %v, want %v", got, want)
+		}
+	}
+}
+
+// A held macro re-executes (release chord, press chord) on each repeat.
+func TestApplyKeyRepeatRetriggersMacro(t *testing.T) {
+	kb := &fakeKeyboard{}
+	d := newInjectDaemon()
+	d.kb = kb
+	d.mapping = MergeDefaults(map[string]string{"home": "macro(leftctrl+c)"})
+
+	d.applyKey(2, "home", 1)
+	d.applyKey(2, "home", 2)
+
+	events := kb.snapshot()
+	downs := 0
+	for _, item := range events {
+		if strings.HasPrefix(item, "down ") {
+			downs++
+		}
+	}
+	if downs != 4 { // two keys, played twice
+		t.Fatalf("macro repeat events = %v, want the chord played twice", events)
+	}
+	if !strings.HasPrefix(events[len(events)-1], "down ") {
+		t.Fatalf("repeat should leave the chord pressed, got %v", events)
 	}
 }

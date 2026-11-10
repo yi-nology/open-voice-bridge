@@ -55,3 +55,32 @@ func TestDeleteAndClear(t *testing.T) {
 		t.Fatal("persisted clear failed")
 	}
 }
+
+// DOM-14: entry ids must be unique even inside one clock tick — Delete
+// removes every entry carrying the id.
+func TestHistoryIDsAreUniqueWithinOneTick(t *testing.T) {
+	store := New("", 10)
+	frozen := time.Unix(1_700_000_000, 0)
+	store.now = func() time.Time { return frozen }
+
+	if err := store.Append(Entry{Text: "one"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Append(Entry{Text: "two"}); err != nil {
+		t.Fatal(err)
+	}
+	entries := store.List(0)
+	if len(entries) != 2 {
+		t.Fatalf("entries = %d", len(entries))
+	}
+	if entries[0].ID == entries[1].ID {
+		t.Fatalf("ids collide in one tick: %q", entries[0].ID)
+	}
+	// List is newest-first: entries[0] is "two", entries[1] is "one".
+	if err := store.Delete(entries[0].ID); err != nil {
+		t.Fatal(err)
+	}
+	if remaining := store.List(0); len(remaining) != 1 || remaining[0].Text != "one" {
+		t.Fatalf("delete must remove exactly one entry, left %+v", remaining)
+	}
+}
