@@ -24,8 +24,15 @@ jobs:
         run: test -z "$(gofmt -l .)"
       - name: Vet
         run: go vet -tags stdjson ./...
-      - name: Test
-        run: go test -tags stdjson ./...
+      - name: Test (race + coverage)
+        run: go test -tags stdjson -race -coverprofile=coverage.out -covermode=atomic ./...
+      - name: Coverage summary
+        run: go tool cover -func=coverage.out | tail -1
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.out
       - name: Build
         run: go build -tags stdjson ./...
 

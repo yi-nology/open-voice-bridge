@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.1 — 2026-11-10
+
+Maintenance and quality baseline.
+
+- Release automation: tag-triggered GitHub Release with linux amd64/arm64
+  binaries, SHA-256 checksums and changelog-derived notes.
+- Community baseline: issue forms, pull request template and Dependabot
+  (Go modules + GitHub Actions, weekly).
+- CI hardening: race detector and atomic coverage on the Linux test job,
+  with a coverage artifact.
+- Core tests: helper Unix-socket protocol (fake server), paste empty/Wayland
+  paths, F24 watcher construction, and an `agent.finalize` regression suite
+  driven by a fake ASR engine (dictionary, snippets, no-speech, short audio,
+  errors and empty text).
+
 ## 0.1.0 — 2026-11-10
 
 Initial public release.

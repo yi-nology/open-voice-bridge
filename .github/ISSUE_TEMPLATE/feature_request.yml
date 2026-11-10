@@ -1,0 +1,27 @@
+name: Feature request
+description: Suggest an improvement or new capability
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What user need or pain point does this address?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What you would like to happen. Sketches and examples welcome.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: markdown
+    attributes:
+      value: |
+        Note: the admin UI stays loopback-only and the project is Linux-first.
+        See the README roadmap and `docs/design/` for already-planned work.

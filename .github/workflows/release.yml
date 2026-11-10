@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release (e.g. v0.1.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+jobs:
+  build:
+    name: Build (${{ matrix.goarch }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        goarch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Build and package
+        env:
+          CGO_ENABLED: "0"
+          GOOS: linux
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          version="${TAG#v}"
+          name="open-voice-bridge_${version}_linux_${{ matrix.goarch }}"
+          mkdir -p "dist/$name"
+          go build -tags stdjson -trimpath \
+            -ldflags "-s -w -X main.version=$version" \
+            -o "dist/$name/xiaomi-remote" .
+          cp README.md LICENSE CHANGELOG.md "dist/$name/"
+          cp conf/config.example.json "dist/$name/"
+          tar -czf "dist/${name}.tar.gz" -C dist "$name"
+          (cd dist && sha256sum "${name}.tar.gz" > "${name}.tar.gz.sha256")
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.goarch }}
+          path: dist/*.tar.gz*
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Extract changelog section
+        run: |
+          version="${TAG#v}"
+          awk -v hdr="## $version" 'index($0,hdr)==1{f=1;print;next} f&&/^## /{exit} f{print}' \
+            CHANGELOG.md > notes.md
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -s notes.md ]; then
+            gh release create "$TAG" dist/* \
+              --title "Open Voice Bridge $TAG" \
+              --notes-file notes.md \
+              --verify-tag
+          else
+            gh release create "$TAG" dist/* \
+              --title "Open Voice Bridge $TAG" \
+              --generate-notes \
+              --verify-tag
+          fi
