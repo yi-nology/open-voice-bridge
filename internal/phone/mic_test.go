@@ -342,11 +342,12 @@ func TestPhoneSecondStartIsRejectedNotSilentlyRestarted(t *testing.T) {
 // CON-07: a phone that stops talking AND stops heartbeating must not hold a
 // client slot forever. The read loop carries an idle deadline.
 func TestIdlePhoneConnectionExpires(t *testing.T) {
-	old := wsIdleTimeout
-	wsIdleTimeout = 300 * time.Millisecond
-	t.Cleanup(func() { wsIdleTimeout = old })
-
-	e := newTestEnv(t, ServerConfig{Transcriber: &fakeTranscriber{ok: true}, MaxUtteranceSeconds: 30, MaxClients: 4})
+	e := newTestEnv(t, ServerConfig{
+		Transcriber:         &fakeTranscriber{ok: true},
+		MaxUtteranceSeconds: 30,
+		MaxClients:          4,
+		WSIdleTimeout:       300 * time.Millisecond,
+	})
 	conn, _ := dialPhone(t, e, "Pixel")
 	_ = conn // stay connected but silent: no control messages at all
 

@@ -22,13 +22,14 @@ import (
 var log = logx.Delegating("phone")
 
 // WebSocket liveness (CON-07). The phone page heartbeats every 15 s, so a
-// connection silent for longer than wsIdleTimeout is dead or wedged and must
-// free its slot; the server ping keeps NAT mappings warm and notices peers
-// that stop ponging. Tests shorten these.
-var (
-	wsIdleTimeout  = 75 * time.Second
-	wsPingInterval = 30 * time.Second
-	wsPingTimeout  = 10 * time.Second
+// connection silent for longer than the idle timeout is dead or wedged and
+// must free its slot; the server ping keeps NAT mappings warm and notices
+// peers that stop ponging. The timeouts live on the Server (not package
+// globals) so one instance's test tuning can never race another's read loop.
+const (
+	defaultWSIdleTimeout  = 75 * time.Second
+	defaultWSPingInterval = 30 * time.Second
+	defaultWSPingTimeout  = 10 * time.Second
 )
 
 // ServerConfig tunes the standalone phone listener. It is separate from the
@@ -42,22 +43,28 @@ type ServerConfig struct {
 	// MaxQueuedUtterances bounds the in-flight transcription backlog; 0 falls
 	// back to maxQueuedUtterances (SEC-08).
 	MaxQueuedUtterances int
-	Transcriber         Transcriber
+	// WSIdleTimeout bounds how long a silent connection may hold its client
+	// slot; 0 falls back to defaultWSIdleTimeout. Tests shorten it.
+	WSIdleTimeout time.Duration
+	Transcriber   Transcriber
 }
 
 // Server serves the phone pairing endpoints, the WebSocket key channel and, in
 // later phases, the microphone stream. It only accepts paired devices and
 // enforces same-origin WebSocket handshakes.
 type Server struct {
-	store       *Store
-	injector    *KeyInjector
-	hub         *input.Hub
-	certs       *CertificateManager
-	cfg         ServerConfig
-	transcriber Transcriber
-	maxSamples  int
-	queue       *utteranceQueue
-	srv         *http.Server
+	store        *Store
+	injector     *KeyInjector
+	hub          *input.Hub
+	certs        *CertificateManager
+	cfg          ServerConfig
+	transcriber  Transcriber
+	maxSamples   int
+	queue        *utteranceQueue
+	srv          *http.Server
+	idleTimeout  time.Duration
+	pingInterval time.Duration
+	pingTimeout  time.Duration
 
 	mu     sync.Mutex
 	conns  map[string]*activeConn
@@ -87,15 +94,21 @@ func NewServer(store *Store, injector *KeyInjector, hub *input.Hub, cfg ServerCo
 		maxUtterance = 30
 	}
 	s := &Server{
-		store:       store,
-		injector:    injector,
-		hub:         hub,
-		cfg:         cfg,
-		transcriber: cfg.Transcriber,
-		maxSamples:  maxUtterance * sampleRate,
-		queue:       newUtteranceQueue(cfg.MaxQueuedUtterances),
-		conns:       map[string]*activeConn{},
-		closed:      make(chan struct{}),
+		store:        store,
+		injector:     injector,
+		hub:          hub,
+		cfg:          cfg,
+		transcriber:  cfg.Transcriber,
+		maxSamples:   maxUtterance * sampleRate,
+		queue:        newUtteranceQueue(cfg.MaxQueuedUtterances),
+		idleTimeout:  cfg.WSIdleTimeout,
+		pingInterval: defaultWSPingInterval,
+		pingTimeout:  defaultWSPingTimeout,
+		conns:        map[string]*activeConn{},
+		closed:       make(chan struct{}),
+	}
+	if s.idleTimeout <= 0 {
+		s.idleTimeout = defaultWSIdleTimeout
 	}
 	if cfg.TLSMode == "auto" && cfg.CertDir != "" {
 		s.certs = NewCertificateManager(cfg.CertDir)
@@ -313,7 +326,7 @@ func (s *Server) serveConn(ctx context.Context, conn *websocket.Conn, active *ac
 		// Each read carries an idle deadline (CON-07): a phone that stops
 		// heartbeating must not hold its slot forever. Cancellation closes
 		// the connection, which ends this loop and unregisters the source.
-		readCtx, cancel := context.WithTimeout(ctx, wsIdleTimeout)
+		readCtx, cancel := context.WithTimeout(ctx, s.idleTimeout)
 		typ, data, err := conn.Read(readCtx)
 		cancel()
 		if err != nil {
@@ -332,7 +345,7 @@ func (s *Server) serveConn(ctx context.Context, conn *websocket.Conn, active *ac
 // fails to earn a pong closes the connection so the read loop (and the client
 // slot) is released.
 func (s *Server) pingLoop(ctx context.Context, conn *websocket.Conn, done <-chan struct{}) {
-	ticker := time.NewTicker(wsPingInterval)
+	ticker := time.NewTicker(s.pingInterval)
 	defer ticker.Stop()
 	for {
 		select {
@@ -341,7 +354,7 @@ func (s *Server) pingLoop(ctx context.Context, conn *websocket.Conn, done <-chan
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			pingCtx, cancel := context.WithTimeout(ctx, wsPingTimeout)
+			pingCtx, cancel := context.WithTimeout(ctx, s.pingTimeout)
 			err := conn.Ping(pingCtx)
 			cancel()
 			if err != nil {
@@ -445,11 +458,9 @@ func (s *Server) handleStart(ctx context.Context, active *activeConn, msg contro
 // never requested.
 func (s *Server) handleAudio(ctx context.Context, active *activeConn, data []byte) {
 	if !active.source.isSpeaking() {
-		log.Info("DBG audio dropped not speaking", "device", active.deviceID, "bytes", len(data))
 		return
 	}
 	ok, full := active.buffer.append(data)
-	log.Info("DBG audio appended", "device", active.deviceID, "bytes", len(data), "count", active.buffer.count())
 	if !ok {
 		active.send(ctx, errorFrame("bad_frame", "malformed pcm frame"))
 		return
@@ -566,9 +577,7 @@ func (s *Server) register(deviceID string, ws *websocket.Conn, name, ip string) 
 	// The samples are taken synchronously with the flag flip so a racing
 	// "end" cannot wipe them; only the notice goes off-thread.
 	active.source.onPreempt = func() {
-		before := active.buffer.count()
 		samples := active.buffer.take()
-		log.Info("DBG preempt hook", "device", active.deviceID, "samples", len(samples), "count_before", before)
 		async.GoSafe(func() { s.preempted(active, samples) })
 	}
 	s.conns[deviceID] = active
