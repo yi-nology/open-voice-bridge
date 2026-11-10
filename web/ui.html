@@ -2476,23 +2476,28 @@ async function deleteHistory(id) {
   await loadHistory();
 }
 
-function setListening(active) {
+function setListening(active, source, name) {
+  let label = "等待语音";
+  if (active) {
+    const who = name || (source ? (source === "phone" ? "手机" : "遥控器") : "");
+    label = who ? who + " · 正在聆听…" : "正在聆听…";
+  }
   const node = document.getElementById("subtitle-live");
   if (node) {
     node.classList.toggle("listening", !!active);
-    const label = node.querySelector("span");
-    if (label) label.textContent = active ? "正在聆听…" : "等待语音";
+    const text = node.querySelector("span");
+    if (text) text.textContent = label;
   }
   document.body.classList.toggle("listening", !!active);
   if (lastStatus) {
     setChip("chip-mic",
-      active ? "正在聆听…" : (lastStatus.mic_active ? "语音就绪" : "语音未运行"),
+      active ? label : (lastStatus.mic_active ? "语音就绪" : "语音未运行"),
       active ? "warn" : (lastStatus.mic_active ? "good" : "bad"));
   }
   const state = document.getElementById("guided-state");
   if (state) {
     if (active) {
-      state.textContent = "正在聆听…";
+      state.textContent = label;
     } else if (lastStatus) {
       const ready = lastStatus.remote_present && lastStatus.keyd_active && lastStatus.mic_active && !lastStatus.asr_error;
       state.textContent = ready ? "已就绪" : "待检查";
@@ -2636,7 +2641,7 @@ function connectEvents() {
         setTimeout(() => highlight(data.key, false), 150);
       }
     } else if (data.event === "listening") {
-      setListening(data.active);
+      setListening(data.active, data.source, data.source_name);
     } else if (data.event === "transcript") {
       addSubtitle(data.text, data.at);
       setTimeout(loadOverviewRecent, 500);

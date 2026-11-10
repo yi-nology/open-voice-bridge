@@ -2,12 +2,13 @@
 
 ## Unreleased
 
-Phone as a second input source — Phase 1 (virtual remote control).
+Phone as a second input source — Phase 1 (virtual remote control) and
+Phase 2 (phone microphone).
 
 - Input abstraction (`internal/input`): a source Hub over the BLE遥控器,
   wrapped without behavior change, ready to also carry phone sources.
-- `SpeechPipeline` extracted in `internal/agent` so keys and future phone
-  audio share one ASR / rewrite / paste / history path.
+- `SpeechPipeline` extracted in `internal/agent` so the remote's keys, its own
+  dictation and phone audio share one ASR / rewrite / paste / history path.
 - Phone pairing (`internal/phone`): 6-digit code → 256-bit token (stored as
   SHA-256, returned once) → 60-second one-time WebSocket ticket; self-signed
   ECDSA TLS with LAN-covering SANs; an independent `0.0.0.0:8788` listener
@@ -20,8 +21,23 @@ Phone as a second input source — Phase 1 (virtual remote control).
 - Admin UI + endpoints: 输入源 panel with a live source list, pairing code
   and countdown, a pairing link (`#pair` fragment only, never in query or
   logs), and paired-device revoke. Admin stays on `127.0.0.1:8787`.
-
-Phone microphone is deferred to Phase 2.
+- Phone microphone (Phase 2): a paired phone browser can now hold-to-talk.
+  AudioWorklet capture, a main-thread 16 kHz mono Int16 resampler and 20 ms
+  WebSocket frames feed the same speech chain as the BLE remote, so phone
+  dictation gets the same ASR provider, text rules, LLM rewrite, desktop paste,
+  subtitle stream and history as the remote. Microphone ownership is
+  arbitrated by the input hub over the capture window only: phones are mutually
+  exclusive, the BLE remote preempts so RC003 audio is never dropped, a
+  disconnect releases, and release happens before ASR so a phone is never held
+  busy through a recognition it cannot use.
+- The phone page is now the real PWA (pairing, D-pad, hold-to-talk, level
+  meter, transcript, reconnect with backoff) served on its own strict CSP that
+  permits the microphone, unlike the admin UI that denies it.
+- Desktop subtitles name the speaking source: the listening pill and mic chip
+  read "客厅手机 · 正在聆听…" for a phone and "遥控器 · 正在聆听…" for the
+  remote, driven by one hub state stream instead of a remote-only channel.
+- Deferred to Phase 3: pairing QR image, phone metrics and audit counters,
+  rate-limit hardening.
 
 ## 0.1.1 — 2026-11-10
 
