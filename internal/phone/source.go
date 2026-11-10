@@ -20,6 +20,7 @@ type Source struct {
 	connected bool
 	speaking  bool
 	lastSeen  time.Time
+	onPreempt func() // set by the server; delivers the partial + notice (I1)
 }
 
 func newSource(deviceID, name, address string) *Source {
@@ -74,4 +75,18 @@ func (s *Source) disconnect() {
 	s.connected = false
 	s.speaking = false
 	s.mu.Unlock()
+}
+
+// Preempt stops a hold-to-talk capture because a stronger source claimed the
+// microphone (I1). The flag flips synchronously so stray frames stop landing;
+// the server's hook then delivers what was spoken and notifies the phone.
+func (s *Source) Preempt() {
+	s.mu.Lock()
+	wasSpeaking := s.speaking
+	s.speaking = false
+	hook := s.onPreempt
+	s.mu.Unlock()
+	if wasSpeaking && hook != nil {
+		hook()
+	}
 }

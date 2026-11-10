@@ -551,7 +551,11 @@ func (a *Agent) closeCapture() {
 func (a *Agent) finalize() { a.runSpeech(a.takeDictation(), a.currentSampleRate()) }
 
 func (a *Agent) runSpeech(samples []int16, rate int) {
-	a.pipeline.Transcribe(Utterance{
+	ctx := a.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	a.pipeline.Transcribe(ctx, Utterance{
 		Samples:    samples,
 		SampleRate: rate,
 		Ref:        SourceRef{Kind: string(input.KindRemote), Address: a.currentAddress()},
@@ -594,7 +598,14 @@ func (a *Agent) RestartAudio(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if err := sink.Start(ctx); err != nil {
+	// The sink's processes and watchdog live on the agent's lifetime context,
+	// not on this request's (CON-05): a restarted sink must survive the HTTP
+	// call that asked for it.
+	lifeCtx := a.ctx
+	if lifeCtx == nil {
+		lifeCtx = context.Background()
+	}
+	if err := sink.Start(lifeCtx); err != nil {
 		return err
 	}
 	a.audioMu.Lock()

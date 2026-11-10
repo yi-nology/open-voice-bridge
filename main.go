@@ -133,8 +133,8 @@ type phoneSpeech struct {
 	pipeline *agent.SpeechPipeline
 }
 
-func (s phoneSpeech) TranscribeUtterance(_ context.Context, samples []int16, meta phone.UtteranceMeta) (phone.UtteranceResult, bool) {
-	transcript, ok := s.pipeline.Transcribe(agent.Utterance{
+func (s phoneSpeech) TranscribeUtterance(ctx context.Context, samples []int16, meta phone.UtteranceMeta) (phone.UtteranceResult, bool) {
+	transcript, ok := s.pipeline.Transcribe(ctx, agent.Utterance{
 		Samples:    samples,
 		SampleRate: meta.SampleRate,
 		Ref: agent.SourceRef{
@@ -320,14 +320,25 @@ func runAgent(args []string, stderr io.Writer) int {
 			DeleteHistory:       func(_ context.Context, id string) error { return historyStore.Delete(id) },
 			ClearHistory:        func(context.Context) error { return historyStore.Clear() },
 			Stats:               func() history.UsageStats { return statsStore.Snapshot() },
-			Devices:             svc.Devices,
-			DiscoverDevices:     svc.DiscoverDevices,
-			SelectDevice:        svc.SelectDevice,
-			SetDeviceEnabled:    svc.SetDeviceEnabled,
-			SaveDevice:          svc.SaveDevice,
-			DeleteDevice:        svc.DeleteDevice,
-			ConnectDevice:       svc.ConnectDevice,
-			Ready:               svc.Ready,
+			ExportConfig:        svc.ExportConfig,
+			ImportConfig:        svc.ImportConfig,
+			Diagnostics:         func(ctx context.Context) map[string]any { return svc.Diagnostics(ctx, version) },
+			SnapshotState: func() map[string]any {
+				owner := inputHub.AudioOwner()
+				active, source, name := speakingLabel(
+					input.AudioState{Speaking: owner != "", Owner: owner}, inputHub.Sources())
+				return map[string]any{
+					"listening": map[string]any{"active": active, "source": source, "source_name": name},
+				}
+			},
+			Devices:          svc.Devices,
+			DiscoverDevices:  svc.DiscoverDevices,
+			SelectDevice:     svc.SelectDevice,
+			SetDeviceEnabled: svc.SetDeviceEnabled,
+			SaveDevice:       svc.SaveDevice,
+			DeleteDevice:     svc.DeleteDevice,
+			ConnectDevice:    svc.ConnectDevice,
+			Ready:            svc.Ready,
 			Inputs: func(context.Context) map[string]any {
 				return map[string]any{"enabled": phoneEnabled, "sources": inputHub.Sources()}
 			},

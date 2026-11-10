@@ -338,3 +338,83 @@ func TestPhoneSecondStartIsRejectedNotSilentlyRestarted(t *testing.T) {
 		t.Fatalf("end = %v, want the mic closing", frame)
 	}
 }
+
+// CON-07: a phone that stops talking AND stops heartbeating must not hold a
+// client slot forever. The read loop carries an idle deadline.
+func TestIdlePhoneConnectionExpires(t *testing.T) {
+	old := wsIdleTimeout
+	wsIdleTimeout = 300 * time.Millisecond
+	t.Cleanup(func() { wsIdleTimeout = old })
+
+	e := newTestEnv(t, ServerConfig{Transcriber: &fakeTranscriber{ok: true}, MaxUtteranceSeconds: 30, MaxClients: 4})
+	conn, _ := dialPhone(t, e, "Pixel")
+	_ = conn // stay connected but silent: no control messages at all
+
+	waitFor(t, func() bool { return len(e.server.ConnectedDevices()) == 0 },
+		"idle phone connection should expire and free its slot")
+}
+
+// DOM-06 / I1: when the BLE remote force-claims the microphone, the phone
+// must be told, must stop capturing at once, and the words already spoken
+// still reach the shared chain (DOM-04).
+func TestRemotePreemptionStopsPhoneCapture(t *testing.T) {
+	transcriber := &fakeTranscriber{ok: true, result: UtteranceResult{Text: "半句", At: time.Now()}}
+	e := newTestEnv(t, ServerConfig{Transcriber: transcriber, MaxUtteranceSeconds: 30, MaxClients: 4})
+	conn, ctx := dialPhone(t, e, "Pixel")
+
+	sendJSON(t, ctx, conn, map[string]any{"type": "start", "format": "pcm16", "rate": 16000, "channels": 1})
+	if frame := readMessage(t, ctx, conn); frame["type"] != "listening" || frame["active"] != true {
+		t.Fatalf("start = %v", frame)
+	}
+	if err := conn.Write(ctx, websocket.MessageBinary, pcmFrame(320)); err != nil {
+		t.Fatal(err)
+	}
+	// Frames on one connection are processed in order: once the ping is
+	// answered, the audio frame is in the buffer and preemption cannot race
+	// ahead of it.
+	expectQuiet(t, ctx, conn)
+
+	// The remote's claim wins — exactly how the agent claims for RC003 audio.
+	e.hub.AcquireAudioForce(input.RemoteID)
+
+	sawListening, sawPreempted := false, false
+	for deadline := time.Now().Add(3 * time.Second); time.Now().Before(deadline) && !(sawListening && sawPreempted); {
+		frame := readMessage(t, ctx, conn)
+		if frame["type"] == "listening" && frame["active"] == false {
+			sawListening = true
+		}
+		if frame["type"] == "error" && frame["code"] == "preempted" {
+			sawPreempted = true
+		}
+	}
+	if !sawListening || !sawPreempted {
+		t.Fatalf("preemption notice missing: listening=%v preempted=%v", sawListening, sawPreempted)
+	}
+
+	// Capture stopped: this stray frame must not join any later utterance.
+	if err := conn.Write(ctx, websocket.MessageBinary, pcmFrame(320)); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, func() bool { return len(transcriber.snapshot()) == 1 }, "partial utterance should reach the chain")
+	if got := transcriber.snapshot()[0].samples; got != 320 {
+		t.Fatalf("partial samples = %d, want the 320 spoken before preemption", got)
+	}
+	if owner := e.hub.AudioOwner(); owner != input.RemoteID {
+		t.Fatalf("owner = %q, want the remote to keep the microphone", owner)
+	}
+
+	// Once the remote releases, a fresh utterance starts from a clean buffer.
+	e.hub.ReleaseAudio(input.RemoteID)
+	sendJSON(t, ctx, conn, map[string]any{"type": "start", "format": "pcm16", "rate": 16000, "channels": 1})
+	if frame := readMessage(t, ctx, conn); frame["type"] != "listening" || frame["active"] != true {
+		t.Fatalf("second start = %v", frame)
+	}
+	if err := conn.Write(ctx, websocket.MessageBinary, pcmFrame(320)); err != nil {
+		t.Fatal(err)
+	}
+	sendJSON(t, ctx, conn, map[string]any{"type": "end"})
+	waitFor(t, func() bool { return len(transcriber.snapshot()) == 2 }, "second utterance should reach the chain")
+	if got := transcriber.snapshot()[1].samples; got != 320 {
+		t.Fatalf("second samples = %d, want 320 (stray frame survived)", got)
+	}
+}

@@ -52,6 +52,14 @@ type Source interface {
 	Status() Status
 }
 
+// Preemptable is an optional Source capability (I1): when a stronger claim
+// steals the microphone, the hub calls Preempt and the source must stop
+// capturing at once. It runs outside the hub lock and must not call back into
+// the hub synchronously.
+type Preemptable interface {
+	Preempt()
+}
+
 // AudioState is one microphone-ownership transition.
 type AudioState struct {
 	Owner    string `json:"owner"`
@@ -119,15 +127,28 @@ func (h *Hub) AcquireAudio(id string) bool {
 
 // AcquireAudioForce takes the microphone regardless of the current owner. The
 // BLE remote uses it so dictation is never dropped because a phone started
-// speaking first; RC003 audio is the primary path and always wins.
+// speaking first; RC003 audio is the primary path and always wins. The
+// preempted source is told to stop capturing (I1).
 func (h *Hub) AcquireAudioForce(id string) {
 	h.mu.Lock()
-	defer h.mu.Unlock()
 	if h.audioOwner == id {
+		h.mu.Unlock()
 		return
 	}
+	prev := h.audioOwner
 	h.audioOwner = id
 	h.notifyLocked()
+	var stolen Source
+	if prev != "" {
+		stolen = h.sources[prev]
+	}
+	h.mu.Unlock()
+	// The preemption notice may talk to sockets; never under the hub lock (R8).
+	if stolen != nil {
+		if p, ok := stolen.(Preemptable); ok {
+			p.Preempt()
+		}
+	}
 }
 
 // ReleaseAudio frees the microphone if id currently owns it.

@@ -86,7 +86,10 @@ func (c *Client) StartCapture(ctx context.Context) (*Capture, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := conn.SetWriteDeadline(time.Now().Add(c.Timeout)); err != nil {
+	// The handshake (request + first response) is bounded; the deadline is
+	// cleared before the event stream starts, which is meant to be long-lived
+	// (CON-02).
+	if err := conn.SetDeadline(time.Now().Add(c.Timeout)); err != nil {
 		conn.Close()
 		return nil, err
 	}
@@ -108,6 +111,10 @@ func (c *Client) StartCapture(ctx context.Context) (*Capture, error) {
 	if ok, _ := first["ok"].(bool); !ok {
 		conn.Close()
 		return nil, oeerrors.Errorf("capture start failed: %v", first["error"])
+	}
+	if err := conn.SetDeadline(time.Time{}); err != nil {
+		conn.Close()
+		return nil, err
 	}
 	capture := &Capture{
 		conn:   conn,

@@ -185,3 +185,27 @@ func TestStartCaptureStreamsEvents(t *testing.T) {
 		t.Fatalf("Stop: %v", err)
 	}
 }
+
+// CON-02: the capture handshake must not read forever. A helper that accepts
+// and then goes silent used to wedge the caller (holding the admin mutex)
+// until process exit.
+func TestStartCaptureTimesOutOnSilentHelper(t *testing.T) {
+	path := serveUnix(t, func(net.Conn) {
+		time.Sleep(10 * time.Second) // accept, then say nothing
+	})
+	c := New(path)
+	c.Timeout = 200 * time.Millisecond
+	done := make(chan error, 1)
+	go func() {
+		_, err := c.StartCapture(context.Background())
+		done <- err
+	}()
+	select {
+	case err := <-done:
+		if err == nil {
+			t.Fatal("silent helper must not yield a capture session")
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("StartCapture hung on a silent helper: handshake read has no deadline")
+	}
+}

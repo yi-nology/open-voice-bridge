@@ -59,6 +59,10 @@ type Deps struct {
 	ConnectDevice       func(context.Context, string, bool) error
 	Ready               func(context.Context) map[string]any
 	Inputs              func(context.Context) map[string]any
+	SnapshotState       func() map[string]any
+	ExportConfig        func() ([]byte, error)
+	ImportConfig        func([]byte) error
+	Diagnostics         func(context.Context) map[string]any
 	PhonePairing        func(context.Context) map[string]any
 	PhoneDevices        func(context.Context) map[string]any
 	PhoneRevoke         func(context.Context, string) map[string]any
@@ -66,15 +70,17 @@ type Deps struct {
 }
 
 type sseClient struct {
-	ch chan map[string]any
+	ch      chan map[string]any
+	dropped int // events lost to a full buffer (I4)
 }
 
 type Server struct {
-	deps    Deps
-	helper  *helper.Client
-	mu      sync.Mutex
-	clients map[*sseClient]struct{}
-	capture *helper.Capture
+	deps            Deps
+	helper          *helper.Client
+	mu              sync.Mutex
+	clients         map[*sseClient]struct{}
+	capture         *helper.Capture
+	captureStarting bool
 }
 
 func New(deps Deps) *Server {
@@ -180,9 +186,7 @@ func (s *Server) Root(ctx context.Context, c *app.RequestContext) {
 
 func (s *Server) Events(ctx context.Context, c *app.RequestContext) {
 	client := &sseClient{ch: make(chan map[string]any, 16)}
-	s.mu.Lock()
-	s.clients[client] = struct{}{}
-	s.mu.Unlock()
+	snapshot := s.registerClient(client)
 	defer func() {
 		s.mu.Lock()
 		delete(s.clients, client)
@@ -196,6 +200,11 @@ func (s *Server) Events(ctx context.Context, c *app.RequestContext) {
 		}
 	}()
 	if err := stream.WriteComment("hello"); err != nil {
+		return
+	}
+	// I4: the first real frame is a state snapshot, so a fresh or returning
+	// page cannot be out of sync with the listening pill and capture UI.
+	if err := stream.Send("", snapshot); err != nil {
 		return
 	}
 	ticker := time.NewTicker(15 * time.Second)
@@ -216,14 +225,52 @@ func (s *Server) Events(ctx context.Context, c *app.RequestContext) {
 	}
 }
 
+// registerClient adds a subscriber and returns the snapshot it must receive
+// first (I4).
+func (s *Server) registerClient(client *sseClient) map[string]any {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.clients[client] = struct{}{}
+	snap := map[string]any{
+		"event":     "snapshot",
+		"capturing": s.capture != nil,
+	}
+	if s.deps.SnapshotState != nil {
+		for key, value := range s.deps.SnapshotState() {
+			snap[key] = value
+		}
+	}
+	return snap
+}
+
+// enqueue pushes without blocking. When the buffer is full it drops the
+// oldest event so the newest survive, and reports how many were dropped (I4).
+func enqueue(ch chan map[string]any, event map[string]any) int {
+	dropped := 0
+	for {
+		select {
+		case ch <- event:
+			return dropped
+		default:
+		}
+		select {
+		case <-ch:
+			dropped++
+		default:
+			// A concurrent reader emptied the buffer between the selects;
+			// this event is lost too.
+			return dropped + 1
+		}
+	}
+}
+
 func (s *Server) broadcast(event map[string]any) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for client := range s.clients {
-		select {
-		case client.ch <- event:
-		default:
-			// Slow client: drop this event rather than blocking the agent.
+		if lost := enqueue(client.ch, event); lost > 0 {
+			client.dropped += lost
+			enqueue(client.ch, map[string]any{"event": "stream_gap", "dropped": client.dropped})
 		}
 	}
 }
@@ -253,11 +300,17 @@ func (s *Server) relayCapture(capture *helper.Capture) {
 
 func (s *Server) startCapture(ctx context.Context) (string, error) {
 	s.mu.Lock()
-	if s.capture != nil {
+	if s.capture != nil || s.captureStarting {
 		s.mu.Unlock()
 		return "", errCaptureRunning
 	}
+	s.captureStarting = true
+	s.mu.Unlock()
+	// The helper round-trip runs outside s.mu (CON-02): a slow or wedged
+	// helper must not freeze broadcast, every SSE client, or shutdown.
 	capture, err := s.helper.StartCapture(ctx)
+	s.mu.Lock()
+	s.captureStarting = false
 	if err != nil {
 		s.mu.Unlock()
 		return "", err

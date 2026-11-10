@@ -12,23 +12,34 @@
 
 工作方式已固定，不需要重新商量：**一条缺陷一个提交，TDD 先写失败测试**（失败输出留作证据，实现后同批转绿），每步跑三件套，一个批次做完再推远端。
 
-### 已完成（2026-11-11 批次，全部带回归测试）
+### 已完成（2026-11-11 两批，全部带回归测试）
 
-- **SEC-03 + SEC-04 + DOM-08**：`validatePhone` 无条件校验（负数/超限/坏 tls 立即报错，不再等启用才炸）；`tls: off` 只允许回环地址，错误文案点名两种解法；自签证书去 CA 化（叶子证书、`KeyUsage=DigitalSignature`）、寿命降为一年、`stillValid` 增加 30 天续期余量；文档信任口径改为"只接受一次例外，不要装成根"。
-- **SEC-01**：helper socket 每条连接取 `SO_PEERCRED`，`apply`/`set_devices`/`capture_*`/`status` 只允许 root 或 `--agent-uid`，仅 `inject` 对组内开放；判定是纯函数（`internal/remap/auth.go`）；unit 模板与 Makefile 传 `--agent-uid @UID@ --group @GID@`。
-- **SEC-06**：管理端 POST 必须有同源证据（I9：空 `Origin` 不算同源，除非 `Sec-Fetch-Site: same-origin`）；`asr.command`/`whispercpp` 的 binary 过守卫（绝对路径或 PATH 解析、普通文件、可执行位、非组/其他可写、属主 root 或本人），doctor 诊断直接显示守卫拒绝原因。
-- **SEC-07 + SEC-08**：`Store` 预鉴权表过期清扫（ticket/ip 窗口/配对码）+ 条目上限（ticket 256 / ip 窗口 512，超限逐最旧淘汰）；手机转写改有界 FIFO 队列（默认 4，可配 `MaxQueuedUtterances`），按采集顺序消费（DOM-04 遗留的乱序问题一并解决），满则 `busy`（开录前也拒绝，避免说了白说）。
-- **CON-08**：`Pair`/`Revoke`/`Rename` 的落盘挪出 `s.mu`（快照在锁内、写盘在 `persistMu` 下），FIFO 回归测试证明慢盘不再冻结 `Authenticate`。
-- 顺手修掉 macOS 上跑不齐测试的两处平台问题：`parseModalias` 移出 `_linux` 文件；helper 测试 socket 路径改短（sun_path 104 限制）。
-- **产品增量（SayAll 对标）**：「使用统计」落地——`usage-stats.json` 独立累计（次数/字数/语音时长/最长单次/按日，180 天窗口），`Transcript` 带 `Duration`，`GET /api/stats` 只回数字不回内容，概览页 KPI 卡 + 14 天柱状图（空态/有数均真机验证）。
+批次一（SEC/DOM + 使用统计）：
+
+- **SEC-03 + SEC-04 + DOM-08**：`validatePhone` 无条件校验；`tls: off` 只允许回环；自签证书去 CA 化、一年寿命、30 天续期余量；文档信任口径改"只接受一次例外"。
+- **SEC-01**：helper socket 逐连接 `SO_PEERCRED`；`apply`/`set_devices`/`capture_*`/`status` 限 root 与 `--agent-uid`，仅 `inject` 对组内开放；unit/Makefile 传 `--agent-uid @UID@ --group @GID@`。
+- **SEC-06**：管理端 POST 必须有同源证据（I9）；`asr.command`/`whispercpp` binary 守卫（属主/可执行位/防篡改）。
+- **SEC-07 + SEC-08**：预鉴权表清扫+上限；手机转写有界 FIFO 队列按采集序消费（DOM-04 乱序一并解决），满则 `busy`。
+- **CON-08**：`Pair`/`Revoke`/`Rename` 落盘挪出 `s.mu`（快照+`persistMu` 串行写）。
+- **产品增量**：「使用统计」（`usage-stats.json` 累计 + `GET /api/stats` + 概览 KPI/14 天柱状图）。
+
+批次二（CON 并发生命周期 + 产品增量）：
+
+- **CON-02**：helper `StartCapture` 握手加 deadline（流式读保留无限期）；UI `startCapture` 的 helper 调用挪出 `s.mu`（`captureStarting` 防并发），慢 helper 不再冻结 broadcast/优雅关闭。
+- **CON-03**：`SpeechPipeline.Transcribe(ctx, u)` 传递调用方 ctx；`budgetFor` 按音频长度定超时（20s+8×时长，封顶 `asrTimeout`）；`runSpeech` 用 agent 生命周期 ctx，手机队列 worker 带生命周期 ctx。
+- **CON-04 + CON-05**：pw-cat stdin 写带 5s deadline（超时回收 player 再试一次，失败弃帧）；sink `Close` 停 watchdog（`stop` 通道）；`RestartAudio` 用 agent 生命周期 ctx 而非请求 ctx。
+- **CON-06**：SSE 建连先发 `snapshot`（capturing + listening 状态）；缓冲满丢最旧并计数，发 `stream_gap` 让 UI 自愈（I4）。
+- **CON-07**：手机 HTTP Read/Write/Idle 超时；WS 每读 75s 空闲 deadline（客户端 15s 心跳×5）；服务端 30s ping，无 pong 即断开释放槽位。
+- **DOM-06 / I1**：`input.Preemptable` 接口；`AcquireAudioForce` 锁外通知被抢占源；手机原子停采（竞态-safe）、半句送达链路（DOM-04）、`preempted` 帧告知 UI；双源并发 e2e 测试。
+- **产品增量（SayAll Windows 对标）**：配置导出/导入（校验先行、失败不动盘、旧档 `.bak-时间戳` 备份、`restart_required` 口径）；一键诊断摘要（`GET /api/diagnostics`：版本/平台/ready/status/ASR 检查，MAC 脱敏 + HOME 路径打码）。
 
 ### 待做顺序（越靠前越漏得多）
 
-1. **SEC-06 剩余半句**：`asr.command.args` 同样可执行任意程序（`binary=/bin/sh args=["-c",...]`）——binary 守卫挡不住这个，真正的闸门是管理端 origin（已收紧）。若要再加一层：args 白名单或命令模板，交由波 1 决定。
-2. **CON-02/03/04/05/07**：一律是"把阻塞 IO 挪出锁 + 给每个外部调用配 deadline"（管理端 helper 调用、ASR 窗口持锁 + `context.Background()`、pw-cat 写 stdin、PipeWire watcher 泄漏、手机 WS 无读写/idle 超时）。CON-06：SSE 建连即发状态快照（I4）。
-3. **DOM-06**：抢占要通知被抢占方并停其采集（I1），配双源并发端到端测试。
-4. **DOM-09 ~ DOM-14**：输入源身份贯穿字幕与历史、字典替换去正则化、keymap 应用原子化、`device.Profile` 死字段与长按重复、`Pair`/`serveConn`/`asrTimeout` 小硬伤、`SetHub` 与 `history.rewrite` 的可见性与 `Sync`。
-5. **产品增量（SayAll 对标，未做）**：配置导出/导入（版本化 JSON、导入前校验并备份旧配置）、一键诊断摘要（脱敏 JSON 随 issue 提交）、常用语面板、按键次数统计（需要 root helper 计数回传）。
+1. **SEC-06 剩余半句**：`asr.command.args` 可夹带任意程序（`binary=/bin/sh args=["-c",...]`）——闸门是管理端 origin（已收紧）；若要再加一层：args 白名单或命令模板，交波 1 决定。
+2. **DOM-07**：手机按键通道同步调 helper（10s），卡住时同一连接的 PCM 也停——把按键注入挪出读循环或异步化。
+3. **DOM-09 ~ DOM-14**：输入源身份贯穿字幕与历史、字典替换去正则化、keymap 应用原子化（DOM-11 与导入/备份相邻，可同批）、`device.Profile` 死字段与长按重复、`Pair`/`serveConn`/`asrTimeout` 小硬伤、`SetHub` 与 `history.rewrite` 的可见性与 `Sync`。
+4. **产品增量（SayAll 对标，未做）**：常用语面板、组合动作宏、按键次数统计（需 root helper 计数回传）、按 App 自动切换键位方案（Linux 按 WM_CLASS）。
+5. **波 2（OPS）与波 3（打磨）**：按原清单。
 
 硬门禁（不要为了赶进度绕过）：
 
@@ -60,14 +71,14 @@
 - [x] **DOM-03** 重复 `EventAudioStart`（丢了 stop 的真实情形，`protocol.go:268-270`）在 `handleControl` 里没有 case → 既不重置缓冲也不改归属，两句合成一句。动作：dup 时重置缓冲、保留归属（I2）。**已做**：`case atvv.EventAudioStartDup` 只 `closeCapture()`（排空上一句、不释放麦克风归属），新采集从空缓冲开始；`TestDuplicateStartClosesTheOpenCapture` 覆盖归属仍在 + 后续 stop 不再产出空句子。
 - [x] **DOM-04** 任一源断开都会丢掉正在录的音频：`markDisconnected`（`internal/agent/agent.go:414-425`）与手机断链（`internal/phone/server.go:462-477`）只释放麦克风、不取缓冲。动作：先 finalize 再释放（I5）。**已做**：遥控器侧 `markDisconnected` 先 `closeCapture()` 再 `releaseMic()`，并只在 `a.ctx` 仍活着时排空（退出时不把字打给正在关的桌面）；手机侧 `unregister` 在锁内只做一次 `buffer.take()` 拷贝、锁外异步转写（R8），结果不再回写已死的 socket。**同批发现**：排空改成异步后，两句并发在飞的句子到达 ASR 的先后不再确定（`p.mu` 谁先抢到谁先走，`internal/agent/pipeline.go:56`）——桌面字幕与历史会偶发调换顺序，收进 SEC-08 的有界在途队列一起解；测试侧已按"集合"而非"顺序"断言（`capture_test.go` 的 `collect/pick`）。
 - [x] **DOM-05** 设备可控的 `FrameSize` 未校验：`protocol.go:262` 取 16 位字段（最大 65535），`FrameAccumulator.Append`（:200-213）会为了凑齐一帧永远缓冲 → 静默丢全部音频。动作：上限 + 超限重同步。**已做**：`atvv.MaxFrameSize = 4096`——`ParseCaps` 把 0 或超限的设备值退回 `DefaultFrame`，`FrameAccumulator` 拒绝以不可用帧长启动，并在输入长度超过上限时丢弃待定字节重新同步（`Dropped()` 计数可观测）。
-- [ ] **DOM-06** 仲裁只是"开门检查"不是串行：`AcquireAudioForce`（`internal/input/hub.go:123`）抢走 owner 后手机的 `speaking` 仍为真，继续缓冲并在 BLE 之后并发转写（`internal/phone/server.go:366,396-405`），且被抢占方收不到通知。动作：抢占要通知到客户端并停其采集（I1）。**验证**：双源并发端到端测试
+- [x] **DOM-06** 仲裁只是"开门检查"不是串行：`AcquireAudioForce`（`internal/input/hub.go:123`）抢走 owner 后手机的 `speaking` 仍为真，继续缓冲并在 BLE 之后并发转写（`internal/phone/server.go:366,396-405`），且被抢占方收不到通知。动作：抢占要通知到客户端并停其采集（I1）。**验证**：双源并发端到端测试
 - [x] **CON-01** `bluez` transport 的回调与关闭不安全：`Connect` 在 :126 就起了分发协程，`Subscribe` 到 :190-191 才裸写 `onAudio/onControl`（读点 :264/:267）；`Close` 用 `select` 而非已有的 `closeOnce` 关 `done`（:283-289）→ CI `-race` 命中面 + 双重 close panic 风险（`agent.Close` 对上 `connectLoop`）。动作：回调读写上锁、`done` 走 `closeOnce`。**同批发现并修复**：`Close` 与 `Connect` 并发时 D-Bus 句柄字段也无同步（改由 `publish` 单点安装，且关闭后拒绝安装）；`Subscribe`/`WriteTX` 在未连接时对 nil 接口发起调用（改为返回错误）。
-- [ ] **CON-02** 管理端在 `s.mu` 里同步调 root helper，而 helper 客户端无读超时（`biz/handler/ui/server.go:238`、`internal/helper/client.go:98`）→ 卡住 `broadcast`（:197-207）并拖垮优雅关闭。动作：调用挪到锁外 + 加 deadline（I3/R8）。
-- [ ] **CON-03** 转写链在整个 ASR 窗口持 `p.mu` 且用 `context.Background()`+180 s（`internal/agent/pipeline.go:56-64`；手机侧同样 `phone/server.go:414-415`）→ 手机句子排在 BLE 后面且 SIGINT 救不回。动作：调用方 ctx 传入、超时按音频长度给（I3）。
-- [ ] **CON-04** `pw-cat` 写 stdin 无截止且持 `p.mu`（`internal/audio/pipewire_linux.go:214`）→ `handleAudio` 停摆、256 槽 D-Bus 通道填满、godbus 无界起 `deferredDeliver`。动作：带 deadline 的写 + 失败即弃。
-- [ ] **CON-05** PipeWire watcher 泄漏：`watchOnce` 绑在 Start 的 ctx 上（:56），`RestartAudio` 只关 sink（`internal/agent/agent.go:524-532`），而 `check` 在已关闭时返回 true（:97-99）→ 每 15 s 永久 fork 一次 `pw-dump`。动作：重启时取消 watcher。
-- [ ] **CON-06** 用户可见事件静默可丢且无快照：`transcripts` 环 16 非阻塞丢（`agent.go:180-186`）、SSE 客户端环 16 丢（`server.go:201-205`）、SSE 建连时不发状态快照（:159-195）→ 丢一条 `listening` 药丸就永久错位。动作：建连即快照（I4）。
-- [ ] **CON-07** 手机 HTTP 只设了 `ReadHeaderTimeout`（`internal/phone/server.go:88`），WS `Read` 无 deadline（:281）→ slow-loris 与 4 个槽位被赖住；优雅关闭被吃掉 5 s（10 s 预算）。动作：读写/idle 超时 + 服务端 ping。
+- [x] **CON-02** 管理端在 `s.mu` 里同步调 root helper，而 helper 客户端无读超时（`biz/handler/ui/server.go:238`、`internal/helper/client.go:98`）→ 卡住 `broadcast`（:197-207）并拖垮优雅关闭。动作：调用挪到锁外 + 加 deadline（I3/R8）。
+- [x] **CON-03** 转写链在整个 ASR 窗口持 `p.mu` 且用 `context.Background()`+180 s（`internal/agent/pipeline.go:56-64`；手机侧同样 `phone/server.go:414-415`）→ 手机句子排在 BLE 后面且 SIGINT 救不回。动作：调用方 ctx 传入、超时按音频长度给（I3）。
+- [x] **CON-04** `pw-cat` 写 stdin 无截止且持 `p.mu`（`internal/audio/pipewire_linux.go:214`）→ `handleAudio` 停摆、256 槽 D-Bus 通道填满、godbus 无界起 `deferredDeliver`。动作：带 deadline 的写 + 失败即弃。
+- [x] **CON-05** PipeWire watcher 泄漏：`watchOnce` 绑在 Start 的 ctx 上（:56），`RestartAudio` 只关 sink（`internal/agent/agent.go:524-532`），而 `check` 在已关闭时返回 true（:97-99）→ 每 15 s 永久 fork 一次 `pw-dump`。动作：重启时取消 watcher。
+- [x] **CON-06** 用户可见事件静默可丢且无快照：`transcripts` 环 16 非阻塞丢（`agent.go:180-186`）、SSE 客户端环 16 丢（`server.go:201-205`）、SSE 建连时不发状态快照（:159-195）→ 丢一条 `listening` 药丸就永久错位。动作：建连即快照（I4）。
+- [x] **CON-07** 手机 HTTP 只设了 `ReadHeaderTimeout`（`internal/phone/server.go:88`），WS `Read` 无 deadline（:281）→ slow-loris 与 4 个槽位被赖住；优雅关闭被吃掉 5 s（10 s 预算）。动作：读写/idle 超时 + 服务端 ping。
 - [x] **CON-08** `store.persistLocked` 在 `store.mu` 里落盘（`internal/phone/store.go:215,318,170-173`）→ 阻塞 `Authenticate`。动作：IO 挪出锁（R8）。
 
 ### 波 0 附带的小硬伤（同批清）

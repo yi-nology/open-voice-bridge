@@ -30,6 +30,30 @@ Security, correctness and product work from the wave-0 audit handover
 - Tests run green on macOS again: `parseModalias` is platform-neutral and the
   helper socket tests use short paths (macOS `sun_path` limit).
 
+Concurrency and lifecycle fixes (CON-02…CON-07) and two more SayAll-inspired
+features:
+
+- CON-02/CON-03: helper capture handshakes are deadline-bounded and run
+  outside the admin mutex, and the transcription chain carries the caller's
+  context with an audio-length-scaled budget instead of a fixed 180 s on
+  `context.Background()`.
+- CON-04/CON-05: pw-cat writes are deadline-bounded (a wedged player is
+  recycled instead of stalling the audio path), closing a sink stops its
+  watchdog, and a restarted sink lives on the agent's lifetime context rather
+  than the HTTP request that asked for it.
+- CON-06: the SSE stream opens with a state snapshot (capture + listening) and
+  a full buffer drops the oldest events with a visible `stream_gap` instead of
+  dropping silently (I4).
+- CON-07: the phone listener gets full HTTP read/write/idle timeouts, a WS
+  read idle deadline and a server ping; a silent peer frees its slot.
+- DOM-06: preemption now stops the losing source. The hub calls `Preempt` on
+  the stolen claim, the phone is notified (`preempted`), and its half-spoken
+  utterance still reaches the chain in capture order (I1).
+- New: configuration export/import (validate-first, timestamped backup of the
+  previous file, restart to apply) and a one-click redacted diagnostics
+  summary (version/platform/ready/status/ASR checks; MAC addresses redacted,
+  home paths scrubbed).
+
 Phone as a second input source — Phase 1 (virtual remote control) and
 Phase 2 (phone microphone).
 

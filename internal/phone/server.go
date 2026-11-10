@@ -21,6 +21,16 @@ import (
 
 var log = logx.Delegating("phone")
 
+// WebSocket liveness (CON-07). The phone page heartbeats every 15 s, so a
+// connection silent for longer than wsIdleTimeout is dead or wedged and must
+// free its slot; the server ping keeps NAT mappings warm and notices peers
+// that stop ponging. Tests shorten these.
+var (
+	wsIdleTimeout  = 75 * time.Second
+	wsPingInterval = 30 * time.Second
+	wsPingTimeout  = 10 * time.Second
+)
+
 // ServerConfig tunes the standalone phone listener. It is separate from the
 // loopback management UI so a LAN exposure never inherits admin middleware.
 type ServerConfig struct {
@@ -93,7 +103,13 @@ func NewServer(store *Store, injector *KeyInjector, hub *input.Hub, cfg ServerCo
 	if cfg.Transcriber != nil {
 		async.GoSafe(s.runTranscriptionQueue)
 	}
-	s.srv = &http.Server{Handler: s.Handler(), ReadHeaderTimeout: 10 * time.Second}
+	s.srv = &http.Server{
+		Handler:           s.Handler(),
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       2 * time.Minute,
+	}
 	return s
 }
 
@@ -287,8 +303,19 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) serveConn(ctx context.Context, conn *websocket.Conn, active *activeConn) {
+	// Server-side heartbeat (CON-07): keeps NATs warm and closes peers that
+	// stop ponging even while the read side is idle.
+	pingDone := make(chan struct{})
+	defer close(pingDone)
+	async.GoSafe(func() { s.pingLoop(ctx, conn, pingDone) })
+
 	for {
-		typ, data, err := conn.Read(ctx)
+		// Each read carries an idle deadline (CON-07): a phone that stops
+		// heartbeating must not hold its slot forever. Cancellation closes
+		// the connection, which ends this loop and unregisters the source.
+		readCtx, cancel := context.WithTimeout(ctx, wsIdleTimeout)
+		typ, data, err := conn.Read(readCtx)
+		cancel()
 		if err != nil {
 			return
 		}
@@ -297,6 +324,30 @@ func (s *Server) serveConn(ctx context.Context, conn *websocket.Conn, active *ac
 			s.handleControl(ctx, active, data)
 		case websocket.MessageBinary:
 			s.handleAudio(ctx, active, data)
+		}
+	}
+}
+
+// pingLoop sends protocol-level pings until the session ends. A ping that
+// fails to earn a pong closes the connection so the read loop (and the client
+// slot) is released.
+func (s *Server) pingLoop(ctx context.Context, conn *websocket.Conn, done <-chan struct{}) {
+	ticker := time.NewTicker(wsPingInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-done:
+			return
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			pingCtx, cancel := context.WithTimeout(ctx, wsPingTimeout)
+			err := conn.Ping(pingCtx)
+			cancel()
+			if err != nil {
+				conn.CloseNow()
+				return
+			}
 		}
 	}
 }
@@ -394,9 +445,11 @@ func (s *Server) handleStart(ctx context.Context, active *activeConn, msg contro
 // never requested.
 func (s *Server) handleAudio(ctx context.Context, active *activeConn, data []byte) {
 	if !active.source.isSpeaking() {
+		log.Info("DBG audio dropped not speaking", "device", active.deviceID, "bytes", len(data))
 		return
 	}
 	ok, full := active.buffer.append(data)
+	log.Info("DBG audio appended", "device", active.deviceID, "bytes", len(data), "count", active.buffer.count())
 	if !ok {
 		active.send(ctx, errorFrame("bad_frame", "malformed pcm frame"))
 		return
@@ -411,9 +464,25 @@ func (s *Server) handleAudio(ctx context.Context, active *activeConn, data []byt
 // samples to the bounded transcription queue, so a slow provider never stops
 // the phone from pressing keys and two sentences can never reach ASR swapped
 // (SEC-08).
+// preempted handles losing the microphone to a stronger source (DOM-06): the
+// phone is told so its UI stops showing "listening", and the words already
+// spoken still reach the chain (DOM-04), marked as cut short.
+func (s *Server) preempted(active *activeConn, samples []int16) {
+	sendCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	active.send(sendCtx, map[string]any{"type": "listening", "active": false})
+	active.send(sendCtx, errorFrame("preempted", "another source took the microphone"))
+	if len(samples) == 0 || s.transcriber == nil {
+		return
+	}
+	s.queue.offer(utteranceJob{samples: samples, meta: utteranceMeta(active), truncated: true})
+}
+
 func (s *Server) finishUtterance(ctx context.Context, active *activeConn, truncated bool) {
 	if !active.source.isSpeaking() {
-		active.buffer.reset()
+		// Preempted or double "end": the capture is already owned elsewhere.
+		// No reset here — the buffer may hold the samples a preemption is
+		// about to deliver, and handleStart always starts clean.
 		return
 	}
 	samples := active.buffer.take()
@@ -435,20 +504,23 @@ func (s *Server) finishUtterance(ctx context.Context, active *activeConn, trunca
 
 // runTranscriptionQueue drains finished utterances in capture order. It is the
 // only caller of the transcriber for phone audio, which is what makes the
-// subtitles and history keep the order the words were spoken in.
+// subtitles and history keep the order the words were spoken in. Jobs run with
+// a worker-lifetime context so shutdown can cut an in-flight request (CON-03).
 func (s *Server) runTranscriptionQueue() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	for {
 		select {
 		case <-s.closed:
 			return
 		case job := <-s.queue.ch:
-			s.processUtterance(job)
+			s.processUtterance(ctx, job)
 		}
 	}
 }
 
-func (s *Server) processUtterance(job utteranceJob) {
-	result, ok := s.transcriber.TranscribeUtterance(context.Background(), job.samples, job.meta)
+func (s *Server) processUtterance(ctx context.Context, job utteranceJob) {
+	result, ok := s.transcriber.TranscribeUtterance(ctx, job.samples, job.meta)
 	if job.notify == nil {
 		return
 	}
@@ -489,6 +561,15 @@ func (s *Server) register(deviceID string, ws *websocket.Conn, name, ip string) 
 		ws:       ws,
 		source:   newSource(deviceID, name, ip),
 		buffer:   newUtteranceBuffer(s.maxSamples),
+	}
+	// DOM-06: the hub calls Preempt when the remote steals the microphone.
+	// The samples are taken synchronously with the flag flip so a racing
+	// "end" cannot wipe them; only the notice goes off-thread.
+	active.source.onPreempt = func() {
+		before := active.buffer.count()
+		samples := active.buffer.take()
+		log.Info("DBG preempt hook", "device", active.deviceID, "samples", len(samples), "count_before", before)
+		async.GoSafe(func() { s.preempted(active, samples) })
 	}
 	s.conns[deviceID] = active
 	if s.hub != nil {

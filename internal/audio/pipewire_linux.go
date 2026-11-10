@@ -32,12 +32,13 @@ type pipeWireSink struct {
 	closed    bool
 	closeOnce sync.Once
 	watchOnce sync.Once
+	stop      chan struct{} // closed by Close; ends the watchdog (CON-05)
 	pcm       bytes.Buffer
 	healthy   atomic.Bool
 }
 
 func newSink(cfg Config) (Sink, error) {
-	return &pipeWireSink{cfg: cfg}, nil
+	return &pipeWireSink{cfg: cfg, stop: make(chan struct{})}, nil
 }
 
 func (p *pipeWireSink) Name() string { return "PipeWire " + p.cfg.SourceName }
@@ -84,6 +85,8 @@ func (p *pipeWireSink) watch(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			return
+		case <-p.stop:
 			return
 		case <-time.After(delay):
 		}
@@ -188,6 +191,30 @@ func (p *pipeWireSink) ensurePlayerLocked(ctx context.Context) error {
 	return nil
 }
 
+// playerWriteTimeout bounds one pw-cat stdin write (CON-04). Frames are small
+// (one 20 ms slice), so a write that has not completed by now means the pipe
+// stopped draining; waiting longer only stalls the whole audio path while the
+// sink lock is held.
+const playerWriteTimeout = 5 * time.Second
+
+// writeBoundedLocked writes to pw-cat's stdin with a deadline. It must run
+// with p.mu held; on timeout the caller recycles the player, which also
+// unblocks the abandoned goroutine (the pipe closes under it).
+func (p *pipeWireSink) writeBoundedLocked(data []byte) error {
+	stdin := p.stdin
+	done := make(chan error, 1)
+	go func() {
+		_, err := stdin.Write(data)
+		done <- err
+	}()
+	select {
+	case err := <-done:
+		return err
+	case <-time.After(playerWriteTimeout):
+		return oeerrors.Errorf("pw-cat stdin write timed out after %s", playerWriteTimeout)
+	}
+}
+
 func (p *pipeWireSink) Write(samples []int16) error {
 	if len(samples) == 0 {
 		return nil
@@ -211,14 +238,15 @@ func (p *pipeWireSink) Write(samples []int16) error {
 		binary.LittleEndian.PutUint16(raw[:], uint16(sample))
 		p.pcm.Write(raw[:])
 	}
-	if _, err := p.stdin.Write(p.pcm.Bytes()); err != nil {
-		// The player died; drop the old process and retry once.
+	if err := p.writeBoundedLocked(p.pcm.Bytes()); err != nil {
+		// The player is dead or wedged: recycle it and try once more through
+		// the same bounded write, then drop the frame rather than block.
+		log.Warn("pw-cat write failed; recycling player", "err", err)
 		p.dropPlayerLocked()
 		if err := p.ensurePlayerLocked(sinkCtx); err != nil {
 			return err
 		}
-		_, err = p.stdin.Write(p.pcm.Bytes())
-		return err
+		return p.writeBoundedLocked(p.pcm.Bytes())
 	}
 	return nil
 }
@@ -244,6 +272,9 @@ func (p *pipeWireSink) dropPlayerLocked() {
 func (p *pipeWireSink) Close(ctx context.Context) error {
 	var closeErr error
 	p.closeOnce.Do(func() {
+		if p.stop != nil {
+			close(p.stop) // end the watchdog (CON-05)
+		}
 		p.mu.Lock()
 		defer p.mu.Unlock()
 		if p.closed {

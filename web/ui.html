@@ -1060,6 +1060,19 @@
       </div>
       <div class="stats-days" id="stats-days" title="最近 14 天语音时长"></div>
     </div>
+
+    <div class="panel" id="maintenance-panel" style="margin-top:14px;">
+      <div class="panel-head">
+        <div><h3>配置备份与诊断</h3><p>导出的配置只含文件路径，不含密钥内容；诊断摘要不含设备地址与个人路径</p></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn small" id="config-export">导出配置</button>
+        <button class="btn small" id="config-import">导入配置…</button>
+        <input type="file" id="config-import-file" accept="application/json,.json" hidden>
+        <button class="btn small" id="diagnostics-download">生成诊断摘要</button>
+      </div>
+      <div class="sub" id="maintenance-msg" style="margin-top:8px;"></div>
+    </div>
     </div>
 
     <div id="cfg-asr" class="cfg-panel">
@@ -2630,6 +2643,64 @@ async function loadStats() {
   }
 }
 
+function maintenanceMsg(text, kind) {
+  const el = document.getElementById("maintenance-msg");
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = kind === "err" ? "var(--red)" : "var(--muted)";
+}
+
+function downloadJSON(res, filename) {
+  return res.blob().then(blob => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+}
+
+const configExportBtn = document.getElementById("config-export");
+if (configExportBtn) configExportBtn.addEventListener("click", async () => {
+  try {
+    const res = await fetch("/api/config/export");
+    if (!res.ok) return maintenanceMsg("导出失败（" + res.status + "）", "err");
+    await downloadJSON(res, "xiaomi-remote-config.json");
+    maintenanceMsg("配置已导出。", "ok");
+  } catch (error) {
+    maintenanceMsg("导出失败：" + error, "err");
+  }
+});
+const configImportBtn = document.getElementById("config-import");
+const configImportFile = document.getElementById("config-import-file");
+if (configImportBtn && configImportFile) {
+  configImportBtn.addEventListener("click", () => configImportFile.click());
+  configImportFile.addEventListener("change", async (event) => {
+    const file = event.target.files[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      const res = await fetch("/api/config/import", { method: "POST", headers: { "Content-Type": "application/json" }, body: await file.text() });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return maintenanceMsg("导入失败：" + (data.error || res.status), "err");
+      maintenanceMsg("导入成功，重启服务后生效。", "ok");
+    } catch (error) {
+      maintenanceMsg("导入失败：" + error, "err");
+    }
+  });
+}
+const diagnosticsBtn = document.getElementById("diagnostics-download");
+if (diagnosticsBtn) diagnosticsBtn.addEventListener("click", async () => {
+  try {
+    const res = await fetch("/api/diagnostics");
+    if (!res.ok) return maintenanceMsg("生成失败（" + res.status + "）", "err");
+    await downloadJSON(res, "xiaomi-remote-diagnostics.json");
+    maintenanceMsg("诊断摘要已下载，可随问题反馈一起提交。", "ok");
+  } catch (error) {
+    maintenanceMsg("生成失败：" + error, "err");
+  }
+});
+
 function renderStatsDays(days) {
   const host = document.getElementById("stats-days");
   if (!host) return;
@@ -2730,6 +2801,12 @@ function connectEvents() {
       }
     } else if (data.event === "listening") {
       setListening(data.active, data.source, data.source_name);
+    } else if (data.event === "snapshot") {
+      setCaptureUi(!!data.capturing);
+      if (data.listening) setListening(!!data.listening.active, data.listening.source, data.listening.source_name);
+    } else if (data.event === "stream_gap") {
+      // Events were dropped to keep the stream live; resync (I4).
+      loadStatus(false);
     } else if (data.event === "transcript") {
       addSubtitle(data.text, data.at);
       setTimeout(loadOverviewRecent, 500);

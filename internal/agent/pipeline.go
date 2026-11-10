@@ -51,10 +51,11 @@ func (u Utterance) MinSamples() int { return u.Rate() / 4 }
 // phone sources call Transcribe directly, so the two paths can never diverge.
 //
 // Live collaborators are read through accessors, letting ASR/LLM/rule switches
-// take effect without rebuilding the pipeline. Transcribe serialises engine
-// calls so two sources never share one request.
+// take effect without rebuilding the pipeline. Collaborator closures are
+// expected to be safe for concurrent use; the pipeline itself serialises only
+// the desktop paste, never the ASR request (CON-03).
 type SpeechPipeline struct {
-	mu           sync.Mutex
+	pasteMu      sync.Mutex
 	engine       func() asr.Engine
 	rules        func() *text.Rules
 	processor    func() llm.Processor
@@ -64,10 +65,30 @@ type SpeechPipeline struct {
 	asrTimeout   time.Duration
 }
 
+// budgetFor scales the ASR deadline with the captured audio: a one-second tap
+// must not inherit the whole long-dictation window, and a hung provider must
+// not hold the serial chain that long (CON-03). asrTimeout is the hard cap.
+func (p *SpeechPipeline) budgetFor(u Utterance) time.Duration {
+	rate := u.Rate()
+	audio := time.Duration(len(u.Samples)) * time.Second / time.Duration(rate)
+	budget := 20*time.Second + 8*audio
+	if budget > p.asrTimeout {
+		budget = p.asrTimeout
+	}
+	return budget
+}
+
 // Transcribe processes one utterance. It reports false (without publishing)
-// when the audio is too short, no engine is set, ASR found no speech, or the
-// recognised text is empty.
-func (p *SpeechPipeline) Transcribe(u Utterance) (Transcript, bool) {
+// when the audio is too short, no engine is set, ASR found no speech, the
+// recognised text is empty, or the caller's context ended (CON-03).
+//
+// The request runs without holding a pipeline-wide lock: a wedged provider
+// costs its own deadline, never the other input sources'. Each call builds its
+// own engine request, so two sources never share one.
+func (p *SpeechPipeline) Transcribe(parent context.Context, u Utterance) (Transcript, bool) {
+	if parent == nil {
+		parent = context.Background()
+	}
 	if len(u.Samples) < u.MinSamples() {
 		return Transcript{}, false
 	}
@@ -75,10 +96,8 @@ func (p *SpeechPipeline) Transcribe(u Utterance) (Transcript, bool) {
 	if engine == nil {
 		return Transcript{}, false
 	}
-	p.mu.Lock()
-	defer p.mu.Unlock()
 
-	ctx, cancel := context.WithTimeout(context.Background(), p.asrTimeout)
+	ctx, cancel := context.WithTimeout(parent, p.budgetFor(u))
 	defer cancel()
 	result, err := engine.Transcribe(ctx, asr.Audio{
 		Samples:    u.Samples,
@@ -147,6 +166,11 @@ func (p *SpeechPipeline) applyPaste(_ context.Context, processed string) {
 	if p.pasteEnabled == nil || !p.pasteEnabled() || p.pasteText == nil {
 		return
 	}
+	// Keystrokes are a shared physical resource: two concurrent recognitions
+	// must not interleave characters in the focused window, so the paste
+	// itself is serialised even though ASR is not.
+	p.pasteMu.Lock()
+	defer p.pasteMu.Unlock()
 	pasteCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := p.pasteText(pasteCtx, processed); err != nil {

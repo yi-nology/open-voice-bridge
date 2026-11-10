@@ -84,7 +84,7 @@ func TestRecognizedLineLogsCountsNotText(t *testing.T) {
 	probe := &pipelineProbe{}
 	pipeline := buildPipeline(engine, rules, probe, false)
 
-	if _, ok := pipeline.Transcribe(utterance(oneSecond(), SourceRef{Kind: "phone", Address: "192.0.2.10"})); !ok {
+	if _, ok := pipeline.Transcribe(context.Background(), utterance(oneSecond(), SourceRef{Kind: "phone", Address: "192.0.2.10"})); !ok {
 		t.Fatal("expected a transcript")
 	}
 	assertNoTranscriptInLogs(t, sink, "recognized")
@@ -125,7 +125,7 @@ func TestFailedLLMRequestLogsNoText(t *testing.T) {
 		return failingProcessor{fmt.Errorf("llm HTTP 400: rejected: %s", spoken)}
 	}
 
-	if _, ok := pipeline.Transcribe(utterance(oneSecond(), SourceRef{Kind: "remote"})); !ok {
+	if _, ok := pipeline.Transcribe(context.Background(), utterance(oneSecond(), SourceRef{Kind: "remote"})); !ok {
 		t.Fatal("expected a transcript")
 	}
 	assertNoTranscriptInLogs(t, sink, "llm failure")
