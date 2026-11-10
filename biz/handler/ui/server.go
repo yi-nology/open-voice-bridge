@@ -57,6 +57,10 @@ type Deps struct {
 	DeleteDevice        func(context.Context, string) error
 	ConnectDevice       func(context.Context, string, bool) error
 	Ready               func(context.Context) map[string]any
+	Inputs              func(context.Context) map[string]any
+	PhonePairing        func(context.Context) map[string]any
+	PhoneDevices        func(context.Context) map[string]any
+	PhoneRevoke         func(context.Context, string) map[string]any
 	HelperSocket        string
 }
 

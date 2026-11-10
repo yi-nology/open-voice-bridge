@@ -518,6 +518,25 @@
   .check-line { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; }
   .model-grid label.check-line { flex-direction: row; justify-content: flex-start; align-items: center; }
 
+  /* ---- input sources (BLE remote + paired phones) ---- */
+  .pair-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .pair-head .spacer { margin-left: auto; }
+  .pair-code-card {
+    margin-top: 12px; padding: 18px 16px; background: #f7f7f9;
+    border: 1px solid #e8e8ec; border-radius: 12px; text-align: center;
+  }
+  .pair-code { font: 600 42px/1.1 ui-monospace, monospace; letter-spacing: .22em; color: var(--text); }
+  .pair-meta { margin-top: 8px; color: var(--muted); font-size: 12px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .pair-link-row { margin-top: 14px; display: flex; gap: 8px; align-items: center; }
+  .pair-link-row input {
+    flex: 1; min-width: 0; padding: 7px 10px; border: 1px solid var(--line);
+    border-radius: 8px; background: #fff; font: 12px ui-monospace, monospace; color: var(--text);
+  }
+  .src-kind { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; margin-right: 6px; }
+  .src-kind.remote { background: #e8f1ff; color: #1768d6; }
+  .src-kind.phone { background: #f0e8ff; color: #7a3ff0; }
+  .device-sub { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+
   .history-row { align-items: flex-start; }
   .history-text { font-size: 13px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
   .history-meta { color: var(--muted); font-size: 11px; margin-top: 5px; display: flex; gap: 8px; flex-wrap: wrap; }
@@ -1165,6 +1184,47 @@
 
   <!-- ================= DEVICES ================= -->
   <section id="tab-devices" class="tab">
+    <div class="panel" id="inputs-panel" style="margin-bottom:16px;">
+      <div class="panel-head">
+        <div>
+          <h3>输入源</h3>
+          <p>物理遥控器与已配对手机在此汇总。手机作为无线遥控通过独立端口接入，管理页面仍只监听 127.0.0.1。</p>
+        </div>
+        <div class="spacer"></div>
+        <button id="inputs-refresh" class="btn small">刷新</button>
+      </div>
+      <div id="inputs-list" class="device-list"></div>
+
+      <div class="device-sub">
+        <div class="pair-head">
+          <h3 style="margin:0;font-size:13px;">手机配对</h3>
+          <div class="spacer"></div>
+          <button id="phone-pair-btn" class="btn small primary">生成配对码</button>
+        </div>
+        <div id="phone-pair-hint" class="note" style="margin-top:6px;"></div>
+        <div id="pair-code-card" class="pair-code-card" hidden>
+          <div class="pair-code" id="pair-code">——————</div>
+          <div class="pair-meta">
+            <span id="pair-countdown"></span>
+            <span id="pair-expiry"></span>
+          </div>
+          <div class="pair-link-row">
+            <input id="pair-link" readonly>
+            <button id="pair-link-copy" class="btn small">复制链接</button>
+          </div>
+          <p class="note">链接把配对码放在 <code>#pair=</code> 片段里，不会进入服务端访问日志；也可在手机手动输入这 6 位码。到期自动刷新。</p>
+        </div>
+      </div>
+
+      <div class="device-sub">
+        <div class="pair-head">
+          <h3 style="margin:0;font-size:13px;">已配对手机</h3>
+          <div class="spacer"></div>
+          <button id="phone-devices-refresh" class="btn small">刷新</button>
+        </div>
+        <div id="phone-devices-list" class="device-list" style="margin-top:10px;"></div>
+      </div>
+    </div>
     <div class="panel">
       <div class="panel-head">
         <div>
@@ -2095,6 +2155,242 @@ async function deleteDevice() {
   resetDeviceForm();
 }
 
+// ---- input sources: BLE remote + paired phones ----
+let pairCountdownTimer = null;
+let pairExpiresAt = 0;
+
+function inputsMessage(text, cls) {
+  const node = document.getElementById("phone-pair-hint");
+  if (!node) return;
+  node.textContent = text || "";
+  node.className = "note" + (cls ? " " + cls : "");
+}
+
+function fmtAgo(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  if (date.getUTCFullYear() < 2000) return "";
+  const diff = Date.now() - date.getTime();
+  if (diff < 0) return "";
+  if (diff < 20000) return "刚刚";
+  if (diff < 120000) return Math.round(diff / 1000) + " 秒前";
+  if (diff < 7200000) return Math.round(diff / 60000) + " 分钟前";
+  return date.toLocaleTimeString("zh-CN", {hour12: false});
+}
+
+function makeBadge(text, cls) {
+  const badge = document.createElement("span");
+  badge.className = "device-badge " + cls;
+  badge.textContent = text;
+  return badge;
+}
+
+function renderInputs(data) {
+  const list = document.getElementById("inputs-list");
+  if (!list) return;
+  list.innerHTML = "";
+  if (!data.enabled) {
+    const note = document.createElement("div");
+    note.className = "note";
+    note.textContent = "手机输入未启用（config.phone.enabled = false）。开启后这里会显示遥控器与已连接手机。";
+    list.appendChild(note);
+    return;
+  }
+  const sources = data.sources || [];
+  if (!sources.length) {
+    const note = document.createElement("div");
+    note.className = "note";
+    note.textContent = "当前没有已注册的输入源。";
+    list.appendChild(note);
+    return;
+  }
+  for (const source of sources) {
+    const row = document.createElement("div");
+    row.className = "device-row";
+    const main = document.createElement("div");
+    main.className = "device-main";
+    const name = document.createElement("div");
+    name.className = "device-name";
+    const kind = document.createElement("span");
+    kind.className = "src-kind " + (source.kind === "phone" ? "phone" : "remote");
+    kind.textContent = source.kind === "phone" ? "手机" : "遥控器";
+    name.appendChild(kind);
+    name.appendChild(document.createTextNode(source.name || source.id || "未命名"));
+    if (source.connected) name.appendChild(makeBadge("在线", "connected"));
+    if (source.speaking) name.appendChild(makeBadge("正在说话", "connected"));
+    const meta = document.createElement("div");
+    meta.className = "device-meta";
+    meta.textContent = [source.address, source.last_active ? fmtAgo(source.last_active) : ""].filter(Boolean).join(" · ");
+    main.append(name, meta);
+    row.appendChild(main);
+    list.appendChild(row);
+  }
+}
+
+async function loadInputs() {
+  const list = document.getElementById("inputs-list");
+  if (!list) return;
+  try {
+    const res = await fetch("/api/inputs");
+    const data = await res.json();
+    renderInputs(data || {});
+  } catch (error) {
+    inputsMessage("加载输入源失败：" + error, "err");
+  }
+}
+
+function stopPairCountdown() {
+  if (pairCountdownTimer) {
+    clearInterval(pairCountdownTimer);
+    pairCountdownTimer = null;
+  }
+}
+
+function buildPairLink(data) {
+  const scheme = data.scheme || "https";
+  const port = data.port || "8788";
+  const base = data.link || (scheme + "://" + location.hostname + ":" + port + "/phone");
+  return base + "#pair=" + data.code;
+}
+
+function tickPairCountdown() {
+  const remaining = Math.max(0, Math.round((pairExpiresAt - Date.now()) / 1000));
+  const node = document.getElementById("pair-countdown");
+  if (node) node.textContent = "有效期 " + remaining + " 秒";
+  if (remaining <= 0) {
+    stopPairCountdown();
+    generatePairCode(true);
+  }
+}
+
+async function generatePairCode(silent) {
+  const btn = document.getElementById("phone-pair-btn");
+  if (btn) { btn.disabled = true; btn.textContent = silent ? "刷新中…" : "生成中…"; }
+  try {
+    const res = await fetch("/api/phone/pairing", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: "{}",
+    });
+    const data = await res.json();
+    if (!data.enabled) {
+      document.getElementById("pair-code-card").hidden = true;
+      stopPairCountdown();
+      inputsMessage("手机输入未启用，无法生成配对码。", "warn");
+      return;
+    }
+    if (!data.code) {
+      inputsMessage("生成配对码失败：" + errorText(data, "未知错误"), "err");
+      return;
+    }
+    document.getElementById("pair-code").textContent = data.code;
+    document.getElementById("pair-link").value = buildPairLink(data);
+    const expires = new Date(data.expires_at);
+    pairExpiresAt = Number.isNaN(expires.getTime()) ? Date.now() + 300000 : expires.getTime();
+    document.getElementById("pair-expiry").textContent = Number.isNaN(expires.getTime())
+      ? "" : "截止 " + expires.toLocaleTimeString("zh-CN", {hour12: false});
+    document.getElementById("pair-code-card").hidden = false;
+    inputsMessage("", "");
+    stopPairCountdown();
+    tickPairCountdown();
+    pairCountdownTimer = setInterval(tickPairCountdown, 1000);
+  } catch (error) {
+    inputsMessage("生成配对码失败：" + error, "err");
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = "生成配对码"; }
+  }
+}
+
+function renderPhoneDevices(data) {
+  const list = document.getElementById("phone-devices-list");
+  if (!list) return;
+  list.innerHTML = "";
+  if (!data.enabled) {
+    const note = document.createElement("div");
+    note.className = "note";
+    note.textContent = "手机输入未启用。";
+    list.appendChild(note);
+    return;
+  }
+  const devices = data.devices || [];
+  const connected = new Set((data.connected || []).map(item => item.id));
+  if (!devices.length) {
+    const note = document.createElement("div");
+    note.className = "note";
+    note.textContent = "还没有配对手机。点上方「生成配对码」，用手机打开链接或输入 6 位码。";
+    list.appendChild(note);
+    return;
+  }
+  for (const device of devices) {
+    const row = document.createElement("div");
+    row.className = "device-row";
+    const main = document.createElement("div");
+    main.className = "device-main";
+    const name = document.createElement("div");
+    name.className = "device-name";
+    name.textContent = device.name || device.id;
+    if (connected.has(device.id)) name.appendChild(makeBadge("在线", "connected"));
+    const meta = document.createElement("div");
+    meta.className = "device-meta";
+    meta.textContent = [device.id, device.last_seen ? "最后在线 " + fmtAgo(device.last_seen) : "从未连接"].filter(Boolean).join(" · ");
+    main.append(name, meta);
+    const actions = document.createElement("div");
+    actions.className = "device-actions";
+    const revoke = document.createElement("button");
+    revoke.className = "btn small";
+    revoke.textContent = "吊销";
+    revoke.addEventListener("click", () => revokePhone(device.id, device.name || device.id));
+    actions.appendChild(revoke);
+    row.append(main, actions);
+    list.appendChild(row);
+  }
+}
+
+async function loadPhoneDevices() {
+  const list = document.getElementById("phone-devices-list");
+  if (!list) return;
+  try {
+    const res = await fetch("/api/phone/devices");
+    const data = await res.json();
+    renderPhoneDevices(data || {});
+  } catch (error) {
+    inputsMessage("加载手机设备失败：" + error, "err");
+  }
+}
+
+async function revokePhone(id, name) {
+  if (!confirm("吊销「" + name + "」的配对？该手机需要重新配对才能继续使用。")) return;
+  try {
+    const res = await fetch("/api/phone/revoke", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({device_id: id}),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      inputsMessage("吊销失败：" + errorText(data, "未知错误"), "err");
+      return;
+    }
+    inputsMessage("已吊销 " + name, "ok");
+    await loadPhoneDevices();
+    await loadInputs();
+  } catch (error) {
+    inputsMessage("吊销失败：" + error, "err");
+  }
+}
+
+document.getElementById("inputs-refresh").addEventListener("click", () => { loadInputs(); loadPhoneDevices(); });
+document.getElementById("phone-devices-refresh").addEventListener("click", loadPhoneDevices);
+document.getElementById("phone-pair-btn").addEventListener("click", () => generatePairCode(false));
+document.getElementById("pair-link-copy").addEventListener("click", () => {
+  const input = document.getElementById("pair-link");
+  if (!input.value || !navigator.clipboard || !navigator.clipboard.writeText) return;
+  navigator.clipboard.writeText(input.value)
+    .then(() => inputsMessage("配对链接已复制", "ok"))
+    .catch(() => {});
+});
+
 let historyEntries = [];
 
 function historyMessage(text, cls) {
@@ -2368,6 +2664,7 @@ document.querySelectorAll(".tab-btn").forEach(button => {
     window.scrollTo(0, 0);
     const mainEl = document.querySelector("main");
     if (mainEl) mainEl.scrollTop = 0;
+    if (button.dataset.tab !== "devices") stopPairCountdown();
     if (button.dataset.tab === "connection") {
       showConfigPanel("overview");
       loadStatus(false);
@@ -2377,6 +2674,8 @@ document.querySelectorAll(".tab-btn").forEach(button => {
     } else if (button.dataset.tab === "devices") {
       loadDevices();
       loadDiscovery();
+      loadInputs();
+      loadPhoneDevices();
     } else if (button.dataset.tab === "history") {
       loadHistory();
     } else if (button.dataset.tab === "subtitle") {
@@ -3097,6 +3396,7 @@ document.getElementById("device-reset").addEventListener("click", resetDeviceFor
 document.getElementById("device-save").addEventListener("click", saveDevice);
 document.getElementById("device-delete").addEventListener("click", deleteDevice);
 loadDevices();
+loadInputs();
 const asrPreset = document.getElementById("asr-preset");
 populateASRPresets();
 if (asrPreset) {

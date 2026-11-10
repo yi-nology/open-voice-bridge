@@ -190,6 +190,8 @@ func (d *Daemon) handleConn(conn net.Conn) {
 			Mapping map[string]string `json:"mapping"`
 			Devices []device.Match    `json:"devices"`
 			Apple   bool              `json:"apple"`
+			Key     string            `json:"key"`
+			Value   int               `json:"value"`
 		}
 		if err := json.Unmarshal(scanner.Bytes(), &command); err != nil {
 			d.writeConn(conn, map[string]any{"ok": false, "error": "bad json"})
@@ -234,6 +236,19 @@ func (d *Daemon) handleConn(conn net.Conn) {
 			}
 			d.writeConn(conn, map[string]any{"ok": true, "event": "capture_stopped"})
 			return
+		case "inject":
+			code, ok := InjectKeyCode(command.Key)
+			if !ok {
+				log.Warn("rejected phone key injection", "key", command.Key)
+				d.writeConn(conn, map[string]any{"ok": false, "error": "key not allowed"})
+				continue
+			}
+			if command.Value != 0 && command.Value != 1 {
+				d.writeConn(conn, map[string]any{"ok": false, "error": "invalid value"})
+				continue
+			}
+			d.applyKey(code, command.Key, command.Value)
+			d.writeConn(conn, map[string]any{"ok": true, "key": command.Key, "value": command.Value})
 		default:
 			d.writeConn(conn, map[string]any{"ok": false, "error": "unknown command"})
 		}

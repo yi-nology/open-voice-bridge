@@ -33,7 +33,9 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/helper"
 	"github.com/yi-nology/open-voice-bridge/internal/history"
+	"github.com/yi-nology/open-voice-bridge/internal/input"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
+	"github.com/yi-nology/open-voice-bridge/internal/phone"
 	"github.com/yi-nology/open-voice-bridge/internal/remap"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
@@ -183,6 +185,8 @@ func runAgent(args []string, stderr io.Writer) int {
 			return err
 		}
 		ag := agent.New(cfg, engine, sink)
+		inputHub := input.NewHub()
+		ag.SetHub(inputHub)
 		transcriptsTotal, asrLatency := registerAgentMetrics(ag)
 		llmProcessor, llmErr := llm.Build(cfg.LLM)
 		if llmErr != nil {
@@ -210,6 +214,36 @@ func runAgent(args []string, stderr io.Writer) int {
 		helperClient := helper.New(cfg.HelperSocket)
 		svc := service.New(cfg, *path, ag, helperClient, asrErr, logger)
 		historyStore := history.New(filepath.Join(filepath.Dir(*path), "history.jsonl"), 200)
+
+		phoneEnabled := cfg.Phone.Enabled
+		var phoneStore *phone.Store
+		var phoneServer *phone.Server
+		if phoneEnabled {
+			store, err := phone.NewStore(filepath.Join(filepath.Dir(*path), "phone_tokens.json"), phone.Config{
+				PairCodeTTL: time.Duration(cfg.Phone.PairCodeTTLSeconds) * time.Second,
+			})
+			if err != nil {
+				logger.Error("phone store unavailable; disabling phone input", "err", err)
+				phoneEnabled = false
+			} else {
+				phoneStore = store
+				phoneServer = phone.NewServer(store, phone.NewKeyInjector(helperClient), inputHub, phone.ServerConfig{
+					Addr:       cfg.Phone.Addr,
+					TLSMode:    cfg.Phone.TLS,
+					CertDir:    filepath.Dir(*path),
+					MaxClients: cfg.Phone.MaxClients,
+				})
+			}
+		}
+		if phoneEnabled {
+			app.GoBackground("phone", func(ctx context.Context) {
+				if err := phoneServer.Serve(ctx); err != nil {
+					logger.Error("phone server stopped", "err", err)
+				}
+			})
+			logger.Info("phone input listener started", "addr", cfg.Phone.Addr, "tls", cfg.Phone.TLS)
+		}
+
 		deps := ui.Deps{
 			Status:              svc.Status,
 			Apply:               svc.Apply,
@@ -240,7 +274,44 @@ func runAgent(args []string, stderr io.Writer) int {
 			DeleteDevice:        svc.DeleteDevice,
 			ConnectDevice:       svc.ConnectDevice,
 			Ready:               svc.Ready,
-			HelperSocket:        cfg.HelperSocket,
+			Inputs: func(context.Context) map[string]any {
+				return map[string]any{"enabled": phoneEnabled, "sources": inputHub.Sources()}
+			},
+			PhonePairing: func(context.Context) map[string]any {
+				if !phoneEnabled {
+					return map[string]any{"enabled": false}
+				}
+				code, expires := phoneStore.GeneratePairCode()
+				scheme, host, port := phone.PairingBase(cfg.Phone.TLS, cfg.Phone.Addr)
+				out := map[string]any{
+					"enabled":    true,
+					"code":       code,
+					"expires_at": expires.Format(time.RFC3339),
+					"scheme":     scheme,
+					"port":       port,
+				}
+				if host != "" {
+					out["host"] = host
+					out["link"] = scheme + "://" + host + ":" + port + "/phone"
+				}
+				return out
+			},
+			PhoneDevices: func(context.Context) map[string]any {
+				if !phoneEnabled {
+					return map[string]any{"enabled": false, "devices": []phone.Device{}}
+				}
+				return map[string]any{"enabled": true, "devices": phoneStore.ListDevices(), "connected": phoneServer.ConnectedDevices()}
+			},
+			PhoneRevoke: func(_ context.Context, deviceID string) map[string]any {
+				if !phoneEnabled {
+					return map[string]any{"ok": false, "error": "phone input disabled"}
+				}
+				if err := phoneStore.Revoke(deviceID); err != nil {
+					return map[string]any{"ok": false, "error": err.Error()}
+				}
+				return map[string]any{"ok": true}
+			},
+			HelperSocket: cfg.HelperSocket,
 		}
 
 		uiServer := ui.New(deps)

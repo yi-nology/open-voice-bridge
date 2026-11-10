@@ -60,6 +60,20 @@ func (c *Client) Call(ctx context.Context, payload any) (map[string]any, error) 
 	return response, nil
 }
 
+// Inject forwards a whitelisted logical key press/release to the root remapper.
+// The helper enforces the whitelist and current keymap profile; this only
+// returns an error when the transport fails or the helper rejects the key.
+func (c *Client) Inject(ctx context.Context, key string, value int) error {
+	response, err := c.Call(ctx, map[string]any{"cmd": "inject", "key": key, "value": value})
+	if err != nil {
+		return err
+	}
+	if ok, _ := response["ok"].(bool); !ok {
+		return oeerrors.Errorf("inject %q rejected: %v", key, response["error"])
+	}
+	return nil
+}
+
 type Capture struct {
 	conn   net.Conn
 	events chan map[string]any

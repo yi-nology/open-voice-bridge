@@ -18,6 +18,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/audio"
 	"github.com/yi-nology/open-voice-bridge/internal/bluez"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/input"
 	"github.com/yi-nology/open-voice-bridge/internal/keys"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
 	"github.com/yi-nology/open-voice-bridge/internal/paste"
@@ -38,6 +39,8 @@ type Agent struct {
 	audioMu sync.Mutex
 	watcher keys.F24Watcher
 
+	hub *input.Hub
+
 	mu          sync.Mutex
 	addrMu      sync.RWMutex
 	address     string
@@ -53,7 +56,8 @@ type Agent struct {
 	dictation []int16
 	maxSample int
 
-	finalizeMu  sync.Mutex
+	pipeline *SpeechPipeline
+
 	reconnectCh chan struct{}
 	transcripts chan Transcript
 	listening   chan bool
@@ -79,7 +83,7 @@ type Transcript struct {
 }
 
 func New(cfg config.Config, engine asr.Engine, sink audio.Sink) *Agent {
-	return &Agent{
+	a := &Agent{
 		cfg:         cfg,
 		address:     cfg.Address,
 		asr:         engine,
@@ -90,6 +94,46 @@ func New(cfg config.Config, engine asr.Engine, sink audio.Sink) *Agent {
 		listening:   make(chan bool, 4),
 		maxSample:   cfg.MaxUtterance * atvv.SampleRate,
 	}
+	a.pipeline = a.newPipeline()
+	return a
+}
+
+// newPipeline wires the shared transcription chain to the agent's live
+// collaborators so provider/rule/LLM switches apply without rebuilding it.
+func (a *Agent) newPipeline() *SpeechPipeline {
+	return &SpeechPipeline{
+		engine: func() asr.Engine {
+			a.asrMu.RLock()
+			defer a.asrMu.RUnlock()
+			return a.asr
+		},
+		rules: func() *text.Rules {
+			a.textMu.RLock()
+			defer a.textMu.RUnlock()
+			return a.text
+		},
+		processor: func() llm.Processor {
+			a.llmMu.RLock()
+			defer a.llmMu.RUnlock()
+			return a.llm
+		},
+		pasteEnabled: func() bool { return a.cfg.PasteEnabled },
+		pasteText:    paste.Text,
+		sink:         a.recordTranscript,
+		minSamples:   atvv.SampleRate / 4,
+		asrTimeout:   180 * time.Second,
+	}
+}
+
+// recordTranscript updates the agent's last-result fields and forwards the
+// utterance to the subtitle stream.
+func (a *Agent) recordTranscript(transcript Transcript) {
+	a.mu.Lock()
+	a.lastText = transcript.Text
+	a.lastAt = transcript.At
+	a.lastLatency = transcript.Latency
+	a.mu.Unlock()
+	a.publishTranscript(transcript)
 }
 
 // Transcripts yields finalized utterances for the subtitle stream.
@@ -97,6 +141,22 @@ func (a *Agent) Transcripts() <-chan Transcript { return a.transcripts }
 
 // Listening reports whether the active remote is currently capturing audio.
 func (a *Agent) Listening() <-chan bool { return a.listening }
+
+// SetHub registers the BLE remote as an input source. It is safe to leave the
+// hub unset; the agent behaves exactly as before when no hub is provided.
+func (a *Agent) SetHub(hub *input.Hub) {
+	a.hub = hub
+	if hub != nil {
+		hub.Register(remoteSource{a})
+	}
+}
+
+// audioActive reports whether the remote is capturing dictation samples now.
+func (a *Agent) audioActive() bool {
+	a.dictMu.Lock()
+	defer a.dictMu.Unlock()
+	return len(a.dictation) > 0
+}
 
 func (a *Agent) publishListening(active bool) {
 	select {
@@ -340,32 +400,6 @@ func (a *Agent) SetAddress(address string) error {
 	return a.Reconnect()
 }
 
-func (a *Agent) processText(parent context.Context, input string) string {
-	a.textMu.RLock()
-	rules := a.text
-	a.textMu.RUnlock()
-	if snippet, ok := rules.Snippet(input); ok {
-		log.Info("voice snippet matched")
-		return snippet
-	}
-	output := input
-	a.llmMu.RLock()
-	processor := a.llm
-	a.llmMu.RUnlock()
-	if processor != nil {
-		ctx, cancel := context.WithTimeout(parent, 25*time.Second)
-		processed, err := processor.Process(ctx, output)
-		cancel()
-		if err != nil {
-			log.Warn("LLM post-process failed", "err", err)
-		} else if strings.TrimSpace(processed) != "" {
-			log.Info("text post-processed", "original", len(output), "processed", len(processed))
-			output = processed
-		}
-	}
-	return rules.Dictionary(output)
-}
-
 func (a *Agent) markDisconnected() {
 	a.publishListening(false)
 	a.mu.Lock()
@@ -459,66 +493,10 @@ func (a *Agent) finalize() {
 	samples := append([]int16(nil), a.dictation...)
 	a.dictation = a.dictation[:0]
 	a.dictMu.Unlock()
-	if len(samples) < atvv.SampleRate/4 {
-		return
-	}
-	if a.asr == nil {
-		return
-	}
-	a.asrMu.RLock()
-	engine := a.asr
-	a.asrMu.RUnlock()
-	if engine == nil {
-		return
-	}
-	a.finalizeMu.Lock()
-	defer a.finalizeMu.Unlock()
-	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
-	defer cancel()
-	result, err := engine.Transcribe(ctx, asr.Audio{
-		Samples:    samples,
-		SampleRate: atvv.SampleRate,
+	a.pipeline.Transcribe(samples, SourceRef{
+		Kind:    string(input.KindRemote),
+		Address: a.currentAddress(),
 	})
-	if oeerrors.Is(err, asr.ErrNoSpeech) {
-		return
-	}
-	if err != nil {
-		log.Warn("ASR failed", "err", err)
-		return
-	}
-	rawText := result.Text
-	if rawText == "" {
-		return
-	}
-	text := a.processText(ctx, rawText)
-	log.Info("recognized",
-		"text", text,
-		"provider", result.Provider,
-		"latency", result.Latency.Round(time.Millisecond),
-	)
-	a.mu.Lock()
-	a.lastText = text
-	a.lastAt = time.Now()
-	a.lastLatency = result.Latency
-	at := a.lastAt
-	a.mu.Unlock()
-	a.publishTranscript(Transcript{
-		Text:      text,
-		RawText:   rawText,
-		Language:  result.Language,
-		Provider:  result.Provider,
-		Address:   a.currentAddress(),
-		Processed: text != rawText,
-		Latency:   result.Latency,
-		At:        at,
-	})
-	if a.cfg.PasteEnabled {
-		pasteCtx, cancelPaste := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancelPaste()
-		if err := paste.Text(pasteCtx, text); err != nil {
-			log.Warn("paste failed", "err", err)
-		}
-	}
 }
 
 func (a *Agent) Reconnect() error {

@@ -156,6 +156,31 @@ func MacroTokenCodes(action string) ([]int, bool) {
 	return codes, true
 }
 
+// injectWhitelist lists the logical keys a phone remote may inject. It is a
+// deliberate subset of SourceCodes: only navigation/media/power keys the
+// virtual remote exposes, never arbitrary bindings.
+var injectWhitelist = map[string]bool{
+	"up": true, "down": true, "left": true, "right": true,
+	"enter": true, "back": true, "home": true, "menu": true,
+	"volumeup": true, "volumedown": true, "power": true, "f5": true,
+}
+
+// InjectAllowed reports whether a logical key name may be injected remotely.
+func InjectAllowed(name string) bool { return injectWhitelist[name] }
+
+// InjectKeyCode resolves an allowed logical key to its evdev source code.
+// Disallowed or unknown names return ok=false so callers reject them.
+func InjectKeyCode(name string) (int, bool) {
+	if !injectWhitelist[name] {
+		return 0, false
+	}
+	code, ok := SourceCodes[name]
+	if !ok {
+		return 0, false
+	}
+	return code, true
+}
+
 func SourceName(code int) string {
 	for name, candidate := range SourceCodes {
 		if candidate == code {

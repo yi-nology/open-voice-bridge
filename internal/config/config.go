@@ -34,6 +34,17 @@ type DeviceConfig struct {
 	NameMatch []string `json:"name_match,omitempty"`
 }
 
+// PhoneConfig gates the standalone phone input listener (mic + virtual keys).
+// It binds a separate LAN address from the loopback-only management UI.
+type PhoneConfig struct {
+	Enabled             bool   `json:"enabled"`
+	Addr                string `json:"addr"`
+	TLS                 string `json:"tls"` // auto | off (off = trusted HTTPS in front)
+	PairCodeTTLSeconds  int    `json:"pair_code_ttl_seconds"`
+	MaxClients          int    `json:"max_clients"`
+	MaxUtteranceSeconds int    `json:"max_utterance_seconds"`
+}
+
 type Config struct {
 	Address      string         `json:"address"`
 	ActiveDevice string         `json:"active_device"`
@@ -53,6 +64,7 @@ type Config struct {
 	LLM          llm.Config     `json:"llm"`
 	Text         text.Config    `json:"text"`
 	Keymap       KeymapConfig   `json:"keymap"`
+	Phone        PhoneConfig    `json:"phone"`
 }
 
 var macPattern = regexp.MustCompile(`^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$`)
@@ -123,6 +135,14 @@ func Default() Config {
 		Profiles: DefaultProfiles(),
 	}
 	cfg.LLM = llm.DefaultConfig()
+	cfg.Phone = PhoneConfig{
+		Enabled:             false,
+		Addr:                "0.0.0.0:8788",
+		TLS:                 "auto",
+		PairCodeTTLSeconds:  300,
+		MaxClients:          4,
+		MaxUtteranceSeconds: 30,
+	}
 	cfg.Devices = []DeviceConfig{{
 		ID:      "rc003",
 		Name:    "Xiaomi Bluetooth Remote",
@@ -195,6 +215,20 @@ func (c *Config) normalizeDevices() {
 	}
 }
 
+// DeviceName returns the display name of the active device, falling back to
+// its address when no friendly name is configured.
+func (c Config) DeviceName() string {
+	for _, item := range c.Devices {
+		if item.ID == c.ActiveDevice {
+			if item.Name != "" {
+				return item.Name
+			}
+			return item.Address
+		}
+	}
+	return c.Address
+}
+
 func DefaultPath() string {
 	dir, err := os.UserConfigDir()
 	if err != nil {
@@ -230,6 +264,7 @@ func Load(path string) (Config, error) {
 	cfg.normalizeLLM()
 	cfg.normalizeText()
 	cfg.normalizeKeymap()
+	cfg.normalizePhone()
 	cfg.normalizeDevices()
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(data, &raw); err != nil {
@@ -239,7 +274,8 @@ func Load(path string) (Config, error) {
 	_, hasKeymap := raw["keymap"]
 	_, hasDevices := raw["devices"]
 	_, hasLLM := raw["llm"]
-	if !hasASR || !hasKeymap || !hasDevices || !hasLLM {
+	_, hasPhone := raw["phone"]
+	if !hasASR || !hasKeymap || !hasDevices || !hasLLM || !hasPhone {
 		// Migrate older configs so the new sections are visible/editable.
 		if err := writeConfig(path, cfg); err != nil {
 			return cfg, oeerrors.Errorf("migrate config: %w", err)
@@ -277,6 +313,24 @@ func (c *Config) normalizeLLM() {
 	}
 	if c.LLM.TimeoutSeconds <= 0 {
 		c.LLM.TimeoutSeconds = 20
+	}
+}
+
+func (c *Config) normalizePhone() {
+	if strings.TrimSpace(c.Phone.Addr) == "" {
+		c.Phone.Addr = "0.0.0.0:8788"
+	}
+	if c.Phone.TLS == "" {
+		c.Phone.TLS = "auto"
+	}
+	if c.Phone.PairCodeTTLSeconds == 0 {
+		c.Phone.PairCodeTTLSeconds = 300
+	}
+	if c.Phone.MaxClients == 0 {
+		c.Phone.MaxClients = 4
+	}
+	if c.Phone.MaxUtteranceSeconds == 0 {
+		c.Phone.MaxUtteranceSeconds = 30
 	}
 }
 
@@ -423,6 +477,43 @@ func (c Config) Validate() error {
 	if !activeEnabled {
 		return oeerrors.Errorf("active device %q is disabled", c.ActiveDevice)
 	}
+	if err := c.validatePhone(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// validatePhone enforces the separation between the loopback management UI and
+// the standalone phone listener when phone input is enabled.
+func (c Config) validatePhone() error {
+	if !c.Phone.Enabled {
+		return nil
+	}
+	_, phonePort, err := net.SplitHostPort(c.Phone.Addr)
+	if err != nil {
+		return oeerrors.Errorf("invalid phone.addr: %w", err)
+	}
+	if value, err := strconv.Atoi(phonePort); err != nil || value < 1 || value > 65535 {
+		return oeerrors.Errorf("invalid phone.addr port %q", phonePort)
+	}
+	_, uiPort, err := net.SplitHostPort(c.UIAddr)
+	if err == nil && phonePort == uiPort {
+		return oeerrors.Errorf("phone.addr must use a different port than ui_addr")
+	}
+	switch c.Phone.TLS {
+	case "auto", "off":
+	default:
+		return oeerrors.Errorf("phone.tls must be auto or off, got %q", c.Phone.TLS)
+	}
+	if c.Phone.PairCodeTTLSeconds < 30 || c.Phone.PairCodeTTLSeconds > 3600 {
+		return oeerrors.Errorf("phone.pair_code_ttl_seconds must be 30..3600")
+	}
+	if c.Phone.MaxClients < 1 || c.Phone.MaxClients > 16 {
+		return oeerrors.Errorf("phone.max_clients must be 1..16")
+	}
+	if c.Phone.MaxUtteranceSeconds < 5 || c.Phone.MaxUtteranceSeconds > 60 {
+		return oeerrors.Errorf("phone.max_utterance_seconds must be 5..60")
+	}
 	return nil
 }
 
@@ -431,6 +522,7 @@ func Save(path string, cfg Config) error {
 	cfg.normalizeLLM()
 	cfg.normalizeText()
 	cfg.normalizeKeymap()
+	cfg.normalizePhone()
 	cfg.normalizeDevices()
 	if err := cfg.Validate(); err != nil {
 		return err
@@ -459,5 +551,6 @@ func writeConfig(path string, cfg Config) error {
 func writeDefault(path string, cfg Config) error {
 	cfg.normalizeASR()
 	cfg.normalizeKeymap()
+	cfg.normalizePhone()
 	return writeConfig(path, cfg)
 }

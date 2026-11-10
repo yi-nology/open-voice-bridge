@@ -104,6 +104,14 @@
       }
     }
   },
+  "phone": {
+    "enabled": false,
+    "addr": "0.0.0.0:8788",
+    "tls": "auto",
+    "pair_code_ttl_seconds": 300,
+    "max_clients": 4,
+    "max_utterance_seconds": 30
+  },
   "active_device": "rc003",
   "devices": [
     {

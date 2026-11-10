@@ -71,6 +71,41 @@ func TestCallSuccess(t *testing.T) {
 	}
 }
 
+func TestInjectSuccess(t *testing.T) {
+	path := serveUnix(t, func(conn net.Conn) {
+		line, err := bufio.NewReader(conn).ReadBytes('\n')
+		if err != nil {
+			t.Errorf("read request: %v", err)
+			return
+		}
+		var request map[string]any
+		if err := json.Unmarshal(line, &request); err != nil {
+			t.Errorf("decode request: %v", err)
+			return
+		}
+		if request["cmd"] != "inject" || request["key"] != "down" || request["value"] != float64(1) {
+			t.Errorf("request = %+v", request)
+		}
+		writeLine(t, conn, map[string]any{"ok": true, "key": "down", "value": 1})
+	})
+	if err := New(path).Inject(context.Background(), "down", 1); err != nil {
+		t.Fatalf("Inject: %v", err)
+	}
+}
+
+func TestInjectRejected(t *testing.T) {
+	path := serveUnix(t, func(conn net.Conn) {
+		if _, err := bufio.NewReader(conn).ReadBytes('\n'); err != nil {
+			t.Errorf("read request: %v", err)
+			return
+		}
+		writeLine(t, conn, map[string]any{"ok": false, "error": "key not allowed"})
+	})
+	if err := New(path).Inject(context.Background(), "ok", 1); err == nil {
+		t.Fatal("expected rejection error")
+	}
+}
+
 func TestCallDialError(t *testing.T) {
 	client := New(filepath.Join(t.TempDir(), "missing.sock"))
 	client.Timeout = 200 * time.Millisecond

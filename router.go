@@ -22,4 +22,10 @@ func customizedRegister(r *server.Hertz) {
 	r.GET("/assets/*filepath", assets)
 	r.HEAD("/assets/*filepath", assets)
 	r.GET("/events", customUI.Events)
+
+	// Management-plane phone/input endpoints (loopback + same-site only).
+	r.GET("/api/inputs", customUI.Inputs)
+	r.POST("/api/phone/pairing", customUI.PhonePairing)
+	r.GET("/api/phone/devices", customUI.PhoneDevices)
+	r.POST("/api/phone/revoke", customUI.PhoneRevoke)
 }
