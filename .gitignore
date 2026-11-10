@@ -27,3 +27,6 @@
 
 # local design explorations (not part of the public tree)
 /design-preview/
+
+# agent working drafts: plans carry machine-specific absolute paths
+docs/superpowers/plans/
