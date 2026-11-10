@@ -9,7 +9,9 @@ Maintenance and quality baseline.
 - Community baseline: issue forms, pull request template and Dependabot
   (Go modules + GitHub Actions, weekly).
 - CI hardening: race detector and atomic coverage on the Linux test job,
-  with a coverage artifact.
+  with a coverage artifact. The race detector surfaced a data race in the
+  service test fake (`fakeHelper` shared fields) which is now mutex-guarded;
+  production `helper.Client` dials per call and was already safe.
 - Core tests: helper Unix-socket protocol (fake server), paste empty/Wayland
   paths, F24 watcher construction, and an `agent.finalize` regression suite
   driven by a fake ASR engine (dictionary, snippets, no-speech, short audio,

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/oekit/logx"
@@ -57,10 +58,23 @@ func (f *fakeAgent) ASRName() string {
 }
 
 type fakeHelper struct {
+	mu       sync.Mutex
 	status   map[string]any
 	applied  map[string]string
 	devices  []device.Match
 	applyErr error
+}
+
+func (f *fakeHelper) appliedSnapshot() map[string]string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.applied
+}
+
+func (f *fakeHelper) devicesSnapshot() []device.Match {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.devices
 }
 
 func (f *fakeHelper) Call(ctx context.Context, payload any) (map[string]any, error) {
@@ -70,13 +84,18 @@ func (f *fakeHelper) Call(ctx context.Context, payload any) (map[string]any, err
 	}
 	if command["cmd"] == "apply" {
 		if mapping, ok := command["mapping"].(map[string]string); ok {
+			f.mu.Lock()
 			f.applied = mapping
+			f.mu.Unlock()
 		}
 		return map[string]any{"ok": true, "config": "{}"}, nil
 	}
 	if command["cmd"] == "set_devices" {
+		f.mu.Lock()
 		f.devices, _ = command["devices"].([]device.Match)
-		return map[string]any{"ok": true, "devices": len(f.devices)}, nil
+		n := len(f.devices)
+		f.mu.Unlock()
+		return map[string]any{"ok": true, "devices": n}, nil
 	}
 	if f.status != nil {
 		return f.status, nil
@@ -175,8 +194,9 @@ func TestSaveAndDeleteProfile(t *testing.T) {
 func TestSyncKeymapAppliesConfiguredProfile(t *testing.T) {
 	svc, _, helper, _ := newTestService(t)
 	svc.SyncKeymap(context.Background())
-	if helper.applied == nil || helper.applied["power"] != "esc" {
-		t.Fatalf("applied = %+v", helper.applied)
+	applied := helper.appliedSnapshot()
+	if applied == nil || applied["power"] != "esc" {
+		t.Fatalf("applied = %+v", applied)
 	}
 }
 
@@ -213,11 +233,12 @@ func TestDevicesAndSelection(t *testing.T) {
 		t.Fatalf("agent address = %q", agent.address)
 	}
 	svc.SyncDevices(context.Background())
-	if len(helper.devices) != 3 {
-		t.Fatalf("matchers = %+v", helper.devices)
+	devices := helper.devicesSnapshot()
+	if len(devices) != 3 {
+		t.Fatalf("matchers = %+v", devices)
 	}
-	if helper.devices[2].Vendor != "1234" || helper.devices[2].Product != "5678" {
-		t.Fatalf("generic matcher = %+v", helper.devices[2])
+	if devices[2].Vendor != "1234" || devices[2].Product != "5678" {
+		t.Fatalf("generic matcher = %+v", devices[2])
 	}
 	loaded, err := config.Load(path)
 	if err != nil {
