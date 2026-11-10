@@ -59,3 +59,32 @@ func TestSecurityRejectsCrossSitePost(t *testing.T) {
 		t.Fatalf("code=%d body=%s", resp.Code, resp.Body.String())
 	}
 }
+
+// SEC-06 / I9: a POST without any same-origin evidence must be rejected. A
+// bare request (no Origin, no Sec-Fetch-Site) used to pass, which turned
+// "reach the admin API" into "run asr.command.binary as this user".
+func TestSecurityRejectsPostWithoutOriginEvidence(t *testing.T) {
+	h := securityEngine()
+	resp := request(h, "POST", "http://127.0.0.1:8787/")
+	if resp.Code != consts.StatusForbidden {
+		t.Fatalf("evidence-free POST code=%d body=%s, want 403", resp.Code, resp.Body.String())
+	}
+	resp = request(h, "POST", "http://127.0.0.1:8787/",
+		ut.Header{Key: "Sec-Fetch-Site", Value: "none"},
+	)
+	if resp.Code != consts.StatusForbidden {
+		t.Fatalf("Sec-Fetch-Site none without Origin code=%d, want 403", resp.Code)
+	}
+}
+
+// I9: Sec-Fetch-Site: same-origin alone is accepted as same-origin evidence
+// (the Origin header may be omitted on same-origin fetches).
+func TestSecurityAllowsSecFetchSiteSameOriginAlone(t *testing.T) {
+	h := securityEngine()
+	resp := request(h, "POST", "http://127.0.0.1:8787/",
+		ut.Header{Key: "Sec-Fetch-Site", Value: "same-origin"},
+	)
+	if resp.Code != consts.StatusOK {
+		t.Fatalf("same-origin evidence code=%d body=%s, want 200", resp.Code, resp.Body.String())
+	}
+}

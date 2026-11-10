@@ -79,6 +79,7 @@ type Transcript struct {
 	Address   string
 	Processed bool
 	Latency   time.Duration
+	Duration  time.Duration // length of the spoken audio
 	At        time.Time
 }
 

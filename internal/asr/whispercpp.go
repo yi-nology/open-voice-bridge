@@ -31,6 +31,9 @@ func NewWhisperCPP(cfg WhisperCPPConfig) (*WhisperCPP, error) {
 	if cfg.Binary == "" {
 		cfg.Binary = "whisper-cli"
 	}
+	if err := guardBinary(cfg.Binary); err != nil {
+		return nil, err
+	}
 	if cfg.ModelPath == "" {
 		return nil, oeerrors.Errorf("whisper.cpp model_path is required")
 	}

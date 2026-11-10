@@ -14,6 +14,7 @@ type Config struct {
 	MappingPath string
 	SocketPath  string
 	SocketGroup int
+	AgentUID    int
 }
 
 type Daemon struct{}

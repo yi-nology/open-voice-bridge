@@ -47,6 +47,7 @@ type Deps struct {
 	History             func(context.Context) []history.Entry
 	DeleteHistory       func(context.Context, string) error
 	ClearHistory        func(context.Context) error
+	Stats               func() history.UsageStats
 	TextConfig          func(context.Context) map[string]any
 	UpdateTextConfig    func(context.Context, text.Config) error
 	Devices             func(context.Context) map[string]any
@@ -128,18 +129,39 @@ func validOrigin(c *app.RequestContext) bool {
 		return true
 	}
 	site := string(c.Request.Header.Peek("Sec-Fetch-Site"))
+	origin := string(c.Request.Header.Peek("Origin"))
+	// I9: an empty Origin is not same-origin evidence. Without it a bare
+	// request (curl, a foreign process) could reach POST endpoints whose
+	// worst case is executing asr.command.binary (SEC-06).
+	if origin == "" {
+		return site == "same-origin"
+	}
 	if site != "" && site != "same-origin" && site != "none" {
 		return false
-	}
-	origin := string(c.Request.Header.Peek("Origin"))
-	if origin == "" {
-		return true
 	}
 	parsed, err := url.Parse(origin)
 	if err != nil {
 		return false
 	}
 	return parsed.Host == string(c.Request.Host())
+}
+
+// Stats returns the cumulative usage statistics ("使用统计"): lifetime totals
+// and per-day numbers. Only counts and durations — never speech content.
+func (s *Server) Stats(ctx context.Context, c *app.RequestContext) {
+	if s.deps.Stats == nil {
+		c.JSON(consts.StatusServiceUnavailable, map[string]any{"error": "stats unavailable"})
+		return
+	}
+	snap := s.deps.Stats()
+	c.JSON(consts.StatusOK, map[string]any{
+		"ok":         true,
+		"utterances": snap.Utterances,
+		"characters": snap.Characters,
+		"speech_ms":  snap.SpeechMS,
+		"longest_ms": snap.LongestMS,
+		"days":       snap.Days,
+	})
 }
 
 func (s *Server) Root(ctx context.Context, c *app.RequestContext) {

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"net"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -12,7 +13,14 @@ import (
 
 func serveUnix(t *testing.T, handle func(net.Conn)) string {
 	t.Helper()
-	path := filepath.Join(t.TempDir(), "helper.sock")
+	// Keep the socket path short: macOS caps sun_path at 104 bytes and
+	// t.TempDir() names include the full test name.
+	dir, err := os.MkdirTemp("", "h")
+	if err != nil {
+		t.Fatalf("temp dir: %v", err)
+	}
+	t.Cleanup(func() { os.RemoveAll(dir) })
+	path := filepath.Join(dir, "helper.sock")
 	listener, err := net.Listen("unix", path)
 	if err != nil {
 		t.Fatalf("listen unix: %v", err)

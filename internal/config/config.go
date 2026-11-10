@@ -484,12 +484,11 @@ func (c Config) Validate() error {
 }
 
 // validatePhone enforces the separation between the loopback management UI and
-// the standalone phone listener when phone input is enabled.
+// the standalone phone listener. It runs whether or not phone input is enabled
+// so a bad section can never be persisted silently and only explode when the
+// user later flips the switch (DOM-08).
 func (c Config) validatePhone() error {
-	if !c.Phone.Enabled {
-		return nil
-	}
-	_, phonePort, err := net.SplitHostPort(c.Phone.Addr)
+	phoneHost, phonePort, err := net.SplitHostPort(c.Phone.Addr)
 	if err != nil {
 		return oeerrors.Errorf("invalid phone.addr: %w", err)
 	}
@@ -505,6 +504,13 @@ func (c Config) validatePhone() error {
 	default:
 		return oeerrors.Errorf("phone.tls must be auto or off, got %q", c.Phone.TLS)
 	}
+	// SEC-03: tls=off means pairing codes and long-lived tokens travel in
+	// cleartext, which is only tolerable on loopback.
+	if c.Phone.TLS == "off" && !isLoopbackHost(phoneHost) {
+		return oeerrors.Errorf(
+			"phone.tls=off requires a loopback phone.addr, got %q; set phone.tls to auto or bind the address to 127.0.0.1/localhost",
+			c.Phone.Addr)
+	}
 	if c.Phone.PairCodeTTLSeconds < 30 || c.Phone.PairCodeTTLSeconds > 3600 {
 		return oeerrors.Errorf("phone.pair_code_ttl_seconds must be 30..3600")
 	}
@@ -515,6 +521,17 @@ func (c Config) validatePhone() error {
 		return oeerrors.Errorf("phone.max_utterance_seconds must be 5..60")
 	}
 	return nil
+}
+
+// isLoopbackHost reports whether a phone.addr host is loopback: the literal
+// localhost name or any address in 127.0.0.0/8 / ::1. Unspecified addresses
+// (0.0.0.0, [::]), LAN IPs and other hostnames are not.
+func isLoopbackHost(host string) bool {
+	if strings.EqualFold(strings.TrimSpace(host), "localhost") {
+		return true
+	}
+	ip := net.ParseIP(strings.Trim(host, "[]"))
+	return ip != nil && ip.IsLoopback()
 }
 
 func Save(path string, cfg Config) error {

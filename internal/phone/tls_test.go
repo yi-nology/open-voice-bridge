@@ -35,8 +35,13 @@ func TestCertificateManagerGeneratesAndReuses(t *testing.T) {
 	if !hasLoopback {
 		t.Fatalf("SAN IPs = %v, want 127.0.0.1", leaf.IPAddresses)
 	}
-	if !leaf.IsCA {
-		t.Fatal("self-signed cert should set IsCA")
+	// SEC-04: the leaf must not be a CA — trusting it must not turn this
+	// host's key into a general-purpose signer.
+	if leaf.IsCA {
+		t.Fatal("self-signed leaf must not be a CA")
+	}
+	if leaf.KeyUsage != x509.KeyUsageDigitalSignature {
+		t.Fatalf("key usage = %v, want digital signature only", leaf.KeyUsage)
 	}
 
 	keyInfo, err := os.Stat(filepath.Join(dir, keyFileName))
@@ -72,14 +77,41 @@ func TestCertificateManagerRebuildsExpired(t *testing.T) {
 	}
 	firstLeaf, _ := x509.ParseCertificate(first.Certificate[0])
 
-	// Advance past expiry so the cached cert is no longer valid.
-	manager.now = func() time.Time { return base.Add(certValidFor + 2*time.Hour) }
+	// Well before the renewal margin the cached cert keeps being reused.
+	manager.now = func() time.Time { return base.Add(certValidFor - certRenewMargin - 24*time.Hour) }
+	kept, err := manager.Get()
+	if err != nil {
+		t.Fatalf("Get before renewal margin: %v", err)
+	}
+	keptLeaf, _ := x509.ParseCertificate(kept.Certificate[0])
+	if keptLeaf.SerialNumber.Cmp(firstLeaf.SerialNumber) != 0 {
+		t.Fatal("certificate before the renewal margin should be reused")
+	}
+
+	// Near expiry (inside the renewal margin) must rebuild even though the
+	// cert is not expired yet: a long-running process must not stay pinned
+	// to a cert that is about to die.
+	manager.now = func() time.Time { return base.Add(certValidFor - certRenewMargin + 2*time.Hour) }
 	second, err := manager.Get()
 	if err != nil {
-		t.Fatalf("Get after expiry: %v", err)
+		t.Fatalf("Get near expiry: %v", err)
 	}
 	secondLeaf, _ := x509.ParseCertificate(second.Certificate[0])
 	if secondLeaf.SerialNumber.Cmp(firstLeaf.SerialNumber) == 0 {
+		t.Fatal("near-expiry certificate should be regenerated")
+	}
+
+	// Fully expired: the second cert is rebuilt too (its NotAfter is
+	// secondIssueTime - 1h + certValidFor).
+	manager.now = func() time.Time {
+		return base.Add(2*certValidFor - certRenewMargin + 8*time.Hour)
+	}
+	third, err := manager.Get()
+	if err != nil {
+		t.Fatalf("Get after expiry: %v", err)
+	}
+	thirdLeaf, _ := x509.ParseCertificate(third.Certificate[0])
+	if thirdLeaf.SerialNumber.Cmp(secondLeaf.SerialNumber) == 0 {
 		t.Fatal("expired certificate should be regenerated")
 	}
 }

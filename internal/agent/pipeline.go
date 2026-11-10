@@ -111,6 +111,7 @@ func (p *SpeechPipeline) Transcribe(u Utterance) (Transcript, bool) {
 		Address:   u.Ref.Address,
 		Processed: processed != rawText,
 		Latency:   result.Latency,
+		Duration:  time.Duration(len(u.Samples)) * time.Second / time.Duration(u.Rate()),
 		At:        time.Now(),
 	}
 	if p.sink != nil {

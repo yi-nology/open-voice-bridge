@@ -29,6 +29,9 @@ type ServerConfig struct {
 	CertDir             string // used only when TLSMode == "auto"
 	MaxClients          int
 	MaxUtteranceSeconds int // 0 falls back to 30
+	// MaxQueuedUtterances bounds the in-flight transcription backlog; 0 falls
+	// back to maxQueuedUtterances (SEC-08).
+	MaxQueuedUtterances int
 	Transcriber         Transcriber
 }
 
@@ -43,6 +46,7 @@ type Server struct {
 	cfg         ServerConfig
 	transcriber Transcriber
 	maxSamples  int
+	queue       *utteranceQueue
 	srv         *http.Server
 
 	mu     sync.Mutex
@@ -79,11 +83,15 @@ func NewServer(store *Store, injector *KeyInjector, hub *input.Hub, cfg ServerCo
 		cfg:         cfg,
 		transcriber: cfg.Transcriber,
 		maxSamples:  maxUtterance * sampleRate,
+		queue:       newUtteranceQueue(cfg.MaxQueuedUtterances),
 		conns:       map[string]*activeConn{},
 		closed:      make(chan struct{}),
 	}
 	if cfg.TLSMode == "auto" && cfg.CertDir != "" {
 		s.certs = NewCertificateManager(cfg.CertDir)
+	}
+	if cfg.Transcriber != nil {
+		async.GoSafe(s.runTranscriptionQueue)
 	}
 	s.srv = &http.Server{Handler: s.Handler(), ReadHeaderTimeout: 10 * time.Second}
 	return s
@@ -130,8 +138,10 @@ func (s *Server) Serve(ctx context.Context) error {
 	case <-ctx.Done():
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
+		close(s.closed) // stop the transcription worker
 		return s.srv.Shutdown(shutdownCtx)
 	case err := <-serveErr:
+		close(s.closed)
 		return err
 	}
 }
@@ -349,6 +359,13 @@ func (s *Server) handleStart(ctx context.Context, active *activeConn, msg contro
 		active.send(ctx, errorFrame("bad_state", "an utterance is already in progress"))
 		return
 	}
+	// A full queue means earlier speech is still being transcribed. Refuse
+	// here so the user never speaks into an utterance that cannot be queued
+	// (SEC-08).
+	if s.queue.full() {
+		active.send(ctx, errorFrame("busy", "still catching up on earlier speech"))
+		return
+	}
 	if msg.Format != "" && msg.Format != "pcm16" {
 		active.send(ctx, errorFrame("bad_format", "only pcm16 is supported"))
 		return
@@ -391,8 +408,9 @@ func (s *Server) handleAudio(ctx context.Context, active *activeConn, data []byt
 }
 
 // finishUtterance closes the recording, releases the microphone and hands the
-// samples to ASR off the read loop, so a slow provider never stops the phone
-// from pressing keys.
+// samples to the bounded transcription queue, so a slow provider never stops
+// the phone from pressing keys and two sentences can never reach ASR swapped
+// (SEC-08).
 func (s *Server) finishUtterance(ctx context.Context, active *activeConn, truncated bool) {
 	if !active.source.isSpeaking() {
 		active.buffer.reset()
@@ -405,29 +423,53 @@ func (s *Server) finishUtterance(ctx context.Context, active *activeConn, trunca
 	}
 	active.send(ctx, map[string]any{"type": "listening", "active": false})
 
-	transcriber := s.transcriber
-	meta := utteranceMeta(active)
-	async.GoSafe(func() {
-		result, ok := transcriber.TranscribeUtterance(context.Background(), samples, meta)
-		// A fresh detached context: by the time ASR returns the read loop may
-		// already be gone, and a write on a closed connection is a no-op that
-		// writeControl logs at debug rather than a panic.
-		sendCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		if !ok {
-			active.send(sendCtx, errorFrame("no_speech", "nothing recognised"))
+	if !s.queue.offer(utteranceJob{
+		samples:   samples,
+		meta:      utteranceMeta(active),
+		truncated: truncated,
+		notify:    active,
+	}) {
+		active.send(ctx, errorFrame("busy", "still catching up on earlier speech"))
+	}
+}
+
+// runTranscriptionQueue drains finished utterances in capture order. It is the
+// only caller of the transcriber for phone audio, which is what makes the
+// subtitles and history keep the order the words were spoken in.
+func (s *Server) runTranscriptionQueue() {
+	for {
+		select {
+		case <-s.closed:
 			return
+		case job := <-s.queue.ch:
+			s.processUtterance(job)
 		}
-		active.send(sendCtx, map[string]any{
-			"type":       "transcript",
-			"text":       result.Text,
-			"raw_text":   result.RawText,
-			"provider":   result.Provider,
-			"processed":  result.Processed,
-			"latency_ms": result.LatencyMS,
-			"at":         result.At.Format(time.RFC3339),
-			"truncated":  truncated,
-		})
+	}
+}
+
+func (s *Server) processUtterance(job utteranceJob) {
+	result, ok := s.transcriber.TranscribeUtterance(context.Background(), job.samples, job.meta)
+	if job.notify == nil {
+		return
+	}
+	// A fresh detached context: by the time ASR returns the read loop may
+	// already be gone, and a write on a closed connection is a no-op that
+	// writeControl logs at debug rather than a panic.
+	sendCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if !ok {
+		job.notify.send(sendCtx, errorFrame("no_speech", "nothing recognised"))
+		return
+	}
+	job.notify.send(sendCtx, map[string]any{
+		"type":       "transcript",
+		"text":       result.Text,
+		"raw_text":   result.RawText,
+		"provider":   result.Provider,
+		"processed":  result.Processed,
+		"latency_ms": result.LatencyMS,
+		"at":         result.At.Format(time.RFC3339),
+		"truncated":  job.truncated,
 	})
 }
 
@@ -491,16 +533,13 @@ func (s *Server) dropLocked(active *activeConn) {
 
 // transcribeDropped runs audio left over by a connection that ended while the
 // user was holding to talk. Nothing is written back to the phone: the words
-// still belong in the focused window, the subtitles and the history (I5).
+// still belong in the focused window, the subtitles and the history (I5), and
+// they ride the same ordered queue as live utterances.
 func (s *Server) transcribeDropped(active *activeConn, samples []int16) {
 	if len(samples) == 0 || s.transcriber == nil {
 		return
 	}
-	transcriber := s.transcriber
-	meta := utteranceMeta(active)
-	async.GoSafe(func() {
-		transcriber.TranscribeUtterance(context.Background(), samples, meta)
-	})
+	s.queue.offer(utteranceJob{samples: samples, meta: utteranceMeta(active)})
 }
 
 // Disconnect closes the live session of a device, if it has one. A revoked

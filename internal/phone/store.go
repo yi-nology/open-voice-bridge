@@ -71,19 +71,28 @@ type ipWindow struct {
 	resetAt time.Time
 }
 
+// Pre-authentication tables are bounded (SEC-07). Tickets live ~60 s and
+// rate-limit windows ~1 min, so a sweep keeps them small; the caps are the
+// backstop for a flood that stays inside the TTL.
+const (
+	maxTicketEntries = 256
+	maxIPWindows     = 512
+)
+
 // Store owns pairing codes, device tokens, and WebSocket tickets. It is safe
 // for concurrent use and persists only device/token records (never codes or
 // tickets, which are ephemeral by design).
 type Store struct {
-	mu      sync.Mutex
-	path    string
-	cfg     Config
-	now     func() time.Time
-	codes   map[string]*pairCode // ephemeral code -> record (keyed by code)
-	tokens  map[string]string    // tokenHash hex -> deviceID
-	devices map[string]*Device
-	tickets map[string]ticket
-	ip      map[string]*ipWindow
+	mu        sync.Mutex
+	persistMu sync.Mutex // serialises disk writes; never held together with s.mu
+	path      string
+	cfg       Config
+	now       func() time.Time
+	codes     map[string]*pairCode // ephemeral code -> record (keyed by code)
+	tokens    map[string]string    // tokenHash hex -> deviceID
+	devices   map[string]*Device
+	tickets   map[string]ticket
+	ip        map[string]*ipWindow
 }
 
 // NewStore loads any previously paired devices from path (0600 JSON). A missing
@@ -148,7 +157,9 @@ func (s *Store) load() error {
 	return nil
 }
 
-func (s *Store) persistLocked() error {
+// snapshotLocked copies the persisted view of the device set. Callers hold
+// s.mu only for this copy — the disk write happens in persistFlush (R8).
+func (s *Store) snapshotLocked() []persistedDevice {
 	items := make([]persistedDevice, 0, len(s.devices))
 	for _, device := range s.devices {
 		items = append(items, persistedDevice{
@@ -159,6 +170,15 @@ func (s *Store) persistLocked() error {
 			LastSeen:  device.LastSeen,
 		})
 	}
+	return items
+}
+
+// persistFlush writes the device set to disk. It must be called without s.mu
+// held: the write is serialised by persistMu so concurrent commits cannot
+// interleave, and a slow disk cannot freeze Authenticate (CON-08).
+func (s *Store) persistFlush(items []persistedDevice) error {
+	s.persistMu.Lock()
+	defer s.persistMu.Unlock()
 	data, err := json.MarshalIndent(items, "", "  ")
 	if err != nil {
 		return err
@@ -171,6 +191,57 @@ func (s *Store) persistLocked() error {
 		return err
 	}
 	return os.Rename(tmp, s.path)
+}
+
+// sweepLocked drops expired tickets, rate-limit windows and pairing codes so
+// pre-auth tables cannot grow without bound (SEC-07).
+func (s *Store) sweepLocked() {
+	now := s.now()
+	for value, t := range s.tickets {
+		if now.After(t.expires) {
+			delete(s.tickets, value)
+		}
+	}
+	for ip, window := range s.ip {
+		if now.After(window.resetAt) {
+			delete(s.ip, ip)
+		}
+	}
+	for value, pc := range s.codes {
+		if now.After(pc.expires) {
+			delete(s.codes, value)
+		}
+	}
+}
+
+// evictOldestTicketLocked drops the ticket closest to expiry to make room for
+// one new entry. Oldest-first keeps the freshest handshakes alive.
+func (s *Store) evictOldestTicketLocked() {
+	oldest := ""
+	var oldestExp time.Time
+	for value, t := range s.tickets {
+		if oldest == "" || t.expires.Before(oldestExp) {
+			oldest, oldestExp = value, t.expires
+		}
+	}
+	if oldest != "" {
+		delete(s.tickets, oldest)
+	}
+}
+
+// evictOldestWindowLocked drops the rate-limit window closest to reset, the
+// least protective entry to give up under pressure.
+func (s *Store) evictOldestWindowLocked() {
+	oldest := ""
+	var oldestReset time.Time
+	for ip, window := range s.ip {
+		if oldest == "" || window.resetAt.Before(oldestReset) {
+			oldest, oldestReset = ip, window.resetAt
+		}
+	}
+	if oldest != "" {
+		delete(s.ip, oldest)
+	}
 }
 
 // GeneratePairCode invalidates any prior code and returns a fresh 6-digit code
@@ -188,15 +259,18 @@ func (s *Store) GeneratePairCode() (string, time.Time) {
 // returned exactly once; the store keeps only its SHA-256 hash.
 func (s *Store) Pair(code, name, ip string) (deviceID, token string, err error) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.sweepLocked()
 	if !s.allowIPLocked(ip) {
+		s.mu.Unlock()
 		return "", "", oeerrors.New("too many pairing attempts from this address")
 	}
 	matched, ok := s.matchCodeLocked(code)
 	if !ok {
+		s.mu.Unlock()
 		return "", "", oeerrors.New("invalid or expired pairing code")
 	}
 	if len(s.devices) >= s.cfg.MaxDevices {
+		s.mu.Unlock()
 		return "", "", oeerrors.New("maximum paired devices reached")
 	}
 	rawToken := randomHex(32)
@@ -212,9 +286,13 @@ func (s *Store) Pair(code, name, ip string) (deviceID, token string, err error) 
 	}
 	s.tokens[hash] = deviceID
 	delete(s.codes, matched)
-	if err := s.persistLocked(); err != nil {
+	items := s.snapshotLocked()
+	s.mu.Unlock()
+	if err := s.persistFlush(items); err != nil {
+		s.mu.Lock()
 		delete(s.devices, deviceID)
 		delete(s.tokens, hash)
+		s.mu.Unlock()
 		return "", "", oeerrors.Wrap(err, "persist phone device")
 	}
 	return deviceID, rawToken, nil
@@ -250,6 +328,9 @@ func (s *Store) allowIPLocked(ip string) bool {
 	now := s.now()
 	window, ok := s.ip[ip]
 	if !ok || now.After(window.resetAt) {
+		if !ok && len(s.ip) >= maxIPWindows {
+			s.evictOldestWindowLocked()
+		}
 		s.ip[ip] = &ipWindow{count: 1, resetAt: now.Add(time.Minute)}
 		return true
 	}
@@ -276,8 +357,12 @@ func (s *Store) Authenticate(token string) (string, bool) {
 func (s *Store) IssueTicket(deviceID string) (string, time.Time, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.sweepLocked()
 	if _, ok := s.devices[deviceID]; !ok {
 		return "", time.Time{}, oeerrors.Errorf("unknown device %q", deviceID)
+	}
+	if len(s.tickets) >= maxTicketEntries {
+		s.evictOldestTicketLocked()
 	}
 	value := randomHex(16)
 	expires := s.now().Add(s.cfg.TicketTTL)
@@ -289,6 +374,7 @@ func (s *Store) IssueTicket(deviceID string) (string, time.Time, error) {
 func (s *Store) RedeemTicket(value string) (string, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.sweepLocked()
 	t, ok := s.tickets[value]
 	if !ok {
 		return "", false
@@ -303,9 +389,9 @@ func (s *Store) RedeemTicket(value string) (string, bool) {
 // Revoke removes a device and any outstanding tickets for it.
 func (s *Store) Revoke(deviceID string) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	device, ok := s.devices[deviceID]
 	if !ok {
+		s.mu.Unlock()
 		return oeerrors.Errorf("unknown device %q", deviceID)
 	}
 	delete(s.tokens, device.tokenHash)
@@ -315,19 +401,23 @@ func (s *Store) Revoke(deviceID string) error {
 			delete(s.tickets, value)
 		}
 	}
-	return s.persistLocked()
+	items := s.snapshotLocked()
+	s.mu.Unlock()
+	return s.persistFlush(items)
 }
 
 // Rename updates a device's display name.
 func (s *Store) Rename(deviceID, name string) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	device, ok := s.devices[deviceID]
 	if !ok {
+		s.mu.Unlock()
 		return oeerrors.Errorf("unknown device %q", deviceID)
 	}
 	device.Name = name
-	return s.persistLocked()
+	items := s.snapshotLocked()
+	s.mu.Unlock()
+	return s.persistFlush(items)
 }
 
 // DeviceName returns the display name for a paired device id, or "" if unknown.

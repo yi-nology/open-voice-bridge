@@ -8,26 +8,33 @@
 
 进度勾选表示"代码已落地并通过本机 `gofmt`/`vet`/`test` 三件套"；标 **CI** 的还需要 `-race` 或交叉编译证据。
 
-## 执行交接（波 0 未完，从这里接）
+## 执行交接（波 0 剩余，从这里接）
 
 工作方式已固定，不需要重新商量：**一条缺陷一个提交，TDD 先写失败测试**（失败输出留作证据，实现后同批转绿），每步跑三件套，一个批次做完再推远端。
 
-待做顺序（越靠前越漏得多）：
+### 已完成（2026-11-11 批次，全部带回归测试）
 
-1. **SEC-03 + SEC-04 + DOM-08**（进行中）：`validatePhone` 改成无条件校验、拒绝负数、拒绝"非回环 + `tls: off`"；自签叶子证书去 CA 化 + 缩短寿命 + 续期余量；两份文档的信任口径同步。具体判据与要反向的断言已经写进上面两条，不用重新调研。
-2. **SEC-01**：helper socket 取 `SO_PEERCRED`，判定逻辑做成纯函数 + 表驱动 `TestHelperSocketPeerAuth`（含 uid=-1）。
-3. **SEC-06**：管理端"必须有同源证据"，`asr.command.binary` 加属主/可执行位/目录白名单守卫。
-4. **SEC-07 + SEC-08**：配对 map 与 ticket 表过期清扫 + 条目上限；转写改有界、按到达顺序消费的在途队列（顺带解掉 DOM-04 留下的顺序问题）。
-5. **CON-02/03/04/05/08**：一律是"把阻塞 IO 挪出锁 + 给每个外部调用配 deadline"，提交信息里带 I3/R8。
-6. **CON-06/07**：SSE 建连即发状态快照（I4）；手机监听器补读/写/idle 超时与服务端 ping。
-7. **DOM-06**：抢占要通知被抢占方并停其采集（I1），配双源并发端到端测试。
-8. **DOM-09 ~ DOM-14**：输入源身份贯穿字幕与历史、字典替换去正则化、keymap 应用原子化、`device.Profile` 死字段与长按重复、`Pair`/`serveConn`/`asrTimeout` 小硬伤、`SetHub` 与 `history.rewrite` 的可见性与 `Sync`。
+- **SEC-03 + SEC-04 + DOM-08**：`validatePhone` 无条件校验（负数/超限/坏 tls 立即报错，不再等启用才炸）；`tls: off` 只允许回环地址，错误文案点名两种解法；自签证书去 CA 化（叶子证书、`KeyUsage=DigitalSignature`）、寿命降为一年、`stillValid` 增加 30 天续期余量；文档信任口径改为"只接受一次例外，不要装成根"。
+- **SEC-01**：helper socket 每条连接取 `SO_PEERCRED`，`apply`/`set_devices`/`capture_*`/`status` 只允许 root 或 `--agent-uid`，仅 `inject` 对组内开放；判定是纯函数（`internal/remap/auth.go`）；unit 模板与 Makefile 传 `--agent-uid @UID@ --group @GID@`。
+- **SEC-06**：管理端 POST 必须有同源证据（I9：空 `Origin` 不算同源，除非 `Sec-Fetch-Site: same-origin`）；`asr.command`/`whispercpp` 的 binary 过守卫（绝对路径或 PATH 解析、普通文件、可执行位、非组/其他可写、属主 root 或本人），doctor 诊断直接显示守卫拒绝原因。
+- **SEC-07 + SEC-08**：`Store` 预鉴权表过期清扫（ticket/ip 窗口/配对码）+ 条目上限（ticket 256 / ip 窗口 512，超限逐最旧淘汰）；手机转写改有界 FIFO 队列（默认 4，可配 `MaxQueuedUtterances`），按采集顺序消费（DOM-04 遗留的乱序问题一并解决），满则 `busy`（开录前也拒绝，避免说了白说）。
+- **CON-08**：`Pair`/`Revoke`/`Rename` 的落盘挪出 `s.mu`（快照在锁内、写盘在 `persistMu` 下），FIFO 回归测试证明慢盘不再冻结 `Authenticate`。
+- 顺手修掉 macOS 上跑不齐测试的两处平台问题：`parseModalias` 移出 `_linux` 文件；helper 测试 socket 路径改短（sun_path 104 限制）。
+- **产品增量（SayAll 对标）**：「使用统计」落地——`usage-stats.json` 独立累计（次数/字数/语音时长/最长单次/按日，180 天窗口），`Transcript` 带 `Duration`，`GET /api/stats` 只回数字不回内容，概览页 KPI 卡 + 14 天柱状图（空态/有数均真机验证）。
+
+### 待做顺序（越靠前越漏得多）
+
+1. **SEC-06 剩余半句**：`asr.command.args` 同样可执行任意程序（`binary=/bin/sh args=["-c",...]`）——binary 守卫挡不住这个，真正的闸门是管理端 origin（已收紧）。若要再加一层：args 白名单或命令模板，交由波 1 决定。
+2. **CON-02/03/04/05/07**：一律是"把阻塞 IO 挪出锁 + 给每个外部调用配 deadline"（管理端 helper 调用、ASR 窗口持锁 + `context.Background()`、pw-cat 写 stdin、PipeWire watcher 泄漏、手机 WS 无读写/idle 超时）。CON-06：SSE 建连即发状态快照（I4）。
+3. **DOM-06**：抢占要通知被抢占方并停其采集（I1），配双源并发端到端测试。
+4. **DOM-09 ~ DOM-14**：输入源身份贯穿字幕与历史、字典替换去正则化、keymap 应用原子化、`device.Profile` 死字段与长按重复、`Pair`/`serveConn`/`asrTimeout` 小硬伤、`SetHub` 与 `history.rewrite` 的可见性与 `Sync`。
+5. **产品增量（SayAll 对标，未做）**：配置导出/导入（版本化 JSON、导入前校验并备份旧配置）、一键诊断摘要（脱敏 JSON 随 issue 提交）、常用语面板、按键次数统计（需要 root helper 计数回传）。
 
 硬门禁（不要为了赶进度绕过）：
 
 - 每个 Go 命令前先 `export PATH=$HOME/go-toolchain/go/bin:$PATH`；`build`/`vet`/`test` 一律带 `-tags stdjson`。
 - 三件套：`gofmt -l . && go vet -tags stdjson ./... && go test -tags stdjson -count=1 ./...`。输出重定向到临时文件再看退出码，不要把 `go test` 管进 `grep`（会吞掉真实 `$?`）。
-- `-race` 在这台 Pi 上跑不起来（47 位虚拟地址内核对 race detector 不可用）：竞争类结论只以 CI 的 `Test (linux)` 作业为证据，本机绿不代表无竞争，勾选时要标 **CI**。
+- `-race` 在 Pi 上跑不起来：竞争类结论只以 CI 的 `Test (linux)` 作业为证据，勾选时要标 **CI**。macOS 开发机可用 Docker（`golang:1.27`）跑 Linux 侧测试作近似证据。
 - 管理端永远只绑 `127.0.0.1:8787`；配对码只进 URL fragment（`#pair=`）；token / ticket / 配对码 / 音频字节 / 转写正文永不进日志与提交物；提交的文档与测试里不写真实 MAC 与机器路径（示例一律 `AA:BB:CC:DD:EE:FF`）。
 - 推送用显式 SSH URL（`origin` 是 HTTPS，凭据不在那里）；`git remote set-url` 这条路被拒过，别再试。
 - **不打 `v0.2.0` tag**：`release.yml` 由 tag 触发并公开发布，硬件验收通过之前不切版本。
@@ -37,14 +44,14 @@
 
 ### 正在漏的（Critical/High）
 
-- [ ] **SEC-01** root helper socket 无对端凭据校验 → 组内任意进程可让 root 改写 `/etc` 映射、独占抓取键盘（`EVIOCGRAB`）、把原始按键回流给自己（等价键盘记录）。证据 `internal/remap/daemon.go:150-161,200-254,328-344,436-467`；全仓 `SO_PEERCRED` 零命中。动作：接受连接后取 `ucred`，`apply`/`set_devices`/`capture_start` 要求 uid 0 或 agent uid，仅 `inject` 允许组内；判定逻辑做成纯函数便于单测。**验证**：`TestHelperSocketPeerAuth`（表驱动，含 uid=-1、非授权 uid、agent uid、root）
+- [x] **SEC-01** root helper socket 无对端凭据校验 → 组内任意进程可让 root 改写 `/etc` 映射、独占抓取键盘（`EVIOCGRAB`）、把原始按键回流给自己（等价键盘记录）。证据 `internal/remap/daemon.go:150-161,200-254,328-344,436-467`；全仓 `SO_PEERCRED` 零命中。动作：接受连接后取 `ucred`，`apply`/`set_devices`/`capture_start` 要求 uid 0 或 agent uid，仅 `inject` 允许组内；判定逻辑做成纯函数便于单测。**验证**：`TestHelperSocketPeerAuth`（表驱动，含 uid=-1、非授权 uid、agent uid、root）
 - [x] **SEC-02** 转写正文进日志，且日志落在 git 工作区内。证据 `internal/agent/pipeline.go:77-81`（`text=<全文>`）、`deploy/xiaomi-remote-go.service:19-20` + Makefile logrotate 把 `agent.log` 存在 checkout 里；与 `SECURITY.md:29` 的承诺直接冲突。动作：只记长度/语言/提供商，地址脱敏；顺手审一遍其它 `log.*` 站点。**验证**：日志断言测试（正文不出现在 sink 中）。**已做**：`recognized` 改记 `chars/language/provider/source/latency`（`internal/agent/pipeline.go:99`）；蓝牙地址走新的 `internal/redact`（`MAC` 留厂商段 + 末段，`agent.go:370/409`）；日志文件从 checkout 搬到 `~/.local/state/xiaomi-remote/agent.log`（`@LOG_DIR@`/`@LOG_FILE@` 占位符 + Makefile 按服务用户的 home 解析，`install-logrotate` 走 sudo 也不会算成 `/root`；`ExecStartPre=/bin/mkdir -p`）。**同批审出来的另外两条正文外泄路径**：提供商 4xx 的响应体原来整段拼进 error（`internal/llm/openai.go:92`、`internal/asr/{mimo,openai}.go`），内容策略拒绝会引用被拒的那句话——改成只留状态码 + `error.type/code`（`redact.ProviderSuffix`）；`asr.command` 的 stderr 整段进 error，而 ASR 前端会把识别结果打到 stderr——改成 error 只留字节数，正文降级到 debug 级。断言测试在 `internal/agent/log_test.go`（自建 slog sink 捕获全进程日志，含"LLM 报错时正文仍不出现"这条兜底，`redactText`）。
-- [ ] **SEC-03** `phone.tls: "off"` 被允许，非回环地址上配对码与长效令牌走明文（`internal/config/config.go:503-507`、`internal/phone/util.go:80-90`）。动作：装载与保存都拒绝"非回环 + 关闭 TLS"（I6）。**已定做法**：在 `validatePhone` 里判断 `Phone.Addr` 的主机部分，`tls: off` 时只放行 `127.0.0.1`/`localhost`/`::1`（以及回环段 `127.0.0.0/8`），其余（`0.0.0.0`、`[::]`、局域网 IP、主机名）一律报错，错误文案要点名"要么开 `tls: auto`，要么把地址收到回环"；测试写 `TestPhonePlainTLSNeedsLoopback`（表驱动，拒绝列 + 放行列各一组）与 `TestPhoneValidatedEvenWhenDisabled`。`PairingBase` 的 `off → http` 映射保留不动，`internal/phone/util_test.go:13` 已把它钉住——校验层负责堵死非回环明文，不需要改 URL 语义。
-- [ ] **SEC-04** 自签叶子证书被签成 CA：`IsCA:true` + `KeyUsageCertSign`、825 天、无 pinning（`internal/phone/tls.go:119-122`），而文档让用户信任它（`docs/design/external-input-sources.md:268`）——信任之后这台 Pi 的 key 就成了通用 CA。动作：去掉 `IsCA`/`CertSign`，寿命缩短，文档同步。**已定做法**：`KeyUsage` 从 `DigitalSignature|CertSign` 收成只留 `DigitalSignature`，`IsCA` 置假（`BasicConstraintsValid` 保持真，让扩展以 CA=FALSE 正常编码），`certValidFor` 从 825 天降到一年量级，`stillValid` 增加"剩余寿命不足阈值即重建"的续期余量（现在只按已过期判断，长跑进程会卡在临期证书上）；`internal/phone/tls_test.go:38-40` 现在断言 `IsCA` 为真，要反过来断言"叶子不是 CA、`KeyUsage == DigitalSignature`"，并把临期重建加进 `TestCertificateManagerRebuildsExpired`。文档同步两处口径：`docs/design/external-input-sources.md:32`（"手机首次访问手动信任"）与 `:268`（"iOS 额外提示安装证书"）要改成"接受一次例外即可，不要把这张证书导入为长期信任的根"；`SECURITY.md` 里的 MitM 窗口说明跟着更新。
+- [x] **SEC-03** `phone.tls: "off"` 被允许，非回环地址上配对码与长效令牌走明文（`internal/config/config.go:503-507`、`internal/phone/util.go:80-90`）。动作：装载与保存都拒绝"非回环 + 关闭 TLS"（I6）。**已定做法**：在 `validatePhone` 里判断 `Phone.Addr` 的主机部分，`tls: off` 时只放行 `127.0.0.1`/`localhost`/`::1`（以及回环段 `127.0.0.0/8`），其余（`0.0.0.0`、`[::]`、局域网 IP、主机名）一律报错，错误文案要点名"要么开 `tls: auto`，要么把地址收到回环"；测试写 `TestPhonePlainTLSNeedsLoopback`（表驱动，拒绝列 + 放行列各一组）与 `TestPhoneValidatedEvenWhenDisabled`。`PairingBase` 的 `off → http` 映射保留不动，`internal/phone/util_test.go:13` 已把它钉住——校验层负责堵死非回环明文，不需要改 URL 语义。
+- [x] **SEC-04** 自签叶子证书被签成 CA：`IsCA:true` + `KeyUsageCertSign`、825 天、无 pinning（`internal/phone/tls.go:119-122`），而文档让用户信任它（`docs/design/external-input-sources.md:268`）——信任之后这台 Pi 的 key 就成了通用 CA。动作：去掉 `IsCA`/`CertSign`，寿命缩短，文档同步。**已定做法**：`KeyUsage` 从 `DigitalSignature|CertSign` 收成只留 `DigitalSignature`，`IsCA` 置假（`BasicConstraintsValid` 保持真，让扩展以 CA=FALSE 正常编码），`certValidFor` 从 825 天降到一年量级，`stillValid` 增加"剩余寿命不足阈值即重建"的续期余量（现在只按已过期判断，长跑进程会卡在临期证书上）；`internal/phone/tls_test.go:38-40` 现在断言 `IsCA` 为真，要反过来断言"叶子不是 CA、`KeyUsage == DigitalSignature`"，并把临期重建加进 `TestCertificateManagerRebuildsExpired`。文档同步两处口径：`docs/design/external-input-sources.md:32`（"手机首次访问手动信任"）与 `:268`（"iOS 额外提示安装证书"）要改成"接受一次例外即可，不要把这张证书导入为长期信任的根"；`SECURITY.md` 里的 MitM 窗口说明跟着更新。
 - [x] **SEC-05** 撤销设备不断现有会话：`Store.Revoke` 只清令牌/ticket（`internal/phone/store.go:304-319`），而 `serveConn` 只在 ticket 兑换时鉴权一次（`internal/phone/server.go:279`）→ 被撤销的手机还能继续按键与听写。动作：撤销即丢弃该 device 的活动连接（与 DOM-04/I5 同批做）。**已做**：`Server.Disconnect(deviceID)` 摘注册表 + `hub.Unregister` + 在锁外 `CloseNow()`；`main.go` 的 `PhoneRevoke` 在 Revoke 成功后立刻调用并回 `disconnected` 字段。撤销是有意切断，所以那半句只丢弃、不进转写（不会把文字打到别人眼前）。
-- [ ] **SEC-06** 管理端 origin 检查在 `Origin` 为空且无 `Sec-Fetch-Site` 时直接放行（`biz/handler/ui/server.go:126-143`），而 `asr.command.binary` 会原样执行（`internal/asr/command.go:81`）→ 摸到管理 API ≈ 本机 RCE。动作：收紧到"必须有同源证据"（I9），并把 `binary` 路径限定为白名单目录/要求可执行位与属主检查。
-- [ ] **SEC-07** 预鉴权 map 无界增长：配对尝试计数的 `ip` 项从不清理、ticket 表从不清理（`internal/phone/store.go:86,246-258,276-286`），任何局域网 TCP 源都能灌。动作：过期清扫 + 条目上限。
-- [ ] **SEC-08** 转写任务无并发上限：每句起一个 goroutine 并各持约 960 KB PCM（`internal/phone/server.go:396-436`、`server.go:81`），而 `speech` 用一把锁串行（`internal/agent/pipeline.go:56`）→ 内存增长 + 遥控器听写被饿死。动作：有界队列/在途上限，超出即回 `busy`。**范围追加**：队列要按采集顺序消费——DOM-04 把排空改成同步取、异步跑之后，两句同时在飞时到达 ASR 的先后取决于谁先抢到 `p.mu`，字幕与历史会偶发调换顺序。
+- [x] **SEC-06** 管理端 origin 检查在 `Origin` 为空且无 `Sec-Fetch-Site` 时直接放行（`biz/handler/ui/server.go:126-143`），而 `asr.command.binary` 会原样执行（`internal/asr/command.go:81`）→ 摸到管理 API ≈ 本机 RCE。动作：收紧到"必须有同源证据"（I9），并把 `binary` 路径限定为白名单目录/要求可执行位与属主检查。
+- [x] **SEC-07** 预鉴权 map 无界增长：配对尝试计数的 `ip` 项从不清理、ticket 表从不清理（`internal/phone/store.go:86,246-258,276-286`），任何局域网 TCP 源都能灌。动作：过期清扫 + 条目上限。
+- [x] **SEC-08** 转写任务无并发上限：每句起一个 goroutine 并各持约 960 KB PCM（`internal/phone/server.go:396-436`、`server.go:81`），而 `speech` 用一把锁串行（`internal/agent/pipeline.go:56`）→ 内存增长 + 遥控器听写被饿死。动作：有界队列/在途上限，超出即回 `busy`。**范围追加**：队列要按采集顺序消费——DOM-04 把排空改成同步取、异步跑之后，两句同时在飞时到达 ASR 的先后取决于谁先抢到 `p.mu`，字幕与历史会偶发调换顺序。
 
 ### 会丢用户数据或冻住服务的（High/Medium）
 
@@ -61,12 +68,12 @@
 - [ ] **CON-05** PipeWire watcher 泄漏：`watchOnce` 绑在 Start 的 ctx 上（:56），`RestartAudio` 只关 sink（`internal/agent/agent.go:524-532`），而 `check` 在已关闭时返回 true（:97-99）→ 每 15 s 永久 fork 一次 `pw-dump`。动作：重启时取消 watcher。
 - [ ] **CON-06** 用户可见事件静默可丢且无快照：`transcripts` 环 16 非阻塞丢（`agent.go:180-186`）、SSE 客户端环 16 丢（`server.go:201-205`）、SSE 建连时不发状态快照（:159-195）→ 丢一条 `listening` 药丸就永久错位。动作：建连即快照（I4）。
 - [ ] **CON-07** 手机 HTTP 只设了 `ReadHeaderTimeout`（`internal/phone/server.go:88`），WS `Read` 无 deadline（:281）→ slow-loris 与 4 个槽位被赖住；优雅关闭被吃掉 5 s（10 s 预算）。动作：读写/idle 超时 + 服务端 ping。
-- [ ] **CON-08** `store.persistLocked` 在 `store.mu` 里落盘（`internal/phone/store.go:215,318,170-173`）→ 阻塞 `Authenticate`。动作：IO 挪出锁（R8）。
+- [x] **CON-08** `store.persistLocked` 在 `store.mu` 里落盘（`internal/phone/store.go:215,318,170-173`）→ 阻塞 `Authenticate`。动作：IO 挪出锁（R8）。
 
 ### 波 0 附带的小硬伤（同批清）
 
 - [ ] **DOM-07** 手机按键通道同步调 helper（10 s 超时，`internal/phone/server.go:329`、`internal/helper/client.go:28`），卡住时同一连接的 PCM 也停。
-- [ ] **DOM-08** `validatePhone` 只在 `Phone.Enabled` 时跑（`internal/config/config.go:488-491`），手机段关掉时任何非法值都能过装载与保存；`normalizePhone` 只填**零值**（`config.go:319-335`），所以负数与超限值会原样落盘。**订正**：原描述里"`maxSamples` 变负、每帧都满"经复核不成立——`NewServer` 已把 `<=0` 夹成 30（`internal/phone/server.go:70-74`），真正的危害是坏配置被静默持久化，等到用户打开手机输入才在启动时炸出错误，而那时他刚接受完"配好了"的引导。动作：无条件校验 + 显式拒绝负数（与 SEC-03 同一条 `validatePhone` 改，测试见 `TestPhoneValidatedEvenWhenDisabled`）。
+- [x] **DOM-08** `validatePhone` 只在 `Phone.Enabled` 时跑（`internal/config/config.go:488-491`），手机段关掉时任何非法值都能过装载与保存；`normalizePhone` 只填**零值**（`config.go:319-335`），所以负数与超限值会原样落盘。**订正**：原描述里"`maxSamples` 变负、每帧都满"经复核不成立——`NewServer` 已把 `<=0` 夹成 30（`internal/phone/server.go:70-74`），真正的危害是坏配置被静默持久化，等到用户打开手机输入才在启动时炸出错误，而那时他刚接受完"配好了"的引导。动作：无条件校验 + 显式拒绝负数（与 SEC-03 同一条 `validatePhone` 改，测试见 `TestPhoneValidatedEvenWhenDisabled`）。
 - [ ] **DOM-09** 手机句子丢身份：`SourceRef.Kind` 写了却没人读，`main.go:139` 忽略 `meta.Name`/`meta.DeviceID` → 字幕/历史只有 IP；两源上限口径还不同（`config.MaxUtterance` vs `Phone.MaxUtteranceSeconds`），BLE 超限静默截断而手机有 `too_long`（`agent.go:489-496` vs `phone/server.go`）。动作：统一标注与超限语义（I8）。
 - [ ] **DOM-10** 字典替换把 `To` 当正则模板（`internal/text/text.go:93`），含 `$1` 的替换文本会展开成不存在的分组；规则还会链式二次改写。动作：字面替换 + 规则不叠加。
 - [ ] **DOM-11** keymap 应用与落盘不原子：`biz/service/service.go:138-223` 先动 helper 再 `config.Save`，保存可能失败 → 运行中的守护进程对应一份存不出去的配置。

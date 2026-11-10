@@ -21,7 +21,8 @@ const (
 	certFileName = "phone_cert.pem"
 	keyFileName  = "phone_key.pem"
 
-	certValidFor = 825 * 24 * time.Hour // browsers cap trust lifetimes near this
+	certValidFor    = 365 * 24 * time.Hour // one year; shorter is safer for a TOFU cert
+	certRenewMargin = 30 * 24 * time.Hour  // rebuild when less than this is left
 )
 
 // CertificateManager produces and caches a self-signed TLS certificate whose
@@ -71,11 +72,14 @@ func (m *CertificateManager) Get() (tls.Certificate, error) {
 	return cert, nil
 }
 
-// stillValid is true when the cert is unexpired and its SANs already cover the
-// current local name/IP set.
+// stillValid is true when the cert is unexpired, outside the renewal margin
+// and its SANs already cover the current local name/IP set.
 func (m *CertificateManager) stillValid(leaf *x509.Certificate) bool {
 	now := m.now()
 	if now.After(leaf.NotAfter) || now.Add(24*time.Hour).Before(leaf.NotBefore) {
+		return false
+	}
+	if now.Add(certRenewMargin).After(leaf.NotAfter) {
 		return false
 	}
 	wantDNS, wantIPs := localNames()
@@ -116,10 +120,10 @@ func newSelfSigned(dnsNames []string, ips []net.IP, now time.Time) (certPair, er
 		Subject:               pkix.Name{CommonName: "Open Voice Bridge Phone", Organization: []string{"yi-nology"}},
 		NotBefore:             now.Add(-time.Hour),
 		NotAfter:              now.Add(certValidFor),
-		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		KeyUsage:              x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
-		IsCA:                  true,
+		IsCA:                  false,
 		DNSNames:              dnsNames,
 		IPAddresses:           ips,
 	}

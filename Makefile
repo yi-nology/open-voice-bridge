@@ -16,6 +16,8 @@ RUN_HOME := $(shell getent passwd $(RUN_USER) 2>/dev/null | cut -d: -f6)
 ifeq ($(RUN_HOME),)
 RUN_HOME := $(HOME)
 endif
+RUN_UID := $(shell id -u $(RUN_USER) 2>/dev/null)
+RUN_GID := $(shell id -g $(RUN_USER) 2>/dev/null)
 LOG_DIR := $(RUN_HOME)/.local/state/xiaomi-remote
 LOG_FILE := $(LOG_DIR)/agent.log
 BIN := bin/xiaomi-remote
@@ -58,7 +60,9 @@ install-user:
 
 install-remap:
 	mkdir -p $(dir $(SYSTEM_UNIT))
-	sed -e 's|@ROOT@|$(ROOT)|g' -e 's|@USER@|$(RUN_USER)|g' deploy/xiaomi-remote-remap.service > $(SYSTEM_UNIT)
+	sed -e 's|@ROOT@|$(ROOT)|g' -e 's|@USER@|$(RUN_USER)|g' \
+		-e 's|@UID@|$(RUN_UID)|g' -e 's|@GID@|$(RUN_GID)|g' \
+		deploy/xiaomi-remote-remap.service > $(SYSTEM_UNIT)
 	chmod 644 $(SYSTEM_UNIT)
 	systemctl daemon-reload
 	systemctl enable --now xiaomi-remote-remap.service

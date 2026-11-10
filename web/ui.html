@@ -674,6 +674,10 @@
   .recent-row .dur { font: 10px ui-monospace, monospace; color: #9a9aa2; padding-top: 3px; white-space: nowrap; }
   .recent-empty { padding: 16px; font-size: 12px; color: var(--muted); }
   .recent-count { font-size: 11px; color: #9a9aa2; margin-right: 10px; white-space: nowrap; }
+  .stats-days { display: flex; align-items: flex-end; gap: 4px; height: 72px; margin: 14px 4px 0; }
+  .stats-day { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; min-width: 0; height: 100%; }
+  .stats-bar { width: 100%; max-width: 18px; border-radius: 3px 3px 0 0; background: var(--blue); opacity: .85; min-height: 2px; }
+  .stats-day-label { font-size: 10px; color: var(--muted); white-space: nowrap; }
 
   /* ---- config as settings groups (A direction) ---- */
   #cfg-asr > .card, #cfg-llm > .card, #cfg-text > .card {
@@ -1026,6 +1030,35 @@
         <button class="btn small" id="overview-recent-all">查看全部</button>
       </div>
       <div id="overview-recent" class="recent-list"></div>
+    </div>
+
+    <div class="panel" id="overview-stats-panel" style="margin-top:14px;">
+      <div class="panel-head">
+        <div><h3>使用统计</h3><p>只累计次数与时长，听写内容不会离开这台机器</p></div>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <h3>听写次数</h3>
+          <div class="value" id="stats-utterances">…</div>
+          <div class="sub">累计成功识别</div>
+        </div>
+        <div class="card">
+          <h3>累计字数</h3>
+          <div class="value" id="stats-characters">…</div>
+          <div class="sub">识别出的文字</div>
+        </div>
+        <div class="card">
+          <h3>语音时长</h3>
+          <div class="value" id="stats-speech">…</div>
+          <div class="sub">按住说话的总时间</div>
+        </div>
+        <div class="card">
+          <h3>最长单次</h3>
+          <div class="value" id="stats-longest">…</div>
+          <div class="sub">一次听写的最长时长</div>
+        </div>
+      </div>
+      <div class="stats-days" id="stats-days" title="最近 14 天语音时长"></div>
     </div>
     </div>
 
@@ -2572,6 +2605,61 @@ document.querySelectorAll(".side-item").forEach(item => {
 
 const guidedSubtitle = document.getElementById("guided-subtitle");
 if (guidedSubtitle) guidedSubtitle.addEventListener("click", () => goTab("subtitle"));
+function fmtDuration(ms) {
+  const total = Math.round((ms || 0) / 1000);
+  if (total < 60) return total + " 秒";
+  const minutes = Math.floor(total / 60);
+  const rest = total % 60;
+  if (minutes < 60) return rest ? minutes + " 分 " + rest + " 秒" : minutes + " 分";
+  return Math.floor(minutes / 60) + " 小时 " + (minutes % 60) + " 分";
+}
+
+async function loadStats() {
+  const el = document.getElementById("stats-utterances");
+  if (!el) return;
+  try {
+    const res = await fetch("/api/stats");
+    const data = await res.json();
+    el.textContent = (data.utterances || 0).toLocaleString();
+    document.getElementById("stats-characters").textContent = (data.characters || 0).toLocaleString();
+    document.getElementById("stats-speech").textContent = fmtDuration(data.speech_ms);
+    document.getElementById("stats-longest").textContent = data.longest_ms ? fmtDuration(data.longest_ms) : "—";
+    renderStatsDays(data.days || {});
+  } catch (error) {
+    /* overview stays usable without stats */
+  }
+}
+
+function renderStatsDays(days) {
+  const host = document.getElementById("stats-days");
+  if (!host) return;
+  host.innerHTML = "";
+  const today = new Date();
+  const values = [];
+  for (let i = 13; i >= 0; i--) {
+    const day = new Date(today);
+    day.setDate(today.getDate() - i);
+    const key = day.getFullYear() + "-" + String(day.getMonth() + 1).padStart(2, "0") + "-" + String(day.getDate()).padStart(2, "0");
+    values.push({ key, label: (day.getMonth() + 1) + "/" + day.getDate(), ms: (days[key] && days[key].speech_ms) || 0, count: (days[key] && days[key].utterances) || 0 });
+  }
+  const peak = Math.max(...values.map(v => v.ms), 1);
+  for (const item of values) {
+    const col = document.createElement("div");
+    col.className = "stats-day";
+    const bar = document.createElement("div");
+    bar.className = "stats-bar";
+    bar.style.height = item.ms ? Math.max(4, Math.round((item.ms / peak) * 56)) + "px" : "2px";
+    if (!item.ms) bar.style.opacity = "0.18";
+    bar.title = item.label + "：" + item.count + " 次，" + fmtDuration(item.ms);
+    const label = document.createElement("div");
+    label.className = "stats-day-label";
+    label.textContent = item.label;
+    col.appendChild(bar);
+    col.appendChild(label);
+    host.appendChild(col);
+  }
+}
+
 const guidedSettings = document.getElementById("guided-settings");
 if (guidedSettings) guidedSettings.addEventListener("click", () => openConfigPanel("asr"));
 const recentAll = document.getElementById("overview-recent-all");
@@ -2645,6 +2733,7 @@ function connectEvents() {
     } else if (data.event === "transcript") {
       addSubtitle(data.text, data.at);
       setTimeout(loadOverviewRecent, 500);
+      setTimeout(loadStats, 500);
     } else if (data.event === "capture_started") {
       setCaptureUi(true);
       setChip("chip-keyd", "捕获中 · 注入已暂停", "warn");
@@ -2673,6 +2762,7 @@ document.querySelectorAll(".tab-btn").forEach(button => {
     if (button.dataset.tab === "connection") {
       showConfigPanel("overview");
       loadStatus(false);
+      loadStats();
       loadASRConfig();
       loadLLMConfig();
       loadTextConfig();
@@ -3532,6 +3622,7 @@ loadLLMConfig();
 loadASRConfig();
 loadSubtitles();
 loadOverviewRecent();
+loadStats();
 syncNav();
 loadStatus(true);
 connectEvents();

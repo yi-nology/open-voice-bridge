@@ -32,6 +32,9 @@ type Config struct {
 	MappingPath string
 	SocketPath  string
 	SocketGroup int
+	// AgentUID is the uid allowed to run privileged commands besides root
+	// (SEC-01). 0 means unset: only root is trusted then.
+	AgentUID int
 }
 
 type Daemon struct {
@@ -115,6 +118,9 @@ func (d *Daemon) Run(ctx context.Context) error {
 	async.GoSafe(func() { d.acceptLoop(ctx, listener) })
 	async.GoSafe(func() { d.eventLoop(ctx) })
 	async.GoSafe(func() { d.appleLoop(ctx) })
+	if d.cfg.AgentUID <= 0 {
+		log.Warn("helper agent uid not configured; privileged commands limited to root", "hint", "pass --agent-uid")
+	}
 	log.Info("remapper started", "socket", d.cfg.SocketPath, "mapping", d.cfg.MappingPath)
 	<-ctx.Done()
 	return nil
@@ -161,6 +167,31 @@ func (d *Daemon) listen() (net.Listener, error) {
 	return listener, nil
 }
 
+// peerUID reads SO_PEERCRED from an accepted Unix socket connection. It
+// returns -1 when the credential cannot be established, which the auth rule
+// treats as unauthenticated.
+func peerUID(conn net.Conn) int32 {
+	unixConn, ok := conn.(*net.UnixConn)
+	if !ok {
+		return -1
+	}
+	raw, err := unixConn.SyscallConn()
+	if err != nil {
+		return -1
+	}
+	uid := int32(-1)
+	if err := raw.Control(func(fd uintptr) {
+		cred, err := unix.GetsockoptUcred(int(fd), unix.SOL_SOCKET, unix.SO_PEERCRED)
+		if err != nil {
+			return
+		}
+		uid = int32(cred.Uid)
+	}); err != nil {
+		return -1
+	}
+	return uid
+}
+
 func (d *Daemon) acceptLoop(ctx context.Context, listener net.Listener) {
 	for {
 		conn, err := listener.Accept()
@@ -181,6 +212,8 @@ func (d *Daemon) handleConn(conn net.Conn) {
 			log.Debug("close daemon connection", "err", err)
 		}
 	}()
+	// SO_PEERCRED is fixed at connect time; read it once (SEC-01).
+	peerUID := peerUID(conn)
 	var client *captureClient
 	scanner := bufio.NewScanner(conn)
 	scanner.Buffer(make([]byte, 0, 4096), 1<<20)
@@ -195,6 +228,11 @@ func (d *Daemon) handleConn(conn net.Conn) {
 		}
 		if err := json.Unmarshal(scanner.Bytes(), &command); err != nil {
 			d.writeConn(conn, map[string]any{"ok": false, "error": "bad json"})
+			continue
+		}
+		if !authorizeCommand(peerUID, d.cfg.AgentUID, command.Cmd) {
+			log.Warn("rejected helper command", "cmd", command.Cmd, "peer_uid", peerUID)
+			d.writeConn(conn, map[string]any{"ok": false, "error": "denied"})
 			continue
 		}
 		switch command.Cmd {

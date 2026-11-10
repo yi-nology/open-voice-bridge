@@ -9,6 +9,8 @@ import (
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/common/ut"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
+
+	"github.com/yi-nology/open-voice-bridge/internal/history"
 )
 
 func adminEngine(deps Deps) *server.Hertz {
@@ -16,6 +18,7 @@ func adminEngine(deps Deps) *server.Hertz {
 	h := server.New()
 	h.Use(s.Security)
 	h.GET("/api/inputs", s.Inputs)
+	h.GET("/api/stats", s.Stats)
 	h.POST("/api/phone/pairing", s.PhonePairing)
 	h.GET("/api/phone/devices", s.PhoneDevices)
 	h.POST("/api/phone/revoke", s.PhoneRevoke)
@@ -47,10 +50,14 @@ func TestAdminPhoneEndpointsUnavailableWhenNil(t *testing.T) {
 	}
 	for _, tc := range cases {
 		var body *ut.Body
+		headers := []ut.Header{
+			{Key: "Origin", Value: "http://127.0.0.1:8787"},
+			{Key: "Sec-Fetch-Site", Value: "same-origin"},
+		}
 		if tc.method == "POST" {
 			body = &ut.Body{Body: bytes.NewBufferString(`{"device_id":"phone-1"}`), Len: 24}
 		}
-		resp := ut.PerformRequest(h.Engine, tc.method, "http://127.0.0.1:8787"+tc.path, body)
+		resp := ut.PerformRequest(h.Engine, tc.method, "http://127.0.0.1:8787"+tc.path, body, headers...)
 		if resp.Code != consts.StatusServiceUnavailable {
 			t.Fatalf("%s %s code = %d, want 503", tc.method, tc.path, resp.Code)
 		}
@@ -102,5 +109,33 @@ func TestAdminRejectsCrossSitePairing(t *testing.T) {
 	)
 	if resp.Code != consts.StatusForbidden {
 		t.Fatalf("cross-site pairing code = %d, want 403", resp.Code)
+	}
+}
+
+// The stats endpoint returns counts and durations only — never speech content.
+func TestAdminStats(t *testing.T) {
+	h := adminEngine(Deps{
+		Stats: func() history.UsageStats {
+			return history.UsageStats{
+				Utterances: 7,
+				Characters: 91,
+				SpeechMS:   42000,
+				LongestMS:  13000,
+				Days:       map[string]history.DayStat{"2026-11-11": {Utterances: 7, Characters: 91, SpeechMS: 42000}},
+			}
+		},
+	})
+	resp := ut.PerformRequest(h.Engine, "GET", "http://127.0.0.1:8787/api/stats", nil)
+	if resp.Code != consts.StatusOK {
+		t.Fatalf("stats code = %d body = %s", resp.Code, resp.Body.String())
+	}
+	body := resp.Body.String()
+	for _, want := range []string{`"utterances":7`, `"characters":91`, `"speech_ms":42000`, `"longest_ms":13000`, "2026-11-11"} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("stats body %s missing %s", body, want)
+		}
+	}
+	if strings.Contains(body, `"text"`) {
+		t.Fatalf("stats body must not carry speech content: %s", body)
 	}
 }

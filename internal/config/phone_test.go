@@ -92,3 +92,83 @@ func TestLoadFillsAndMigratesPhone(t *testing.T) {
 		t.Fatal("migration should persist a phone section")
 	}
 }
+
+// SEC-03: pairing codes and long-lived tokens must never travel in cleartext
+// on a non-loopback address. phone.tls=off is only allowed on loopback.
+func TestPhonePlainTLSNeedsLoopback(t *testing.T) {
+	cases := []struct {
+		name string
+		addr string
+		tls  string
+		want bool // true = must validate
+	}{
+		{"off on 0.0.0.0", "0.0.0.0:8788", "off", false},
+		{"off on [::]", "[::]:8788", "off", false},
+		{"off on LAN IPv4", "192.168.1.5:8788", "off", false},
+		{"off on link-local", "169.254.1.1:8788", "off", false},
+		{"off on hostname", "voicebox.local:8788", "off", false},
+		{"off on 127.0.0.1", "127.0.0.1:8788", "off", true},
+		{"off on loopback range", "127.0.0.2:8788", "off", true},
+		{"off on localhost", "localhost:8788", "off", true},
+		{"off on [::1]", "[::1]:8788", "off", true},
+		{"auto on 0.0.0.0", "0.0.0.0:8788", "auto", true},
+		{"auto on LAN IPv4", "192.168.1.5:8788", "auto", true},
+		{"auto on hostname", "voicebox.local:8788", "auto", true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := Default()
+			cfg.Phone = PhoneConfig{Enabled: true, Addr: tc.addr, TLS: tc.tls, PairCodeTTLSeconds: 300, MaxClients: 4, MaxUtteranceSeconds: 30}
+			err := cfg.Validate()
+			if tc.want {
+				if err != nil {
+					t.Fatalf("want valid, got %v", err)
+				}
+				return
+			}
+			if err == nil {
+				t.Fatal("want rejection for non-loopback cleartext phone listener")
+			}
+			if !strings.Contains(err.Error(), "loopback") {
+				t.Fatalf("error should name the loopback rule, got %v", err)
+			}
+			if !strings.Contains(err.Error(), "tls") {
+				t.Fatalf("error should point at the tls remedy, got %v", err)
+			}
+		})
+	}
+}
+
+// DOM-08: a disabled phone section must not smuggle invalid values into the
+// persisted config; validation runs regardless of Enabled.
+func TestPhoneValidatedEvenWhenDisabled(t *testing.T) {
+	cases := []struct {
+		name string
+		seed func(p *PhoneConfig)
+		want string
+	}{
+		{"negative ttl", func(p *PhoneConfig) { p.PairCodeTTLSeconds = -5 }, "pair_code_ttl"},
+		{"negative max clients", func(p *PhoneConfig) { p.MaxClients = -1 }, "max_clients"},
+		{"negative max utterance", func(p *PhoneConfig) { p.MaxUtteranceSeconds = -30 }, "max_utterance"},
+		{"bad tls string", func(p *PhoneConfig) { p.TLS = "weird" }, "phone.tls"},
+		{"off on 0.0.0.0", func(p *PhoneConfig) { p.TLS = "off"; p.Addr = "0.0.0.0:8788" }, "loopback"},
+		{"ttl above range", func(p *PhoneConfig) { p.PairCodeTTLSeconds = 99999 }, "pair_code_ttl"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := Default()
+			cfg.Phone = PhoneConfig{Enabled: false, Addr: "0.0.0.0:8788", TLS: "auto", PairCodeTTLSeconds: 300, MaxClients: 4, MaxUtteranceSeconds: 30}
+			tc.seed(&cfg.Phone)
+			err := cfg.Validate()
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("want error containing %q, got %v", tc.want, err)
+			}
+		})
+	}
+	// A disabled section with sane values must keep validating.
+	cfg := Default()
+	cfg.Phone.Enabled = false
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("disabled phone with valid values rejected: %v", err)
+	}
+}

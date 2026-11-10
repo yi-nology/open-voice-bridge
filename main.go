@@ -266,6 +266,7 @@ func runAgent(args []string, stderr io.Writer) int {
 		helperClient := helper.New(cfg.HelperSocket)
 		svc := service.New(cfg, *path, ag, helperClient, asrErr, logger)
 		historyStore := history.New(filepath.Join(filepath.Dir(*path), "history.jsonl"), 200)
+		statsStore := history.NewStats(filepath.Join(filepath.Dir(*path), "usage-stats.json"))
 
 		phoneEnabled := cfg.Phone.Enabled
 		var phoneStore *phone.Store
@@ -320,6 +321,7 @@ func runAgent(args []string, stderr io.Writer) int {
 			History:             func(context.Context) []history.Entry { return historyStore.List(200) },
 			DeleteHistory:       func(_ context.Context, id string) error { return historyStore.Delete(id) },
 			ClearHistory:        func(context.Context) error { return historyStore.Clear() },
+			Stats:               func() history.UsageStats { return statsStore.Snapshot() },
 			Devices:             svc.Devices,
 			DiscoverDevices:     svc.DiscoverDevices,
 			SelectDevice:        svc.SelectDevice,
@@ -398,6 +400,7 @@ func runAgent(args []string, stderr io.Writer) int {
 					}); err != nil {
 						logger.Warn("append history", "err", err)
 					}
+					statsStore.Record(transcript.Duration, len([]rune(transcript.Text)))
 					uiServer.Publish(map[string]any{
 						"event":      "transcript",
 						"text":       transcript.Text,
@@ -464,6 +467,7 @@ func runRemap(args []string, stderr io.Writer) int {
 	mapping := fs.String("mapping", "/etc/xiaomi-remote/mapping.json", "mapping file")
 	socket := fs.String("socket", "/run/xiaomi-remote-helper.sock", "Unix socket")
 	group := fs.Int("group", 1000, "socket group id")
+	agentUID := fs.Int("agent-uid", 0, "uid allowed to run privileged commands besides root (0 = root only)")
 	if _, code := cli.ParseFlags(fs, args); code != cli.ExitOK {
 		return code
 	}
@@ -476,6 +480,7 @@ func runRemap(args []string, stderr io.Writer) int {
 		MappingPath: *mapping,
 		SocketPath:  *socket,
 		SocketGroup: *group,
+		AgentUID:    *agentUID,
 	})
 	app, err := bootstrap.New(
 		bootstrap.WithServiceName("xiaomi-remote-remap"),

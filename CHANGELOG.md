@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+Security, correctness and product work from the wave-0 audit handover
+(`docs/design/evolution-roadmap.md`), plus the first SayAll-inspired feature:
+
+- SEC-01: the root helper socket authenticates every peer with `SO_PEERCRED`.
+  Mapping/device changes, capture and status are limited to root and the
+  configured agent uid (`remap --agent-uid`, wired through the unit template);
+  only the key-injection whitelist stays open to the socket group.
+- SEC-03/SEC-04/DOM-08: `phone.tls: off` is only accepted on a loopback
+  `phone.addr`, phone settings are validated whether or not the phone input is
+  enabled, and the self-signed phone certificate is a one-year leaf (never a
+  CA) that renews 30 days before expiry. Docs now say "accept one TLS
+  exception, do not install this certificate as a trusted root".
+- SEC-06: admin POSTs need same-origin evidence (an empty `Origin` no longer
+  passes), and `asr.command` / `whisper.cpp` binaries must be owned by root or
+  the user, executable, and not writable by group or others.
+- SEC-07/SEC-08: pairing rate-limit windows and WebSocket tickets are swept on
+  expiry and capped, and phone transcription runs through a bounded FIFO queue
+  (default 4, `MaxQueuedUtterances`) consumed in capture order — a full queue
+  answers `busy` instead of pinning megabytes of PCM behind a slow provider.
+- CON-08: phone token persistence no longer runs under the store lock, so a
+  slow disk cannot freeze authentication.
+- New: usage statistics ("使用统计") on the overview page. A separate
+  `usage-stats.json` keeps lifetime utterance/character/speech-time totals,
+  the longest single dictation and a 180-day per-day breakdown; `GET
+  /api/stats` returns counts and durations only, never speech content.
+- Tests run green on macOS again: `parseModalias` is platform-neutral and the
+  helper socket tests use short paths (macOS `sun_path` limit).
+
 Phone as a second input source — Phase 1 (virtual remote control) and
 Phase 2 (phone microphone).
 

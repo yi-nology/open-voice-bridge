@@ -27,8 +27,8 @@ type Command struct {
 }
 
 func NewCommand(cfg CommandConfig) (*Command, error) {
-	if cfg.Binary == "" {
-		return nil, oeerrors.Errorf("command binary is required")
+	if err := guardBinary(cfg.Binary); err != nil {
+		return nil, err
 	}
 	if len(cfg.Args) == 0 {
 		cfg.Args = []string{"{audio}"}

@@ -6,7 +6,6 @@ import (
 	oeerrors "github.com/oekit/pkg/errors"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -273,10 +272,8 @@ func checkBinary(provider, binary string) Diagnostic {
 	if binary == "" {
 		return Diagnostic{Provider: provider, OK: false, Detail: "binary is empty"}
 	}
-	if _, err := exec.LookPath(binary); err != nil {
-		if info, statErr := os.Stat(binary); statErr != nil || info.IsDir() {
-			return Diagnostic{Provider: provider, OK: false, Detail: "binary not found: " + binary}
-		}
+	if err := guardBinary(binary); err != nil {
+		return Diagnostic{Provider: provider, OK: false, Detail: err.Error()}
 	}
 	return Diagnostic{Provider: provider, OK: true, Detail: "binary: " + binary}
 }
