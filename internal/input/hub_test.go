@@ -88,3 +88,75 @@ func TestStatusReflectsSource(t *testing.T) {
 		t.Fatalf("status = %+v", statuses)
 	}
 }
+
+func TestHubWatchReportsOwnershipTransitions(t *testing.T) {
+	hub := NewHub()
+	watch := hub.Watch()
+	if state := <-watch; state.Speaking || state.Owner != "" {
+		t.Fatalf("fresh hub should report idle, got %+v", state)
+	}
+	if !hub.AcquireAudio("phone-1") {
+		t.Fatal("first acquire should succeed")
+	}
+	state := <-watch
+	if state.Owner != "phone-1" || !state.Speaking {
+		t.Fatalf("acquire should publish phone-1 speaking, got %+v", state)
+	}
+	if hub.AcquireAudio("phone-2") {
+		t.Fatal("a second phone must be busy while phone-1 holds the mic")
+	}
+	select {
+	case unexpected := <-watch:
+		t.Fatalf("failed acquire must not publish, got %+v", unexpected)
+	default:
+	}
+	hub.ReleaseAudio("phone-1")
+	if state = <-watch; state.Speaking || state.Owner != "" {
+		t.Fatalf("release should publish idle, got %+v", state)
+	}
+}
+
+func TestHubRemotePreemptsPhone(t *testing.T) {
+	hub := NewHub()
+	watch := hub.Watch()
+	<-watch
+	hub.AcquireAudio("phone-1")
+	<-watch
+	hub.AcquireAudioForce(RemoteID)
+	if owner := hub.AudioOwner(); owner != RemoteID {
+		t.Fatalf("owner = %q, want the remote to preempt the phone", owner)
+	}
+	if hub.AcquireAudio("phone-2") {
+		t.Fatal("remote still owns the microphone")
+	}
+	if state := <-watch; state.Owner != RemoteID || !state.Speaking {
+		t.Fatalf("preempt should publish remote speaking, got %+v", state)
+	}
+	// Releasing on behalf of the wrong source must not free the mic.
+	hub.ReleaseAudio("phone-1")
+	if hub.AudioOwner() != RemoteID {
+		t.Fatal("phone-1 release must not free the remote's claim")
+	}
+}
+
+func TestHubUnregisterFreesDroppedWatcher(t *testing.T) {
+	hub := NewHub()
+	hub.AcquireAudio("phone-9")
+	hub.Unregister("phone-9")
+	if hub.AudioOwner() != "" {
+		t.Fatal("unregistering the owner must free the microphone")
+	}
+}
+
+func TestHubWatchKeepsTheNewestStatePerWatcher(t *testing.T) {
+	hub := NewHub()
+	first := hub.Watch()
+	second := hub.Watch()
+	hub.AcquireAudio("phone-1")
+	if state := <-first; state.Owner != "phone-1" {
+		t.Fatalf("first watcher = %+v", state)
+	}
+	if state := <-second; state.Owner != "phone-1" {
+		t.Fatalf("second watcher = %+v", state)
+	}
+}

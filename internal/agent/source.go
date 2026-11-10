@@ -10,14 +10,14 @@ import (
 // dashboard can list it alongside phone clients.
 type remoteSource struct{ a *Agent }
 
-func (remoteSource) ID() string       { return "remote" }
+func (remoteSource) ID() string       { return input.RemoteID }
 func (remoteSource) Kind() input.Kind { return input.KindRemote }
 
 func (r remoteSource) Status() input.Status {
 	status := r.a.Status()
 	connected, _ := status["connected"].(bool)
 	return input.Status{
-		ID:         "remote",
+		ID:         input.RemoteID,
 		Kind:       input.KindRemote,
 		Name:       r.a.cfg.DeviceName(),
 		Address:    r.a.currentAddress(),

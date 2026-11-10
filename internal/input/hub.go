@@ -16,6 +16,10 @@ const (
 	KindPhone  Kind = "phone"
 )
 
+// RemoteID is the hub id of the BLE remote. It is exported because the agent
+// claims the microphone under this id and the dashboard maps it to a label.
+const RemoteID = "remote"
+
 // kindRank orders sources for the dashboard: the BLE remote leads, then
 // phones. Unknown kinds sort last by their own name.
 func kindRank(kind Kind) int {
@@ -48,16 +52,23 @@ type Source interface {
 	Status() Status
 }
 
+// AudioState is one microphone-ownership transition.
+type AudioState struct {
+	Owner    string `json:"owner"`
+	Speaking bool   `json:"speaking"`
+}
+
 // Hub tracks registered sources and serializes microphone ownership so only
 // one source transcribes at a time; key injection is not arbitrated here.
 type Hub struct {
 	mu         sync.Mutex
 	sources    map[string]Source
 	audioOwner string
+	watchers   map[chan AudioState]struct{}
 }
 
 func NewHub() *Hub {
-	return &Hub{sources: map[string]Source{}}
+	return &Hub{sources: map[string]Source{}, watchers: map[chan AudioState]struct{}{}}
 }
 
 func (h *Hub) Register(source Source) {
@@ -73,6 +84,7 @@ func (h *Hub) Unregister(id string) {
 	delete(h.sources, id)
 	if h.audioOwner == id {
 		h.audioOwner = ""
+		h.notifyLocked()
 	}
 }
 
@@ -97,11 +109,25 @@ func (h *Hub) Sources() []Status {
 func (h *Hub) AcquireAudio(id string) bool {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	if h.audioOwner == "" || h.audioOwner == id {
+	if h.audioOwner == "" {
 		h.audioOwner = id
+		h.notifyLocked()
 		return true
 	}
-	return false
+	return h.audioOwner == id
+}
+
+// AcquireAudioForce takes the microphone regardless of the current owner. The
+// BLE remote uses it so dictation is never dropped because a phone started
+// speaking first; RC003 audio is the primary path and always wins.
+func (h *Hub) AcquireAudioForce(id string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if h.audioOwner == id {
+		return
+	}
+	h.audioOwner = id
+	h.notifyLocked()
 }
 
 // ReleaseAudio frees the microphone if id currently owns it.
@@ -110,6 +136,35 @@ func (h *Hub) ReleaseAudio(id string) {
 	defer h.mu.Unlock()
 	if h.audioOwner == id {
 		h.audioOwner = ""
+		h.notifyLocked()
+	}
+}
+
+// Watch returns the microphone-ownership stream. The channel is buffered with
+// the current state so a new subscriber starts in sync, and later transitions
+// replace that value instead of queueing behind it.
+func (h *Hub) Watch() <-chan AudioState {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	ch := make(chan AudioState, 1)
+	ch <- AudioState{Owner: h.audioOwner, Speaking: h.audioOwner != ""}
+	h.watchers[ch] = struct{}{}
+	return ch
+}
+
+// notifyLocked fans the current ownership out to watchers. Callers hold h.mu.
+// Each watcher channel has room for exactly one state, so the undrained value
+// is replaced rather than queued: a stalled subscriber always converges on the
+// newest state instead of being stuck behind a stale one, and a capture never
+// blocks on a publisher.
+func (h *Hub) notifyLocked() {
+	state := AudioState{Owner: h.audioOwner, Speaking: h.audioOwner != ""}
+	for ch := range h.watchers {
+		select {
+		case <-ch:
+		default:
+		}
+		ch <- state
 	}
 }
 

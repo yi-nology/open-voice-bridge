@@ -158,6 +158,24 @@ func (a *Agent) audioActive() bool {
 	return len(a.dictation) > 0
 }
 
+// acquireMic claims the microphone for BLE dictation. The remote preempts: a
+// phone that started first must not cost the RC003 an utterance.
+func (a *Agent) acquireMic() {
+	if a.hub == nil {
+		return
+	}
+	a.hub.AcquireAudioForce(input.RemoteID)
+}
+
+// releaseMic frees the microphone once the utterance has been transcribed.
+// Holding it across ASR keeps sources strictly one-at-a-time.
+func (a *Agent) releaseMic() {
+	if a.hub == nil {
+		return
+	}
+	a.hub.ReleaseAudio(input.RemoteID)
+}
+
 func (a *Agent) publishListening(active bool) {
 	select {
 	case a.listening <- active:
@@ -402,6 +420,9 @@ func (a *Agent) SetAddress(address string) error {
 
 func (a *Agent) markDisconnected() {
 	a.publishListening(false)
+	// A capture cut short by a disconnect never reaches finalize, so the claim
+	// has to be dropped here or phones would find the microphone busy forever.
+	a.releaseMic()
 	a.mu.Lock()
 	a.connected = false
 	a.ready = false
@@ -443,6 +464,7 @@ func (a *Agent) handleControl(data []byte) {
 		}
 	case atvv.EventAudioStart:
 		log.Info("audio stream started")
+		a.acquireMic()
 		a.publishListening(true)
 		a.resetDictation()
 	case atvv.EventAudioStop:
@@ -497,6 +519,7 @@ func (a *Agent) finalize() {
 		Kind:    string(input.KindRemote),
 		Address: a.currentAddress(),
 	})
+	a.releaseMic()
 }
 
 func (a *Agent) Reconnect() error {
