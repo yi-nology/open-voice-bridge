@@ -10,6 +10,9 @@ type UtteranceMeta struct {
 	DeviceID string
 	Name     string
 	Address  string
+	// SampleRate states what the buffered samples actually are, so the chain
+	// never has to assume a rate on the phone's behalf (DOM-01).
+	SampleRate int
 }
 
 // UtteranceResult is the narrow answer the phone page needs echoed back. Only

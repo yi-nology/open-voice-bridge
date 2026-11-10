@@ -21,11 +21,34 @@ type SourceRef struct {
 	Address string
 }
 
+// Utterance is one finished capture handed to the chain: samples plus the rate
+// they were captured at. The rate travels with the audio because the remote
+// negotiates it in ATVV caps, while a phone resamples to 16 kHz itself; a fixed
+// label would misreport an 8 kHz device and fake the minimum-duration floor
+// (DOM-01).
+type Utterance struct {
+	Samples    []int16
+	SampleRate int
+	Ref        SourceRef
+}
+
+// Rate is the capture rate, defaulting to the negotiated remote rate when a
+// source did not measure one.
+func (u Utterance) Rate() int {
+	if u.SampleRate > 0 {
+		return u.SampleRate
+	}
+	return atvv.SampleRate
+}
+
+// MinSamples is the shortest utterance worth a request: a tap shorter than
+// 250 ms has never carried a word.
+func (u Utterance) MinSamples() int { return u.Rate() / 4 }
+
 // SpeechPipeline is the single transcription chain used by every input source:
-// mono 16 kHz PCM to ASR, then text rules and LLM rewrite, then a Transcript
+// mono PCM to ASR, then text rules and LLM rewrite, then a Transcript
 // event and optional desktop paste. The BLE remote drives it through finalize;
-// Phase 2 phone sources will call Transcribe directly, so the two paths can
-// never diverge.
+// phone sources call Transcribe directly, so the two paths can never diverge.
 //
 // Live collaborators are read through accessors, letting ASR/LLM/rule switches
 // take effect without rebuilding the pipeline. Transcribe serialises engine
@@ -38,15 +61,14 @@ type SpeechPipeline struct {
 	pasteEnabled func() bool
 	pasteText    func(context.Context, string) error
 	sink         func(Transcript)
-	minSamples   int
 	asrTimeout   time.Duration
 }
 
 // Transcribe processes one utterance. It reports false (without publishing)
 // when the audio is too short, no engine is set, ASR found no speech, or the
 // recognised text is empty.
-func (p *SpeechPipeline) Transcribe(samples []int16, ref SourceRef) (Transcript, bool) {
-	if len(samples) < p.minSamples {
+func (p *SpeechPipeline) Transcribe(u Utterance) (Transcript, bool) {
+	if len(u.Samples) < u.MinSamples() {
 		return Transcript{}, false
 	}
 	engine := p.engine()
@@ -59,8 +81,8 @@ func (p *SpeechPipeline) Transcribe(samples []int16, ref SourceRef) (Transcript,
 	ctx, cancel := context.WithTimeout(context.Background(), p.asrTimeout)
 	defer cancel()
 	result, err := engine.Transcribe(ctx, asr.Audio{
-		Samples:    samples,
-		SampleRate: atvv.SampleRate,
+		Samples:    u.Samples,
+		SampleRate: u.Rate(),
 	})
 	if oeerrors.Is(err, asr.ErrNoSpeech) {
 		return Transcript{}, false
@@ -84,7 +106,7 @@ func (p *SpeechPipeline) Transcribe(samples []int16, ref SourceRef) (Transcript,
 		RawText:   rawText,
 		Language:  result.Language,
 		Provider:  result.Provider,
-		Address:   ref.Address,
+		Address:   u.Ref.Address,
 		Processed: processed != rawText,
 		Latency:   result.Latency,
 		At:        time.Now(),

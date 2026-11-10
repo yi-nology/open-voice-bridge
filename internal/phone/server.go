@@ -407,9 +407,10 @@ func (s *Server) finishUtterance(ctx context.Context, active *activeConn, trunca
 
 	transcriber := s.transcriber
 	meta := UtteranceMeta{
-		DeviceID: active.deviceID,
-		Name:     active.source.Name(),
-		Address:  active.source.Address(),
+		DeviceID:   active.deviceID,
+		Name:       active.source.Name(),
+		Address:    active.source.Address(),
+		SampleRate: sampleRate,
 	}
 	async.GoSafe(func() {
 		result, ok := transcriber.TranscribeUtterance(context.Background(), samples, meta)

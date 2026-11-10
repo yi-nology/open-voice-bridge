@@ -15,6 +15,16 @@ const (
 	ControlUUID  = "ab5e0004-5a21-4f05-bc7d-af01f617b664"
 	SampleRate   = 16000
 	DefaultFrame = 120
+
+	// MaxFrameSize is the ceiling for a device-reported frame. At 16 kHz ADPCM
+	// (4:1) 4096 bytes already spans about a second of audio; anything larger
+	// would make FrameAccumulator wait that long before emitting one frame, so
+	// dictation would silently lose every sample (DOM-05).
+	MaxFrameSize = 4096
+
+	// maxPending bounds the accumulator against a device that never sends
+	// frame-aligned data, so a stalled sync cannot grow memory without end.
+	maxPending = 1 << 16
 )
 
 var GetCapabilities = []byte{0x0A, 0x01, 0x00, 0x00, 0x03, 0x03}
@@ -66,7 +76,10 @@ func ParseCaps(data []byte) (Caps, bool) {
 		codecs = int(data[4])
 	}
 	frameSize := int(data[5])<<8 | int(data[6])
-	if frameSize == 0 {
+	if frameSize <= 0 || frameSize > MaxFrameSize {
+		// The field is a 16-bit device value; an unusable size must not be
+		// trusted, or the accumulator waits for a frame that never fills
+		// (DOM-05).
 		frameSize = DefaultFrame
 	}
 	selected := 0x01
@@ -195,13 +208,21 @@ func Peak(samples []int16) int {
 
 type FrameAccumulator struct {
 	pending []byte
+	dropped int
 }
 
 func (a *FrameAccumulator) Append(data []byte, frameSize int) [][]byte {
-	if frameSize <= 0 {
+	if frameSize <= 0 || frameSize > MaxFrameSize {
 		return nil
 	}
 	a.pending = append(a.pending, data...)
+	if len(a.pending) > maxPending {
+		// Frame sizes that never align mean the held bytes are not decodable
+		// audio; keeping them only delays the next resync.
+		a.pending = nil
+		a.dropped++
+		return nil
+	}
 	var frames [][]byte
 	for len(a.pending) >= frameSize {
 		frame := make([]byte, frameSize)
@@ -216,12 +237,16 @@ func (a *FrameAccumulator) Reset() {
 	a.pending = a.pending[:0]
 }
 
+// Dropped counts the resyncs where unframeable bytes had to be discarded.
+func (a *FrameAccumulator) Dropped() int { return a.dropped }
+
 // Session holds one ATVV connection's protocol state.
 type Session struct {
 	mu          sync.Mutex
 	decoder     Decoder
 	accumulator FrameAccumulator
 	frameSize   int
+	sampleRate  int
 	version     int
 	caps        *Caps
 	micOpen     bool
@@ -232,7 +257,16 @@ type Session struct {
 }
 
 func NewSession() *Session {
-	return &Session{frameSize: DefaultFrame}
+	return &Session{frameSize: DefaultFrame, sampleRate: SampleRate}
+}
+
+// SampleRate reports the rate the device negotiated in caps. Decoded samples
+// must carry it, because stamping a fixed 16 kHz on an 8 kHz codec makes the
+// providers hear sped-up speech and writes a lying WAV header (DOM-01).
+func (s *Session) SampleRate() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.sampleRate
 }
 
 func (s *Session) Caps() *Caps {
@@ -260,6 +294,7 @@ func (s *Session) HandleControl(payload []byte) string {
 		s.caps = &caps
 		s.version = caps.Version
 		s.frameSize = caps.FrameSize
+		s.sampleRate = caps.SampleRate
 		return EventCaps
 	case OpMicButton:
 		return EventMicButton

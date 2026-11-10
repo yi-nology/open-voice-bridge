@@ -118,7 +118,6 @@ func (a *Agent) newPipeline() *SpeechPipeline {
 		pasteEnabled: func() bool { return a.cfg.PasteEnabled },
 		pasteText:    paste.Text,
 		sink:         a.recordTranscript,
-		minSamples:   atvv.SampleRate / 4,
 		asrTimeout:   180 * time.Second,
 	}
 }
@@ -442,6 +441,12 @@ func (a *Agent) handleControl(data []byte) {
 				"frame", caps.FrameSize,
 				"rate", caps.SampleRate,
 			)
+			if caps.SampleRate != atvv.SampleRate {
+				// The decoder is rate-agnostic, but cloud providers are not:
+				// an 8 kHz remote will be refused by MiMo instead of being
+				// silently transcribed as sped-up speech (DOM-01).
+				log.Warn("remote negotiated a non-16 kHz codec", "rate", caps.SampleRate)
+			}
 		}
 		a.mu.Lock()
 		a.ready = true
@@ -459,10 +464,17 @@ func (a *Agent) handleControl(data []byte) {
 		log.Info("audio stream started")
 		a.acquireMic()
 		a.resetDictation()
+	case atvv.EventAudioStartDup:
+		// The device started a new capture without our seeing an audio-stop, so
+		// the buffered samples belong to the previous sentence. Drain them here
+		// and keep the microphone claim, or the two would merge into one
+		// utterance (DOM-03).
+		log.Info("duplicate audio start -> closing the open capture")
+		a.closeCapture()
 	case atvv.EventAudioStop:
 		log.Info("audio stream stopped")
 		a.releaseMic()
-		async.GoSafe(a.finalize)
+		a.closeCapture()
 	}
 }
 
@@ -496,21 +508,58 @@ func (a *Agent) handleAudio(data []byte) {
 	a.dictMu.Unlock()
 }
 
+// resetDictation opens a fresh capture. It must not reuse the previous backing
+// array: that array may still be on its way to the ASR request (DOM-02).
 func (a *Agent) resetDictation() {
 	a.dictMu.Lock()
-	a.dictation = a.dictation[:0]
+	a.dictation = nil
 	a.dictMu.Unlock()
 }
 
-func (a *Agent) finalize() {
+// takeDictation drains the current capture and returns sole ownership of its
+// samples.
+func (a *Agent) takeDictation() []int16 {
 	a.dictMu.Lock()
-	samples := append([]int16(nil), a.dictation...)
-	a.dictation = a.dictation[:0]
-	a.dictMu.Unlock()
-	a.pipeline.Transcribe(samples, SourceRef{
-		Kind:    string(input.KindRemote),
-		Address: a.currentAddress(),
+	defer a.dictMu.Unlock()
+	samples := a.dictation
+	a.dictation = nil
+	return samples
+}
+
+// closeCapture ends the capture that is open now. Draining happens on the
+// dispatch goroutine, before any later audio-start can touch the buffer, and
+// only the request runs in the background (I2).
+func (a *Agent) closeCapture() {
+	samples := a.takeDictation()
+	if len(samples) == 0 {
+		return
+	}
+	rate := a.currentSampleRate()
+	async.GoSafe(func() { a.runSpeech(samples, rate) })
+}
+
+// finalize drains and transcribes inline; it is the synchronous form used when
+// the caller must observe the result before returning.
+func (a *Agent) finalize() { a.runSpeech(a.takeDictation(), a.currentSampleRate()) }
+
+func (a *Agent) runSpeech(samples []int16, rate int) {
+	a.pipeline.Transcribe(Utterance{
+		Samples:    samples,
+		SampleRate: rate,
+		Ref:        SourceRef{Kind: string(input.KindRemote), Address: a.currentAddress()},
 	})
+}
+
+// currentSampleRate reports the rate the remote negotiated, defaulting to
+// 16 kHz before caps arrive.
+func (a *Agent) currentSampleRate() int {
+	a.mu.Lock()
+	session := a.session
+	a.mu.Unlock()
+	if session == nil {
+		return atvv.SampleRate
+	}
+	return session.SampleRate()
 }
 
 func (a *Agent) Reconnect() error {

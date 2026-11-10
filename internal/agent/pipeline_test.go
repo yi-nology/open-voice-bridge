@@ -46,12 +46,17 @@ func buildPipeline(engine asr.Engine, rules *text.Rules, probe *pipelineProbe, p
 		pasteEnabled: func() bool { return pasteOn },
 		pasteText:    probe.paste,
 		sink:         probe.sink,
-		minSamples:   atvv.SampleRate / 4,
 		asrTimeout:   5 * time.Second,
 	}
 }
 
 func oneSecond() []int16 { return make([]int16, atvv.SampleRate) }
+
+// utterance builds a 16 kHz capture, which is what every test here pretends the
+// source negotiated.
+func utterance(samples []int16, ref SourceRef) Utterance {
+	return Utterance{Samples: samples, SampleRate: atvv.SampleRate, Ref: ref}
+}
 
 func TestPipelineTranscribeStampsSourceAndAppliesDictionary(t *testing.T) {
 	engine := &fakeEngine{result: asr.Result{Text: "hello world", Provider: "fake", Latency: 80 * time.Millisecond}}
@@ -62,7 +67,7 @@ func TestPipelineTranscribeStampsSourceAndAppliesDictionary(t *testing.T) {
 	probe := &pipelineProbe{}
 	pipeline := buildPipeline(engine, rules, probe, false)
 
-	transcript, ok := pipeline.Transcribe(oneSecond(), SourceRef{Kind: "phone", Address: "192.0.2.10"})
+	transcript, ok := pipeline.Transcribe(utterance(oneSecond(), SourceRef{Kind: "phone", Address: "192.0.2.10"}))
 	if !ok {
 		t.Fatal("expected transcript")
 	}
@@ -89,7 +94,7 @@ func TestPipelinePasteEnabled(t *testing.T) {
 	}
 	probe := &pipelineProbe{}
 	pipeline := buildPipeline(engine, rules, probe, true)
-	if _, ok := pipeline.Transcribe(oneSecond(), SourceRef{Kind: "remote"}); !ok {
+	if _, ok := pipeline.Transcribe(utterance(oneSecond(), SourceRef{Kind: "remote"})); !ok {
 		t.Fatal("expected transcript")
 	}
 	_, pasted := probe.snapshot()
@@ -102,7 +107,7 @@ func TestPipelineTooShortSkipsEngine(t *testing.T) {
 	engine := &fakeEngine{result: asr.Result{Text: "hi"}}
 	probe := &pipelineProbe{}
 	pipeline := buildPipeline(engine, nil, probe, false)
-	if _, ok := pipeline.Transcribe(make([]int16, atvv.SampleRate/8), SourceRef{}); ok {
+	if _, ok := pipeline.Transcribe(utterance(make([]int16, atvv.SampleRate/8), SourceRef{})); ok {
 		t.Fatal("short audio must not produce transcript")
 	}
 	if engine.calls != 0 {
@@ -113,7 +118,7 @@ func TestPipelineTooShortSkipsEngine(t *testing.T) {
 func TestPipelineNilEngine(t *testing.T) {
 	probe := &pipelineProbe{}
 	pipeline := buildPipeline(nil, nil, probe, false)
-	if _, ok := pipeline.Transcribe(oneSecond(), SourceRef{}); ok {
+	if _, ok := pipeline.Transcribe(utterance(oneSecond(), SourceRef{})); ok {
 		t.Fatal("nil engine must not produce transcript")
 	}
 }
@@ -122,7 +127,7 @@ func TestPipelineNoSpeechDoesNotPublish(t *testing.T) {
 	engine := &fakeEngine{err: asr.ErrNoSpeech}
 	probe := &pipelineProbe{}
 	pipeline := buildPipeline(engine, nil, probe, false)
-	if _, ok := pipeline.Transcribe(oneSecond(), SourceRef{}); ok {
+	if _, ok := pipeline.Transcribe(utterance(oneSecond(), SourceRef{})); ok {
 		t.Fatal("no-speech must not produce transcript")
 	}
 	if saved, _ := probe.snapshot(); len(saved) != 0 {
@@ -141,10 +146,10 @@ func TestPipelineReusedByTwoSources(t *testing.T) {
 	probe := &pipelineProbe{}
 	pipeline := buildPipeline(engine, rules, probe, false)
 
-	if _, ok := pipeline.Transcribe(oneSecond(), SourceRef{Kind: "remote", Address: "AA:BB:CC:DD:EE:FF"}); !ok {
+	if _, ok := pipeline.Transcribe(utterance(oneSecond(), SourceRef{Kind: "remote", Address: "AA:BB:CC:DD:EE:FF"})); !ok {
 		t.Fatal("remote utterance expected")
 	}
-	if _, ok := pipeline.Transcribe(oneSecond(), SourceRef{Kind: "phone", Address: "192.0.2.10"}); !ok {
+	if _, ok := pipeline.Transcribe(utterance(oneSecond(), SourceRef{Kind: "phone", Address: "192.0.2.10"})); !ok {
 		t.Fatal("phone utterance expected")
 	}
 	saved, _ := probe.snapshot()

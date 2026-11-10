@@ -39,6 +39,29 @@ Phase 2 (phone microphone).
 - Deferred to Phase 3: pairing QR image, phone metrics and audit counters,
   rate-limit hardening.
 
+Robustness fixes from the architecture audit (`docs/design/architecture.md`,
+tracked item-by-item in `docs/design/evolution-roadmap.md`):
+
+- Capture hand-off: ending a capture now drains the buffer on the dispatch
+  goroutine instead of inside the background request, and a new capture starts
+  from a fresh buffer rather than rewinding the previous one. Releasing the
+  button and pressing it again quickly no longer loses the first sentence.
+- A duplicate audio-start from the remote (the common case of a lost
+  audio-stop) closes the open capture and keeps the microphone claim, so two
+  sentences are no longer merged into one utterance.
+- The sample rate the remote negotiated in its ATVV caps is now carried on the
+  utterance and used for the request header, the provider guard and the
+  minimum-length floor; before, every capture was labelled 16 kHz whatever the
+  device said, and a non-16 kHz codec is now logged instead of being silently
+  transcribed as sped-up speech.
+- A device-reported frame size is clamped (`atvv.MaxFrameSize`): an unusable
+  value falls back to the default instead of making the accumulator wait
+  forever for a frame that never completes, and oversize input resyncs the
+  accumulator rather than stalling it.
+- The BlueZ transport guards its D-Bus handles and callbacks behind one lock,
+  closes idempotently, refuses to install handles after close, and returns an
+  error instead of calling a nil characteristic when used before connecting.
+
 ## 0.1.1 — 2026-11-10
 
 Maintenance and quality baseline.

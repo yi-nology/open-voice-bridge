@@ -136,9 +136,13 @@ type phoneSpeech struct {
 }
 
 func (s phoneSpeech) TranscribeUtterance(_ context.Context, samples []int16, meta phone.UtteranceMeta) (phone.UtteranceResult, bool) {
-	transcript, ok := s.pipeline.Transcribe(samples, agent.SourceRef{
-		Kind:    string(input.KindPhone),
-		Address: meta.Address,
+	transcript, ok := s.pipeline.Transcribe(agent.Utterance{
+		Samples:    samples,
+		SampleRate: meta.SampleRate,
+		Ref: agent.SourceRef{
+			Kind:    string(input.KindPhone),
+			Address: meta.Address,
+		},
 	})
 	if !ok {
 		return phone.UtteranceResult{}, false
