@@ -406,12 +406,7 @@ func (s *Server) finishUtterance(ctx context.Context, active *activeConn, trunca
 	active.send(ctx, map[string]any{"type": "listening", "active": false})
 
 	transcriber := s.transcriber
-	meta := UtteranceMeta{
-		DeviceID:   active.deviceID,
-		Name:       active.source.Name(),
-		Address:    active.source.Address(),
-		SampleRate: sampleRate,
-	}
+	meta := utteranceMeta(active)
 	async.GoSafe(func() {
 		result, ok := transcriber.TranscribeUtterance(context.Background(), samples, meta)
 		// A fresh detached context: by the time ASR returns the read loop may
@@ -460,13 +455,30 @@ func (s *Server) register(deviceID string, ws *websocket.Conn, name, ip string) 
 	return active
 }
 
+func utteranceMeta(active *activeConn) UtteranceMeta {
+	return UtteranceMeta{
+		DeviceID:   active.deviceID,
+		Name:       active.source.Name(),
+		Address:    active.source.Address(),
+		SampleRate: sampleRate,
+	}
+}
+
 func (s *Server) unregister(active *activeConn) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	var samples []int16
 	if current, ok := s.conns[active.deviceID]; ok && current == active {
+		// A phone killed mid-sentence did speak: take those samples before the
+		// registry forgets the session. Only a copy happens under the lock, since
+		// the socket is already dying and nothing may block here (R8, I5).
+		if active.source.isSpeaking() {
+			samples = active.buffer.take()
+		}
 		s.dropLocked(active)
 	}
+	s.mu.Unlock()
 	active.source.disconnect()
+	s.transcribeDropped(active, samples)
 }
 
 func (s *Server) dropLocked(active *activeConn) {
@@ -475,6 +487,38 @@ func (s *Server) dropLocked(active *activeConn) {
 		s.hub.Unregister(active.deviceID)
 	}
 	active.source.disconnect()
+}
+
+// transcribeDropped runs audio left over by a connection that ended while the
+// user was holding to talk. Nothing is written back to the phone: the words
+// still belong in the focused window, the subtitles and the history (I5).
+func (s *Server) transcribeDropped(active *activeConn, samples []int16) {
+	if len(samples) == 0 || s.transcriber == nil {
+		return
+	}
+	transcriber := s.transcriber
+	meta := utteranceMeta(active)
+	async.GoSafe(func() {
+		transcriber.TranscribeUtterance(context.Background(), samples, meta)
+	})
+}
+
+// Disconnect closes the live session of a device, if it has one. A revoked
+// phone must stop sending keys and audio at once rather than at its next
+// reconnect (SEC-05); its half-spoken utterance is dropped instead of
+// transcribed, because revoking is a deliberate cut.
+func (s *Server) Disconnect(deviceID string) bool {
+	s.mu.Lock()
+	active, ok := s.conns[deviceID]
+	if ok {
+		s.dropLocked(active)
+	}
+	s.mu.Unlock()
+	if !ok {
+		return false
+	}
+	active.ws.CloseNow()
+	return true
 }
 
 // --- JSON helpers ----------------------------------------------------------

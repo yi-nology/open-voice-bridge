@@ -61,6 +61,15 @@ tracked item-by-item in `docs/design/evolution-roadmap.md`):
 - The BlueZ transport guards its D-Bus handles and callbacks behind one lock,
   closes idempotently, refuses to install handles after close, and returns an
   error instead of calling a nil characteristic when used before connecting.
+- Words spoken when a source disappears are no longer thrown away: a remote that
+  drops, or a phone killed while holding to talk, hands its buffered audio to the
+  same speech chain, so the text still reaches the focused window, the subtitles
+  and the history. At service shutdown the capture is still dropped rather than
+  pasted into a desktop that is going away.
+- Revoking a paired phone now closes its live session instead of waiting for the
+  next reconnect: the keys and microphone stop immediately, the microphone is
+  released for other sources, and the admin panel says so. A revoked device's
+  in-flight sentence is discarded, not transcribed.
 
 ## 0.1.1 — 2026-11-10
 

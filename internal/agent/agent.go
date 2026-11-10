@@ -411,9 +411,15 @@ func (a *Agent) SetAddress(address string) error {
 }
 
 func (a *Agent) markDisconnected() {
-	// A capture cut short by a disconnect never reaches the audio-stop path, so
-	// the claim has to be dropped here or phones would find the microphone busy
-	// forever.
+	// A capture cut short by a disconnect never reaches the audio-stop path, but
+	// the samples in hand are words the user already spoke, so they are
+	// transcribed before the claim drops (I5). During shutdown the request would
+	// paste into a desktop that is going away, so the buffer is simply lost.
+	if a.ctx == nil || a.ctx.Err() == nil {
+		a.closeCapture()
+	}
+	// The claim has to go here either way, or phones would find the microphone
+	// busy forever.
 	a.releaseMic()
 	a.mu.Lock()
 	a.connected = false

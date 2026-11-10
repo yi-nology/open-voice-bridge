@@ -2372,7 +2372,7 @@ async function revokePhone(id, name) {
       inputsMessage("吊销失败：" + errorText(data, "未知错误"), "err");
       return;
     }
-    inputsMessage("已吊销 " + name, "ok");
+    inputsMessage(data.disconnected ? "已吊销 " + name + "，并断开了它正在进行的会话" : "已吊销 " + name, "ok");
     await loadPhoneDevices();
     await loadInputs();
   } catch (error) {

@@ -79,7 +79,8 @@ func TestInterleavedCapturesBecomeSeparateUtterances(t *testing.T) {
 	appendDictation(a, 2*atvv.SampleRate, 0x22)
 	a.handleControl([]byte{atvv.OpAudioStop})
 
-	short, long := engine.nextBySize(t, atvv.SampleRate), engine.nextBySize(t, 2*atvv.SampleRate)
+	heard := engine.collect(t, 2)
+	short, long := engine.pick(t, heard, atvv.SampleRate), engine.pick(t, heard, 2*atvv.SampleRate)
 	engine.assertSilence(t)
 
 	// The reset used to rewind the same backing array and the copy used to run
@@ -96,26 +97,36 @@ func TestInterleavedCapturesBecomeSeparateUtterances(t *testing.T) {
 	}
 }
 
-// nextBySize waits for the utterance holding want samples, so the test does not
-// depend on the order the background requests reach the engine.
-func (e *heardEngine) nextBySize(t *testing.T, want int) asr.Audio {
+// collect reads n utterances however the background requests happen to finish,
+// because the pipeline does not promise an ordering between them.
+func (e *heardEngine) collect(t *testing.T, n int) []asr.Audio {
 	t.Helper()
-	var others []int
-	for {
+	out := make([]asr.Audio, 0, n)
+	for i := 0; i < n; i++ {
 		select {
 		case audio := <-e.heard:
-			if len(audio.Samples) == want {
-				return audio
-			}
-			others = append(others, len(audio.Samples))
-			if len(others) >= 2 {
-				t.Fatalf("no %d-sample utterance; saw %v", want, others)
-			}
+			out = append(out, audio)
 		case <-time.After(5 * time.Second):
-			t.Fatalf("no utterance of %d samples reached ASR; saw %v", want, others)
-			return asr.Audio{}
+			t.Fatalf("only %d of %d utterances reached ASR", len(out), n)
 		}
 	}
+	return out
+}
+
+// pick returns the collected utterance holding want samples.
+func (e *heardEngine) pick(t *testing.T, heard []asr.Audio, want int) asr.Audio {
+	t.Helper()
+	for _, audio := range heard {
+		if len(audio.Samples) == want {
+			return audio
+		}
+	}
+	sizes := make([]int, 0, len(heard))
+	for _, audio := range heard {
+		sizes = append(sizes, len(audio.Samples))
+	}
+	t.Fatalf("no utterance of %d samples; sizes = %v", want, sizes)
+	return asr.Audio{}
 }
 
 func homogeneous(audio asr.Audio, value int16) error {
@@ -184,6 +195,45 @@ func TestDrainedSamplesSurviveTheNextCapture(t *testing.T) {
 			t.Fatalf("sample %d = %#x, want the drained capture untouched", i, sample)
 		}
 	}
+}
+
+// TestDisconnectTranscribesTheOpenCapture: a remote that dies mid-sentence took
+// down the audio-stop path with it, but the words were already spoken (DOM-04).
+func TestDisconnectTranscribesTheOpenCapture(t *testing.T) {
+	hub := input.NewHub()
+	engine := newHeardEngine()
+	a := newFinalizeAgent(engine)
+	a.SetHub(hub)
+	a.session = atvv.NewSession()
+
+	a.handleControl([]byte{atvv.OpAudioStart})
+	appendDictation(a, atvv.SampleRate/2, 0x11)
+	a.markDisconnected()
+
+	utterance := engine.next(t)
+	if len(utterance.Samples) != atvv.SampleRate/2 {
+		t.Fatalf("samples = %d, want the half second captured before the drop", len(utterance.Samples))
+	}
+	if owner := hub.AudioOwner(); owner != "" {
+		t.Fatalf("owner = %q, want the disconnect to free the mic", owner)
+	}
+}
+
+// TestDisconnectDuringShutdownDropsTheCapture is the other half: at exit no text
+// may appear in a desktop that is going away.
+func TestDisconnectDuringShutdownDropsTheCapture(t *testing.T) {
+	engine := newHeardEngine()
+	a := newFinalizeAgent(engine)
+	ctx, cancel := context.WithCancel(context.Background())
+	a.ctx = ctx
+	cancel()
+	a.session = atvv.NewSession()
+
+	a.handleControl([]byte{atvv.OpAudioStart})
+	appendDictation(a, atvv.SampleRate/2, 0x11)
+	a.markDisconnected()
+
+	engine.assertSilence(t)
 }
 
 // TestUtteranceCarriesTheNegotiatedRate closes DOM-01 for the remote path: an

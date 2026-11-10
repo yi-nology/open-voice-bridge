@@ -363,7 +363,10 @@ func runAgent(args []string, stderr io.Writer) int {
 				if err := phoneStore.Revoke(deviceID); err != nil {
 					return map[string]any{"ok": false, "error": err.Error()}
 				}
-				return map[string]any{"ok": true}
+				// The token is gone, but the WebSocket that is already open needs
+				// closing or a revoked phone keeps speaking until it reconnects.
+				disconnected := phoneServer.Disconnect(deviceID)
+				return map[string]any{"ok": true, "disconnected": disconnected}
 			},
 			HelperSocket: cfg.HelperSocket,
 		}
