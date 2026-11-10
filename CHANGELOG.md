@@ -1,5 +1,28 @@
 # Changelog
 
+## Unreleased
+
+Phone as a second input source — Phase 1 (virtual remote control).
+
+- Input abstraction (`internal/input`): a source Hub over the BLE遥控器,
+  wrapped without behavior change, ready to also carry phone sources.
+- `SpeechPipeline` extracted in `internal/agent` so keys and future phone
+  audio share one ASR / rewrite / paste / history path.
+- Phone pairing (`internal/phone`): 6-digit code → 256-bit token (stored as
+  SHA-256, returned once) → 60-second one-time WebSocket ticket; self-signed
+  ECDSA TLS with LAN-covering SANs; an independent `0.0.0.0:8788` listener
+  that serves only the phone page and the WebSocket key channel, never the
+  admin API.
+- Key injection: whitelisted `inject` command on the root helper's local
+  Unix socket, reusing the active keymap profile.
+- Config: new `phone` section (disabled by default) with address/TLS/limit
+  validation.
+- Admin UI + endpoints: 输入源 panel with a live source list, pairing code
+  and countdown, a pairing link (`#pair` fragment only, never in query or
+  logs), and paired-device revoke. Admin stays on `127.0.0.1:8787`.
+
+Phone microphone is deferred to Phase 2.
+
 ## 0.1.1 — 2026-11-10
 
 Maintenance and quality baseline.
