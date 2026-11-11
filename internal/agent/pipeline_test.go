@@ -387,3 +387,28 @@ func TestPhraseWatcherInsertsAndNotifies(t *testing.T) {
 		t.Fatal("phrase watcher did not stop")
 	}
 }
+
+// DOM-09 / I8: the shared chain stamps who spoke and whether the capture was
+// cut short, so subtitles and history stop showing an anonymous address.
+func TestTranscriptStampsSourceIdentity(t *testing.T) {
+	engine := &fakeEngine{result: asr.Result{Text: "你好", Provider: "fake"}}
+	rules, err := text.New(text.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	probe := &pipelineProbe{}
+	pipeline := buildPipeline(engine, rules, probe, false)
+
+	utterance := utterance(oneSecond(), SourceRef{Kind: "phone", Name: "客厅手机", Address: "192.0.2.10"})
+	utterance.Truncated = true
+	transcript, ok := pipeline.Transcribe(context.Background(), utterance)
+	if !ok {
+		t.Fatal("transcribe failed")
+	}
+	if transcript.Source != "phone" || transcript.SourceName != "客厅手机" {
+		t.Fatalf("identity = %q/%q", transcript.Source, transcript.SourceName)
+	}
+	if !transcript.Truncated {
+		t.Fatal("truncation must reach the transcript")
+	}
+}

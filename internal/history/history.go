@@ -16,15 +16,18 @@ import (
 var log = logx.Delegating("history")
 
 type Entry struct {
-	ID        string    `json:"id"`
-	Text      string    `json:"text"`
-	RawText   string    `json:"raw_text,omitempty"`
-	Provider  string    `json:"provider,omitempty"`
-	Language  string    `json:"language,omitempty"`
-	Address   string    `json:"address,omitempty"`
-	Processed bool      `json:"processed"`
-	LatencyMS int64     `json:"latency_ms,omitempty"`
-	At        time.Time `json:"at"`
+	ID         string    `json:"id"`
+	Text       string    `json:"text"`
+	RawText    string    `json:"raw_text,omitempty"`
+	Provider   string    `json:"provider,omitempty"`
+	Language   string    `json:"language,omitempty"`
+	Source     string    `json:"source,omitempty"`      // "remote" | "phone" (DOM-09)
+	SourceName string    `json:"source_name,omitempty"` // friendly device name
+	Address    string    `json:"address,omitempty"`
+	Processed  bool      `json:"processed"`
+	Truncated  bool      `json:"truncated,omitempty"` // capture hit its time cap
+	LatencyMS  int64     `json:"latency_ms,omitempty"`
+	At         time.Time `json:"at"`
 }
 
 type Store struct {

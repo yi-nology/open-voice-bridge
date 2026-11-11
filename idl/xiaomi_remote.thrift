@@ -47,6 +47,8 @@ struct StatusResp {
   22: bool mic_healthy
   23: i64 last_latency_ms
   24: string platform
+  25: i64 key_total
+  26: map<string, i64> key_counts
 }
 
 struct ApplyReq {
@@ -256,6 +258,9 @@ struct HistoryEntry {
   7: bool processed
   8: string at
   9: i64 latency_ms
+  10: string source
+  11: string source_name
+  12: bool truncated
 }
 
 struct HistoryResp {

@@ -419,3 +419,27 @@ func TestRemotePreemptionStopsPhoneCapture(t *testing.T) {
 		t.Fatalf("second samples = %d, want 320 (stray frame survived)", got)
 	}
 }
+
+// DOM-09: a capture cut at the server cap must be labelled as truncated when
+// it reaches the shared chain — the same signal the phone page already gets.
+func TestTruncatedUtteranceIsLabelledForTheChain(t *testing.T) {
+	transcriber := &fakeTranscriber{ok: true, result: UtteranceResult{Text: "截断", At: time.Now()}}
+	e := newTestEnv(t, ServerConfig{Transcriber: transcriber, MaxUtteranceSeconds: 1, MaxClients: 4})
+	conn, ctx := dialPhone(t, e, "Pixel")
+
+	sendJSON(t, ctx, conn, map[string]any{"type": "start", "format": "pcm16", "rate": 16000, "channels": 1})
+	if frame := readMessage(t, ctx, conn); frame["type"] != "listening" {
+		t.Fatalf("start = %v", frame)
+	}
+	// 1 s cap at 16 kHz = 16000 samples = 50 frames of 320.
+	for i := 0; i < 52; i++ {
+		if err := conn.Write(ctx, websocket.MessageBinary, pcmFrame(320)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	waitFor(t, func() bool { return len(transcriber.snapshot()) == 1 }, "capped utterance should reach the chain")
+	call := transcriber.snapshot()[0]
+	if !call.meta.Truncated {
+		t.Fatalf("meta = %+v, want Truncated set", call.meta)
+	}
+}

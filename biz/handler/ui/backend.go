@@ -71,6 +71,8 @@ func (s *Server) Status(ctx context.Context) (*api.StatusResp, error) {
 		MicHealthy:     boolValue(status["mic_healthy"]),
 		LastLatencyMs:  int64Value(status["last_latency_ms"]),
 		Platform:       stringValue(status["platform"]),
+		KeyTotal:       int64Value(status["key_total"]),
+		KeyCounts:      int64Map(status["key_counts"]),
 	}
 	if value := stringValue(status["helper_error"]); value != "" {
 		resp.HelperError = ptrx.Of(value)
@@ -346,6 +348,21 @@ func stringMap(value any) map[string]string {
 	}
 }
 
+func int64Map(value any) map[string]int64 {
+	switch typed := value.(type) {
+	case map[string]int64:
+		return typed
+	case map[string]any:
+		out := make(map[string]int64, len(typed))
+		for key, item := range typed {
+			out[key] = int64Value(item)
+		}
+		return out
+	default:
+		return nil
+	}
+}
+
 func (s *Server) GetDevices(ctx context.Context) (*api.DevicesResp, error) {
 	if s.deps.Devices == nil {
 		return nil, oeerrors.New("devices not available")
@@ -590,15 +607,18 @@ func (s *Server) GetHistory(ctx context.Context) (*api.HistoryResp, error) {
 	resp := &api.HistoryResp{Ok: true, Entries: make([]*api.HistoryEntry, 0, len(entries))}
 	for _, entry := range entries {
 		resp.Entries = append(resp.Entries, &api.HistoryEntry{
-			ID:        entry.ID,
-			Text:      entry.Text,
-			RawText:   entry.RawText,
-			Provider:  entry.Provider,
-			Language:  entry.Language,
-			Address:   entry.Address,
-			Processed: entry.Processed,
-			LatencyMs: entry.LatencyMS,
-			At:        entry.At.Format(time.RFC3339),
+			ID:         entry.ID,
+			Text:       entry.Text,
+			RawText:    entry.RawText,
+			Provider:   entry.Provider,
+			Language:   entry.Language,
+			Source:     entry.Source,
+			SourceName: entry.SourceName,
+			Address:    entry.Address,
+			Processed:  entry.Processed,
+			Truncated:  entry.Truncated,
+			LatencyMs:  entry.LatencyMS,
+			At:         entry.At.Format(time.RFC3339),
 		})
 	}
 	return resp, nil

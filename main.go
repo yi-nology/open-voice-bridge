@@ -147,8 +147,10 @@ func (s phoneSpeech) TranscribeUtterance(ctx context.Context, samples []int16, m
 		SampleRate: meta.SampleRate,
 		Ref: agent.SourceRef{
 			Kind:    string(input.KindPhone),
+			Name:    meta.Name,
 			Address: meta.Address,
 		},
+		Truncated: meta.Truncated,
 	})
 	if !ok {
 		return phone.UtteranceResult{}, false
@@ -414,29 +416,35 @@ func runAgent(args []string, stderr io.Writer) int {
 						asrLatency.Observe(transcript.Latency.Seconds())
 					}
 					if err := historyStore.Append(history.Entry{
-						ID:        transcript.At.Format("20060102-150405.000000000"),
-						Text:      transcript.Text,
-						RawText:   transcript.RawText,
-						Provider:  transcript.Provider,
-						Language:  transcript.Language,
-						Address:   transcript.Address,
-						Processed: transcript.Processed,
-						LatencyMS: transcript.Latency.Milliseconds(),
-						At:        transcript.At,
+						ID:         transcript.At.Format("20060102-150405.000000000"),
+						Text:       transcript.Text,
+						RawText:    transcript.RawText,
+						Provider:   transcript.Provider,
+						Language:   transcript.Language,
+						Source:     transcript.Source,
+						SourceName: transcript.SourceName,
+						Address:    transcript.Address,
+						Processed:  transcript.Processed,
+						Truncated:  transcript.Truncated,
+						LatencyMS:  transcript.Latency.Milliseconds(),
+						At:         transcript.At,
 					}); err != nil {
 						logger.Warn("append history", "err", err)
 					}
 					statsStore.Record(transcript.Duration, len([]rune(transcript.Text)))
 					uiServer.Publish(map[string]any{
-						"event":      "transcript",
-						"text":       transcript.Text,
-						"raw_text":   transcript.RawText,
-						"language":   transcript.Language,
-						"provider":   transcript.Provider,
-						"address":    transcript.Address,
-						"processed":  transcript.Processed,
-						"latency_ms": transcript.Latency.Milliseconds(),
-						"at":         transcript.At.Format(time.RFC3339),
+						"event":       "transcript",
+						"text":        transcript.Text,
+						"raw_text":    transcript.RawText,
+						"language":    transcript.Language,
+						"provider":    transcript.Provider,
+						"source":      transcript.Source,
+						"source_name": transcript.SourceName,
+						"address":     transcript.Address,
+						"processed":   transcript.Processed,
+						"truncated":   transcript.Truncated,
+						"latency_ms":  transcript.Latency.Milliseconds(),
+						"at":          transcript.At.Format(time.RFC3339),
 					})
 				case state := <-micOwner:
 					active, source, name := speakingLabel(state, inputHub.Sources())

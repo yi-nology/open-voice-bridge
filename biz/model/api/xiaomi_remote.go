@@ -952,6 +952,8 @@ type StatusResp struct {
 	MicHealthy     bool              `thrift:"mic_healthy,22" form:"mic_healthy" json:"mic_healthy" query:"mic_healthy"`
 	LastLatencyMs  int64             `thrift:"last_latency_ms,23" form:"last_latency_ms" json:"last_latency_ms" query:"last_latency_ms"`
 	Platform       string            `thrift:"platform,24" form:"platform" json:"platform" query:"platform"`
+	KeyTotal       int64             `thrift:"key_total,25" form:"key_total" json:"key_total" query:"key_total"`
+	KeyCounts      map[string]int64  `thrift:"key_counts,26" form:"key_counts" json:"key_counts" query:"key_counts"`
 }
 
 func NewStatusResp() *StatusResp {
@@ -10508,15 +10510,18 @@ func (p *LLMKeyReq) String() string {
 }
 
 type HistoryEntry struct {
-	ID        string `thrift:"id,1" form:"id" json:"id" query:"id"`
-	Text      string `thrift:"text,2" form:"text" json:"text" query:"text"`
-	RawText   string `thrift:"raw_text,3" form:"raw_text" json:"raw_text" query:"raw_text"`
-	Provider  string `thrift:"provider,4" form:"provider" json:"provider" query:"provider"`
-	Language  string `thrift:"language,5" form:"language" json:"language" query:"language"`
-	Address   string `thrift:"address,6" form:"address" json:"address" query:"address"`
-	Processed bool   `thrift:"processed,7" form:"processed" json:"processed" query:"processed"`
-	At        string `thrift:"at,8" form:"at" json:"at" query:"at"`
-	LatencyMs int64  `thrift:"latency_ms,9" form:"latency_ms" json:"latency_ms" query:"latency_ms"`
+	ID         string `thrift:"id,1" form:"id" json:"id" query:"id"`
+	Text       string `thrift:"text,2" form:"text" json:"text" query:"text"`
+	RawText    string `thrift:"raw_text,3" form:"raw_text" json:"raw_text" query:"raw_text"`
+	Provider   string `thrift:"provider,4" form:"provider" json:"provider" query:"provider"`
+	Language   string `thrift:"language,5" form:"language" json:"language" query:"language"`
+	Address    string `thrift:"address,6" form:"address" json:"address" query:"address"`
+	Processed  bool   `thrift:"processed,7" form:"processed" json:"processed" query:"processed"`
+	At         string `thrift:"at,8" form:"at" json:"at" query:"at"`
+	LatencyMs  int64  `thrift:"latency_ms,9" form:"latency_ms" json:"latency_ms" query:"latency_ms"`
+	Source     string `thrift:"source,10" form:"source" json:"source" query:"source"`
+	SourceName string `thrift:"source_name,11" form:"source_name" json:"source_name" query:"source_name"`
+	Truncated  bool   `thrift:"truncated,12" form:"truncated" json:"truncated" query:"truncated"`
 }
 
 func NewHistoryEntry() *HistoryEntry {

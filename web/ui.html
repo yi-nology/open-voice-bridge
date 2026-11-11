@@ -1108,6 +1108,11 @@
           <div class="value" id="stats-longest">…</div>
           <div class="sub">一次听写的最长时长</div>
         </div>
+        <div class="card">
+          <h3>按键次数</h3>
+          <div class="value" id="stats-keys">…</div>
+          <div class="sub" id="stats-keys-top">累计按下</div>
+        </div>
       </div>
       <div class="stats-days" id="stats-days" title="最近 14 天语音时长"></div>
       <div class="stats-heat" id="stats-heat" title="最近 26 周使用热力图"></div>
@@ -1795,6 +1800,17 @@ function updateConnection(status) {
       keymapProfileSignature = signature;
     }
     if (status.keymap_profile) profileSelect.value = status.keymap_profile;
+  }
+  const keysValue = document.getElementById("stats-keys");
+  if (keysValue) {
+    keysValue.textContent = (status.key_total || 0).toLocaleString();
+    const top = Object.entries(status.key_counts || {}).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const topSub = document.getElementById("stats-keys-top");
+    if (topSub) {
+      topSub.textContent = top.length
+        ? "最常用：" + top.map(([name, count]) => name + " " + count).join(" · ")
+        : "累计按下";
+    }
   }
   const autostart = document.getElementById("conn-autostart");
   if (autostart) {
@@ -2602,7 +2618,7 @@ function renderHistory() {
     const meta = document.createElement("div");
     meta.className = "history-meta";
     const at = entry.at ? new Date(entry.at).toLocaleString("zh-CN", {hour12: false}) : "";
-    meta.textContent = [at, entry.provider, entry.latency_ms ? entry.latency_ms + " ms" : "", entry.processed ? "已润色" : "", entry.address].filter(Boolean).join(" · ");
+    meta.textContent = [at, entry.provider, entry.latency_ms ? entry.latency_ms + " ms" : "", entry.processed ? "已润色" : "", entry.truncated ? "已截断" : "", entry.source_name || entry.address].filter(Boolean).join(" · ");
     main.append(text, meta);
     const actions = document.createElement("div");
     actions.className = "history-actions";

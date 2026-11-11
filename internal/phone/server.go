@@ -302,7 +302,11 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 		conn.Close(websocket.StatusPolicyViolation, "too many clients")
 		return
 	}
-	defer s.unregister(active)
+	// DOM-13: whatever ended the session, the socket closes with it.
+	defer func() {
+		s.unregister(active)
+		conn.CloseNow()
+	}()
 
 	ctx := r.Context()
 	active.send(ctx, map[string]any{
@@ -531,7 +535,9 @@ func (s *Server) runTranscriptionQueue() {
 }
 
 func (s *Server) processUtterance(ctx context.Context, job utteranceJob) {
-	result, ok := s.transcriber.TranscribeUtterance(ctx, job.samples, job.meta)
+	meta := job.meta
+	meta.Truncated = job.truncated
+	result, ok := s.transcriber.TranscribeUtterance(ctx, job.samples, meta)
 	if job.notify == nil {
 		return
 	}

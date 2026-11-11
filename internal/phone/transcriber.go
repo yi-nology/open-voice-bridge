@@ -13,6 +13,9 @@ type UtteranceMeta struct {
 	// SampleRate states what the buffered samples actually are, so the chain
 	// never has to assume a rate on the phone's behalf (DOM-01).
 	SampleRate int
+	// Truncated marks a capture that hit the server's time cap instead of
+	// ending on the user's release (DOM-09).
+	Truncated bool
 }
 
 // UtteranceResult is the narrow answer the phone page needs echoed back. Only

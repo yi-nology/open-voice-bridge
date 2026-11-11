@@ -15,9 +15,10 @@ import (
 )
 
 // SourceRef labels which input source produced an utterance so the shared
-// transcription chain can stamp subtitles and history consistently.
+// transcription chain can stamp subtitles and history consistently (I8).
 type SourceRef struct {
 	Kind    string
+	Name    string
 	Address string
 }
 
@@ -30,6 +31,9 @@ type Utterance struct {
 	Samples    []int16
 	SampleRate int
 	Ref        SourceRef
+	// Truncated marks a capture that hit its time cap instead of ending on
+	// the user's release (DOM-09): both sources label it the same way.
+	Truncated bool
 }
 
 // Rate is the capture rate, defaulting to the negotiated remote rate when a
@@ -123,15 +127,18 @@ func (p *SpeechPipeline) Transcribe(parent context.Context, u Utterance) (Transc
 		"latency", result.Latency.Round(time.Millisecond),
 	)
 	transcript := Transcript{
-		Text:      processed,
-		RawText:   rawText,
-		Language:  result.Language,
-		Provider:  result.Provider,
-		Address:   u.Ref.Address,
-		Processed: processed != rawText,
-		Latency:   result.Latency,
-		Duration:  time.Duration(len(u.Samples)) * time.Second / time.Duration(u.Rate()),
-		At:        time.Now(),
+		Text:       processed,
+		RawText:    rawText,
+		Language:   result.Language,
+		Provider:   result.Provider,
+		Source:     u.Ref.Kind,
+		SourceName: u.Ref.Name,
+		Address:    u.Ref.Address,
+		Processed:  processed != rawText,
+		Truncated:  u.Truncated,
+		Latency:    result.Latency,
+		Duration:   time.Duration(len(u.Samples)) * time.Second / time.Duration(u.Rate()),
+		At:         time.Now(),
 	}
 	if p.sink != nil {
 		p.sink(transcript)

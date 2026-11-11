@@ -53,9 +53,10 @@ type Agent struct {
 	lastAt      time.Time
 	lastLatency time.Duration
 
-	dictMu    sync.Mutex
-	dictation []int16
-	maxSample int
+	dictMu        sync.Mutex
+	dictation     []int16
+	dictTruncated bool // the open capture hit its time cap (DOM-09)
+	maxSample     int
 
 	pipeline *SpeechPipeline
 
@@ -72,15 +73,18 @@ type Agent struct {
 
 // Transcript is one finalized utterance emitted for live subtitles.
 type Transcript struct {
-	Text      string
-	RawText   string
-	Language  string
-	Provider  string
-	Address   string
-	Processed bool
-	Latency   time.Duration
-	Duration  time.Duration // length of the spoken audio
-	At        time.Time
+	Text       string
+	RawText    string
+	Language   string
+	Provider   string
+	Source     string // "remote" | "phone" (SourceRef.Kind)
+	SourceName string
+	Address    string
+	Processed  bool
+	Truncated  bool // the capture hit its time cap (DOM-09)
+	Latency    time.Duration
+	Duration   time.Duration // length of the spoken audio
+	At         time.Time
 }
 
 func New(cfg config.Config, engine asr.Engine, sink audio.Sink) *Agent {
@@ -525,6 +529,11 @@ func (a *Agent) handleAudio(data []byte) {
 		}
 		a.dictation = append(a.dictation, samples[:room]...)
 	}
+	if room < len(samples) {
+		// The capture ran into its time cap (DOM-09): label it, same as the
+		// phone's too_long path.
+		a.dictTruncated = true
+	}
 	a.dictMu.Unlock()
 }
 
@@ -533,36 +542,42 @@ func (a *Agent) handleAudio(data []byte) {
 func (a *Agent) resetDictation() {
 	a.dictMu.Lock()
 	a.dictation = nil
+	a.dictTruncated = false
 	a.dictMu.Unlock()
 }
 
 // takeDictation drains the current capture and returns sole ownership of its
-// samples.
-func (a *Agent) takeDictation() []int16 {
+// samples together with the truncation flag.
+func (a *Agent) takeDictation() ([]int16, bool) {
 	a.dictMu.Lock()
 	defer a.dictMu.Unlock()
 	samples := a.dictation
+	truncated := a.dictTruncated
 	a.dictation = nil
-	return samples
+	a.dictTruncated = false
+	return samples, truncated
 }
 
 // closeCapture ends the capture that is open now. Draining happens on the
 // dispatch goroutine, before any later audio-start can touch the buffer, and
 // only the request runs in the background (I2).
 func (a *Agent) closeCapture() {
-	samples := a.takeDictation()
+	samples, truncated := a.takeDictation()
 	if len(samples) == 0 {
 		return
 	}
 	rate := a.currentSampleRate()
-	async.GoSafe(func() { a.runSpeech(samples, rate) })
+	async.GoSafe(func() { a.runSpeech(samples, rate, truncated) })
 }
 
 // finalize drains and transcribes inline; it is the synchronous form used when
 // the caller must observe the result before returning.
-func (a *Agent) finalize() { a.runSpeech(a.takeDictation(), a.currentSampleRate()) }
+func (a *Agent) finalize() {
+	samples, truncated := a.takeDictation()
+	a.runSpeech(samples, a.currentSampleRate(), truncated)
+}
 
-func (a *Agent) runSpeech(samples []int16, rate int) {
+func (a *Agent) runSpeech(samples []int16, rate int, truncated bool) {
 	ctx := a.ctx
 	if ctx == nil {
 		ctx = context.Background()
@@ -570,7 +585,12 @@ func (a *Agent) runSpeech(samples []int16, rate int) {
 	a.pipeline.Transcribe(ctx, Utterance{
 		Samples:    samples,
 		SampleRate: rate,
-		Ref:        SourceRef{Kind: string(input.KindRemote), Address: a.currentAddress()},
+		Ref: SourceRef{
+			Kind:    string(input.KindRemote),
+			Name:    a.cfg.DeviceName(),
+			Address: a.currentAddress(),
+		},
+		Truncated: truncated,
 	})
 }
 
