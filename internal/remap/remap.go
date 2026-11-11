@@ -152,6 +152,20 @@ func ActionKeyCode(action string) (int, bool) {
 	return code, ok
 }
 
+// isTriggerCode reports whether a code is a private signal for the agent's
+// evdev watcher (F24 opens a capture, phrase1..8 insert a common phrase)
+// rather than a key for the focused app. The watcher accepts only value=1, so
+// these must never be re-tapped on autorepeat.
+func isTriggerCode(code int) bool {
+	switch code {
+	case ActionCodes["f24"], ActionCodes["phrase1"], ActionCodes["phrase2"],
+		ActionCodes["phrase3"], ActionCodes["phrase4"], ActionCodes["phrase5"],
+		ActionCodes["phrase6"], ActionCodes["phrase7"], ActionCodes["phrase8"]:
+		return true
+	}
+	return false
+}
+
 func MacroTokenCodes(action string) ([]int, bool) {
 	if !strings.HasPrefix(action, "macro(") {
 		return nil, false

@@ -605,6 +605,11 @@ func (d *Daemon) emit(code, value int) {
 		return
 	}
 	if value == 2 {
+		if isTriggerCode(code) {
+			// A trigger fires once per physical press; the agent cannot tell a
+			// re-tapped repeat from a new press.
+			return
+		}
 		// uinput has no repeat event and the library cannot write one; a
 		// repeat re-taps the key so a held button keeps acting at the
 		// source's repeat rate (DOM-12).

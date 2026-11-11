@@ -184,6 +184,44 @@ func TestApplyKeyRepeatRetriggers(t *testing.T) {
 	}
 }
 
+// The voice key and the phrase keys are private signals for the agent's evdev
+// watcher, not keys for the focused app. It accepts only value=1, so a
+// re-tapped repeat reads as a brand-new press: holding the voice button fired
+// MIC_OPEN every 50 ms and cut the capture into fragments too short to
+// transcribe. A trigger fires once per physical press.
+func TestTriggerKeysDoNotRepeat(t *testing.T) {
+	for _, tc := range []struct{ key, action string }{
+		{"f5", "f24"},
+		{"compose", "phrase1"},
+		{"menu", "phrase8"},
+	} {
+		t.Run(tc.key, func(t *testing.T) {
+			kb := &fakeKeyboard{}
+			d := newInjectDaemon()
+			d.kb = kb
+			d.mapping = MergeDefaults(map[string]string{tc.key: tc.action})
+			code := ActionCodes[tc.action]
+			source := SourceCodes[tc.key]
+
+			d.applyKey(source, tc.key, 1)
+			d.applyKey(source, tc.key, 2)
+			d.applyKey(source, tc.key, 2)
+			d.applyKey(source, tc.key, 0)
+
+			want := []string{fmt.Sprintf("down %d", code), fmt.Sprintf("up %d", code)}
+			got := kb.snapshot()
+			if len(got) != len(want) {
+				t.Fatalf("events = %v, want %v", got, want)
+			}
+			for index := range want {
+				if got[index] != want[index] {
+					t.Fatalf("events = %v, want %v", got, want)
+				}
+			}
+		})
+	}
+}
+
 // A held macro re-executes (release chord, press chord) on each repeat.
 func TestApplyKeyRepeatRetriggersMacro(t *testing.T) {
 	kb := &fakeKeyboard{}
