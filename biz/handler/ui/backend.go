@@ -336,36 +336,33 @@ func (s *Server) GetDevices(ctx context.Context) (*api.DevicesResp, error) {
 	if s.deps.Devices == nil {
 		return nil, oeerrors.New("devices not available")
 	}
-	data := s.deps.Devices(ctx)
-	resp := &api.DevicesResp{Ok: boolValue(data["ok"]), Active: stringValue(data["active"])}
-	if profiles, ok := data["profiles"].([]map[string]any); ok {
-		resp.Profiles = make([]*api.ProfileInfo, 0, len(profiles))
-		for _, profile := range profiles {
-			resp.Profiles = append(resp.Profiles, &api.ProfileInfo{
-				ID:           stringValue(profile["id"]),
-				Name:         stringValue(profile["name"]),
-				Transport:    stringValue(profile["transport"]),
-				Capabilities: stringSlice(profile["capabilities"]),
-			})
-		}
+	view := s.deps.Devices(ctx)
+	resp := &api.DevicesResp{Ok: view.OK, Active: view.Active}
+	resp.Profiles = make([]*api.ProfileInfo, 0, len(view.Profiles))
+	for _, profile := range view.Profiles {
+		resp.Profiles = append(resp.Profiles, &api.ProfileInfo{
+			ID:           profile.ID,
+			Name:         profile.Name,
+			Transport:    profile.Transport,
+			Capabilities: profile.Capabilities,
+		})
 	}
-	items, _ := data["devices"].([]map[string]any)
-	resp.Devices = make([]*api.DeviceInfo, 0, len(items))
-	for _, item := range items {
+	resp.Devices = make([]*api.DeviceInfo, 0, len(view.Devices))
+	for _, item := range view.Devices {
 		resp.Devices = append(resp.Devices, &api.DeviceInfo{
-			ID:           stringValue(item["id"]),
-			Name:         stringValue(item["name"]),
-			Address:      stringValue(item["address"]),
-			Profile:      stringValue(item["profile"]),
-			Enabled:      boolValue(item["enabled"]),
-			Active:       boolValue(item["active"]),
-			Connected:    boolValue(item["connected"]),
-			Capabilities: stringSlice(item["capabilities"]),
-			Vendor:       stringValue(item["vendor"]),
-			Product:      stringValue(item["product"]),
-			NameMatch:    stringSlice(item["name_match"]),
-			Paired:       boolValue(item["paired"]),
-			Battery:      int32Value(item["battery"]),
+			ID:           item.ID,
+			Name:         item.Name,
+			Address:      item.Address,
+			Profile:      item.Profile,
+			Enabled:      item.Enabled,
+			Active:       item.Active,
+			Connected:    item.Connected,
+			Capabilities: item.Capabilities,
+			Vendor:       item.Vendor,
+			Product:      item.Product,
+			NameMatch:    item.NameMatch,
+			Paired:       item.Paired,
+			Battery:      item.Battery,
 		})
 	}
 	return resp, nil

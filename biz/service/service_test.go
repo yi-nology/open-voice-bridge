@@ -228,7 +228,7 @@ func TestSyncKeymapAppliesConfiguredProfile(t *testing.T) {
 func TestDevicesAndSelection(t *testing.T) {
 	svc, agent, helper, path := newTestService(t)
 	data := svc.Devices(context.Background())
-	if data["ok"] != true || len(data["devices"].([]map[string]any)) != 1 {
+	if !data.OK || len(data.Devices) != 1 {
 		t.Fatalf("devices = %+v", data)
 	}
 	if err := svc.SaveDevice(context.Background(), config.DeviceConfig{

@@ -78,3 +78,40 @@ type StatusView struct {
 	KeyTotal       int64             `json:"key_total"`
 	KeyCounts      map[string]int64  `json:"key_counts"`
 }
+
+// DeviceView is one configured input device as the device manager sees it.
+// Battery is already the wire's int32 percentage; a device BlueZ knows nothing
+// about reports 0, which is what the map path produced too.
+type DeviceView struct {
+	ID           string   `json:"id"`
+	Name         string   `json:"name"`
+	Address      string   `json:"address"`
+	Profile      string   `json:"profile"`
+	Enabled      bool     `json:"enabled"`
+	Active       bool     `json:"active"`
+	Connected    bool     `json:"connected"`
+	Capabilities []string `json:"capabilities"`
+	Vendor       string   `json:"vendor"`
+	Product      string   `json:"product"`
+	NameMatch    []string `json:"name_match"`
+	Paired       bool     `json:"paired"`
+	Battery      int32    `json:"battery"`
+}
+
+// ProfileView is one builtin device profile: the template a configured device
+// points at, not a device itself.
+type ProfileView struct {
+	ID           string   `json:"id"`
+	Name         string   `json:"name"`
+	Transport    string   `json:"transport"`
+	Capabilities []string `json:"capabilities"`
+}
+
+// DevicesView is the device manager's read model: the configured devices, the
+// builtin profiles they can point at, and which device is active.
+type DevicesView struct {
+	OK       bool          `json:"ok"`
+	Active   string        `json:"active"`
+	Devices  []DeviceView  `json:"devices"`
+	Profiles []ProfileView `json:"profiles"`
+}

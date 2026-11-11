@@ -80,7 +80,7 @@ main.go ──┬──> internal/agent ──┬──> internal/bluez ──> 
 
 | 包 | 职责（一句话） | 对外接口（关键） | 依赖 | 规模上限 |
 | --- | --- | --- | --- | --- |
-| `core` | 定义领域词汇，不做任何事 | `AudioFormat`、`Utterance`、`SourceRef`、`Transcript`、`StatusView`、`ReadyView`、`DevicesView` | 无 | 400 LOC |
+| `core` | 定义领域词汇，不做任何事 | `AudioFormat`、`Utterance`、`SourceRef`、`Transcript`、`AgentView`、`StatusView`、`ReadyView`、`DevicesView` | 无 | 400 LOC |
 | `core/audiofmt` | 16k/单声道/Int16 的唯一真相 | `SampleRate`、`FrameSamples`、`Cap()`、`MinUtterance()` | 无 | 60 LOC |
 | `config` | 装载/校验/保存纯数据，并持有各段的类型与默认值 | `Load`/`Save`/`Validate`（只做结构校验）、`ASRConfig`/`LLMConfig`/`TextConfig`/`DefaultKeymap` | `core`、`fsutil` | 750 LOC（含 `sections.go`） |
 | `appconfig` | 唯一把 config 与子系统词汇接起来的地方 | `Load`/`Save`/`Normalize`/`Validate`（语义校验） | `config`、`asr`、`llm`、`text`、`remap`、`device` | 120 LOC |

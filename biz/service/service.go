@@ -352,7 +352,7 @@ func (s *Service) Ready(ctx context.Context) core.ReadyView {
 	return view
 }
 
-func (s *Service) Devices(ctx context.Context) map[string]any {
+func (s *Service) Devices(ctx context.Context) core.DevicesView {
 	s.cfgMu.RLock()
 	devices := append([]config.DeviceConfig(nil), s.cfg.Devices...)
 	active := s.cfg.ActiveDevice
@@ -364,37 +364,36 @@ func (s *Service) Devices(ctx context.Context) map[string]any {
 			bluezStatus[strings.ToUpper(item.Address)] = item
 		}
 	}
-	out := make([]map[string]any, 0, len(devices))
+	view := core.DevicesView{OK: true, Active: active}
+	view.Devices = make([]core.DeviceView, 0, len(devices))
 	for _, item := range devices {
 		profile, _ := device.Builtin().Get(item.Profile)
 		link := bluezStatus[strings.ToUpper(item.Address)]
-		connected := link.Connected || (item.ID == active && agentConnected)
-		out = append(out, map[string]any{
-			"id":           item.ID,
-			"name":         item.Name,
-			"address":      item.Address,
-			"profile":      item.Profile,
-			"enabled":      item.Enabled,
-			"active":       item.ID == active,
-			"connected":    connected,
-			"paired":       link.Paired,
-			"battery":      link.Battery,
-			"capabilities": profile.Capabilities,
-			"vendor":       item.Vendor,
-			"product":      item.Product,
-			"name_match":   item.NameMatch,
+		view.Devices = append(view.Devices, core.DeviceView{
+			ID:           item.ID,
+			Name:         item.Name,
+			Address:      item.Address,
+			Profile:      item.Profile,
+			Enabled:      item.Enabled,
+			Active:       item.ID == active,
+			Connected:    link.Connected || (item.ID == active && agentConnected),
+			Paired:       link.Paired,
+			Battery:      int32(link.Battery),
+			Capabilities: profile.Capabilities,
+			Vendor:       item.Vendor,
+			Product:      item.Product,
+			NameMatch:    item.NameMatch,
 		})
 	}
-	profiles := make([]map[string]any, 0)
 	for _, profile := range device.Builtin().List() {
-		profiles = append(profiles, map[string]any{
-			"id":           profile.ID,
-			"name":         profile.Name,
-			"transport":    profile.Transport,
-			"capabilities": profile.Capabilities,
+		view.Profiles = append(view.Profiles, core.ProfileView{
+			ID:           profile.ID,
+			Name:         profile.Name,
+			Transport:    profile.Transport,
+			Capabilities: profile.Capabilities,
 		})
 	}
-	return map[string]any{"ok": true, "active": active, "devices": out, "profiles": profiles}
+	return view
 }
 
 func (s *Service) DiscoverDevices(ctx context.Context) map[string]any {

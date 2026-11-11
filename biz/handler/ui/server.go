@@ -50,7 +50,7 @@ type Deps struct {
 	Stats               func() history.UsageStats
 	TextConfig          func(context.Context) map[string]any
 	UpdateTextConfig    func(context.Context, config.TextConfig) error
-	Devices             func(context.Context) map[string]any
+	Devices             func(context.Context) core.DevicesView
 	DiscoverDevices     func(context.Context) map[string]any
 	SelectDevice        func(context.Context, string) error
 	SetDeviceEnabled    func(context.Context, string, bool) error
