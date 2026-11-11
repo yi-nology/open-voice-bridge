@@ -96,7 +96,7 @@ func (s *Service) Status(ctx context.Context) map[string]any {
 
 	status := map[string]any{"ok": true, "address": address, "platform": runtime.GOOS}
 	if helperStatus, err := s.helper.Call(ctx, map[string]string{"cmd": "status"}); err == nil {
-		for _, key := range []string{"keyd_active", "remote_present", "mapping", "config"} {
+		for _, key := range []string{"keyd_active", "remote_present", "mapping", "config", "key_total", "key_counts"} {
 			if value, ok := helperStatus[key]; ok {
 				status[key] = value
 			}
