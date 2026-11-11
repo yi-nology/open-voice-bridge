@@ -1,5 +1,7 @@
 # build output and local artifacts
 /bin/
+# local scratch probes run by hand, not shipped
+/cmd/tmpe2e/
 /open-voice-bridge
 /probe
 *.log
