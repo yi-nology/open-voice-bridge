@@ -9,7 +9,9 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
 )
 
 var OrderedKeys = []string{
@@ -124,6 +126,10 @@ func validateAction(action string) error {
 			}
 		}
 		return nil
+	}
+	if strings.HasPrefix(action, "seq(") {
+		_, err := ParseSeq(action)
+		return err
 	}
 	return oeerrors.Errorf("unknown action %q", action)
 }
@@ -247,4 +253,68 @@ func ConfigText(mapping map[string]string) string {
 	}
 	data, _ := json.MarshalIndent(ordered, "", "  ")
 	return string(data)
+}
+
+// SeqStep is one stage of a seq(...) combo action (SayAll 组合动作): either a
+// pause or a set of key codes tapped together.
+type SeqStep struct {
+	Delay time.Duration
+	Codes []int
+}
+
+// ParseSeq interprets "seq(up, 40, macro(leftctrl+c), enter)" into ordered
+// steps. Tokens use the same action vocabulary as single mappings; bare
+// integers are pauses in milliseconds (0..2000).
+func ParseSeq(action string) ([]SeqStep, error) {
+	if !strings.HasPrefix(action, "seq(") || !strings.HasSuffix(action, ")") {
+		return nil, oeerrors.New("not a seq action")
+	}
+	body := strings.TrimSuffix(strings.TrimPrefix(action, "seq("), ")")
+	parts := strings.Split(body, ",")
+	steps := make([]SeqStep, 0, len(parts))
+	for _, part := range parts {
+		token := strings.TrimSpace(part)
+		if token == "" {
+			continue
+		}
+		if ms, err := strconv.Atoi(token); err == nil {
+			if ms < 0 || ms > 2000 {
+				return nil, oeerrors.Errorf("seq delay %d out of range 0..2000", ms)
+			}
+			steps = append(steps, SeqStep{Delay: time.Duration(ms) * time.Millisecond})
+			continue
+		}
+		if strings.HasPrefix(token, "macro(") && strings.HasSuffix(token, ")") {
+			codes, ok := MacroTokenCodes(token)
+			if !ok || len(codes) == 0 {
+				return nil, oeerrors.Errorf("seq step %q: bad macro", token)
+			}
+			steps = append(steps, SeqStep{Codes: codes})
+			continue
+		}
+		code, ok := ActionKeyCode(token)
+		if !ok {
+			code, ok = SourceCodes[token]
+		}
+		if !ok {
+			return nil, oeerrors.Errorf("seq step %q: unknown action", token)
+		}
+		steps = append(steps, SeqStep{Codes: []int{code}})
+	}
+	if len(steps) == 0 {
+		return nil, oeerrors.New("empty seq")
+	}
+	return steps, nil
+}
+
+// MatchClass reports whether a focused window class matches a per-app rule
+// (SayAll 切得准): case-insensitive substring, so "firefox" finds
+// "Navigator/firefox".
+func MatchClass(class, pattern string) bool {
+	class = strings.TrimSpace(class)
+	pattern = strings.TrimSpace(pattern)
+	if class == "" || pattern == "" {
+		return false
+	}
+	return strings.Contains(strings.ToLower(class), strings.ToLower(pattern))
 }

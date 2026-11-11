@@ -21,6 +21,14 @@ import (
 type KeymapConfig struct {
 	Profile  string                       `json:"profile"`
 	Profiles map[string]map[string]string `json:"profiles"`
+	AppRules []AppRule                    `json:"app_rules,omitempty"`
+}
+
+// AppRule binds a focused window class (X11 WM_CLASS substring) to a keymap
+// profile so the runtime mapping follows the frontmost app (SayAll 切得准).
+type AppRule struct {
+	Class   string `json:"class"`
+	Profile string `json:"profile"`
 }
 
 type DeviceConfig struct {
@@ -445,6 +453,14 @@ func (c Config) Validate() error {
 	}
 	if _, ok := c.Keymap.Profiles[c.Keymap.Profile]; !ok {
 		return oeerrors.Errorf("keymap profile %q is not defined", c.Keymap.Profile)
+	}
+	for _, rule := range c.Keymap.AppRules {
+		if strings.TrimSpace(rule.Class) == "" {
+			return oeerrors.New("keymap app_rules entry has empty class")
+		}
+		if _, ok := c.Keymap.Profiles[rule.Profile]; !ok {
+			return oeerrors.Errorf("keymap app_rules %q: profile %q is not defined", rule.Class, rule.Profile)
+		}
 	}
 	if len(c.Devices) == 0 {
 		return oeerrors.New("devices are empty")

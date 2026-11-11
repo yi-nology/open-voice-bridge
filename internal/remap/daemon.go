@@ -537,6 +537,19 @@ func (d *Daemon) applyKey(sourceCode int, name string, value int) {
 	case "native", "":
 		d.emit(sourceCode, value)
 	default:
+		if strings.HasPrefix(action, "seq(") {
+			// 组合动作: press (and hold-repeat) plays the sequence; release is
+			// a no-op because every step is self-contained (SayAll 一键做更多).
+			if value == 1 || value == 2 {
+				steps, err := ParseSeq(action)
+				if err != nil {
+					log.Warn("bad seq action", "key", name, "err", err)
+					return
+				}
+				d.runSeq(steps)
+			}
+			return
+		}
 		if code, ok := ActionKeyCode(action); ok {
 			d.emit(code, value)
 			return
@@ -564,6 +577,26 @@ func (d *Daemon) applyKey(sourceCode int, name string, value int) {
 			return
 		}
 		log.Warn("unknown mapping action", "key", name, "action", action)
+	}
+}
+
+// runSeq plays a combo action one step at a time (see ParseSeq). It runs
+// under emitMu via applyKey, so concurrent sequences never interleave.
+func (d *Daemon) runSeq(steps []SeqStep) {
+	for _, step := range steps {
+		if step.Delay > 0 {
+			time.Sleep(step.Delay)
+			continue
+		}
+		for _, code := range step.Codes {
+			d.emit(code, 1)
+		}
+		if len(step.Codes) > 1 {
+			time.Sleep(15 * time.Millisecond) // let the chord land
+		}
+		for index := len(step.Codes) - 1; index >= 0; index-- {
+			d.emit(step.Codes[index], 0)
+		}
 	}
 }
 

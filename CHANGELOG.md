@@ -105,6 +105,16 @@ DOM-09/13 and two more SayAll ports:
   and a symptom table for the mismatches that do exist on Linux (SayAll
   能力矩阵移植).
 
+- DOM-07: phone key injection runs on a per-connection ordered queue, so a
+  wedged root helper can no longer stall that connection's audio frames.
+- New: combo actions (`seq(...)`) — a key can play an ordered sequence of
+  taps, chords and pauses (SayAll 组合动作「一键做更多」), replaying on
+  hold-repeat.
+- New: per-app keymap switching (SayAll 切得准). `keymap.app_rules` matches
+  the focused window class (X11 WM_CLASS substring) and applies the mapped
+  profile at runtime as a pure overlay — the configured profile is never
+  rewritten, and an unmatched app falls back to it.
+
 macOS platform verification and UI adaptation (compat, not a port):
 
 - Deep verification on darwin/arm64 against a real ARN9 remote: CGO and

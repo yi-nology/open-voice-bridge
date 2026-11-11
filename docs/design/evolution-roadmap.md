@@ -43,7 +43,7 @@
 1. **SEC-06 剩余半句**：`asr.command.args` 可夹带任意程序（`binary=/bin/sh args=["-c",...]`）——闸门是管理端 origin（已收紧）；若要再加一层：args 白名单或命令模板，交波 1 决定。
 2. **DOM-07**：手机按键通道同步调 helper（10s），卡住时同一连接的 PCM 也停——把按键注入挪出读循环或异步化。
 3. **DOM-09、DOM-13 与 DOM-12 残余**：输入源身份贯穿字幕与历史（DOM-09）；`Pair` 不消耗配对码/deviceID 撞车/`serveConn` 退出不关 ws（DOM-13，asrTimeout 半句已被 CON-03 解掉）；`Profile.Keys`/`Voice` 接线或删除（DOM-12 残余）。
-4. **产品增量（SayAll 对标）**：已落——只读 MCP「本地 Agent 访问」（token/撤销/审计/片段）、26 周热力图、长会话提醒、按键次数统计（remap `applyKey` 汇聚点计数 + `keycounts.json` 跨重启 + status 回传 + UI 排行）、收音能力矩阵文档（`docs/capability-matrix.md`）、使用统计、配置导出导入、诊断摘要、常用语。未做——常用语浮层面板（桌面 overlay 选句，当前是按键直达）、组合动作宏、按 App 自动切换键位方案（Linux 按 WM_CLASS）、回眸可选录音、加密诊断日志、首次运行引导（Onboarding）、稳定/预发布双通道。
+4. **产品增量（SayAll 对标）**：已落——只读 MCP「本地 Agent 访问」、26 周热力图、长会话提醒、按键次数统计、收音能力矩阵文档、组合动作 `seq(...)`（键级步骤+延时，按住重放）、按 App 自动切键位（`keymap.app_rules` × WM_CLASS，运行时覆盖；`internal/focus` 仅 X11）、使用统计、配置导出导入、诊断摘要、常用语。未做——常用语浮层面板（桌面 overlay 选句）、组合动作的「打开 App/文本」步骤（需经合成键通道委托 agent）、回眸可选录音、加密诊断日志、首次运行引导（Onboarding）、稳定/预发布双通道。
 5. **波 2（OPS）与波 3（打磨）**：按原清单。
 
 硬门禁（不要为了赶进度绕过）：
@@ -88,7 +88,7 @@
 
 ### 波 0 附带的小硬伤（同批清）
 
-- [ ] **DOM-07** 手机按键通道同步调 helper（10 s 超时，`internal/phone/server.go:329`、`internal/helper/client.go:28`），卡住时同一连接的 PCM 也停。
+- [x] **DOM-07** 手机按键通道同步调 helper（10 s 超时，`internal/phone/server.go:329`、`internal/helper/client.go:28`），卡住时同一连接的 PCM 也停。
 - [x] **DOM-08** `validatePhone` 只在 `Phone.Enabled` 时跑（`internal/config/config.go:488-491`），手机段关掉时任何非法值都能过装载与保存；`normalizePhone` 只填**零值**（`config.go:319-335`），所以负数与超限值会原样落盘。**订正**：原描述里"`maxSamples` 变负、每帧都满"经复核不成立——`NewServer` 已把 `<=0` 夹成 30（`internal/phone/server.go:70-74`），真正的危害是坏配置被静默持久化，等到用户打开手机输入才在启动时炸出错误，而那时他刚接受完"配好了"的引导。动作：无条件校验 + 显式拒绝负数（与 SEC-03 同一条 `validatePhone` 改，测试见 `TestPhoneValidatedEvenWhenDisabled`）。
 - [x] **DOM-09** 手机句子丢身份：`SourceRef.Kind` 写了却没人读，`main.go:139` 忽略 `meta.Name`/`meta.DeviceID` → 字幕/历史只有 IP；两源上限口径还不同（`config.MaxUtterance` vs `Phone.MaxUtteranceSeconds`），BLE 超限静默截断而手机有 `too_long`（`agent.go:489-496` vs `phone/server.go`）。动作：统一标注与超限语义（I8）。
 - [x] **DOM-10** 字典替换把 `To` 当正则模板（`internal/text/text.go:93`），含 `$1` 的替换文本会展开成不存在的分组；规则还会链式二次改写。动作：字面替换 + 规则不叠加。

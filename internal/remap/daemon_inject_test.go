@@ -245,3 +245,39 @@ func TestKeyCountsTrackPressesAndPersist(t *testing.T) {
 		t.Fatalf("counts lost across restart: %v", restarted.status()["key_total"])
 	}
 }
+
+// 组合动作 executes its steps in order; a repeat replays the whole sequence
+// (按住连续执行), and the release is a no-op because every step is a tap.
+func TestSeqActionPlaysStepsInOrder(t *testing.T) {
+	kb := &fakeKeyboard{}
+	d := newInjectDaemon()
+	d.kb = kb
+	d.mapping = MergeDefaults(map[string]string{"home": "seq(up,enter)"})
+
+	d.applyKey(3, "home", 1)
+	events := kb.snapshot()
+	up := SourceCodes["up"]
+	enter := SourceCodes["enter"]
+	want := []string{
+		fmt.Sprintf("down %d", up), fmt.Sprintf("up %d", up),
+		fmt.Sprintf("down %d", enter), fmt.Sprintf("up %d", enter),
+	}
+	if len(events) != len(want) {
+		t.Fatalf("events = %v, want %v", events, want)
+	}
+	for i := range want {
+		if events[i] != want[i] {
+			t.Fatalf("events = %v, want %v", events, want)
+		}
+	}
+
+	d.applyKey(3, "home", 2) // repeat replays
+	if got := len(kb.snapshot()); got != 2*len(want) {
+		t.Fatalf("repeat events = %v", kb.snapshot())
+	}
+	before := len(kb.snapshot())
+	d.applyKey(3, "home", 0) // release: nothing to let go
+	if len(kb.snapshot()) != before {
+		t.Fatalf("release must be a no-op, got %v", kb.snapshot())
+	}
+}

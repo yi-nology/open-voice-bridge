@@ -443,3 +443,51 @@ func TestTruncatedUtteranceIsLabelledForTheChain(t *testing.T) {
 		t.Fatalf("meta = %+v, want Truncated set", call.meta)
 	}
 }
+
+// blockingTransport holds Inject open until released, like a wedged root
+// helper.
+type blockingTransport struct {
+	entered chan struct{}
+	release chan struct{}
+}
+
+func (b *blockingTransport) Inject(ctx context.Context, key string, value int) error {
+	select {
+	case b.entered <- struct{}{}:
+	default:
+	}
+	<-b.release
+	return nil
+}
+
+// DOM-07: a slow key injection must not stall the same connection's audio.
+// The key channel is asynchronous and ordered; PCM keeps flowing meanwhile.
+func TestSlowKeyInjectionDoesNotBlockAudio(t *testing.T) {
+	transport := &blockingTransport{entered: make(chan struct{}, 1), release: make(chan struct{})}
+	transcriber := &fakeTranscriber{ok: true, result: UtteranceResult{Text: "你好", At: time.Now()}}
+	e := newTestEnv(t, ServerConfig{Transcriber: transcriber, MaxUtteranceSeconds: 30, MaxClients: 4})
+	e.server.injector = NewKeyInjector(transport)
+	conn, ctx := dialPhone(t, e, "Pixel")
+
+	// A key press wedges inside the helper...
+	sendJSON(t, ctx, conn, map[string]any{"type": "key", "key": "up", "value": 1})
+	select {
+	case <-transport.entered:
+	case <-time.After(2 * time.Second):
+		t.Fatal("key injection never reached the transport")
+	}
+
+	// ...and the very next utterance must still be processed.
+	sendJSON(t, ctx, conn, map[string]any{"type": "start", "format": "pcm16", "rate": 16000, "channels": 1})
+	if frame := readMessage(t, ctx, conn); frame["type"] != "listening" || frame["active"] != true {
+		t.Fatalf("start during stuck key = %v", frame)
+	}
+	if err := conn.Write(ctx, websocket.MessageBinary, pcmFrame(320)); err != nil {
+		t.Fatal(err)
+	}
+	sendJSON(t, ctx, conn, map[string]any{"type": "end"})
+	waitFor(t, func() bool { return len(transcriber.snapshot()) == 1 },
+		"audio must flow while a key injection is stuck")
+
+	close(transport.release)
+}

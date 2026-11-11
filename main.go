@@ -29,6 +29,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/audio"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/focus"
 	"github.com/yi-nology/open-voice-bridge/internal/helper"
 	"github.com/yi-nology/open-voice-bridge/internal/history"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
@@ -404,6 +405,13 @@ func runAgent(args []string, stderr io.Writer) int {
 		uiServer := ui.New(deps)
 		customUI = uiServer
 		apihandler.SetBackend(uiServer)
+		// 切得准: follow the frontmost app's WM_CLASS into its keymap profile
+		// at runtime (X11; the switcher stays idle where focus is not visible).
+		if len(cfg.Keymap.AppRules) > 0 {
+			async.GoSafe(func() {
+				svc.StartAppSwitcher(ctx, 0, focus.ActiveClass)
+			})
+		}
 		micOwner := inputHub.Watch()
 		async.GoSafe(func() {
 			for {

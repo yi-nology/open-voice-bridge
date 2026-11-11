@@ -129,3 +129,27 @@ func TestKeymapApplyFailsClosedWhenSaveFails(t *testing.T) {
 		t.Fatalf("helper updated by SaveKeymapProfile before the config saved: %v", applied)
 	}
 }
+
+// 切得准（SayAll 按 App 自动匹配）: the focused window class picks a keymap
+// profile at runtime — the configured profile is never overwritten.
+func TestApplyAppRuleSwitchesRuntimeMapping(t *testing.T) {
+	svc := testService(t)
+	helper := svc.helper.(*fakeHelper)
+	svc.cfg.Keymap.Profiles["media"] = map[string]string{"enter": "playpause"}
+	svc.cfg.Keymap.AppRules = []config.AppRule{
+		{Class: "Firefox", Profile: "media"},
+		{Class: "code-oss", Profile: "minimal"},
+	}
+
+	svc.applyAppRule(context.Background(), "Navigator/firefox") // substring, case-insensitive
+	applied := helper.appliedSnapshot()
+	if applied["enter"] != "playpause" {
+		t.Fatalf("applied = %v, want the media profile's mapping", applied)
+	}
+
+	svc.applyAppRule(context.Background(), "kitty") // no rule: back to the configured profile
+	applied = helper.appliedSnapshot()
+	if applied["enter"] == "playpause" {
+		t.Fatalf("unmatched class must fall back to the configured profile: %v", applied)
+	}
+}

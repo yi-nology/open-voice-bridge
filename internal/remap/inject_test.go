@@ -3,6 +3,7 @@ package remap
 import (
 	"strconv"
 	"testing"
+	"time"
 )
 
 func TestInjectAllowed(t *testing.T) {
@@ -69,5 +70,59 @@ func TestPhraseActions(t *testing.T) {
 	merged := MergeDefaults(map[string]string{"menu": "phrase3"})
 	if merged["menu"] != "phrase3" {
 		t.Fatalf("merged menu = %q, want phrase3", merged["menu"])
+	}
+}
+
+// 组合动作（SayAll「一键做更多」）: seq(...) plays ordered key steps with
+// optional delays. Tokens use the existing action vocabulary; bare integers
+// are pauses in milliseconds.
+func TestParseSeqSteps(t *testing.T) {
+	steps, err := ParseSeq("seq(up, 40, macro(leftctrl+c), enter)")
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if len(steps) != 4 {
+		t.Fatalf("steps = %d, want 4", len(steps))
+	}
+	if steps[1].Delay != 40*time.Millisecond {
+		t.Fatalf("delay step = %+v", steps[1])
+	}
+	up := SourceCodes["up"]
+	if len(steps[0].Codes) != 1 || steps[0].Codes[0] != up {
+		t.Fatalf("first step = %+v, want a tap of up (%d)", steps[0], up)
+	}
+	if len(steps[2].Codes) != 2 {
+		t.Fatalf("macro step = %+v", steps[2])
+	}
+	if _, err := ParseSeq("seq(nosuchkey)"); err == nil {
+		t.Fatal("unknown token must fail")
+	}
+	if _, err := ParseSeq("seq()"); err == nil {
+		t.Fatal("empty seq must fail")
+	}
+	if err := Validate(map[string]string{"home": "seq(up,enter)"}); err != nil {
+		t.Fatalf("Validate must accept seq: %v", err)
+	}
+	if err := Validate(map[string]string{"home": "seq(nosuchkey)"}); err == nil {
+		t.Fatal("Validate must reject a bad seq")
+	}
+}
+
+// Per-app keymap matching is a plain case-insensitive substring test on the
+// focused window class (X11 WM_CLASS res_class).
+func TestMatchClass(t *testing.T) {
+	cases := []struct {
+		class, pattern string
+		want           bool
+	}{
+		{"Navigator/firefox", "firefox", true},
+		{"Code", "code", true},
+		{"kitty", "firefox", false},
+		{"anything", "", false},
+	}
+	for _, tc := range cases {
+		if got := MatchClass(tc.class, tc.pattern); got != tc.want {
+			t.Fatalf("MatchClass(%q,%q) = %v", tc.class, tc.pattern, got)
+		}
 	}
 }

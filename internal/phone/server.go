@@ -77,6 +77,15 @@ type activeConn struct {
 	source   *Source
 	buffer   *utteranceBuffer
 	writeMu  sync.Mutex
+	keyJobs  chan keyJob // ordered injection queue (DOM-07)
+	keyOnce  sync.Once
+}
+
+// keyJob is one press/release awaiting the root helper. Jobs leave in order so
+// a slow helper can never reorder or block the connection's PCM (DOM-07).
+type keyJob struct {
+	key   string
+	value int
 }
 
 // send is the only writer on a connection. Transcription finishes on its own
@@ -404,14 +413,39 @@ func (s *Server) handleKey(ctx context.Context, active *activeConn, msg controlM
 		active.send(ctx, errorFrame("bad_message", "key value required"))
 		return
 	}
-	if err := s.injector.Inject(ctx, msg.Key, *msg.Value); err != nil {
-		// The rejected value is never logged, only the reason.
-		log.Warn("phone key injection denied", "device", active.deviceID, "key", msg.Key, "err", err)
-		active.send(ctx, errorFrame("denied", err.Error()))
-		return
+	// The helper round-trip runs on its own ordered queue (DOM-07): a wedged
+	// root helper must not stall the same connection's audio frames.
+	select {
+	case active.keyJobs <- keyJob{key: msg.Key, value: *msg.Value}:
+		active.source.touch()
+	default:
+		active.send(ctx, errorFrame("busy", "key queue is full"))
 	}
-	active.source.touch()
-	active.send(ctx, map[string]any{"type": "key_ack", "key": msg.Key, "value": *msg.Value})
+}
+
+// keyWorker injects one connection's keys in order and acknowledges each from
+// its own goroutine, so the read loop only ever does non-blocking hand-offs.
+func (s *Server) keyWorker(active *activeConn) {
+	for job := range active.keyJobs {
+		sendCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		if err := s.injector.Inject(sendCtx, job.key, job.value); err != nil {
+			// The rejected value is never logged, only the reason.
+			log.Warn("phone key injection denied", "device", active.deviceID, "key", job.key, "err", err)
+			active.send(sendCtx, errorFrame("denied", err.Error()))
+		} else {
+			active.send(sendCtx, map[string]any{"type": "key_ack", "key": job.key, "value": job.value})
+		}
+		cancel()
+	}
+}
+
+// closeKeyQueue stops the injection worker exactly once.
+func (active *activeConn) closeKeyQueue() {
+	active.keyOnce.Do(func() {
+		if active.keyJobs != nil {
+			close(active.keyJobs)
+		}
+	})
 }
 
 // --- WebSocket microphone -------------------------------------------------
@@ -578,7 +612,9 @@ func (s *Server) register(deviceID string, ws *websocket.Conn, name, ip string) 
 		ws:       ws,
 		source:   newSource(deviceID, name, ip),
 		buffer:   newUtteranceBuffer(s.maxSamples),
+		keyJobs:  make(chan keyJob, 32),
 	}
+	async.GoSafe(func() { s.keyWorker(active) })
 	// DOM-06: the hub calls Preempt when the remote steals the microphone.
 	// The samples are taken synchronously with the flag flip so a racing
 	// "end" cannot wipe them; only the notice goes off-thread.
@@ -624,6 +660,7 @@ func (s *Server) dropLocked(active *activeConn) {
 	if s.hub != nil {
 		s.hub.Unregister(active.deviceID)
 	}
+	active.closeKeyQueue()
 	active.source.disconnect()
 }
 
