@@ -1,6 +1,11 @@
 package device
 
-import "testing"
+import (
+	"bytes"
+	"encoding/json"
+	"strings"
+	"testing"
+)
 
 func TestBuiltinRC003(t *testing.T) {
 	registry := Builtin()
@@ -91,5 +96,29 @@ func TestMatchAppleAndGenericATVVByID(t *testing.T) {
 	profile, ok := Builtin().MatchIDs("004c", "026d")
 	if !ok || profile.ID != "apple-siri-remote-1" {
 		t.Fatalf("apple match = %+v ok=%v", profile, ok)
+	}
+}
+
+// A preset may only carry what the runtime reads: an ignored field looks like
+// a supported knob to whoever edits the table next (DOM-12).
+func TestBuiltinPresetsCarryNoUnreadFields(t *testing.T) {
+	entries, err := builtinFS.ReadDir("profiles")
+	if err != nil {
+		t.Fatalf("read presets: %v", err)
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
+			continue
+		}
+		data, err := builtinFS.ReadFile("profiles/" + entry.Name())
+		if err != nil {
+			t.Fatalf("read %s: %v", entry.Name(), err)
+		}
+		decoder := json.NewDecoder(bytes.NewReader(data))
+		decoder.DisallowUnknownFields()
+		var profile Profile
+		if err := decoder.Decode(&profile); err != nil {
+			t.Fatalf("%s carries a field the runtime ignores: %v", entry.Name(), err)
+		}
 	}
 }
