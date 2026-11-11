@@ -4,6 +4,7 @@ package config
 import (
 	"encoding/json"
 	oeerrors "github.com/oekit/pkg/errors"
+	"maps"
 	"net"
 	"os"
 	"path/filepath"
@@ -11,12 +12,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
-	"github.com/yi-nology/open-voice-bridge/internal/llm"
-	"github.com/yi-nology/open-voice-bridge/internal/remap"
-	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
 
 type KeymapConfig struct {
@@ -69,9 +66,9 @@ type Config struct {
 	KeydConfig   string         `json:"keyd_config"`
 	MaxUtterance int            `json:"max_utterance_seconds"`
 	PasteEnabled bool           `json:"paste_enabled"`
-	ASR          asr.Config     `json:"asr"`
-	LLM          llm.Config     `json:"llm"`
-	Text         text.Config    `json:"text"`
+	ASR          ASRConfig      `json:"asr"`
+	LLM          LLMConfig      `json:"llm"`
+	Text         TextConfig     `json:"text"`
 	Keymap       KeymapConfig   `json:"keymap"`
 	Phone        PhoneConfig    `json:"phone"`
 }
@@ -79,7 +76,7 @@ type Config struct {
 var macPattern = regexp.MustCompile(`^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$`)
 
 func DefaultProfiles() map[string]map[string]string {
-	coding := remap.Copy(remap.DefaultMapping)
+	coding := maps.Clone(DefaultKeymap)
 	media := map[string]string{
 		"power":      "esc",
 		"f5":         "f24",
@@ -122,7 +119,7 @@ func Default() Config {
 	cfg := Config{
 		Address:      "AA:BB:CC:DD:EE:FF",
 		APIKeyFile:   filepath.Join(home, ".config", "xiaomi-mimo", "api_key"),
-		ASRModel:     "mimo-v2.5-asr",
+		ASRModel:     DefaultASRModel,
 		ASRLanguage:  "auto",
 		SinkName:     "xiaomi_mic_sink",
 		SourceName:   "xiaomi_mic",
@@ -132,8 +129,8 @@ func Default() Config {
 		MaxUtterance: core.DefaultUtteranceSeconds,
 		PasteEnabled: true,
 	}
-	cfg.ASR = asr.DefaultConfig()
-	cfg.ASR.Providers["mimo"] = asr.ProviderConfig{
+	cfg.ASR = DefaultASR()
+	cfg.ASR.Providers["mimo"] = ASRProviderConfig{
 		Type:       "mimo",
 		APIKeyFile: cfg.APIKeyFile,
 		Model:      cfg.ASRModel,
@@ -143,7 +140,7 @@ func Default() Config {
 		Profile:  "coding",
 		Profiles: DefaultProfiles(),
 	}
-	cfg.LLM = llm.DefaultConfig()
+	cfg.LLM = DefaultLLM()
 	cfg.Phone = PhoneConfig{
 		Enabled:             false,
 		Addr:                "0.0.0.0:8788",
@@ -288,10 +285,10 @@ func Load(path string) (Config, error) {
 
 func (c *Config) normalizeText() {
 	if c.Text.Dictionary == nil {
-		c.Text.Dictionary = []text.Replacement{}
+		c.Text.Dictionary = []Replacement{}
 	}
 	if c.Text.Snippets == nil {
-		c.Text.Snippets = []text.Snippet{}
+		c.Text.Snippets = []Snippet{}
 	}
 }
 
@@ -354,7 +351,7 @@ func (c *Config) normalizeASR() {
 		}
 	}
 	if c.ASR.Providers == nil {
-		c.ASR.Providers = map[string]asr.ProviderConfig{}
+		c.ASR.Providers = map[string]ASRProviderConfig{}
 	}
 	mimo, ok := c.ASR.Providers["mimo"]
 	if !ok {
@@ -367,7 +364,7 @@ func (c *Config) normalizeASR() {
 		if !referenced {
 			return
 		}
-		mimo = asr.ProviderConfig{Type: "mimo"}
+		mimo = ASRProviderConfig{Type: "mimo"}
 	}
 	if mimo.Type == "" {
 		mimo.Type = "mimo"

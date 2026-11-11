@@ -1,9 +1,13 @@
 package text
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/yi-nology/open-voice-bridge/internal/config"
+)
 
 func TestDictionaryLongestFirst(t *testing.T) {
-	rules, err := New(Config{Dictionary: []Replacement{
+	rules, err := New(config.TextConfig{Dictionary: []config.Replacement{
 		{From: "米授权", To: "MiniMax"},
 		{From: "米", To: "Xiaomi"},
 	}})
@@ -16,7 +20,7 @@ func TestDictionaryLongestFirst(t *testing.T) {
 }
 
 func TestSnippetNormalization(t *testing.T) {
-	rules, err := New(Config{Snippets: []Snippet{{Trigger: "收货地址", Text: "北京市海淀区"}}})
+	rules, err := New(config.TextConfig{Snippets: []config.Snippet{{Trigger: "收货地址", Text: "北京市海淀区"}}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,10 +33,10 @@ func TestSnippetNormalization(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
-	if err := Validate(Config{Dictionary: []Replacement{{To: "x"}}}); err == nil {
+	if err := Validate(config.TextConfig{Dictionary: []config.Replacement{{To: "x"}}}); err == nil {
 		t.Fatal("empty from should fail")
 	}
-	if err := Validate(Config{Snippets: []Snippet{{Trigger: "x"}}}); err == nil {
+	if err := Validate(config.TextConfig{Snippets: []config.Snippet{{Trigger: "x"}}}); err == nil {
 		t.Fatal("empty snippet text should fail")
 	}
 }
@@ -41,7 +45,7 @@ func TestValidate(t *testing.T) {
 // expanded as a regex template — and rules must not stack: the output of one
 // entry is never re-matched by another.
 func TestDictionaryReplacementsAreLiteralAndDoNotStack(t *testing.T) {
-	rules, err := New(Config{Dictionary: []Replacement{
+	rules, err := New(config.TextConfig{Dictionary: []config.Replacement{
 		{From: "graft", To: "移植物$1"},
 		{From: "price", To: "$5"},
 		{From: "alpha", To: "beta"},

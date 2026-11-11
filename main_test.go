@@ -38,7 +38,7 @@ func TestPhoneSpeechMapsTheTranscript(t *testing.T) {
 		Latency:  1300 * time.Millisecond,
 		Language: "zh",
 	}}
-	rules, err := text.New(text.Config{Dictionary: []text.Replacement{{From: "测试", To: "unittest"}}})
+	rules, err := text.New(config.TextConfig{Dictionary: []config.Replacement{{From: "测试", To: "unittest"}}})
 	if err != nil {
 		t.Fatalf("rules: %v", err)
 	}

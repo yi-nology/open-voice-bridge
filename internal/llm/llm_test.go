@@ -9,10 +9,12 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/yi-nology/open-voice-bridge/internal/config"
 )
 
 func TestBuildDisabled(t *testing.T) {
-	processor, err := Build(Config{Enabled: false})
+	processor, err := Build(config.LLMConfig{Enabled: false})
 	if err != nil || processor != nil {
 		t.Fatalf("processor=%v err=%v", processor, err)
 	}
@@ -20,7 +22,7 @@ func TestBuildDisabled(t *testing.T) {
 
 func TestPresets(t *testing.T) {
 	for _, id := range []string{"minimax", "volcengine", "openai", "deepseek", "custom"} {
-		if _, ok := PresetByID(id); !ok {
+		if _, ok := config.LLMPresetByID(id); !ok {
 			t.Fatalf("missing preset %q", id)
 		}
 	}
@@ -49,7 +51,7 @@ func TestOpenAIProcess(t *testing.T) {
 	if err := os.WriteFile(keyFile, []byte("test-key\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	processor, err := Build(Config{
+	processor, err := Build(config.LLMConfig{
 		Enabled:    true,
 		Provider:   "custom",
 		BaseURL:    server.URL + "/v1",

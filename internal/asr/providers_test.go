@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/yi-nology/open-voice-bridge/internal/config"
 )
 
 func toneSamples(n int) []int16 {
@@ -116,10 +118,10 @@ func TestOpenAILocalURL(t *testing.T) {
 }
 
 func TestBuildFallsBackWhenPrimaryUnavailable(t *testing.T) {
-	cfg := Config{
+	cfg := config.ASRConfig{
 		Provider: "mimo",
 		Fallback: []string{"local"},
-		Providers: map[string]ProviderConfig{
+		Providers: map[string]config.ASRProviderConfig{
 			"mimo":  {Type: "mimo", APIKeyFile: filepath.Join(t.TempDir(), "missing")},
 			"local": {Type: "command", Binary: "/bin/echo"},
 		},

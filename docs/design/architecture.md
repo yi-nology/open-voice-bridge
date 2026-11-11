@@ -65,7 +65,7 @@ main.go ──┬──> internal/agent ──┬──> internal/bluez ──> 
 
 ### 依赖规则（可机械检查，CI 里用 `go list -deps` 断言）
 
-- **R1** `core` 不 import 任何内部包；`config`、`fsutil` 只允许 import `core`。
+- **R1** `core` 不 import 任何内部包；`fsutil` 不 import 任何内部包；`config` 只允许 import `core` 与 `fsutil`。子系统的词汇（ASR 目录、keymap 动作、LLM 预置、设备预置）一律经 `appconfig` 接入，`config` 不得反向 import 子系统；段类型本身声明在 `config`，子系统反过来用它。
 - **R2** 领域层不 import `edge`/`app`；`source/*` 不互相 import。
 - **R3** 只有 `app/runtime`（原 `main.go`）允许同时 import 具体实现。
 - **R4** `edge/admin` 与 `edge/phone` 共用 `edge/netguard` 的 origin 检查与安全头；两个边界的策略差异只能是参数，不能是两份实现。
@@ -82,7 +82,8 @@ main.go ──┬──> internal/agent ──┬──> internal/bluez ──> 
 | --- | --- | --- | --- | --- |
 | `core` | 定义领域词汇，不做任何事 | `AudioFormat`、`Utterance`、`SourceRef`、`Transcript`、`StatusView`、`ReadyView`、`DevicesView` | 无 | 400 LOC |
 | `core/audiofmt` | 16k/单声道/Int16 的唯一真相 | `SampleRate`、`FrameSamples`、`Cap()`、`MinUtterance()` | 无 | 60 LOC |
-| `config` | 装载/校验/保存纯数据 | `Load`/`Save`/`Validate`（只做结构校验） | `core` | 600 LOC |
+| `config` | 装载/校验/保存纯数据，并持有各段的类型与默认值 | `Load`/`Save`/`Validate`（只做结构校验）、`ASRConfig`/`LLMConfig`/`TextConfig`/`DefaultKeymap` | `core`、`fsutil` | 750 LOC（含 `sections.go`） |
+| `appconfig` | 唯一把 config 与子系统词汇接起来的地方 | `Load`/`Save`/`Normalize`/`Validate`（语义校验） | `config`、`asr`、`llm`、`text`、`remap`、`device` | 120 LOC |
 | `fsutil` | 原子写、JSONL 追加、0600 | `WriteAtomic`/`AppendJSONL`/`RewriteJSONL` | 无 | 120 LOC |
 | `input` | 麦克风归属仲裁 + 输入源注册 | `Acquire`/`Release`/`AcquireForce`/`Watch`/`Sources` | `core` | 200 LOC |
 | `speech` | 一条转写链，源无关 | `Transcribe(ctx, Utterance) (Transcript, bool)` | `core`、`asr`、`llm`、`text`、`actuate` | 200 LOC |

@@ -4,8 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/yi-nology/open-voice-bridge/internal/asr"
 )
 
 func TestLoadCreatesDefaults(t *testing.T) {
@@ -100,9 +98,9 @@ func TestSaveKeymapProfileRoundTrip(t *testing.T) {
 func TestValidateAllowsLocalOnlyASR(t *testing.T) {
 	cfg := Default()
 	cfg.APIKeyFile = ""
-	cfg.ASR = asr.Config{
+	cfg.ASR = ASRConfig{
 		Provider: "local",
-		Providers: map[string]asr.ProviderConfig{
+		Providers: map[string]ASRProviderConfig{
 			"local": {Type: "command", Binary: "/bin/echo"},
 		},
 	}
@@ -115,9 +113,9 @@ func TestSaveLocalOnlyKeepsProviders(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.json")
 	cfg := Default()
 	cfg.APIKeyFile = ""
-	cfg.ASR = asr.Config{
+	cfg.ASR = ASRConfig{
 		Provider: "local",
-		Providers: map[string]asr.ProviderConfig{
+		Providers: map[string]ASRProviderConfig{
 			"local": {Type: "command", Binary: "/bin/echo"},
 		},
 	}

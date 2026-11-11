@@ -7,22 +7,9 @@ import (
 	"strings"
 
 	oeerrors "github.com/oekit/pkg/errors"
+
+	"github.com/yi-nology/open-voice-bridge/internal/config"
 )
-
-type Replacement struct {
-	From string `json:"from"`
-	To   string `json:"to"`
-}
-
-type Snippet struct {
-	Trigger string `json:"trigger"`
-	Text    string `json:"text"`
-}
-
-type Config struct {
-	Dictionary []Replacement `json:"dictionary"`
-	Snippets   []Snippet     `json:"snippets"`
-}
 
 type Rules struct {
 	pattern  *regexp.Regexp
@@ -33,7 +20,7 @@ type Rules struct {
 	phraseTexts []string
 }
 
-func Validate(cfg Config) error {
+func Validate(cfg config.TextConfig) error {
 	for _, item := range cfg.Dictionary {
 		if strings.TrimSpace(item.From) == "" {
 			return oeerrors.New("dictionary entry has empty 'from'")
@@ -50,7 +37,7 @@ func Validate(cfg Config) error {
 	return nil
 }
 
-func New(cfg Config) (*Rules, error) {
+func New(cfg config.TextConfig) (*Rules, error) {
 	if err := Validate(cfg); err != nil {
 		return nil, err
 	}

@@ -14,12 +14,13 @@ import (
 	"time"
 
 	"github.com/yi-nology/open-voice-bridge/internal/atvv"
+	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/redact"
 )
 
 const (
-	DefaultModel   = "mimo-v2.5-asr"
+	DefaultModel   = config.DefaultASRModel
 	DefaultBaseURL = "https://api.xiaomimimo.com/v1"
 	TokenPlanCN    = "https://token-plan-cn.xiaomimimo.com/v1"
 	TokenPlanSGP   = "https://token-plan-sgp.xiaomimimo.com/v1"

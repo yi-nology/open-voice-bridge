@@ -9,27 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/yi-nology/open-voice-bridge/internal/config"
 )
-
-type ProviderConfig struct {
-	Type           string   `json:"type"`
-	APIKeyFile     string   `json:"api_key_file"`
-	BaseURL        string   `json:"base_url"`
-	Model          string   `json:"model"`
-	Language       string   `json:"language"`
-	Binary         string   `json:"binary"`
-	ModelPath      string   `json:"model_path"`
-	Threads        int      `json:"threads"`
-	Args           []string `json:"args"`
-	TimeoutSeconds int      `json:"timeout_seconds"`
-}
-
-type Config struct {
-	Provider  string                    `json:"provider"`
-	Fallback  []string                  `json:"fallback"`
-	Language  string                    `json:"language"`
-	Providers map[string]ProviderConfig `json:"providers"`
-}
 
 type Diagnostic struct {
 	Provider string
@@ -37,21 +19,7 @@ type Diagnostic struct {
 	Detail   string
 }
 
-func DefaultConfig() Config {
-	return Config{
-		Provider: "mimo",
-		Language: "auto",
-		Providers: map[string]ProviderConfig{
-			"mimo": {
-				Type:     "mimo",
-				Model:    DefaultModel,
-				Language: "auto",
-			},
-		},
-	}
-}
-
-func providerType(name string, cfg ProviderConfig) string {
+func providerType(name string, cfg config.ASRProviderConfig) string {
 	value := strings.ToLower(strings.TrimSpace(cfg.Type))
 	if value == "" && name == "mimo" {
 		return "mimo"
@@ -59,7 +27,7 @@ func providerType(name string, cfg ProviderConfig) string {
 	return value
 }
 
-func referencedProviders(cfg Config) []string {
+func referencedProviders(cfg config.ASRConfig) []string {
 	names := make([]string, 0, 1+len(cfg.Fallback))
 	seen := map[string]bool{}
 	for _, name := range append([]string{cfg.Provider}, cfg.Fallback...) {
@@ -73,7 +41,7 @@ func referencedProviders(cfg Config) []string {
 	return names
 }
 
-func Validate(cfg Config) error {
+func Validate(cfg config.ASRConfig) error {
 	if len(cfg.Providers) == 0 {
 		return oeerrors.Errorf("asr.providers is empty")
 	}
@@ -114,7 +82,7 @@ func Validate(cfg Config) error {
 	return nil
 }
 
-func Build(cfg Config) (Engine, error) {
+func Build(cfg config.ASRConfig) (Engine, error) {
 	if cfg.Provider == "" {
 		cfg.Provider = "mimo"
 	}
@@ -155,7 +123,7 @@ func Build(cfg Config) (Engine, error) {
 	return NewChain(engines...), nil
 }
 
-func buildProvider(name string, cfg Config) (Engine, error) {
+func buildProvider(name string, cfg config.ASRConfig) (Engine, error) {
 	provider, ok := cfg.Providers[name]
 	if !ok {
 		return nil, oeerrors.Errorf("provider not defined")
@@ -205,7 +173,7 @@ func buildProvider(name string, cfg Config) (Engine, error) {
 	}
 }
 
-func Diagnose(cfg Config) []Diagnostic {
+func Diagnose(cfg config.ASRConfig) []Diagnostic {
 	var result []Diagnostic
 	if cfg.Provider == "" {
 		cfg.Provider = "mimo"

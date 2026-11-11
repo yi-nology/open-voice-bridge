@@ -265,6 +265,20 @@ Privacy fixes from the same audit (SEC-02):
   the transcript must stay out of it, including when the LLM stage fails and when
   the BLE address is switched.
 
+Configuration boundaries (ARC-03, internal — the config file format is unchanged):
+
+- Loading or saving a config no longer drags in the ASR, LLM, text-correction
+  and key-remapping subsystems. `internal/config` is a leaf again: it owns the
+  document shape and the structural rules, and the section types it embeds are
+  declared there instead of being borrowed from four subsystems.
+- The checks that need a subsystem's own vocabulary — the ASR provider
+  catalogue, the keymap action names, the LLM presets, the device profile table
+  — moved to `internal/appconfig`, which wraps every load and save so the gate
+  cannot be skipped by a new call site.
+- The default MiMo model name has one definition (`config.DefaultASRModel`);
+  the provider client and the generated config both read it instead of each
+  carrying the same literal.
+
 ## 0.1.1 — 2026-11-10
 
 Maintenance and quality baseline.

@@ -8,10 +8,7 @@ import (
 	"github.com/oekit/pkg/ptrx"
 
 	api "github.com/yi-nology/open-voice-bridge/biz/model/api"
-	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
-	"github.com/yi-nology/open-voice-bridge/internal/llm"
-	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
 
 var errCaptureRunning = oeerrors.New("capture already running")
@@ -168,12 +165,12 @@ func (s *Server) UpdateASRConfig(ctx context.Context, next *api.ASRConfig) (*api
 	if next == nil {
 		return nil, oeerrors.New("missing asr config")
 	}
-	providers := make(map[string]asr.ProviderConfig, len(next.Providers))
+	providers := make(map[string]config.ASRProviderConfig, len(next.Providers))
 	for name, provider := range next.Providers {
 		if provider == nil {
 			continue
 		}
-		providers[name] = asr.ProviderConfig{
+		providers[name] = config.ASRProviderConfig{
 			Type:           provider.Type,
 			APIKeyFile:     provider.APIKeyFile,
 			BaseURL:        provider.BaseURL,
@@ -186,7 +183,7 @@ func (s *Server) UpdateASRConfig(ctx context.Context, next *api.ASRConfig) (*api
 			TimeoutSeconds: int(provider.TimeoutSeconds),
 		}
 	}
-	cfg := asr.Config{
+	cfg := config.ASRConfig{
 		Provider:  next.Provider,
 		Fallback:  next.Fallback,
 		Language:  next.Language,
@@ -282,7 +279,7 @@ func operationResult(result map[string]any) *api.OperationResp {
 }
 
 func providerModels(value any) map[string]*api.ProviderConfig {
-	providers, ok := value.(map[string]asr.ProviderConfig)
+	providers, ok := value.(map[string]config.ASRProviderConfig)
 	if !ok {
 		return nil
 	}
@@ -534,7 +531,7 @@ func (s *Server) GetLLMConfig(ctx context.Context) (*api.LLMConfigResp, error) {
 		return nil, oeerrors.New("llm config not available")
 	}
 	data := s.deps.LLMConfig(ctx)
-	cfg, _ := data["config"].(llm.Config)
+	cfg, _ := data["config"].(config.LLMConfig)
 	resp := &api.LLMConfigResp{
 		Ok: boolValue(data["ok"]),
 		Config: &api.LLMConfig{
@@ -548,7 +545,7 @@ func (s *Server) GetLLMConfig(ctx context.Context) (*api.LLMConfigResp, error) {
 			TimeoutSeconds: int32(cfg.TimeoutSeconds),
 		},
 	}
-	if presets, ok := data["presets"].([]llm.Preset); ok {
+	if presets, ok := data["presets"].([]config.LLMPreset); ok {
 		resp.Presets = make([]*api.LLMPreset, 0, len(presets))
 		for _, preset := range presets {
 			resp.Presets = append(resp.Presets, &api.LLMPreset{
@@ -572,7 +569,7 @@ func (s *Server) UpdateLLMConfig(ctx context.Context, req *api.LLMConfig) (*api.
 	if req == nil {
 		return nil, oeerrors.New("missing llm config")
 	}
-	if err := s.deps.UpdateLLMConfig(ctx, llm.Config{
+	if err := s.deps.UpdateLLMConfig(ctx, config.LLMConfig{
 		Enabled:        req.Enabled,
 		Provider:       req.Provider,
 		BaseURL:        req.BaseURL,
@@ -649,7 +646,7 @@ func (s *Server) GetTextConfig(ctx context.Context) (*api.TextConfigResp, error)
 		return nil, oeerrors.New("text config not available")
 	}
 	data := s.deps.TextConfig(ctx)
-	cfg, _ := data["config"].(text.Config)
+	cfg, _ := data["config"].(config.TextConfig)
 	resp := &api.TextConfigResp{
 		Ok: boolValue(data["ok"]),
 		Config: &api.TextConfig{
@@ -673,18 +670,18 @@ func (s *Server) UpdateTextConfig(ctx context.Context, req *api.TextConfig) (*ap
 	if req == nil {
 		return nil, oeerrors.New("missing text config")
 	}
-	next := text.Config{}
+	next := config.TextConfig{}
 	for _, item := range req.Dictionary {
 		if item == nil {
 			continue
 		}
-		next.Dictionary = append(next.Dictionary, text.Replacement{From: item.From, To: item.To})
+		next.Dictionary = append(next.Dictionary, config.Replacement{From: item.From, To: item.To})
 	}
 	for _, item := range req.Snippets {
 		if item == nil {
 			continue
 		}
-		next.Snippets = append(next.Snippets, text.Snippet{Trigger: item.Trigger, Text: item.Text})
+		next.Snippets = append(next.Snippets, config.Snippet{Trigger: item.Trigger, Text: item.Text})
 	}
 	if err := s.deps.UpdateTextConfig(ctx, next); err != nil {
 		return nil, err

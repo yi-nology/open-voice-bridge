@@ -8,28 +8,9 @@ import (
 	"time"
 
 	oeerrors "github.com/oekit/pkg/errors"
+
+	"github.com/yi-nology/open-voice-bridge/internal/config"
 )
-
-type Config struct {
-	Enabled        bool   `json:"enabled"`
-	Provider       string `json:"provider"`
-	BaseURL        string `json:"base_url"`
-	Model          string `json:"model"`
-	APIKeyFile     string `json:"api_key_file"`
-	Mode           string `json:"mode"`
-	Prompt         string `json:"prompt"`
-	TimeoutSeconds int    `json:"timeout_seconds"`
-}
-
-type Preset struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	BaseURL     string `json:"base_url"`
-	Model       string `json:"model"`
-	ModelHint   string `json:"model_hint"`
-	KeyHint     string `json:"key_hint"`
-	Description string `json:"description"`
-}
 
 type Processor interface {
 	Name() string
@@ -38,79 +19,7 @@ type Processor interface {
 	Close(ctx context.Context) error
 }
 
-func Presets() []Preset {
-	return []Preset{
-		{
-			ID:          "minimax",
-			Name:        "MiniMax",
-			BaseURL:     "https://api.minimaxi.com/v1",
-			Model:       "MiniMax-M3.1-Flash",
-			ModelHint:   "MiniMax-M3.1-Flash / MiniMax-M3",
-			KeyHint:     "MiniMax 开放平台 API Key",
-			Description: "OpenAI 兼容 Chat Completions",
-		},
-		{
-			ID:          "volcengine",
-			Name:        "火山方舟（豆包）",
-			BaseURL:     "https://ark.cn-beijing.volces.com/api/v3",
-			Model:       "",
-			ModelHint:   "推理接入点 ID（ep-...）或火山方舟模型 ID",
-			KeyHint:     "火山方舟 API Key",
-			Description: "OpenAI 兼容 Chat Completions",
-		},
-		{
-			ID:          "openai",
-			Name:        "OpenAI",
-			BaseURL:     "https://api.openai.com/v1",
-			Model:       "gpt-4o-mini",
-			ModelHint:   "gpt-4o-mini / gpt-4.1-mini",
-			KeyHint:     "OpenAI API Key",
-			Description: "OpenAI Chat Completions",
-		},
-		{
-			ID:          "deepseek",
-			Name:        "DeepSeek",
-			BaseURL:     "https://api.deepseek.com/v1",
-			Model:       "deepseek-chat",
-			ModelHint:   "deepseek-chat / deepseek-reasoner",
-			KeyHint:     "DeepSeek API Key",
-			Description: "OpenAI 兼容 Chat Completions",
-		},
-		{
-			ID:          "custom",
-			Name:        "自定义 OpenAI 兼容",
-			BaseURL:     "",
-			Model:       "",
-			ModelHint:   "模型名",
-			KeyHint:     "API Key 文件",
-			Description: "任意 OpenAI 兼容 /chat/completions 服务",
-		},
-	}
-}
-
-func PresetByID(id string) (Preset, bool) {
-	for _, preset := range Presets() {
-		if preset.ID == id {
-			return preset, true
-		}
-	}
-	return Preset{}, false
-}
-
-func DefaultConfig() Config {
-	preset, _ := PresetByID("minimax")
-	return Config{
-		Enabled:        false,
-		Provider:       preset.ID,
-		BaseURL:        preset.BaseURL,
-		Model:          preset.Model,
-		APIKeyFile:     "",
-		Mode:           "cleanup",
-		TimeoutSeconds: 20,
-	}
-}
-
-func Build(cfg Config) (Processor, error) {
+func Build(cfg config.LLMConfig) (Processor, error) {
 	if !cfg.Enabled {
 		return nil, nil
 	}
@@ -150,7 +59,7 @@ type Diagnostic struct {
 	Detail string
 }
 
-func Diagnose(cfg Config) []Diagnostic {
+func Diagnose(cfg config.LLMConfig) []Diagnostic {
 	var out []Diagnostic
 	if !cfg.Enabled {
 		return []Diagnostic{{OK: true, Detail: "LLM post-processing disabled"}}

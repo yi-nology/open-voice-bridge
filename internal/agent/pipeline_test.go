@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
+	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
@@ -60,7 +61,7 @@ func utterance(samples []int16, ref SourceRef) Utterance {
 
 func TestPipelineTranscribeStampsSourceAndAppliesDictionary(t *testing.T) {
 	engine := &fakeEngine{result: asr.Result{Text: "hello world", Provider: "fake", Latency: 80 * time.Millisecond}}
-	rules, err := text.New(text.Config{Dictionary: []text.Replacement{{From: "world", To: "世界"}}})
+	rules, err := text.New(config.TextConfig{Dictionary: []config.Replacement{{From: "world", To: "世界"}}})
 	if err != nil {
 		t.Fatalf("rules: %v", err)
 	}
@@ -88,7 +89,7 @@ func TestPipelineTranscribeStampsSourceAndAppliesDictionary(t *testing.T) {
 
 func TestPipelinePasteEnabled(t *testing.T) {
 	engine := &fakeEngine{result: asr.Result{Text: "ship it", Provider: "fake"}}
-	rules, err := text.New(text.Config{})
+	rules, err := text.New(config.TextConfig{})
 	if err != nil {
 		t.Fatalf("rules: %v", err)
 	}
@@ -139,7 +140,7 @@ func TestPipelineNoSpeechDoesNotPublish(t *testing.T) {
 // both the remote and phone paths, each labelled with its own source.
 func TestPipelineReusedByTwoSources(t *testing.T) {
 	engine := &fakeEngine{result: asr.Result{Text: "ok", Provider: "fake"}}
-	rules, err := text.New(text.Config{})
+	rules, err := text.New(config.TextConfig{})
 	if err != nil {
 		t.Fatalf("rules: %v", err)
 	}
@@ -176,7 +177,7 @@ func (blockingEngine) Transcribe(ctx context.Context, _ asr.Audio) (asr.Result, 
 // answers used to pin the serial chain until a fixed timeout, and SIGINT
 // could not cut it short.
 func TestTranscribeHonorsCallerCancellation(t *testing.T) {
-	rules, err := text.New(text.Config{})
+	rules, err := text.New(config.TextConfig{})
 	if err != nil {
 		t.Fatalf("rules: %v", err)
 	}
@@ -255,7 +256,7 @@ func (g *gateEngine) Transcribe(ctx context.Context, _ asr.Audio) (asr.Result, e
 // for the hung call's full deadline (up to asrTimeout).
 func TestHungProviderDoesNotBlockOtherSources(t *testing.T) {
 	engine := &gateEngine{entered: make(chan struct{}), release: make(chan struct{})}
-	rules, err := text.New(text.Config{})
+	rules, err := text.New(config.TextConfig{})
 	if err != nil {
 		t.Fatalf("rules: %v", err)
 	}
@@ -300,7 +301,7 @@ func TestHungProviderDoesNotBlockOtherSources(t *testing.T) {
 // through the same serialised paste as a transcript, so the two never
 // interleave keystrokes. Unbound slots must be a no-op.
 func TestInsertPhrasePastesTheNthSnippet(t *testing.T) {
-	rules, err := text.New(text.Config{Snippets: []text.Snippet{
+	rules, err := text.New(config.TextConfig{Snippets: []config.Snippet{
 		{Trigger: "确认", Text: "好的，确认执行。"},
 		{Trigger: "继续", Text: "请继续。"},
 	}})
@@ -344,7 +345,7 @@ func (p *phraseStub) Phrases() <-chan int         { return p.ch }
 // End to end over the watcher: a phrase key-down pastes the phrase and
 // surfaces a notice for the UI, while an unbound slot stays silent.
 func TestPhraseWatcherInsertsAndNotifies(t *testing.T) {
-	rules, err := text.New(text.Config{Snippets: []text.Snippet{
+	rules, err := text.New(config.TextConfig{Snippets: []config.Snippet{
 		{Trigger: "确认", Text: "好的，确认执行。"},
 	}})
 	if err != nil {
@@ -392,7 +393,7 @@ func TestPhraseWatcherInsertsAndNotifies(t *testing.T) {
 // cut short, so subtitles and history stop showing an anonymous address.
 func TestTranscriptStampsSourceIdentity(t *testing.T) {
 	engine := &fakeEngine{result: asr.Result{Text: "你好", Provider: "fake"}}
-	rules, err := text.New(text.Config{})
+	rules, err := text.New(config.TextConfig{})
 	if err != nil {
 		t.Fatal(err)
 	}

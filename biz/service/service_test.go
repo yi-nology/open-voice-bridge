@@ -284,10 +284,10 @@ func TestLLMConfigService(t *testing.T) {
 	if data["ok"] != true {
 		t.Fatalf("llm config = %+v", data)
 	}
-	if presets, ok := data["presets"].([]llm.Preset); !ok || len(presets) < 3 {
+	if presets, ok := data["presets"].([]config.LLMPreset); !ok || len(presets) < 3 {
 		t.Fatalf("presets = %+v", data["presets"])
 	}
-	next := llm.Config{Enabled: false, Provider: "minimax", Mode: "cleanup", TimeoutSeconds: 20}
+	next := config.LLMConfig{Enabled: false, Provider: "minimax", Mode: "cleanup", TimeoutSeconds: 20}
 	if err := svc.UpdateLLMConfig(context.Background(), next); err != nil {
 		t.Fatalf("UpdateLLMConfig: %v", err)
 	}
@@ -336,7 +336,7 @@ func TestLLMLiveDiagnostic(t *testing.T) {
 	defer server.Close()
 	svc, _, _, _ := newTestService(t)
 	svc.cfgMu.Lock()
-	svc.cfg.LLM = llm.Config{Enabled: true, Provider: "custom", BaseURL: server.URL, Model: "test", Mode: "cleanup", TimeoutSeconds: 5}
+	svc.cfg.LLM = config.LLMConfig{Enabled: true, Provider: "custom", BaseURL: server.URL, Model: "test", Mode: "cleanup", TimeoutSeconds: 5}
 	svc.cfgMu.Unlock()
 	diagnostics := svc.TestLLM(context.Background(), "", true)
 	found := false
@@ -352,9 +352,9 @@ func TestLLMLiveDiagnostic(t *testing.T) {
 
 func TestTextConfigService(t *testing.T) {
 	svc, _, _, path := newTestService(t)
-	next := text.Config{
-		Dictionary: []text.Replacement{{From: "米授权", To: "MiniMax"}},
-		Snippets:   []text.Snippet{{Trigger: "收货地址", Text: "北京市海淀区"}},
+	next := config.TextConfig{
+		Dictionary: []config.Replacement{{From: "米授权", To: "MiniMax"}},
+		Snippets:   []config.Snippet{{Trigger: "收货地址", Text: "北京市海淀区"}},
 	}
 	if err := svc.UpdateTextConfig(context.Background(), next); err != nil {
 		t.Fatalf("UpdateTextConfig: %v", err)

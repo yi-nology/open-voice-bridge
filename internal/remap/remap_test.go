@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/device"
 )
 
@@ -71,7 +72,7 @@ func TestLoadSave(t *testing.T) {
 }
 
 func TestConfigText(t *testing.T) {
-	text := ConfigText(DefaultMapping)
+	text := ConfigText(config.DefaultKeymap)
 	if text == "" || text[0] != '{' {
 		t.Fatalf("config text = %q", text)
 	}

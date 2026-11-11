@@ -278,7 +278,7 @@ func (s *Service) ASRConfig(ctx context.Context) map[string]any {
 	}
 }
 
-func (s *Service) UpdateASRConfig(ctx context.Context, next asr.Config) error {
+func (s *Service) UpdateASRConfig(ctx context.Context, next config.ASRConfig) error {
 	if err := asr.Validate(next); err != nil {
 		return err
 	}
@@ -667,7 +667,7 @@ func (s *Service) TextConfig(ctx context.Context) map[string]any {
 	return map[string]any{"ok": true, "config": s.cfg.Text}
 }
 
-func (s *Service) UpdateTextConfig(ctx context.Context, next text.Config) error {
+func (s *Service) UpdateTextConfig(ctx context.Context, next config.TextConfig) error {
 	rules, err := text.New(next)
 	if err != nil {
 		return err
@@ -692,7 +692,7 @@ func (s *Service) LLMConfig(ctx context.Context) map[string]any {
 	defer s.cfgMu.RUnlock()
 	return map[string]any{
 		"ok":      true,
-		"presets": llm.Presets(),
+		"presets": config.LLMPresets(),
 		"config":  s.cfg.LLM,
 	}
 }
@@ -724,7 +724,7 @@ func (s *Service) SaveLLMKey(ctx context.Context, key string) error {
 	return fsutil.WriteAtomic(path, []byte(key+"\n"), 0o600)
 }
 
-func (s *Service) UpdateLLMConfig(ctx context.Context, next llm.Config) error {
+func (s *Service) UpdateLLMConfig(ctx context.Context, next config.LLMConfig) error {
 	processor, err := llm.Build(next)
 	if err != nil {
 		return err
@@ -755,7 +755,7 @@ func (s *Service) TestLLM(ctx context.Context, provider string, live bool) []llm
 	s.cfgMu.RUnlock()
 	testCfg.Enabled = true
 	if provider != "" && provider != testCfg.Provider {
-		if preset, ok := llm.PresetByID(provider); ok {
+		if preset, ok := config.LLMPresetByID(provider); ok {
 			testCfg.BaseURL = preset.BaseURL
 			testCfg.Model = preset.Model
 		}

@@ -22,7 +22,6 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/history"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
 	"github.com/yi-nology/open-voice-bridge/internal/mcp"
-	"github.com/yi-nology/open-voice-bridge/internal/text"
 	"github.com/yi-nology/open-voice-bridge/web"
 )
 
@@ -39,10 +38,10 @@ type Deps struct {
 	SaveKeymapProfile   func(context.Context, string, map[string]string) (map[string]any, error)
 	DeleteKeymapProfile func(context.Context, string) error
 	ASRConfig           func(context.Context) map[string]any
-	UpdateASRConfig     func(context.Context, asr.Config) error
+	UpdateASRConfig     func(context.Context, config.ASRConfig) error
 	TestASR             func(context.Context, string) []asr.Diagnostic
 	LLMConfig           func(context.Context) map[string]any
-	UpdateLLMConfig     func(context.Context, llm.Config) error
+	UpdateLLMConfig     func(context.Context, config.LLMConfig) error
 	TestLLM             func(context.Context, string, bool) []llm.Diagnostic
 	SaveLLMKey          func(context.Context, string) error
 	History             func(context.Context) []history.Entry
@@ -50,7 +49,7 @@ type Deps struct {
 	ClearHistory        func(context.Context) error
 	Stats               func() history.UsageStats
 	TextConfig          func(context.Context) map[string]any
-	UpdateTextConfig    func(context.Context, text.Config) error
+	UpdateTextConfig    func(context.Context, config.TextConfig) error
 	Devices             func(context.Context) map[string]any
 	DiscoverDevices     func(context.Context) map[string]any
 	SelectDevice        func(context.Context, string) error

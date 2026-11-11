@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
 )
 
@@ -20,29 +21,6 @@ var OrderedKeys = []string{
 	"power", "f5", "up", "down", "left", "right", "enter",
 	"back", "home", "compose", "grave", "volumeup", "volumedown",
 	"ok", "homepage", "menu", "playpause", "nextsong", "previoussong", "mute", "siri",
-}
-
-var DefaultMapping = map[string]string{
-	"power":        "esc",
-	"f5":           "f24",
-	"up":           "native",
-	"down":         "native",
-	"left":         "native",
-	"right":        "native",
-	"enter":        "native",
-	"back":         "esc",
-	"home":         "macro(leftalt+tab)",
-	"compose":      "native",
-	"grave":        "noop",
-	"volumeup":     "native",
-	"volumedown":   "native",
-	"ok":           "enter",
-	"homepage":     "macro(leftalt+tab)",
-	"menu":         "compose",
-	"playpause":    "playpause",
-	"nextsong":     "nextsong",
-	"previoussong": "previoussong",
-	"mute":         "mute",
 }
 
 var SourceCodes = map[string]int{
@@ -90,7 +68,7 @@ func Copy(mapping map[string]string) map[string]string {
 }
 
 func MergeDefaults(mapping map[string]string) map[string]string {
-	out := Copy(DefaultMapping)
+	out := Copy(config.DefaultKeymap)
 	for key, value := range mapping {
 		out[key] = value
 	}
@@ -221,7 +199,7 @@ func SourceName(code int) string {
 func Load(path string) (map[string]string, error) {
 	data, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
-		return Copy(DefaultMapping), nil
+		return Copy(config.DefaultKeymap), nil
 	}
 	if err != nil {
 		return nil, err

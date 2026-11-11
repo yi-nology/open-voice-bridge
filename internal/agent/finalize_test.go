@@ -48,7 +48,7 @@ func TestFinalizePublishesProcessedTranscript(t *testing.T) {
 		Text: "hello world", Provider: "fake", Language: "en", Latency: 120 * time.Millisecond,
 	}}
 	a := newFinalizeAgent(engine)
-	rules, err := text.New(text.Config{Dictionary: []text.Replacement{{From: "world", To: "世界"}}})
+	rules, err := text.New(config.TextConfig{Dictionary: []config.Replacement{{From: "world", To: "世界"}}})
 	if err != nil {
 		t.Fatalf("rules: %v", err)
 	}
@@ -76,7 +76,7 @@ func TestFinalizePublishesProcessedTranscript(t *testing.T) {
 func TestFinalizeAppliesSnippet(t *testing.T) {
 	engine := &fakeEngine{result: asr.Result{Text: "邮箱", Provider: "fake"}}
 	a := newFinalizeAgent(engine)
-	rules, err := text.New(text.Config{Snippets: []text.Snippet{{Trigger: "邮箱", Text: "me@example.com"}}})
+	rules, err := text.New(config.TextConfig{Snippets: []config.Snippet{{Trigger: "邮箱", Text: "me@example.com"}}})
 	if err != nil {
 		t.Fatalf("rules: %v", err)
 	}

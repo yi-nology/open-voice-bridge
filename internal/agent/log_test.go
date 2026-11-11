@@ -12,6 +12,7 @@ import (
 	"github.com/oekit/logx"
 
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
+	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
@@ -77,7 +78,7 @@ func TestRecognizedLineLogsCountsNotText(t *testing.T) {
 		Provider: "mimo",
 		Latency:  820 * time.Millisecond,
 	}}
-	rules, err := text.New(text.Config{})
+	rules, err := text.New(config.TextConfig{})
 	if err != nil {
 		t.Fatalf("rules: %v", err)
 	}
@@ -115,7 +116,7 @@ func TestRecognizedLineLogsCountsNotText(t *testing.T) {
 func TestFailedLLMRequestLogsNoText(t *testing.T) {
 	sink := captureLogs(t)
 	engine := &fakeEngine{result: asr.Result{Text: spoken, Provider: "fake", Latency: 10 * time.Millisecond}}
-	rules, err := text.New(text.Config{})
+	rules, err := text.New(config.TextConfig{})
 	if err != nil {
 		t.Fatalf("rules: %v", err)
 	}
