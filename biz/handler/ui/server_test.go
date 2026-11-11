@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 func TestSaveKeymapProfileBackend(t *testing.T) {
@@ -54,14 +56,14 @@ func TestDeleteKeymapProfileBackend(t *testing.T) {
 
 func TestStatusBackendConvertsMapping(t *testing.T) {
 	server := New(Deps{
-		Status: func(context.Context) map[string]any {
-			return map[string]any{
-				"ok":             true,
-				"address":        "AA:BB:CC:DD:EE:FF",
-				"mapping":        map[string]string{"power": "esc"},
-				"asr_providers":  []string{"mimo"},
-				"keymap_profile": "coding",
-				"asr_error":      "missing key",
+		Status: func(context.Context) core.StatusView {
+			return core.StatusView{
+				OK:            true,
+				Address:       "AA:BB:CC:DD:EE:FF",
+				Mapping:       map[string]string{"power": "esc"},
+				AsrProviders:  []string{"mimo"},
+				KeymapProfile: "coding",
+				AsrError:      "missing key",
 			}
 		},
 	})

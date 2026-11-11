@@ -1764,8 +1764,9 @@ function updateConnection(status) {
       last.textContent = status.asr_error;
       last.className = "sub err";
     } else {
+      const ago = fmtAgo(status.last_at);
       last.textContent = status.last_text
-        ? "最近识别：" + status.last_text
+        ? "最近识别" + (ago ? "（" + ago + "）" : "") + "：" + status.last_text
         : "语音输入前请先点进目标输入框";
       last.className = "sub";
     }

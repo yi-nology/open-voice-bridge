@@ -78,68 +78,67 @@ func New(cfg config.Config, path string, agent Agent, helper Helper, asrErr erro
 	}
 }
 
-func (s *Service) Status(ctx context.Context) map[string]any {
+func (s *Service) Status(ctx context.Context) core.StatusView {
 	s.cfgMu.RLock()
-	address := s.cfg.Address
+	view := core.StatusView{
+		OK:            true,
+		Address:       s.cfg.Address,
+		Platform:      runtime.GOOS,
+		AsrProvider:   s.cfg.ASR.Provider,
+		KeymapProfile: s.cfg.Keymap.Profile,
+	}
 	keydConfigPath := s.cfg.KeydConfig
-	asrProvider := s.cfg.ASR.Provider
-	asrProviders := make([]string, 0, len(s.cfg.ASR.Providers))
-	for name := range s.cfg.ASR.Providers {
-		asrProviders = append(asrProviders, name)
-	}
-	keymapProfile := s.cfg.Keymap.Profile
-	keymapProfiles := make([]string, 0, len(s.cfg.Keymap.Profiles))
-	for name := range s.cfg.Keymap.Profiles {
-		keymapProfiles = append(keymapProfiles, name)
-	}
 	asrErrValue := s.asrErr
-	s.cfgMu.RUnlock()
-	sort.Strings(asrProviders)
-	sort.Strings(keymapProfiles)
-
-	status := map[string]any{"ok": true, "address": address, "platform": runtime.GOOS}
-	if helperStatus, err := s.helper.Call(ctx, map[string]string{"cmd": "status"}); err == nil {
-		for _, key := range []string{"keyd_active", "remote_present", "mapping", "config", "key_total", "key_counts"} {
-			if value, ok := helperStatus[key]; ok {
-				status[key] = value
-			}
-		}
-	} else {
-		status["ok"] = false
-		status["keyd_active"] = false
-		status["remote_present"] = false
-		status["helper_error"] = err.Error()
+	for name := range s.cfg.ASR.Providers {
+		view.AsrProviders = append(view.AsrProviders, name)
 	}
-	if _, ok := status["config"]; !ok {
+	for name := range s.cfg.Keymap.Profiles {
+		view.KeymapProfiles = append(view.KeymapProfiles, name)
+	}
+	s.cfgMu.RUnlock()
+	sort.Strings(view.AsrProviders)
+	sort.Strings(view.KeymapProfiles)
+
+	// The helper's reply stays a map: that is the root daemon's IPC protocol,
+	// not a status model this repo owns (R6). These coercions are the only
+	// place it is decoded.
+	if helperStatus, err := s.helper.Call(ctx, map[string]string{"cmd": "status"}); err == nil {
+		view.KeydActive, _ = helperStatus["keyd_active"].(bool)
+		view.RemotePresent, _ = helperStatus["remote_present"].(bool)
+		view.Mapping = stringMap(helperStatus["mapping"])
+		view.Config = stringValue(helperStatus["config"])
+		view.KeyTotal = int64Value(helperStatus["key_total"])
+		view.KeyCounts = int64Map(helperStatus["key_counts"])
+	} else {
+		view.OK = false
+		view.HelperError = err.Error()
+	}
+	if view.Config == "" {
 		if data, err := os.ReadFile(keydConfigPath); err == nil {
-			status["config"] = string(data)
+			view.Config = string(data)
 		}
 	}
 	agentStatus := s.agent.Status()
-	status["mic_active"] = agentStatus.Connected && agentStatus.Ready
-	status["mic_healthy"] = agentStatus.MicHealthy
-	status["ble_connected"] = agentStatus.Connected
-	status["atvv_ready"] = agentStatus.Ready
-	status["last_latency_ms"] = agentStatus.LastLatency.Milliseconds()
-	status["asr_backend"] = s.agent.ASRName()
-	status["asr_local"] = agentStatus.ASRLocal
+	view.MicActive = agentStatus.Connected && agentStatus.Ready
+	view.MicHealthy = agentStatus.MicHealthy
+	view.BleConnected = agentStatus.Connected
+	view.AtvvReady = agentStatus.Ready
+	view.LastLatencyMS = agentStatus.LastLatency.Milliseconds()
+	view.AsrBackend = s.agent.ASRName()
+	view.AsrLocal = agentStatus.ASRLocal
 	if asrErrValue != nil {
-		status["asr_error"] = asrErrValue.Error()
+		view.AsrError = asrErrValue.Error()
 	}
-	status["last_text"] = agentStatus.LastText
+	view.LastText = agentStatus.LastText
 	if !agentStatus.LastAt.IsZero() {
-		status["last_at"] = agentStatus.LastAt.Format(time.RFC3339)
+		view.LastAt = agentStatus.LastAt.Format(time.RFC3339)
 	}
-	status["asr_provider"] = asrProvider
-	status["asr_providers"] = asrProviders
-	status["keymap_profile"] = keymapProfile
-	status["keymap_profiles"] = keymapProfiles
 	home, _ := os.UserHomeDir()
 	_, agentErr := os.Stat(filepath.Join(home, ".config", "systemd", "user", "default.target.wants", "xiaomi-remote-go.service"))
 	_, remapErr := os.Stat("/etc/systemd/system/multi-user.target.wants/xiaomi-remote-remap.service")
-	status["agent_autostart"] = agentErr == nil
-	status["remap_autostart"] = remapErr == nil
-	return status
+	view.AgentAutostart = agentErr == nil
+	view.RemapAutostart = remapErr == nil
+	return view
 }
 
 func (s *Service) Apply(ctx context.Context, mapping map[string]string) (map[string]any, error) {
@@ -876,4 +875,51 @@ func (s *Service) SetPhoneEnabled(enabled bool) error {
 func stringValue(value any) string {
 	text, _ := value.(string)
 	return text
+}
+
+func stringMap(value any) map[string]string {
+	switch typed := value.(type) {
+	case map[string]string:
+		return typed
+	case map[string]any:
+		out := make(map[string]string, len(typed))
+		for key, item := range typed {
+			if text, ok := item.(string); ok {
+				out[key] = text
+			}
+		}
+		return out
+	default:
+		return nil
+	}
+}
+
+func int64Map(value any) map[string]int64 {
+	switch typed := value.(type) {
+	case map[string]int64:
+		return typed
+	case map[string]any:
+		out := make(map[string]int64, len(typed))
+		for key, item := range typed {
+			out[key] = int64Value(item)
+		}
+		return out
+	default:
+		return nil
+	}
+}
+
+func int64Value(value any) int64 {
+	switch typed := value.(type) {
+	case int:
+		return int64(typed)
+	case int32:
+		return int64(typed)
+	case int64:
+		return typed
+	case float64:
+		return int64(typed)
+	default:
+		return 0
+	}
 }

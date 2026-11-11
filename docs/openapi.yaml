@@ -713,6 +713,18 @@ components:
                 last_latency_ms:
                     type: integer
                     format: int64
+                platform:
+                    type: string
+                key_total:
+                    type: integer
+                    format: int64
+                key_counts:
+                    type: object
+                    additionalProperties:
+                        type: integer
+                        format: int64
+                last_at:
+                    type: string
         OperationResp:
             type: object
             properties:
@@ -988,6 +1000,12 @@ components:
                 latency_ms:
                     type: integer
                     format: int64
+                source:
+                    type: string
+                source_name:
+                    type: string
+                truncated:
+                    type: boolean
         HistoryResp:
             type: object
             properties:

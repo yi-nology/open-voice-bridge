@@ -66,13 +66,11 @@ func (s *Service) backupLocked() error {
 // issue: no device addresses, no home paths, no speech, no provider bodies.
 func (s *Service) Diagnostics(ctx context.Context, version string) map[string]any {
 	status := s.Status(ctx)
-	if addr, ok := status["address"].(string); ok {
-		status["address"] = redact.MAC(addr)
-	}
+	status.Address = redact.MAC(status.Address)
 	// The report promises no speech, and the status carries the last dictated
 	// sentence. Dropping it here is what keeps that promise true for a summary
 	// the user attaches to a public issue (I7).
-	delete(status, "last_text")
+	status.LastText = ""
 	s.cfgMu.RLock()
 	asrChecks := asr.Diagnose(s.cfg.ASR)
 	s.cfgMu.RUnlock()
@@ -85,11 +83,14 @@ func (s *Service) Diagnostics(ctx context.Context, version string) map[string]an
 		})
 	}
 	ready := s.Ready(ctx)
-	// scrubHome walks maps and slices; a typed view is neither, so its error
-	// strings are scrubbed here or a helper socket path under the home
-	// directory would reach a shared report (I7).
+	// scrubHome walks maps and slices; a typed view is neither, so every string
+	// that can carry a path is scrubbed here or a helper socket path under the
+	// home directory would reach a shared report (I7).
 	ready.HelperError = scrubHomeString(ready.HelperError)
 	ready.AsrError = scrubHomeString(ready.AsrError)
+	status.Config = scrubHomeString(status.Config)
+	status.HelperError = scrubHomeString(status.HelperError)
+	status.AsrError = scrubHomeString(status.AsrError)
 	return scrubHome(map[string]any{
 		"ok":           true,
 		"generated_at": time.Now().UTC().Format(time.RFC3339),

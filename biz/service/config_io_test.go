@@ -142,6 +142,62 @@ func TestDiagnosticsScrubsHomeFromReadyErrors(t *testing.T) {
 	}
 }
 
+// I7: the status view is typed too, so its path-bearing strings need the same
+// explicit scrubbing as the readiness view. The ASR error quotes the key file
+// and the helper quotes the keyd config it loaded; both live under the home
+// directory on a normal install.
+func TestDiagnosticsScrubsHomeFromStatusStrings(t *testing.T) {
+	home, _ := os.UserHomeDir()
+	if home == "" {
+		t.Skip("no home dir")
+	}
+	keyPath := filepath.Join(home, ".config", "xiaomi-mimo", "api_key")
+	svc := testService(t)
+	svc.asrErr = errors.New("read MiMo API key: open " + keyPath + ": permission denied")
+	svc.helper = &fakeHelper{status: map[string]any{
+		"keyd_active": true,
+		"config":      "# loaded from " + filepath.Join(home, ".config", "keyd", "default.conf"),
+	}}
+
+	summary := svc.Diagnostics(context.Background(), "test-version")
+	encoded, err := json.Marshal(summary)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(encoded), home) {
+		t.Fatalf("summary leaked the home directory: %s", encoded)
+	}
+	status, ok := summary["status"].(core.StatusView)
+	if !ok {
+		t.Fatalf("status = %T, want core.StatusView", summary["status"])
+	}
+	if !strings.Contains(status.AsrError, "~/.config/xiaomi-mimo/api_key") {
+		t.Fatalf("asr error = %q", status.AsrError)
+	}
+	if !strings.Contains(status.Config, "~/.config/keyd/default.conf") {
+		t.Fatalf("config = %q", status.Config)
+	}
+
+	// The helper error is the third path-bearing string on the status view.
+	svc = testService(t)
+	svc.helper = &fakeHelper{callErr: errors.New("dial " + filepath.Join(home, ".local", "run", "helper.sock"))}
+	summary = svc.Diagnostics(context.Background(), "test-version")
+	encoded, err = json.Marshal(summary)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(encoded), home) {
+		t.Fatalf("summary leaked the home directory: %s", encoded)
+	}
+	status, ok = summary["status"].(core.StatusView)
+	if !ok {
+		t.Fatalf("status = %T, want core.StatusView", summary["status"])
+	}
+	if !strings.Contains(status.HelperError, "~/.local/run/helper.sock") {
+		t.Fatalf("helper error = %q", status.HelperError)
+	}
+}
+
 // I7: both Diagnostics doc comments promise "no speech", but the report embedded
 // the whole status map, which carries the last dictated sentence. Attaching it
 // to a public issue would publish what the user last said.
@@ -159,11 +215,11 @@ func TestDiagnosticsOmitsSpeech(t *testing.T) {
 		t.Fatalf("summary leaked the last transcript: %s", encoded)
 	}
 	// The rest of the status still has to be there, or the report is useless.
-	status, ok := summary["status"].(map[string]any)
+	status, ok := summary["status"].(core.StatusView)
 	if !ok {
 		t.Fatalf("status = %T", summary["status"])
 	}
-	if status["asr_provider"] != "mimo" {
+	if status.AsrProvider != "mimo" {
 		t.Fatalf("status lost its provider: %+v", status)
 	}
 }

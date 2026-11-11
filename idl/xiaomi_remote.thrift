@@ -49,6 +49,7 @@ struct StatusResp {
   24: string platform
   25: i64 key_total
   26: map<string, i64> key_counts
+  27: optional string last_at
 }
 
 struct ApplyReq {

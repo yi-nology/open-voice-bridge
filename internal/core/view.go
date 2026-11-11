@@ -42,3 +42,39 @@ type ReadyView struct {
 	HelperError   string `json:"helper_error,omitempty"`
 	AsrError      string `json:"asr_error,omitempty"`
 }
+
+// StatusView is the dashboard's read model. Unlike AgentView it is already in
+// wire units -- milliseconds and RFC3339 -- because the edge's whole job is to
+// copy it into the response, and the diagnostics report embeds it verbatim.
+// The producer converts once, here.
+//
+// Mapping and KeyCounts stay maps: a user's keymap and the per-key counters are
+// genuinely open-ended, which is what R6 allows a map for.
+type StatusView struct {
+	OK             bool              `json:"ok"`
+	Address        string            `json:"address"`
+	Platform       string            `json:"platform"`
+	KeydActive     bool              `json:"keyd_active"`
+	RemotePresent  bool              `json:"remote_present"`
+	Mapping        map[string]string `json:"mapping"`
+	Config         string            `json:"config"`
+	MicActive      bool              `json:"mic_active"`
+	MicHealthy     bool              `json:"mic_healthy"`
+	BleConnected   bool              `json:"ble_connected"`
+	AtvvReady      bool              `json:"atvv_ready"`
+	AsrBackend     string            `json:"asr_backend"`
+	AsrLocal       bool              `json:"asr_local"`
+	AsrProvider    string            `json:"asr_provider"`
+	AsrProviders   []string          `json:"asr_providers"`
+	AsrError       string            `json:"asr_error,omitempty"`
+	KeymapProfile  string            `json:"keymap_profile"`
+	KeymapProfiles []string          `json:"keymap_profiles"`
+	AgentAutostart bool              `json:"agent_autostart"`
+	RemapAutostart bool              `json:"remap_autostart"`
+	HelperError    string            `json:"helper_error,omitempty"`
+	LastText       string            `json:"last_text"`
+	LastAt         string            `json:"last_at,omitempty"`
+	LastLatencyMS  int64             `json:"last_latency_ms"`
+	KeyTotal       int64             `json:"key_total"`
+	KeyCounts      map[string]int64  `json:"key_counts"`
+}

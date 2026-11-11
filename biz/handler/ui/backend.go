@@ -42,41 +42,44 @@ func (s *Server) Ready(ctx context.Context) (*api.ReadyResp, error) {
 }
 
 func (s *Server) Status(ctx context.Context) (*api.StatusResp, error) {
-	status := map[string]any{}
+	var view core.StatusView
 	if s.deps.Status != nil {
-		status = s.deps.Status(ctx)
+		view = s.deps.Status(ctx)
 	}
 	resp := &api.StatusResp{
-		Ok:             boolValue(status["ok"]),
-		Address:        stringValue(status["address"]),
-		KeydActive:     boolValue(status["keyd_active"]),
-		RemotePresent:  boolValue(status["remote_present"]),
-		Mapping:        stringMap(status["mapping"]),
-		Config:         stringValue(status["config"]),
-		MicActive:      boolValue(status["mic_active"]),
-		BleConnected:   boolValue(status["ble_connected"]),
-		AtvvReady:      boolValue(status["atvv_ready"]),
-		AsrBackend:     stringValue(status["asr_backend"]),
-		AsrLocal:       boolValue(status["asr_local"]),
-		LastText:       stringValue(status["last_text"]),
-		AsrProvider:    stringValue(status["asr_provider"]),
-		AsrProviders:   stringSlice(status["asr_providers"]),
-		KeymapProfile:  stringValue(status["keymap_profile"]),
-		KeymapProfiles: stringSlice(status["keymap_profiles"]),
-		AgentAutostart: boolValue(status["agent_autostart"]),
-		RemapAutostart: boolValue(status["remap_autostart"]),
+		Ok:             view.OK,
+		Address:        view.Address,
+		Platform:       view.Platform,
+		KeydActive:     view.KeydActive,
+		RemotePresent:  view.RemotePresent,
+		Mapping:        view.Mapping,
+		Config:         view.Config,
+		MicActive:      view.MicActive,
+		MicHealthy:     view.MicHealthy,
+		BleConnected:   view.BleConnected,
+		AtvvReady:      view.AtvvReady,
+		AsrBackend:     view.AsrBackend,
+		AsrLocal:       view.AsrLocal,
+		AsrProvider:    view.AsrProvider,
+		AsrProviders:   view.AsrProviders,
+		KeymapProfile:  view.KeymapProfile,
+		KeymapProfiles: view.KeymapProfiles,
+		AgentAutostart: view.AgentAutostart,
+		RemapAutostart: view.RemapAutostart,
 		Capturing:      s.IsCapturing(),
-		MicHealthy:     boolValue(status["mic_healthy"]),
-		LastLatencyMs:  int64Value(status["last_latency_ms"]),
-		Platform:       stringValue(status["platform"]),
-		KeyTotal:       int64Value(status["key_total"]),
-		KeyCounts:      int64Map(status["key_counts"]),
+		LastText:       view.LastText,
+		LastLatencyMs:  view.LastLatencyMS,
+		KeyTotal:       view.KeyTotal,
+		KeyCounts:      view.KeyCounts,
 	}
-	if value := stringValue(status["helper_error"]); value != "" {
-		resp.HelperError = ptrx.Of(value)
+	if view.LastAt != "" {
+		resp.LastAt = ptrx.Of(view.LastAt)
 	}
-	if value := stringValue(status["asr_error"]); value != "" {
-		resp.AsrError = ptrx.Of(value)
+	if view.HelperError != "" {
+		resp.HelperError = ptrx.Of(view.HelperError)
+	}
+	if view.AsrError != "" {
+		resp.AsrError = ptrx.Of(view.AsrError)
 	}
 	return resp, nil
 }
@@ -329,38 +332,6 @@ func stringSlice(value any) []string {
 	}
 }
 
-func stringMap(value any) map[string]string {
-	switch typed := value.(type) {
-	case map[string]string:
-		return typed
-	case map[string]any:
-		out := make(map[string]string, len(typed))
-		for key, item := range typed {
-			if text, ok := item.(string); ok {
-				out[key] = text
-			}
-		}
-		return out
-	default:
-		return nil
-	}
-}
-
-func int64Map(value any) map[string]int64 {
-	switch typed := value.(type) {
-	case map[string]int64:
-		return typed
-	case map[string]any:
-		out := make(map[string]int64, len(typed))
-		for key, item := range typed {
-			out[key] = int64Value(item)
-		}
-		return out
-	default:
-		return nil
-	}
-}
-
 func (s *Server) GetDevices(ctx context.Context) (*api.DevicesResp, error) {
 	if s.deps.Devices == nil {
 		return nil, oeerrors.New("devices not available")
@@ -485,21 +456,6 @@ func (s *Server) DeleteDevice(ctx context.Context, id string) (*api.OperationRes
 		return nil, err
 	}
 	return &api.OperationResp{Ok: true}, nil
-}
-
-func int64Value(value any) int64 {
-	switch typed := value.(type) {
-	case int:
-		return int64(typed)
-	case int32:
-		return int64(typed)
-	case int64:
-		return typed
-	case float64:
-		return int64(typed)
-	default:
-		return 0
-	}
 }
 
 func int32Value(value any) int32 {

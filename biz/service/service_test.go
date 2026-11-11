@@ -125,10 +125,10 @@ func newTestService(t *testing.T) (*Service, *fakeAgent, *fakeHelper, string) {
 func TestStatusAndReady(t *testing.T) {
 	svc, _, _, _ := newTestService(t)
 	status := svc.Status(context.Background())
-	if status["ok"] != true || status["address"] != config.Default().Address {
+	if !status.OK || status.Address != config.Default().Address {
 		t.Fatalf("status = %+v", status)
 	}
-	if status["asr_provider"] != "mimo" || status["keymap_profile"] != "coding" {
+	if status.AsrProvider != "mimo" || status.KeymapProfile != "coding" {
 		t.Fatalf("status = %+v", status)
 	}
 	ready := svc.Ready(context.Background())

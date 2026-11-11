@@ -28,7 +28,7 @@ import (
 var log = logx.Delegating("ui")
 
 type Deps struct {
-	Status              func(context.Context) map[string]any
+	Status              func(context.Context) core.StatusView
 	Apply               func(context.Context, map[string]string) (map[string]any, error)
 	Reconnect           func(context.Context) error
 	RestartMic          func(context.Context) error

@@ -279,6 +279,22 @@ Configuration boundaries (ARC-03, internal — the config file format is unchang
   the provider client and the generated config both read it instead of each
   carrying the same literal.
 
+The dashboard shows when the last recognition happened (ARC-05):
+
+- New: `GET /api/status` carries `last_at` (RFC3339, absent until the first
+  utterance), and the overview's "最近识别" line now reads
+  "最近识别（5 分钟前）：…" so you can tell a fresh transcript from yesterday's.
+- Fixed: the Thrift face of the API silently dropped `platform`, `key_total`
+  and `key_counts` on status and `source`, `source_name`, `truncated` on history
+  entries — the generated codecs had no read/write cases for those field IDs,
+  so only the JSON face worked. Regenerating from `idl/xiaomi_remote.thrift`
+  restores them (I10).
+- Internal: the status read model is a typed `core.StatusView` end to end
+  (producer → service → HTTP edge), replacing four layers of `map[string]any`
+  key assertions; a renamed key is now a compile error instead of a silent
+  zero. The diagnostics report keeps its exact JSON shape and still scrubs
+  home paths out of the status strings (I7).
+
 Diagnostics export no longer contains speech (I7):
 
 - Fixed: `GET /api/diagnostics` promised "no device addresses, no home paths, no

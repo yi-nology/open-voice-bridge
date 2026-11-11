@@ -954,6 +954,7 @@ type StatusResp struct {
 	Platform       string            `thrift:"platform,24" form:"platform" json:"platform" query:"platform"`
 	KeyTotal       int64             `thrift:"key_total,25" form:"key_total" json:"key_total" query:"key_total"`
 	KeyCounts      map[string]int64  `thrift:"key_counts,26" form:"key_counts" json:"key_counts" query:"key_counts"`
+	LastAt         *string           `thrift:"last_at,27,optional" form:"last_at" json:"last_at,omitempty" query:"last_at"`
 }
 
 func NewStatusResp() *StatusResp {
@@ -1065,6 +1066,27 @@ func (p *StatusResp) GetLastLatencyMs() (v int64) {
 	return p.LastLatencyMs
 }
 
+func (p *StatusResp) GetPlatform() (v string) {
+	return p.Platform
+}
+
+func (p *StatusResp) GetKeyTotal() (v int64) {
+	return p.KeyTotal
+}
+
+func (p *StatusResp) GetKeyCounts() (v map[string]int64) {
+	return p.KeyCounts
+}
+
+var StatusResp_LastAt_DEFAULT string
+
+func (p *StatusResp) GetLastAt() (v string) {
+	if !p.IsSetLastAt() {
+		return StatusResp_LastAt_DEFAULT
+	}
+	return *p.LastAt
+}
+
 var fieldIDToName_StatusResp = map[int16]string{
 	1:  "ok",
 	2:  "address",
@@ -1089,6 +1111,10 @@ var fieldIDToName_StatusResp = map[int16]string{
 	21: "asr_error",
 	22: "mic_healthy",
 	23: "last_latency_ms",
+	24: "platform",
+	25: "key_total",
+	26: "key_counts",
+	27: "last_at",
 }
 
 func (p *StatusResp) IsSetHelperError() bool {
@@ -1097,6 +1123,10 @@ func (p *StatusResp) IsSetHelperError() bool {
 
 func (p *StatusResp) IsSetAsrError() bool {
 	return p.AsrError != nil
+}
+
+func (p *StatusResp) IsSetLastAt() bool {
+	return p.LastAt != nil
 }
 
 func (p *StatusResp) Read(iprot thrift.TProtocol) (err error) {
@@ -1297,6 +1327,38 @@ func (p *StatusResp) Read(iprot thrift.TProtocol) (err error) {
 		case 23:
 			if fieldTypeId == thrift.I64 {
 				if err = p.ReadField23(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 24:
+			if fieldTypeId == thrift.STRING {
+				if err = p.ReadField24(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 25:
+			if fieldTypeId == thrift.I64 {
+				if err = p.ReadField25(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 26:
+			if fieldTypeId == thrift.MAP {
+				if err = p.ReadField26(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 27:
+			if fieldTypeId == thrift.STRING {
+				if err = p.ReadField27(iprot); err != nil {
 					goto ReadFieldError
 				}
 			} else if err = iprot.Skip(fieldTypeId); err != nil {
@@ -1626,6 +1688,68 @@ func (p *StatusResp) ReadField23(iprot thrift.TProtocol) error {
 	p.LastLatencyMs = _field
 	return nil
 }
+func (p *StatusResp) ReadField24(iprot thrift.TProtocol) error {
+
+	var _field string
+	if v, err := iprot.ReadString(); err != nil {
+		return err
+	} else {
+		_field = v
+	}
+	p.Platform = _field
+	return nil
+}
+func (p *StatusResp) ReadField25(iprot thrift.TProtocol) error {
+
+	var _field int64
+	if v, err := iprot.ReadI64(); err != nil {
+		return err
+	} else {
+		_field = v
+	}
+	p.KeyTotal = _field
+	return nil
+}
+func (p *StatusResp) ReadField26(iprot thrift.TProtocol) error {
+	_, _, size, err := iprot.ReadMapBegin()
+	if err != nil {
+		return err
+	}
+	_field := make(map[string]int64, size)
+	for i := 0; i < size; i++ {
+		var _key string
+		if v, err := iprot.ReadString(); err != nil {
+			return err
+		} else {
+			_key = v
+		}
+
+		var _val int64
+		if v, err := iprot.ReadI64(); err != nil {
+			return err
+		} else {
+			_val = v
+		}
+
+		_field[_key] = _val
+	}
+	if err := iprot.ReadMapEnd(); err != nil {
+		return err
+	}
+	p.KeyCounts = _field
+	return nil
+}
+func (p *StatusResp) ReadField27(iprot thrift.TProtocol) error {
+
+	var _field *string
+	if v, err := iprot.ReadString(); err != nil {
+		return err
+	} else {
+		_field = &v
+	}
+	p.LastAt = _field
+	return nil
+}
 
 func (p *StatusResp) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
@@ -1723,6 +1847,22 @@ func (p *StatusResp) Write(oprot thrift.TProtocol) (err error) {
 		}
 		if err = p.writeField23(oprot); err != nil {
 			fieldId = 23
+			goto WriteFieldError
+		}
+		if err = p.writeField24(oprot); err != nil {
+			fieldId = 24
+			goto WriteFieldError
+		}
+		if err = p.writeField25(oprot); err != nil {
+			fieldId = 25
+			goto WriteFieldError
+		}
+		if err = p.writeField26(oprot); err != nil {
+			fieldId = 26
+			goto WriteFieldError
+		}
+		if err = p.writeField27(oprot); err != nil {
+			fieldId = 27
 			goto WriteFieldError
 		}
 	}
@@ -2163,6 +2303,87 @@ WriteFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 23 begin error: ", p), err)
 WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 23 end error: ", p), err)
+}
+
+func (p *StatusResp) writeField24(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("platform", thrift.STRING, 24); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.Platform); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 24 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 24 end error: ", p), err)
+}
+
+func (p *StatusResp) writeField25(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("key_total", thrift.I64, 25); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteI64(p.KeyTotal); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 25 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 25 end error: ", p), err)
+}
+
+func (p *StatusResp) writeField26(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("key_counts", thrift.MAP, 26); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteMapBegin(thrift.STRING, thrift.I64, len(p.KeyCounts)); err != nil {
+		return err
+	}
+	for k, v := range p.KeyCounts {
+		if err := oprot.WriteString(k); err != nil {
+			return err
+		}
+		if err := oprot.WriteI64(v); err != nil {
+			return err
+		}
+	}
+	if err := oprot.WriteMapEnd(); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 26 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 26 end error: ", p), err)
+}
+
+func (p *StatusResp) writeField27(oprot thrift.TProtocol) (err error) {
+	if p.IsSetLastAt() {
+		if err = oprot.WriteFieldBegin("last_at", thrift.STRING, 27); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.LastAt); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 27 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 27 end error: ", p), err)
 }
 
 func (p *StatusResp) String() string {
@@ -10567,16 +10788,31 @@ func (p *HistoryEntry) GetLatencyMs() (v int64) {
 	return p.LatencyMs
 }
 
+func (p *HistoryEntry) GetSource() (v string) {
+	return p.Source
+}
+
+func (p *HistoryEntry) GetSourceName() (v string) {
+	return p.SourceName
+}
+
+func (p *HistoryEntry) GetTruncated() (v bool) {
+	return p.Truncated
+}
+
 var fieldIDToName_HistoryEntry = map[int16]string{
-	1: "id",
-	2: "text",
-	3: "raw_text",
-	4: "provider",
-	5: "language",
-	6: "address",
-	7: "processed",
-	8: "at",
-	9: "latency_ms",
+	1:  "id",
+	2:  "text",
+	3:  "raw_text",
+	4:  "provider",
+	5:  "language",
+	6:  "address",
+	7:  "processed",
+	8:  "at",
+	9:  "latency_ms",
+	10: "source",
+	11: "source_name",
+	12: "truncated",
 }
 
 func (p *HistoryEntry) Read(iprot thrift.TProtocol) (err error) {
@@ -10665,6 +10901,30 @@ func (p *HistoryEntry) Read(iprot thrift.TProtocol) (err error) {
 		case 9:
 			if fieldTypeId == thrift.I64 {
 				if err = p.ReadField9(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 10:
+			if fieldTypeId == thrift.STRING {
+				if err = p.ReadField10(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 11:
+			if fieldTypeId == thrift.STRING {
+				if err = p.ReadField11(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 12:
+			if fieldTypeId == thrift.BOOL {
+				if err = p.ReadField12(iprot); err != nil {
 					goto ReadFieldError
 				}
 			} else if err = iprot.Skip(fieldTypeId); err != nil {
@@ -10798,6 +11058,39 @@ func (p *HistoryEntry) ReadField9(iprot thrift.TProtocol) error {
 	p.LatencyMs = _field
 	return nil
 }
+func (p *HistoryEntry) ReadField10(iprot thrift.TProtocol) error {
+
+	var _field string
+	if v, err := iprot.ReadString(); err != nil {
+		return err
+	} else {
+		_field = v
+	}
+	p.Source = _field
+	return nil
+}
+func (p *HistoryEntry) ReadField11(iprot thrift.TProtocol) error {
+
+	var _field string
+	if v, err := iprot.ReadString(); err != nil {
+		return err
+	} else {
+		_field = v
+	}
+	p.SourceName = _field
+	return nil
+}
+func (p *HistoryEntry) ReadField12(iprot thrift.TProtocol) error {
+
+	var _field bool
+	if v, err := iprot.ReadBool(); err != nil {
+		return err
+	} else {
+		_field = v
+	}
+	p.Truncated = _field
+	return nil
+}
 
 func (p *HistoryEntry) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
@@ -10839,6 +11132,18 @@ func (p *HistoryEntry) Write(oprot thrift.TProtocol) (err error) {
 		}
 		if err = p.writeField9(oprot); err != nil {
 			fieldId = 9
+			goto WriteFieldError
+		}
+		if err = p.writeField10(oprot); err != nil {
+			fieldId = 10
+			goto WriteFieldError
+		}
+		if err = p.writeField11(oprot); err != nil {
+			fieldId = 11
+			goto WriteFieldError
+		}
+		if err = p.writeField12(oprot); err != nil {
+			fieldId = 12
 			goto WriteFieldError
 		}
 	}
@@ -11010,6 +11315,57 @@ WriteFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 9 begin error: ", p), err)
 WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 9 end error: ", p), err)
+}
+
+func (p *HistoryEntry) writeField10(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("source", thrift.STRING, 10); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.Source); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 10 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 10 end error: ", p), err)
+}
+
+func (p *HistoryEntry) writeField11(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("source_name", thrift.STRING, 11); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.SourceName); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 11 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 11 end error: ", p), err)
+}
+
+func (p *HistoryEntry) writeField12(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("truncated", thrift.BOOL, 12); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteBool(p.Truncated); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 12 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 12 end error: ", p), err)
 }
 
 func (p *HistoryEntry) String() string {
