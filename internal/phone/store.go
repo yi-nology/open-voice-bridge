@@ -269,6 +269,9 @@ func (s *Store) Pair(code, name, ip string) (deviceID, token string, err error) 
 		s.mu.Unlock()
 		return "", "", oeerrors.New("invalid or expired pairing code")
 	}
+	// One-time semantics (DOM-13): a correctly presented code is consumed
+	// even when the pair is then rejected.
+	delete(s.codes, matched)
 	if len(s.devices) >= s.cfg.MaxDevices {
 		s.mu.Unlock()
 		return "", "", oeerrors.New("maximum paired devices reached")
@@ -276,6 +279,9 @@ func (s *Store) Pair(code, name, ip string) (deviceID, token string, err error) 
 	rawToken := randomHex(32)
 	hash := hashToken(rawToken)
 	deviceID = "phone-" + randomHex(4)
+	for s.devices[deviceID] != nil {
+		deviceID = "phone-" + randomHex(4)
+	}
 	now := s.now()
 	s.devices[deviceID] = &Device{
 		ID:        deviceID,
@@ -285,7 +291,6 @@ func (s *Store) Pair(code, name, ip string) (deviceID, token string, err error) 
 		tokenHash: hash,
 	}
 	s.tokens[hash] = deviceID
-	delete(s.codes, matched)
 	items := s.snapshotLocked()
 	s.mu.Unlock()
 	if err := s.persistFlush(items); err != nil {
@@ -449,7 +454,8 @@ func hashToken(token string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-func randomHex(bytes int) string {
+// randomHex is a variable so tests can force id collisions (DOM-13).
+var randomHex = func(bytes int) string {
 	buf := make([]byte, bytes)
 	if _, err := rand.Read(buf); err != nil {
 		panic(err)

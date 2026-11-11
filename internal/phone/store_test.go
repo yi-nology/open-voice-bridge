@@ -349,3 +349,62 @@ visible:
 		t.Fatal("pair never finished")
 	}
 }
+
+// DOM-13: a correct pairing code is consumed exactly once — even when the
+// pair is then rejected (max devices). Otherwise a discovered code can be
+// retried indefinitely.
+func TestPairCodeBurnsOnRejection(t *testing.T) {
+	store := newTestStore(t, Config{PairCodeTTL: time.Hour, TicketTTL: time.Hour, MaxAttemptsPerCode: 6, MaxAttemptsPerIP: 10, MaxDevices: 1})
+	code, _ := store.GeneratePairCode()
+	idA, _, err := store.Pair(code, "A", "")
+	if err != nil {
+		t.Fatalf("first pair: %v", err)
+	}
+	code2, _ := store.GeneratePairCode()
+	if _, _, err := store.Pair(code2, "B", ""); err == nil {
+		t.Fatal("second device must be rejected at MaxDevices")
+	}
+	// Free a slot: only a burned code explains the next failure.
+	if err := store.Revoke(idA); err != nil {
+		t.Fatalf("revoke: %v", err)
+	}
+	if _, _, err := store.Pair(code2, "B", ""); err == nil {
+		t.Fatal("the code must be consumed even by a rejected pair")
+	}
+}
+
+// DOM-13: a generated device id must never overwrite an existing device.
+func TestPairDeviceIDNeverCollides(t *testing.T) {
+	store := newTestStore(t, Config{PairCodeTTL: time.Hour, TicketTTL: time.Hour, MaxAttemptsPerCode: 6, MaxAttemptsPerIP: 10, MaxDevices: 16})
+	original := randomHex
+	t.Cleanup(func() { randomHex = original })
+
+	first, _ := store.GeneratePairCode()
+	if _, _, err := store.Pair(first, "A", ""); err != nil {
+		t.Fatalf("pair A: %v", err)
+	}
+	// Force the id generator to return the id already in use once; the store
+	// must retry until it finds a free one.
+	collided := false
+	randomHex = func(n int) string {
+		if n == 4 && !collided {
+			collided = true
+			for _, device := range store.devices {
+				return strings.TrimPrefix(device.ID, "phone-")
+			}
+		}
+		return original(n)
+	}
+	second, _ := store.GeneratePairCode()
+	idB, _, err := store.Pair(second, "B", "")
+	if err != nil {
+		t.Fatalf("pair B: %v", err)
+	}
+	entries := store.ListDevices()
+	if len(entries) != 2 {
+		t.Fatalf("devices = %d, want 2 (id collision overwrote one)", len(entries))
+	}
+	if idB == "" {
+		t.Fatal("no device id")
+	}
+}
