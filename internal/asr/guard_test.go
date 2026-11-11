@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -82,5 +83,79 @@ func TestWhisperBinaryGuardRejectsWritableBinary(t *testing.T) {
 	}
 	if _, err := NewWhisperCPP(WhisperCPPConfig{Binary: script, ModelPath: model}); err == nil {
 		t.Fatal("world-writable whisper binary accepted, want guard rejection")
+	}
+}
+
+// SEC-06 residual: guardBinary also rejects interpreter basenames. An
+// interpreter is not a recogniser — pointing asr.command at /bin/sh (or env,
+// which will happily run one) turns a tampered config into "run anything",
+// and args cannot be whitelisted safely because exec.Command runs them
+// verbatim. Versioned names (python3.11) count.
+func TestCommandBinaryRejectsInterpreters(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix file modes")
+	}
+	dir := t.TempDir()
+
+	mustWrite := func(name string) string {
+		t.Helper()
+		path := filepath.Join(dir, name)
+		if err := os.WriteFile(path, []byte("#!/bin/sh\nprintf ok\n"), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		return path
+	}
+
+	cases := []struct {
+		name string
+		path string
+	}{
+		{"sh", mustWrite("sh")},
+		{"bash", mustWrite("bash")},
+		{"dash", mustWrite("dash")},
+		{"zsh", mustWrite("zsh")},
+		{"busybox", mustWrite("busybox")},
+		{"python", mustWrite("python")},
+		{"python3", mustWrite("python3")},
+		{"python3.11", mustWrite("python3.11")},
+		{"perl", mustWrite("perl")},
+		{"ruby", mustWrite("ruby")},
+		{"node", mustWrite("node")},
+		// env is the bottom of the barrel: it looks like an ordinary helper
+		// ("env ASR_MODEL=… whisper …") and will execute any interpreter it is
+		// pointed at, so it must not pass as an ASR binary either.
+		{"env", mustWrite("env")},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := NewCommand(CommandConfig{Binary: tc.path})
+			if err == nil {
+				t.Fatalf("interpreter binary %q accepted, want guard rejection", tc.path)
+			}
+			if !strings.Contains(err.Error(), "interpreter") {
+				t.Fatalf("interpreter %q rejected with %q, want the error to name the reason", tc.path, err)
+			}
+		})
+	}
+}
+
+// The blacklist must follow the symlink target, not the innocent-looking
+// link name, or a link called "my-recorder" pointing at /bin/sh walks right
+// through the guard.
+func TestCommandBinaryRejectsInterpreterSymlink(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix file modes")
+	}
+	dir := t.TempDir()
+	target := filepath.Join(dir, "sh")
+	if err := os.WriteFile(target, []byte("#!/bin/sh\nprintf ok\n"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(dir, "my-recorder")
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := NewCommand(CommandConfig{Binary: link}); err == nil {
+		t.Fatalf("symlink %q -> %q accepted, want guard rejection", link, target)
 	}
 }
