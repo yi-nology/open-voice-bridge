@@ -15,6 +15,7 @@ import (
 
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/device"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
@@ -24,21 +25,19 @@ type fakeAgent struct {
 	connected bool
 	ready     bool
 	engine    asr.Engine
-	status    map[string]any
+	view      *core.AgentView
 	address   string
 }
 
-func (f *fakeAgent) Status() map[string]any {
-	if f.status != nil {
-		return f.status
+func (f *fakeAgent) Status() core.AgentView {
+	if f.view != nil {
+		return *f.view
 	}
-	return map[string]any{
-		"connected":       f.connected,
-		"ready":           f.ready,
-		"last_text":       "你好",
-		"asr_local":       false,
-		"mic_healthy":     true,
-		"last_latency_ms": int64(0),
+	return core.AgentView{
+		Connected:  f.connected,
+		Ready:      f.ready,
+		LastText:   "你好",
+		MicHealthy: true,
 	}
 }
 
@@ -140,11 +139,7 @@ func TestStatusAndReady(t *testing.T) {
 // setup. The old contract (any mic hiccup fails readiness) dies here.
 func TestReadyCoreIgnoresOptionalGaps(t *testing.T) {
 	svc, agent, helper, _ := newTestService(t)
-	agent.status = map[string]any{
-		"connected":   false,
-		"ready":       false,
-		"mic_healthy": false,
-	}
+	agent.view = &core.AgentView{Connected: false, Ready: false, MicHealthy: false}
 	helper.status = map[string]any{"keyd_active": false, "remote_present": false}
 	ready := svc.Ready(context.Background())
 	if ready["ok"] != true || ready["core_ok"] != true {

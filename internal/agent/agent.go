@@ -647,31 +647,26 @@ func (a *Agent) RestartAudio(ctx context.Context) error {
 	return a.Reconnect()
 }
 
-func (a *Agent) Status() map[string]any {
+func (a *Agent) Status() core.AgentView {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.asrMu.RLock()
 	engine := a.asr
 	a.asrMu.RUnlock()
-	name := "unknown"
-	local := false
+	view := core.AgentView{
+		Connected:   a.connected,
+		Ready:       a.ready,
+		LastText:    a.lastText,
+		LastAt:      a.lastAt,
+		MicHealthy:  a.micHealthyLocked(),
+		LastLatency: a.lastLatency,
+		ASR:         "unknown",
+	}
 	if engine != nil {
-		name = engine.Name()
-		local = engine.Local()
+		view.ASR = engine.Name()
+		view.ASRLocal = engine.Local()
 	}
-	status := map[string]any{
-		"connected":       a.connected,
-		"ready":           a.ready,
-		"last_text":       a.lastText,
-		"asr":             name,
-		"asr_local":       local,
-		"mic_healthy":     a.micHealthyLocked(),
-		"last_latency_ms": a.lastLatency.Milliseconds(),
-	}
-	if !a.lastAt.IsZero() {
-		status["last_at"] = a.lastAt.Format(time.RFC3339)
-	}
-	return status
+	return view
 }
 
 func (a *Agent) micHealthyLocked() bool {

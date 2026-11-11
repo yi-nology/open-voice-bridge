@@ -21,6 +21,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/bluez"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/device"
 	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
@@ -38,7 +39,7 @@ func builtinProfile(name string) bool {
 
 // Agent is the subset of the BLE/ASR agent used by the service.
 type Agent interface {
-	Status() map[string]any
+	Status() core.AgentView
 	Reconnect() error
 	SetAddress(string) error
 	RestartAudio(context.Context) error
@@ -115,20 +116,20 @@ func (s *Service) Status(ctx context.Context) map[string]any {
 		}
 	}
 	agentStatus := s.agent.Status()
-	connected, _ := agentStatus["connected"].(bool)
-	ready, _ := agentStatus["ready"].(bool)
-	status["mic_active"] = connected && ready
-	status["mic_healthy"] = agentStatus["mic_healthy"]
-	status["ble_connected"] = connected
-	status["atvv_ready"] = ready
-	status["last_latency_ms"] = agentStatus["last_latency_ms"]
+	status["mic_active"] = agentStatus.Connected && agentStatus.Ready
+	status["mic_healthy"] = agentStatus.MicHealthy
+	status["ble_connected"] = agentStatus.Connected
+	status["atvv_ready"] = agentStatus.Ready
+	status["last_latency_ms"] = agentStatus.LastLatency.Milliseconds()
 	status["asr_backend"] = s.agent.ASRName()
-	status["asr_local"] = agentStatus["asr_local"]
+	status["asr_local"] = agentStatus.ASRLocal
 	if asrErrValue != nil {
 		status["asr_error"] = asrErrValue.Error()
 	}
-	status["last_text"] = agentStatus["last_text"]
-	status["last_at"] = agentStatus["last_at"]
+	status["last_text"] = agentStatus.LastText
+	if !agentStatus.LastAt.IsZero() {
+		status["last_at"] = agentStatus.LastAt.Format(time.RFC3339)
+	}
 	status["asr_provider"] = asrProvider
 	status["asr_providers"] = asrProviders
 	status["keymap_profile"] = keymapProfile
@@ -330,14 +331,11 @@ func (s *Service) Ready(ctx context.Context) map[string]any {
 		remote, _ = helperStatus["remote_present"].(bool)
 	}
 	agentStatus := s.agent.Status()
-	connected, _ := agentStatus["connected"].(bool)
-	atvvReady, _ := agentStatus["ready"].(bool)
-	micHealthy, micKnown := agentStatus["mic_healthy"].(bool)
 	checks["keyd_active"] = keyd
 	checks["remote_present"] = remote
-	checks["ble_connected"] = connected
-	checks["atvv_ready"] = atvvReady
-	checks["mic_healthy"] = micKnown && micHealthy
+	checks["ble_connected"] = agentStatus.Connected
+	checks["atvv_ready"] = agentStatus.Ready
+	checks["mic_healthy"] = agentStatus.MicHealthy
 	s.cfgMu.RLock()
 	asrReadyErr := s.asrErr
 	s.cfgMu.RUnlock()
@@ -352,7 +350,7 @@ func (s *Service) Ready(ctx context.Context) map[string]any {
 	// optional_ok instead of failing ok. Until the hardware run confirms
 	// the yardstick (roadmap 未验证 #5), the split is:
 	// core = agent + ASR + paste chain, optional = helper + BLE.
-	optional := keyd && remote && connected && atvvReady && micKnown && micHealthy
+	optional := keyd && remote && agentStatus.Connected && agentStatus.Ready && agentStatus.MicHealthy
 	checks["core_ok"] = asrReady
 	checks["optional_ok"] = optional
 	checks["ok"] = asrReady
@@ -364,10 +362,7 @@ func (s *Service) Devices(ctx context.Context) map[string]any {
 	devices := append([]config.DeviceConfig(nil), s.cfg.Devices...)
 	active := s.cfg.ActiveDevice
 	s.cfgMu.RUnlock()
-	agentConnected := false
-	if status := s.agent.Status(); status != nil {
-		agentConnected, _ = status["connected"].(bool)
-	}
+	agentConnected := s.agent.Status().Connected
 	bluezStatus := map[string]bluez.DeviceStatus{}
 	if known, err := bluez.KnownDevices(ctx); err == nil {
 		for _, item := range known {

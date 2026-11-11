@@ -14,14 +14,12 @@ func (remoteSource) ID() string       { return input.RemoteID }
 func (remoteSource) Kind() input.Kind { return input.KindRemote }
 
 func (r remoteSource) Status() input.Status {
-	status := r.a.Status()
-	connected, _ := status["connected"].(bool)
 	return input.Status{
 		ID:         input.RemoteID,
 		Kind:       input.KindRemote,
 		Name:       r.a.cfg.DeviceName(),
 		Address:    r.a.currentAddress(),
-		Connected:  connected,
+		Connected:  r.a.Status().Connected,
 		Speaking:   r.a.audioActive(),
 		LastActive: r.a.lastActive(),
 	}

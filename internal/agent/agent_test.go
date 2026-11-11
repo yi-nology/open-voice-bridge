@@ -33,14 +33,14 @@ func (f fakeSink) Healthy() bool               { return f.healthy }
 func TestStatusReportsMicHealthAndLatency(t *testing.T) {
 	agent := &Agent{audio: fakeSink{healthy: true}, lastLatency: 320 * time.Millisecond}
 	status := agent.Status()
-	if status["mic_healthy"] != true {
-		t.Fatalf("mic_healthy = %v", status["mic_healthy"])
+	if !status.MicHealthy {
+		t.Fatal("expected healthy mic")
 	}
-	if status["last_latency_ms"] != int64(320) {
-		t.Fatalf("last_latency_ms = %v", status["last_latency_ms"])
+	if status.LastLatency != 320*time.Millisecond {
+		t.Fatalf("last latency = %v", status.LastLatency)
 	}
 	agent.audio = fakeSink{healthy: false}
-	if agent.Status()["mic_healthy"] != false {
+	if agent.Status().MicHealthy {
 		t.Fatal("expected unhealthy mic")
 	}
 }

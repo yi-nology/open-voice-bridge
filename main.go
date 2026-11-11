@@ -30,6 +30,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/audio"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/focus"
 	"github.com/yi-nology/open-voice-bridge/internal/helper"
 	"github.com/yi-nology/open-voice-bridge/internal/history"
@@ -109,29 +110,27 @@ func registerAgentMetrics(ag *agent.Agent) (prometheus.Counter, prometheus.Histo
 		prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 			Name: "xiaomi_remote_ble_connected",
 			Help: "Whether the remote is connected over BLE (1/0).",
-		}, func() float64 { return boolGauge(ag, "connected") }),
+		}, func() float64 { return boolGauge(ag, func(v core.AgentView) bool { return v.Connected }) }),
 		prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 			Name: "xiaomi_remote_atvv_ready",
 			Help: "Whether the ATVV voice bridge is ready (1/0).",
-		}, func() float64 { return boolGauge(ag, "ready") }),
+		}, func() float64 { return boolGauge(ag, func(v core.AgentView) bool { return v.Ready }) }),
 		prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 			Name: "xiaomi_remote_mic_healthy",
 			Help: "Whether the virtual microphone node is present (1/0).",
-		}, func() float64 { return boolGauge(ag, "mic_healthy") }),
+		}, func() float64 { return boolGauge(ag, func(v core.AgentView) bool { return v.MicHealthy }) }),
 		prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 			Name: "xiaomi_remote_last_asr_latency_seconds",
 			Help: "Latency of the most recent transcription in seconds.",
 		}, func() float64 {
-			st := ag.Status()
-			ms, _ := st["last_latency_ms"].(int64)
-			return float64(ms) / 1000
+			return ag.Status().LastLatency.Seconds()
 		}),
 	)
 	return transcriptsTotal, asrLatency
 }
 
-func boolGauge(ag *agent.Agent, key string) float64 {
-	if v, _ := ag.Status()[key].(bool); v {
+func boolGauge(ag *agent.Agent, pick func(core.AgentView) bool) float64 {
+	if pick(ag.Status()) {
 		return 1
 	}
 	return 0
