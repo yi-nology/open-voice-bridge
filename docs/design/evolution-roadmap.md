@@ -1,6 +1,6 @@
 # 演进路线图（v0.2 → v0.3）
 
-- 日期：2026-11-10
+- 日期：2026-11-10；第二轮规划 2026-11-11
 - 状态：执行中
 - 依据：五轴只读审计（分层与依赖、并发与生命周期、安全与隐私、领域正确性、运维与产品），全部结论都带 `file:line` 证据
 - 目标架构与不变量：见 [`architecture.md`](architecture.md)
@@ -8,43 +8,55 @@
 
 进度勾选表示"代码已落地并通过本机 `gofmt`/`vet`/`test` 三件套"；标 **CI** 的还需要 `-race` 或交叉编译证据。
 
-## 执行交接（波 0 剩余，从这里接）
+## 执行交接（第二轮：骨架与发布就绪，从这里接）
+
+波 0 已收官（2026-11-11）：SEC-01–08、CON-01–08、DOM-01–14 全部落地（只余下文两条残余），并带出 SayAll 对标功能增量十余项（使用统计、常用语、组合动作、按 App 键位、本地 Agent 访问（MCP）、热力图、长会话提醒、按键计数、能力矩阵、配置导出导入、诊断摘要）与 macOS 平台兼容。逐项证据见本页「波 0」勾选项与 `CHANGELOG.md` Unreleased 各段。
 
 工作方式已固定，不需要重新商量：**一条缺陷一个提交，TDD 先写失败测试**（失败输出留作证据，实现后同批转绿），每步跑三件套，一个批次做完再推远端。
 
-### 已完成（2026-11-11 两批，全部带回归测试）
+### 债务盘点（2026-11-11 复测，比 [`architecture.md`](architecture.md) 写作时更糟——功能增量在持续加副本）
 
-批次一（SEC/DOM + 使用统计）：
+- `map[string]any` 非测试代码 **213 处**（architecture.md 记 121；分布前列：`biz/service/service.go` 33、`internal/mcp/server.go` 31、`biz/handler/ui/server.go` 30、`main.go` 20）。
+- tmp+rename 原子写 **8 份副本**（architecture.md 记 5）：`internal/remap/{remap,keycounts}.go`、`internal/config/config.go`、`internal/mcp/store.go`、`internal/history/{stats,history}.go`、`internal/phone/store.go`、`biz/service/service.go`。
+- 采样率字面量/双常量 **5 处**：`internal/audio/audio.go:34`、`internal/asr/wav.go:10`、`internal/phone/audio.go:10`、`internal/atvv/protocol.go:16,89`；`asr` 其余处在 `audio.SampleRate` 与 `atvv.SampleRate` 两个并存常量间取值。
+- 超规模文件 7 个：`web/ui.html` 4021、`biz/service/service.go` 858、`internal/phone/server.go` 734、`internal/remap/daemon.go` 710、`internal/agent/agent.go` 701、`biz/handler/ui/backend.go` 693、`main.go` 685。
 
-- **SEC-03 + SEC-04 + DOM-08**：`validatePhone` 无条件校验；`tls: off` 只允许回环；自签证书去 CA 化、一年寿命、30 天续期余量；文档信任口径改"只接受一次例外"。
-- **SEC-01**：helper socket 逐连接 `SO_PEERCRED`；`apply`/`set_devices`/`capture_*`/`status` 限 root 与 `--agent-uid`，仅 `inject` 对组内开放；unit/Makefile 传 `--agent-uid @UID@ --group @GID@`。
-- **SEC-06**：管理端 POST 必须有同源证据（I9）；`asr.command`/`whispercpp` binary 守卫（属主/可执行位/防篡改）。
-- **SEC-07 + SEC-08**：预鉴权表清扫+上限；手机转写有界 FIFO 队列按采集序消费（DOM-04 乱序一并解决），满则 `busy`。
-- **CON-08**：`Pair`/`Revoke`/`Rename` 落盘挪出 `s.mu`（快照+`persistMu` 串行写）。
-- **产品增量**：「使用统计」（`usage-stats.json` 累计 + `GET /api/stats` + 概览 KPI/14 天柱状图）。
+结论：**波 1 骨架必须在下一个功能高峰前立住**。下面批次顺序的硬约束是：从 R2 起，新代码不得再自带 tmp+rename、采样率字面量或 `map[string]any` 状态字段；R9 把它变成 CI 门禁。
 
-批次二（CON 并发生命周期 + 产品增量）：
+### 波 0 残余（先做，两个小提交）
 
-- **CON-02**：helper `StartCapture` 握手加 deadline（流式读保留无限期）；UI `startCapture` 的 helper 调用挪出 `s.mu`（`captureStarting` 防并发），慢 helper 不再冻结 broadcast/优雅关闭。
-- **CON-03**：`SpeechPipeline.Transcribe(ctx, u)` 传递调用方 ctx；`budgetFor` 按音频长度定超时（20s+8×时长，封顶 `asrTimeout`）；`runSpeech` 用 agent 生命周期 ctx，手机队列 worker 带生命周期 ctx。
-- **CON-04 + CON-05**：pw-cat stdin 写带 5s deadline（超时回收 player 再试一次，失败弃帧）；sink `Close` 停 watchdog（`stop` 通道）；`RestartAudio` 用 agent 生命周期 ctx 而非请求 ctx。
-- **CON-06**：SSE 建连先发 `snapshot`（capturing + listening 状态）；缓冲满丢最旧并计数，发 `stream_gap` 让 UI 自愈（I4）。
-- **CON-07**：手机 HTTP Read/Write/Idle 超时；WS 每读 75s 空闲 deadline（客户端 15s 心跳×5）；服务端 30s ping，无 pong 即断开释放槽位。
-- **DOM-06 / I1**：`input.Preemptable` 接口；`AcquireAudioForce` 锁外通知被抢占源；手机原子停采（竞态-safe）、半句送达链路（DOM-04）、`preempted` 帧告知 UI；双源并发 e2e 测试。
-- **产品增量（SayAll Windows 对标）**：配置导出/导入（校验先行、失败不动盘、旧档 `.bak-时间戳` 备份、`restart_required` 口径）；一键诊断摘要（`GET /api/diagnostics`：版本/平台/ready/status/ASR 检查，MAC 脱敏 + HOME 路径打码）。
-- **产品增量（SayAll 对标）**：常用语——`text.snippets` 按序兼任短语库，keymap 新增 `phrase1`–`phrase8` 动作（注入 F13–F20 私有信号，与语音键 F24 同通道）；按下即经共享粘贴链路上屏，SSE/字幕播报，不进历史与日志正文；未占用槽位为空操作。UI：短语行标槽位、按键选择器加「常用语」组。
-- **DOM-10**：词典替换改字面插入（`$1` 不再被展开）+ 单遍 alternation 匹配，规则不链式叠加。
-- **DOM-11**：keymap 三处（Apply/ApplyKeymapProfile/SaveKeymapProfile）改"先落盘、后动 helper"，保存失败即闭合失败（daemon 不会跑到不存在的配置上）。
-- **DOM-12（半）**：长按 `value==2` 不再丢——键动作重按、宏重执行（按住连续执行）；死字段待产品决策。
-- **DOM-14**：历史 ID 严格唯一（同 tick 不撞车，Delete 不会误删多条）；`rewrite` 落盘补 `Sync`（掉电不再清空历史）；`Agent.SetHub` 上锁（`-race` 实测修复）。
+1. **SEC-06 残余**：`asr.command` 的 `binary` 守卫不挡解释器——`binary=/bin/sh args=["-c",…]` 仍可过（SEC-06 批只加了属主/可执行位/防篡改检查）。**已定做法**：在既有守卫上加解释器黑名单（按 basename 拒绝 `sh`/`bash`/`dash`/`zsh`/`env`/`busybox`/`python*`/`perl`/`ruby`/`node`），报错点名「ASR 命令必须是识别器本体，不能是解释器」。不做 args 白名单——`exec.Command` 不经 shell，args 里的元字符无害，攻击面全在「binary 是解释器」这一层。测试：表驱动 `TestCommandBinaryRejectsInterpreters`（含 `env` 垫底用例）。
+2. **DOM-12 残余**：`Profile.Keys`/`Profile.Voice` 死字段（`internal/device/device.go:35-36`，全仓零读点）。**已定做法**：两个都删。`Voice` 的音频真相随 ARC-01 进 `core/audiofmt`；`Keys` 没有消费方，键位走的是 keymap profile 而非设备 profile，键位图鉴另有渲染。旧 JSON 里的这两个键由装载层静默丢弃（现状本就不 `DisallowUnknownFields`），兼容无损。将来若要「按设备出键名表」，按 typed 字段重新设计，不复活 map。
 
-### 待做顺序（越靠前越漏得多）
+### 批次顺序（每批 = 一串单缺陷提交，做完推远端再进下一批）
 
-1. **SEC-06 剩余半句**：`asr.command.args` 可夹带任意程序（`binary=/bin/sh args=["-c",...]`）——闸门是管理端 origin（已收紧）；若要再加一层：args 白名单或命令模板，交波 1 决定。
-2. **DOM-07**：手机按键通道同步调 helper（10s），卡住时同一连接的 PCM 也停——把按键注入挪出读循环或异步化。
-3. **DOM-09、DOM-13 与 DOM-12 残余**：输入源身份贯穿字幕与历史（DOM-09）；`Pair` 不消耗配对码/deviceID 撞车/`serveConn` 退出不关 ws（DOM-13，asrTimeout 半句已被 CON-03 解掉）；`Profile.Keys`/`Voice` 接线或删除（DOM-12 残余）。
-4. **产品增量（SayAll 对标）**：已落——只读 MCP「本地 Agent 访问」、26 周热力图、长会话提醒、按键次数统计、收音能力矩阵文档、组合动作 `seq(...)`（键级步骤+延时，按住重放）、按 App 自动切键位（`keymap.app_rules` × WM_CLASS，运行时覆盖；`internal/focus` 仅 X11）、使用统计、配置导出导入、诊断摘要、常用语。未做——常用语浮层面板（桌面 overlay 选句）、组合动作的「打开 App/文本」步骤（需经合成键通道委托 agent）、回眸可选录音、加密诊断日志、首次运行引导（Onboarding）、稳定/预发布双通道。
-5. **波 2（OPS）与波 3（打磨）**：按原清单。
+编号 R* 是执行批次；括号里是本文/架构稿的条目号，提交信息继续引用原编号。为避免撞名：**执行批次一律写作 R1–R10（本节），波次清单与缺陷条目里的（R5）/（R7）等是 architecture.md 的依赖规则编号**。批次在 ARC 与 OPS 之间交错，与 architecture.md §9 的纯波次顺序有一处有意偏离：**R3/R6 两个产品面批次插在骨架批次之间**——手机功能目前从任何文档化入口都打不开（OPS-01），把用户可达性排在全部重构之后代价太高；骨架的保护靠「R2 起新代码不加副本」的纪律与 R9 的 CI 门禁，不靠功能冻结。
+
+- **R1 · 波 0 收官**：上文两条残余 + 本页勾选同步（3 个提交量级）。
+- **R2 · 叶子抽取（ARC-01、ARC-02）**：立 `core` 与 `core/audiofmt`（采样率/帧长/时长上下限/最小可转写时长单点定义，5 处字面量与 `audio`/`atvv` 双常量收拢，architecture.md R5）；`fsutil` 收拢 8 份原子写与 JSONL 追加（带 `Sync`，architecture.md R7）。纯搬运、零行为变化，三件套全绿即过。
+- **R3 · 手机可达（OPS-01、OPS-06）**：管理 UI 开关 `phone.enabled`（落盘 + `restart_required` 口径，对齐配置导出导入的既有语义）；`/readyz` 与 UI「就绪」拆核心必需/可选项两组——口径以「无 root helper 时纯语音键能否听写」为准（见「未验证」第 5 条），真机确认前先按「核心 = agent+ASR+粘贴链，可选 = root helper/BLE」切，手机-only 用户不再永久 503；README 补「配对手机」整节（同局域网要求、自签证书「只接受一次例外」警告、排错链到能力矩阵）。
+- **R4 · 边界守卫合一（ARC-04、ARC-12）**：抽 `edge/netguard`（一份 origin 检查、一份安全头、一份地址整形），`internal/phone` 删 `web` import 与 mime/CSP 段，管理端换用同一套（architecture.md R4）；手机按键白名单里的 `power` 类危险键收进显式配置开关，默认关。
+- **R5 · 状态视图单点（ARC-05）**：`core.StatusView`/`ReadyView`/`DevicesView` 由 runtime 生成、edge 只序列化，替换 agent Status → service → ui → `api.StatusResp` 四段重复断言（architecture.md R6）；`map[string]any` 收敛到真正的自由格式字段（目标 <20 处，集中在 keymap 自定义动作与 LLM 预设参数）。碰面最广的一批，放在 R2 的 `core` 类型就位之后。
+- **R6 · 开箱路径（OPS-02、OPS-03、OPS-04、OPS-05、OPS-08、OPS-12 版本部分）**：release tarball 带 unit 与安装脚本，`make install-user` 依赖 `build`；doctor 不再写配置、示例 MAC 视为未配置、补真实依赖检查（与 `readyz` 共享检查表）且每条给可执行命令；语音键 EACCES 首次失败即记一次可操作日志（含 udev/`input` 组指引）；`Serve` 真正 bind 成功后再播「已启动」；`version` 子命令。
+- **R7 · 组合根与转写链（ARC-06、ARC-07、ARC-10）**：消 `customUI`/`apihandler.SetBackend`/`phoneSpeech` 全局，配对/撤销 payload 挪进 `app/runtime` 可包内测；`main.go` 只剩解析与分派（`runAgent` 275 行与 doctor 进 `app/runtime`+`app/doctor`）；抽 `speech` 包（现 `internal/agent/pipeline.go`），BLE 与手机都只是调用方（I8）。此后新增输入源只需架构稿 §10 第 7 条的三步。
+- **R8 · 子系统内部（ARC-03、ARC-08、ARC-09）**：`internal/config` 变叶子（删对 `device`/`llm`/`asr`/`remap` 的 import，语义校验交回各子系统、runtime 构造时调用，architecture.md R1）；`agent.go` 三处退避合一 + `TransportFactory` 注入使 `connectLoop` 可单测；拆 `internal/phone/server.go`（按 transport/handlers/audio/keys）与 `biz/service/service.go`（按配置/设备/映射/状态）。排在 R7 之后：runtime 成为组合根后，校验搬迁才有落点。
+- **R9 · 机械门禁（ARC-11 + OPS-07、OPS-09、OPS-10、OPS-14）**：CI `go list -deps` 断言 architecture.md R1–R3 违规即红，附 map 计数（<20）与「16k/原子写/JSONL 唯一定义点」grep 门禁；`make idl`/`make openapi` 产物 diff（手写路由进 IDL 或进显式白名单，I10）；CHANGELOG 补 `## 0.2.0` 标题，README/架构图/`external-input-sources.md` 的手机叙事与阶段状态对齐（OPS-09）；配置键文档对齐全量（约 13 个未记载键），未知 JSON 键从静默丢弃改为告警（OPS-10）；`govulncheck`/密钥扫描/lint 进 CI，release 以测试为门；`apache/thrift` 升到受支持版本。
+- **R10 · 可观测性（OPS-12 其余）**：手机面指标补齐（现有 6 个 `xiaomi_remote_*` 里手机相关为零）；日志级别开关；产品项「加密诊断日志」并入——诊断包本地加密（导出口令），解密才见明文，内容继续走既有脱敏口径。
+
+### 发布段（v0.2.0，硬件验收通过前不打 tag）
+
+进发布段门槛：R3（手机可达）与 R6（开箱路径）完成，R9 的文档叙事在场（CHANGELOG 标题、README 手机章节）。然后：
+
+1. 手机硬件验收重跑：配对 → 按住说话 → 焦点出字 + 字幕 + 历史 + 转写回显；遥控器抢占正在录音的手机；断开/截断的半句不丢。
+2. 本页「未验证 / 需要真机」五条逐条销账。
+3. CHANGELOG 写出 `## 0.2.0` 段落（release 工作流已能按标题提取 notes），此时才打 tag。
+
+### 发布之后（v0.3 线）
+
+- **OPS-11 产品更名**（`xiaomi-*` → 用户可见新名）：用户可见变更，必须与 unit/doctor/README/迁移提示同波，单独立项、不进发布关键路径。
+- **产品余量（SayAll 对标收尾）**：常用语浮层面板（桌面 overlay 选句）；组合动作的「打开 App/文本」步骤（经合成键通道委托 agent，等 R7 的 `speech`/`actuate` 边界稳了再做）；回眸可选录音（隐私敏感，先出设计稿再动手）；Onboarding 首次运行引导（等 R6 的 doctor 能给出可执行建议后兑现）；稳定/预发布双通道（release 流水线工作，挂 R9 之后）。
+- **波 3 打磨**照旧：`ui.html` 拆分与设计 token 统一（亮色 `ui.html:10` vs 暗色 `phone.css:1` 两套 `:root`）、真 manifest/SW 或把「PWA」口径降级、a11y、Wayland/非 GNOME、历史保留与脱敏开关、32 位 Pi/riscv 构建面。
+- **macOS** 是兼容不是移植：长线只保证真机验收清单持续通过、粘贴辅助功能提示进 doctor；不承诺 macOS 与 Linux 功能对齐。
 
 硬门禁（不要为了赶进度绕过）：
 
@@ -65,7 +77,7 @@
 - [x] **SEC-03** `phone.tls: "off"` 被允许，非回环地址上配对码与长效令牌走明文（`internal/config/config.go:503-507`、`internal/phone/util.go:80-90`）。动作：装载与保存都拒绝"非回环 + 关闭 TLS"（I6）。**已定做法**：在 `validatePhone` 里判断 `Phone.Addr` 的主机部分，`tls: off` 时只放行 `127.0.0.1`/`localhost`/`::1`（以及回环段 `127.0.0.0/8`），其余（`0.0.0.0`、`[::]`、局域网 IP、主机名）一律报错，错误文案要点名"要么开 `tls: auto`，要么把地址收到回环"；测试写 `TestPhonePlainTLSNeedsLoopback`（表驱动，拒绝列 + 放行列各一组）与 `TestPhoneValidatedEvenWhenDisabled`。`PairingBase` 的 `off → http` 映射保留不动，`internal/phone/util_test.go:13` 已把它钉住——校验层负责堵死非回环明文，不需要改 URL 语义。
 - [x] **SEC-04** 自签叶子证书被签成 CA：`IsCA:true` + `KeyUsageCertSign`、825 天、无 pinning（`internal/phone/tls.go:119-122`），而文档让用户信任它（`docs/design/external-input-sources.md:268`）——信任之后这台 Pi 的 key 就成了通用 CA。动作：去掉 `IsCA`/`CertSign`，寿命缩短，文档同步。**已定做法**：`KeyUsage` 从 `DigitalSignature|CertSign` 收成只留 `DigitalSignature`，`IsCA` 置假（`BasicConstraintsValid` 保持真，让扩展以 CA=FALSE 正常编码），`certValidFor` 从 825 天降到一年量级，`stillValid` 增加"剩余寿命不足阈值即重建"的续期余量（现在只按已过期判断，长跑进程会卡在临期证书上）；`internal/phone/tls_test.go:38-40` 现在断言 `IsCA` 为真，要反过来断言"叶子不是 CA、`KeyUsage == DigitalSignature`"，并把临期重建加进 `TestCertificateManagerRebuildsExpired`。文档同步两处口径：`docs/design/external-input-sources.md:32`（"手机首次访问手动信任"）与 `:268`（"iOS 额外提示安装证书"）要改成"接受一次例外即可，不要把这张证书导入为长期信任的根"；`SECURITY.md` 里的 MitM 窗口说明跟着更新。
 - [x] **SEC-05** 撤销设备不断现有会话：`Store.Revoke` 只清令牌/ticket（`internal/phone/store.go:304-319`），而 `serveConn` 只在 ticket 兑换时鉴权一次（`internal/phone/server.go:279`）→ 被撤销的手机还能继续按键与听写。动作：撤销即丢弃该 device 的活动连接（与 DOM-04/I5 同批做）。**已做**：`Server.Disconnect(deviceID)` 摘注册表 + `hub.Unregister` + 在锁外 `CloseNow()`；`main.go` 的 `PhoneRevoke` 在 Revoke 成功后立刻调用并回 `disconnected` 字段。撤销是有意切断，所以那半句只丢弃、不进转写（不会把文字打到别人眼前）。
-- [x] **SEC-06** 管理端 origin 检查在 `Origin` 为空且无 `Sec-Fetch-Site` 时直接放行（`biz/handler/ui/server.go:126-143`），而 `asr.command.binary` 会原样执行（`internal/asr/command.go:81`）→ 摸到管理 API ≈ 本机 RCE。动作：收紧到"必须有同源证据"（I9），并把 `binary` 路径限定为白名单目录/要求可执行位与属主检查。
+- [x] **SEC-06** 管理端 origin 检查在 `Origin` 为空且无 `Sec-Fetch-Site` 时直接放行（`biz/handler/ui/server.go:126-143`），而 `asr.command.binary` 会原样执行（`internal/asr/command.go:81`）→ 摸到管理 API ≈ 本机 RCE。动作：收紧到"必须有同源证据"（I9），并把 `binary` 路径限定为白名单目录/要求可执行位与属主检查。**残余**：解释器黑名单待 R1 补（见「执行交接」SEC-06 残余）。
 - [x] **SEC-07** 预鉴权 map 无界增长：配对尝试计数的 `ip` 项从不清理、ticket 表从不清理（`internal/phone/store.go:86,246-258,276-286`），任何局域网 TCP 源都能灌。动作：过期清扫 + 条目上限。
 - [x] **SEC-08** 转写任务无并发上限：每句起一个 goroutine 并各持约 960 KB PCM（`internal/phone/server.go:396-436`、`server.go:81`），而 `speech` 用一把锁串行（`internal/agent/pipeline.go:56`）→ 内存增长 + 遥控器听写被饿死。动作：有界队列/在途上限，超出即回 `busy`。**范围追加**：队列要按采集顺序消费——DOM-04 把排空改成同步取、异步跑之后，两句同时在飞时到达 ASR 的先后取决于谁先抢到 `p.mu`，字幕与历史会偶发调换顺序。
 
@@ -93,7 +105,7 @@
 - [x] **DOM-09** 手机句子丢身份：`SourceRef.Kind` 写了却没人读，`main.go:139` 忽略 `meta.Name`/`meta.DeviceID` → 字幕/历史只有 IP；两源上限口径还不同（`config.MaxUtterance` vs `Phone.MaxUtteranceSeconds`），BLE 超限静默截断而手机有 `too_long`（`agent.go:489-496` vs `phone/server.go`）。动作：统一标注与超限语义（I8）。
 - [x] **DOM-10** 字典替换把 `To` 当正则模板（`internal/text/text.go:93`），含 `$1` 的替换文本会展开成不存在的分组；规则还会链式二次改写。动作：字面替换 + 规则不叠加。
 - [x] **DOM-11** keymap 应用与落盘不原子：`biz/service/service.go:138-223` 先动 helper 再 `config.Save`，保存可能失败 → 运行中的守护进程对应一份存不出去的配置。
-- [ ] **DOM-12**（半完成）长按重复已修（`value==2` 触发重按 / 宏重执行，`daemon_inject_test.go` 覆盖）；剩余：`Profile.Keys`/`Voice` 死字段（`device.go:26-37`，JSON 预置表里有数据但无人读）——接线进按键名解析与音频默认值，还是删除，属产品决策。
+- [ ] **DOM-12**（半完成）长按重复已修（`value==2` 触发重按 / 宏重执行，`daemon_inject_test.go` 覆盖）；剩余：`Profile.Keys`/`Voice` 死字段（`device.go:26-37`，JSON 预置表里有数据但无人读）——产品决策已定：**删除**，随 R1 执行，见「执行交接」。
 - [x] **DOM-13** `Store.Pair` 在 `MaxDevices` 拒绝时不消耗配对码（`internal/phone/store.go:199`），也不防 deviceID 撞车（:204）；`serveConn` 退出时不关 ws（`internal/phone/server.go:276-292`）；`asrTimeout` 固定 180 s 而三提供商链可能更久（`pipeline.go:122`）。
 - [x] **DOM-14** `Agent.SetHub` 裸写 `a.hub`（`internal/agent/agent.go:148`）对上周期的读；`history.rewrite` 改名缺 `Sync`（`internal/history/history.go:154-181`），掉电可清空历史，且 ID 用墙上时钟使 `Delete` 可能删多条。
 
