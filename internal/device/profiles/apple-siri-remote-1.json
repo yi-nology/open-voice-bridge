@@ -7,14 +7,5 @@
     "vendor": "004c",
     "product": "026d",
     "names": ["Siri Remote"]
-  },
-  "keys": {
-    "home": "tv",
-    "volumeup": "volup",
-    "volumedown": "voldown",
-    "playpause": "playpause",
-    "siri": "siri",
-    "compose": "menu",
-    "enter": "click"
   }
 }

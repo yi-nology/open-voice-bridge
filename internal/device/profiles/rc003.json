@@ -20,26 +20,6 @@
       "ARN9"
     ]
   },
-  "voice": {
-    "codec": "adpcm",
-    "rate": 16000,
-    "channels": 1
-  },
-  "keys": {
-    "power": "0x66",
-    "voice": "0x3e",
-    "up": "0x52",
-    "down": "0x51",
-    "left": "0x50",
-    "right": "0x4f",
-    "ok": "0x28",
-    "back": "0xf1",
-    "home": "0x4a",
-    "menu": "0x65",
-    "tv": "0x35",
-    "volumeup": "0x80",
-    "volumedown": "0x81"
-  },
   "models": [
     "RC001-MS",
     "RC003-MS",

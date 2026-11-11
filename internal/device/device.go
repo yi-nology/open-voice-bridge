@@ -18,22 +18,14 @@ type Match struct {
 	Names   []string `json:"names"`
 }
 
-type VoiceSpec struct {
-	Codec    string `json:"codec"`
-	Rate     int    `json:"rate"`
-	Channels int    `json:"channels"`
-}
-
 type Profile struct {
-	ID           string            `json:"id"`
-	Name         string            `json:"name"`
-	Transport    string            `json:"transport"`
-	Capabilities []string          `json:"capabilities"`
-	Models       []string          `json:"models,omitempty"`
-	Aliases      []string          `json:"aliases,omitempty"`
-	Match        Match             `json:"match"`
-	Voice        *VoiceSpec        `json:"voice,omitempty"`
-	Keys         map[string]string `json:"keys,omitempty"`
+	ID           string   `json:"id"`
+	Name         string   `json:"name"`
+	Transport    string   `json:"transport"`
+	Capabilities []string `json:"capabilities"`
+	Models       []string `json:"models,omitempty"`
+	Aliases      []string `json:"aliases,omitempty"`
+	Match        Match    `json:"match"`
 }
 
 func (p Profile) HasCapability(capability string) bool {

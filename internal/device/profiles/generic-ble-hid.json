@@ -5,22 +5,5 @@
   "capabilities": [
     "keys"
   ],
-  "match": {},
-  "keys": {
-    "power": "0x66",
-    "ok": "0x28",
-    "back": "0xf1",
-    "home": "0x4a",
-    "menu": "0x65",
-    "up": "0x52",
-    "down": "0x51",
-    "left": "0x50",
-    "right": "0x4f",
-    "playpause": "0xcd",
-    "nextsong": "0xb5",
-    "previoussong": "0xb6",
-    "mute": "0xe2",
-    "volumeup": "0x80",
-    "volumedown": "0x81"
-  }
+  "match": {}
 }
