@@ -17,6 +17,7 @@ import (
 	"github.com/oekit/logx"
 	oeerrors "github.com/oekit/pkg/errors"
 
+	"github.com/yi-nology/open-voice-bridge/internal/appconfig"
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/bluez"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
@@ -147,7 +148,7 @@ func (s *Service) Apply(ctx context.Context, mapping map[string]string) (map[str
 	}
 	s.cfg.Keymap.Profiles["custom"] = remap.MergeDefaults(mapping)
 	s.cfg.Keymap.Profile = "custom"
-	saveErr := config.Save(s.path, s.cfg)
+	saveErr := appconfig.Save(s.path, s.cfg)
 	s.cfgMu.Unlock()
 	if saveErr != nil {
 		return nil, saveErr
@@ -177,7 +178,7 @@ func (s *Service) SwitchASR(ctx context.Context, name string) error {
 		return err
 	}
 	s.cfg.ASR.Provider = name
-	saveErr := config.Save(s.path, s.cfg)
+	saveErr := appconfig.Save(s.path, s.cfg)
 	if saveErr == nil {
 		s.asrErr = nil
 	}
@@ -214,7 +215,7 @@ func (s *Service) ApplyKeymapProfile(ctx context.Context, name string) (map[stri
 	}
 	s.cfgMu.Lock()
 	s.cfg.Keymap.Profile = name
-	saveErr := config.Save(s.path, s.cfg)
+	saveErr := appconfig.Save(s.path, s.cfg)
 	s.cfgMu.Unlock()
 	if saveErr != nil {
 		return nil, saveErr
@@ -240,7 +241,7 @@ func (s *Service) SaveKeymapProfile(ctx context.Context, name string, mapping ma
 	}
 	s.cfg.Keymap.Profiles[name] = cleaned
 	s.cfg.Keymap.Profile = name
-	saveErr := config.Save(s.path, s.cfg)
+	saveErr := appconfig.Save(s.path, s.cfg)
 	s.cfgMu.Unlock()
 	if saveErr != nil {
 		return nil, saveErr
@@ -262,7 +263,7 @@ func (s *Service) DeleteKeymapProfile(ctx context.Context, name string) error {
 		return oeerrors.Errorf("unknown keymap profile %q", name)
 	}
 	delete(s.cfg.Keymap.Profiles, name)
-	return config.Save(s.path, s.cfg)
+	return appconfig.Save(s.path, s.cfg)
 }
 
 func (s *Service) ASRConfig(ctx context.Context) map[string]any {
@@ -288,7 +289,7 @@ func (s *Service) UpdateASRConfig(ctx context.Context, next asr.Config) error {
 	s.cfgMu.Lock()
 	previous := s.cfg.ASR
 	s.cfg.ASR = next
-	saveErr := config.Save(s.path, s.cfg)
+	saveErr := appconfig.Save(s.path, s.cfg)
 	if saveErr != nil {
 		s.cfg.ASR = previous
 	} else {
@@ -513,7 +514,7 @@ func (s *Service) SelectDevice(ctx context.Context, id string) error {
 	}
 	s.cfg.ActiveDevice = id
 	s.cfg.Address = item.Address
-	saveErr := config.Save(s.path, s.cfg)
+	saveErr := appconfig.Save(s.path, s.cfg)
 	s.cfgMu.Unlock()
 	if saveErr != nil {
 		return saveErr
@@ -540,7 +541,7 @@ func (s *Service) SetDeviceEnabled(ctx context.Context, id string, enabled bool)
 		return oeerrors.Errorf("select another device before disabling %q", id)
 	}
 	s.cfg.Devices[index].Enabled = enabled
-	saveErr := config.Save(s.path, s.cfg)
+	saveErr := appconfig.Save(s.path, s.cfg)
 	s.cfgMu.Unlock()
 	if saveErr == nil {
 		s.syncDevicesEventually()
@@ -613,7 +614,7 @@ func (s *Service) SaveDevice(ctx context.Context, item config.DeviceConfig) erro
 	if !found {
 		s.cfg.Devices = append(s.cfg.Devices, item)
 	}
-	saveErr := config.Save(s.path, s.cfg)
+	saveErr := appconfig.Save(s.path, s.cfg)
 	s.cfgMu.Unlock()
 	if saveErr == nil {
 		s.syncDevicesEventually()
@@ -644,7 +645,7 @@ func (s *Service) DeleteDevice(ctx context.Context, id string) error {
 		s.cfgMu.Unlock()
 		return oeerrors.Errorf("unknown device %q", id)
 	}
-	saveErr := config.Save(s.path, s.cfg)
+	saveErr := appconfig.Save(s.path, s.cfg)
 	s.cfgMu.Unlock()
 	if saveErr == nil {
 		s.syncDevicesEventually()
@@ -674,7 +675,7 @@ func (s *Service) UpdateTextConfig(ctx context.Context, next text.Config) error 
 	s.cfgMu.Lock()
 	previous := s.cfg.Text
 	s.cfg.Text = next
-	saveErr := config.Save(s.path, s.cfg)
+	saveErr := appconfig.Save(s.path, s.cfg)
 	if saveErr != nil {
 		s.cfg.Text = previous
 	}
@@ -711,7 +712,7 @@ func (s *Service) SaveLLMKey(ctx context.Context, key string) error {
 		}
 		path = filepath.Join(home, ".config", "xiaomi-remote", "llm.key")
 		s.cfg.LLM.APIKeyFile = path
-		if err := config.Save(s.path, s.cfg); err != nil {
+		if err := appconfig.Save(s.path, s.cfg); err != nil {
 			s.cfgMu.Unlock()
 			return err
 		}
@@ -731,7 +732,7 @@ func (s *Service) UpdateLLMConfig(ctx context.Context, next llm.Config) error {
 	s.cfgMu.Lock()
 	previous := s.cfg.LLM
 	s.cfg.LLM = next
-	saveErr := config.Save(s.path, s.cfg)
+	saveErr := appconfig.Save(s.path, s.cfg)
 	if saveErr != nil {
 		s.cfg.LLM = previous
 	}

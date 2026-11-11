@@ -13,7 +13,6 @@ import (
 
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
-	"github.com/yi-nology/open-voice-bridge/internal/device"
 	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
 	"github.com/yi-nology/open-voice-bridge/internal/remap"
@@ -186,16 +185,6 @@ func (c *Config) normalizeDevices() {
 		if item.Profile == "" {
 			item.Profile = "rc003"
 		}
-		if profile, ok := device.Builtin().Get(item.Profile); ok {
-			item.Profile = profile.ID
-		}
-		if item.Name == "" {
-			if profile, ok := device.Builtin().Get(item.Profile); ok {
-				item.Name = profile.Name
-			} else {
-				item.Name = item.ID
-			}
-		}
 		if seen[item.ID] {
 			item.ID = item.ID + "-" + strconv.Itoa(index+1)
 		}
@@ -310,14 +299,6 @@ func (c *Config) normalizeLLM() {
 	if c.LLM.Provider == "" {
 		c.LLM.Provider = "minimax"
 	}
-	if preset, ok := llm.PresetByID(c.LLM.Provider); ok {
-		if c.LLM.BaseURL == "" {
-			c.LLM.BaseURL = preset.BaseURL
-		}
-		if c.LLM.Model == "" && preset.Model != "" {
-			c.LLM.Model = preset.Model
-		}
-	}
 	if c.LLM.Mode == "" {
 		c.LLM.Mode = "cleanup"
 	}
@@ -428,12 +409,6 @@ func (c Config) Validate() error {
 	if strings.TrimSpace(c.HelperSocket) == "" {
 		return oeerrors.Errorf("helper_socket is required")
 	}
-	if err := asr.Validate(c.ASR); err != nil {
-		return oeerrors.Wrap(err, "asr")
-	}
-	if err := text.Validate(c.Text); err != nil {
-		return oeerrors.Wrap(err, "text")
-	}
 	if c.LLM.Enabled {
 		if strings.TrimSpace(c.LLM.BaseURL) == "" {
 			return oeerrors.New("llm.base_url is required when enabled")
@@ -445,12 +420,9 @@ func (c Config) Validate() error {
 	if len(c.Keymap.Profiles) == 0 {
 		return oeerrors.New("keymap profiles are empty")
 	}
-	for name, mapping := range c.Keymap.Profiles {
+	for name := range c.Keymap.Profiles {
 		if strings.TrimSpace(name) == "" {
 			return oeerrors.New("keymap profile name is empty")
-		}
-		if err := remap.Validate(mapping); err != nil {
-			return oeerrors.Wrap(err, "keymap profile "+name)
 		}
 	}
 	if _, ok := c.Keymap.Profiles[c.Keymap.Profile]; !ok {
@@ -478,9 +450,6 @@ func (c Config) Validate() error {
 		seenDevices[item.ID] = true
 		if !macPattern.MatchString(item.Address) {
 			return oeerrors.Errorf("device %q: invalid Bluetooth address %q", item.ID, item.Address)
-		}
-		if _, ok := device.Builtin().Get(item.Profile); !ok {
-			return oeerrors.Errorf("device %q: unknown profile %q", item.ID, item.Profile)
 		}
 	}
 	if !seenDevices[c.ActiveDevice] {

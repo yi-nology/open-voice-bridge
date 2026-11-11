@@ -10,6 +10,7 @@ import (
 
 	oeerrors "github.com/oekit/pkg/errors"
 
+	"github.com/yi-nology/open-voice-bridge/internal/appconfig"
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/redact"
@@ -38,10 +39,10 @@ func (s *Service) ImportConfig(data []byte) error {
 	}
 	// Save normalises and validates before writing: a rejected document
 	// leaves the previous file exactly as it was.
-	if err := config.Save(s.path, incoming); err != nil {
+	if err := appconfig.Save(s.path, incoming); err != nil {
 		return err
 	}
-	fresh, err := config.Load(s.path)
+	fresh, err := appconfig.Load(s.path)
 	if err != nil {
 		return err
 	}

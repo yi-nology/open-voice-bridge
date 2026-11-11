@@ -26,6 +26,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/biz/handler/ui"
 	"github.com/yi-nology/open-voice-bridge/biz/service"
 	"github.com/yi-nology/open-voice-bridge/internal/agent"
+	"github.com/yi-nology/open-voice-bridge/internal/appconfig"
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/audio"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
@@ -198,7 +199,7 @@ func runAgent(args []string, stderr io.Writer) int {
 	hertzLogger := logx.NewSlogLogger("hertz")
 	hertzLogger.SetLevel(logx.LevelWarn)
 	hlog.SetLogger(ekithertz.NewLogger(hertzLogger))
-	cfg, err := config.Load(*path)
+	cfg, err := appconfig.Load(*path)
 	if err != nil {
 		logger.Error("load config", "err", err)
 		return 1
@@ -608,7 +609,7 @@ func runDoctor(args []string, stdout, stderr io.Writer) int {
 		return code
 	}
 	logger := newLogger("xiaomi-remote")
-	cfg, err := config.Load(*path)
+	cfg, err := appconfig.Load(*path)
 	if err != nil {
 		logger.Error("load config", "err", err)
 		return 1
