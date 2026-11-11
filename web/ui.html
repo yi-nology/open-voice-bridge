@@ -1703,6 +1703,11 @@ function remoteConnectedOf(status) {
 }
 
 function mapStateOf(status) {
+  if (status.platform === "darwin") {
+    // evdev/uinput is Linux-only; on macOS the remote's own HID drives the
+    // keys, so "mapping unavailable" is the normal state, not a fault.
+    return status.capturing ? "捕获中" : "原生 HID";
+  }
   return status.capturing ? "捕获中"
     : status.keyd_active ? "映射运行中"
     : status.helper_error ? "映射不可用"
@@ -3384,7 +3389,9 @@ function renderQuickstart(status) {
   const desc = panel.querySelector(".panel-head p");
   const toggle = document.getElementById("quickstart-toggle");
   const dismiss = document.getElementById("quickstart-dismiss");
-  const remoteReady = !!(status.remote_present && status.ble_connected);
+  // The helper's remote_present is Linux-only proof; BLE connectivity is the
+  // portable signal, so the checklist accepts either.
+  const remoteReady = remoteConnectedOf(status);
   // On macOS key remapping has no equivalent primitive and there is no
   // virtual mic (docs/design/macos-compat.md); both items are satisfied by
   // design so the checklist measures what the platform actually promises.
