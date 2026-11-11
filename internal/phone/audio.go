@@ -5,10 +5,6 @@ import (
 	"sync"
 )
 
-// sampleRate is the PCM rate the phone page sends: 16 kHz mono, identical to
-// the BLE path so one ASR engine and one minimum-length rule cover both.
-const sampleRate = 16000
-
 // maxFrameSamples bounds a single binary frame. 3840 samples is 240 ms, well
 // above the 20 ms the page sends, so it only catches runaway or hostile
 // clients.

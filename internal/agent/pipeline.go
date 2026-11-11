@@ -9,7 +9,7 @@ import (
 	oeerrors "github.com/oekit/pkg/errors"
 
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
-	"github.com/yi-nology/open-voice-bridge/internal/atvv"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
@@ -42,12 +42,12 @@ func (u Utterance) Rate() int {
 	if u.SampleRate > 0 {
 		return u.SampleRate
 	}
-	return atvv.SampleRate
+	return core.SampleRate
 }
 
 // MinSamples is the shortest utterance worth a request: a tap shorter than
 // 250 ms has never carried a word.
-func (u Utterance) MinSamples() int { return u.Rate() / 4 }
+func (u Utterance) MinSamples() int { return core.MinUtterance(u.Rate()) }
 
 // SpeechPipeline is the single transcription chain used by every input source:
 // mono PCM to ASR, then text rules and LLM rewrite, then a Transcript

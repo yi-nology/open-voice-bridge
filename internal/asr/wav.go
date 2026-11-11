@@ -2,12 +2,14 @@ package asr
 
 import (
 	"encoding/binary"
+
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 // WAV encodes mono 16-bit PCM with a canonical 44-byte RIFF header.
 func WAV(samples []int16, rate int) []byte {
 	if rate <= 0 {
-		rate = 16000
+		rate = core.SampleRate
 	}
 	dataSize := len(samples) * 2
 	data := make([]byte, 44+dataSize)

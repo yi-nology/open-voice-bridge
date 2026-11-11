@@ -3,10 +3,12 @@ package phone
 import (
 	"encoding/binary"
 	"testing"
+
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 func TestUtteranceBufferDecodesLittleEndianPCM(t *testing.T) {
-	b := newUtteranceBuffer(sampleRate)
+	b := newUtteranceBuffer(core.SampleRate)
 	pcm := make([]byte, 6)
 	first, second, third := int16(1234), int16(-2), int16(32767)
 	binary.LittleEndian.PutUint16(pcm[0:2], uint16(first))
@@ -33,7 +35,7 @@ func TestUtteranceBufferDecodesLittleEndianPCM(t *testing.T) {
 }
 
 func TestUtteranceBufferRejectsMalformedFrames(t *testing.T) {
-	b := newUtteranceBuffer(sampleRate)
+	b := newUtteranceBuffer(core.SampleRate)
 	if ok, _ := b.append(nil); ok {
 		t.Fatal("empty frame must be rejected")
 	}
@@ -70,7 +72,7 @@ func TestUtteranceBufferTruncatesAtCap(t *testing.T) {
 }
 
 func TestUtteranceBufferIsSafeForConcurrentAppend(t *testing.T) {
-	b := newUtteranceBuffer(sampleRate * 10)
+	b := newUtteranceBuffer(core.SampleRate * 10)
 	frame := make([]byte, 640) // one 20 ms frame
 	done := make(chan struct{})
 	for i := 0; i < 8; i++ {

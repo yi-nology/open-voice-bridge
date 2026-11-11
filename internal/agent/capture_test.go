@@ -8,6 +8,7 @@ import (
 
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/atvv"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
 )
 
@@ -72,15 +73,15 @@ func TestInterleavedCapturesBecomeSeparateUtterances(t *testing.T) {
 	a.session = atvv.NewSession()
 
 	a.handleControl([]byte{atvv.OpAudioStart})
-	appendDictation(a, atvv.SampleRate, 0x11)
+	appendDictation(a, core.SampleRate, 0x11)
 	a.handleControl([]byte{atvv.OpAudioStop})
 
 	a.handleControl([]byte{atvv.OpAudioStart})
-	appendDictation(a, 2*atvv.SampleRate, 0x22)
+	appendDictation(a, 2*core.SampleRate, 0x22)
 	a.handleControl([]byte{atvv.OpAudioStop})
 
 	heard := engine.collect(t, 2)
-	short, long := engine.pick(t, heard, atvv.SampleRate), engine.pick(t, heard, 2*atvv.SampleRate)
+	short, long := engine.pick(t, heard, core.SampleRate), engine.pick(t, heard, 2*core.SampleRate)
 	engine.assertSilence(t)
 
 	// The reset used to rewind the same backing array and the copy used to run
@@ -92,8 +93,8 @@ func TestInterleavedCapturesBecomeSeparateUtterances(t *testing.T) {
 	if err := homogeneous(long, 0x22); err != nil {
 		t.Fatalf("second capture: %v", err)
 	}
-	if short.SampleRate != atvv.SampleRate || long.SampleRate != atvv.SampleRate {
-		t.Fatalf("rate = %d/%d, want %d", short.SampleRate, long.SampleRate, atvv.SampleRate)
+	if short.SampleRate != core.SampleRate || long.SampleRate != core.SampleRate {
+		t.Fatalf("rate = %d/%d, want %d", short.SampleRate, long.SampleRate, core.SampleRate)
 	}
 }
 
@@ -154,7 +155,7 @@ func TestDuplicateStartClosesTheOpenCapture(t *testing.T) {
 	a.handleControl([]byte{atvv.OpAudioStart})
 
 	utterance := engine.next(t)
-	if len(utterance.Samples) != atvv.SampleRate {
+	if len(utterance.Samples) != core.SampleRate {
 		t.Fatalf("samples = %d, want the buffered second", len(utterance.Samples))
 	}
 	if owner := hub.AudioOwner(); owner != input.RemoteID {
@@ -177,13 +178,13 @@ func TestDrainedSamplesSurviveTheNextCapture(t *testing.T) {
 	a.session = atvv.NewSession()
 
 	a.handleControl([]byte{atvv.OpAudioStart})
-	const filled = atvv.SampleRate / 2
+	const filled = core.SampleRate / 2
 	appendDictation(a, filled, 0x11)
 	a.handleControl([]byte{atvv.OpAudioStop})
 
 	// The request is blocked inside ASR while the next capture runs.
 	a.handleControl([]byte{atvv.OpAudioStart})
-	appendDictation(a, atvv.SampleRate, 0x22)
+	appendDictation(a, core.SampleRate, 0x22)
 	close(engine.gate)
 
 	utterance := engine.next(t)
@@ -207,11 +208,11 @@ func TestDisconnectTranscribesTheOpenCapture(t *testing.T) {
 	a.session = atvv.NewSession()
 
 	a.handleControl([]byte{atvv.OpAudioStart})
-	appendDictation(a, atvv.SampleRate/2, 0x11)
+	appendDictation(a, core.SampleRate/2, 0x11)
 	a.markDisconnected()
 
 	utterance := engine.next(t)
-	if len(utterance.Samples) != atvv.SampleRate/2 {
+	if len(utterance.Samples) != core.SampleRate/2 {
 		t.Fatalf("samples = %d, want the half second captured before the drop", len(utterance.Samples))
 	}
 	if owner := hub.AudioOwner(); owner != "" {
@@ -230,7 +231,7 @@ func TestDisconnectDuringShutdownDropsTheCapture(t *testing.T) {
 	a.session = atvv.NewSession()
 
 	a.handleControl([]byte{atvv.OpAudioStart})
-	appendDictation(a, atvv.SampleRate/2, 0x11)
+	appendDictation(a, core.SampleRate/2, 0x11)
 	a.markDisconnected()
 
 	engine.assertSilence(t)
@@ -263,7 +264,7 @@ func TestSubSecondUtteranceIsDropped(t *testing.T) {
 	a.session = atvv.NewSession()
 
 	a.handleControl([]byte{atvv.OpAudioStart})
-	appendDictation(a, atvv.SampleRate/8, 0x01)
+	appendDictation(a, core.SampleRate/8, 0x01)
 	a.handleControl([]byte{atvv.OpAudioStop})
 
 	engine.assertSilence(t)

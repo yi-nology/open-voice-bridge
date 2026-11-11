@@ -15,6 +15,7 @@ import (
 	"github.com/oekit/concurrency/async"
 	"github.com/oekit/logx"
 
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
 	"github.com/yi-nology/open-voice-bridge/web"
 )
@@ -100,7 +101,7 @@ func (a *activeConn) send(ctx context.Context, payload any) {
 func NewServer(store *Store, injector *KeyInjector, hub *input.Hub, cfg ServerConfig) *Server {
 	maxUtterance := cfg.MaxUtteranceSeconds
 	if maxUtterance <= 0 {
-		maxUtterance = 30
+		maxUtterance = core.DefaultUtteranceSeconds
 	}
 	s := &Server{
 		store:        store,
@@ -108,7 +109,7 @@ func NewServer(store *Store, injector *KeyInjector, hub *input.Hub, cfg ServerCo
 		hub:          hub,
 		cfg:          cfg,
 		transcriber:  cfg.Transcriber,
-		maxSamples:   maxUtterance * sampleRate,
+		maxSamples:   core.Cap(maxUtterance),
 		queue:        newUtteranceQueue(cfg.MaxQueuedUtterances),
 		idleTimeout:  cfg.WSIdleTimeout,
 		pingInterval: defaultWSPingInterval,
@@ -323,7 +324,7 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 		"device_id":         deviceID,
 		"name":              name,
 		"mic_available":     s.transcriber != nil,
-		"max_audio_seconds": s.maxSamples / sampleRate,
+		"max_audio_seconds": s.maxSamples / core.SampleRate,
 	})
 	s.serveConn(ctx, conn, active)
 }
@@ -472,7 +473,7 @@ func (s *Server) handleStart(ctx context.Context, active *activeConn, msg contro
 		active.send(ctx, errorFrame("bad_format", "only pcm16 is supported"))
 		return
 	}
-	if msg.Rate != 0 && msg.Rate != sampleRate {
+	if msg.Rate != 0 && msg.Rate != core.SampleRate {
 		active.send(ctx, errorFrame("bad_format", "audio must be 16 kHz"))
 		return
 	}
@@ -634,7 +635,7 @@ func utteranceMeta(active *activeConn) UtteranceMeta {
 		DeviceID:   active.deviceID,
 		Name:       active.source.Name(),
 		Address:    active.source.Address(),
-		SampleRate: sampleRate,
+		SampleRate: core.SampleRate,
 	}
 }
 

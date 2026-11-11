@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/yi-nology/open-voice-bridge/internal/atvv"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 // CommandConfig adapts any local ASR CLI that accepts a WAV path and prints
@@ -50,9 +51,9 @@ func (c *Command) Close(ctx context.Context) error { return nil }
 func (c *Command) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 	rate := audio.SampleRate
 	if rate == 0 {
-		rate = atvv.SampleRate
+		rate = core.SampleRate
 	}
-	if len(audio.Samples) < rate/4 || atvv.Peak(audio.Samples) < 400 {
+	if len(audio.Samples) < core.MinUtterance(rate) || atvv.Peak(audio.Samples) < 400 {
 		return Result{}, ErrNoSpeech
 	}
 	dir, err := os.MkdirTemp("", "xiaomi-asr-")

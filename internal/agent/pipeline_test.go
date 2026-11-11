@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
-	"github.com/yi-nology/open-voice-bridge/internal/atvv"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
@@ -50,12 +50,12 @@ func buildPipeline(engine asr.Engine, rules *text.Rules, probe *pipelineProbe, p
 	}
 }
 
-func oneSecond() []int16 { return make([]int16, atvv.SampleRate) }
+func oneSecond() []int16 { return make([]int16, core.SampleRate) }
 
 // utterance builds a 16 kHz capture, which is what every test here pretends the
 // source negotiated.
 func utterance(samples []int16, ref SourceRef) Utterance {
-	return Utterance{Samples: samples, SampleRate: atvv.SampleRate, Ref: ref}
+	return Utterance{Samples: samples, SampleRate: core.SampleRate, Ref: ref}
 }
 
 func TestPipelineTranscribeStampsSourceAndAppliesDictionary(t *testing.T) {
@@ -107,7 +107,7 @@ func TestPipelineTooShortSkipsEngine(t *testing.T) {
 	engine := &fakeEngine{result: asr.Result{Text: "hi"}}
 	probe := &pipelineProbe{}
 	pipeline := buildPipeline(engine, nil, probe, false)
-	if _, ok := pipeline.Transcribe(context.Background(), utterance(make([]int16, atvv.SampleRate/8), SourceRef{})); ok {
+	if _, ok := pipeline.Transcribe(context.Background(), utterance(make([]int16, core.SampleRate/8), SourceRef{})); ok {
 		t.Fatal("short audio must not produce transcript")
 	}
 	if engine.calls != 0 {
@@ -214,7 +214,7 @@ func TestTranscribeBudgetScalesWithAudio(t *testing.T) {
 	if empty != 20*time.Second {
 		t.Fatalf("empty audio budget = %v, want the 20s floor", empty)
 	}
-	long := p.budgetFor(utterance(make([]int16, 40*atvv.SampleRate), SourceRef{}))
+	long := p.budgetFor(utterance(make([]int16, 40*core.SampleRate), SourceRef{}))
 	if long != 180*time.Second {
 		t.Fatalf("40s audio budget = %v, want the 180s cap", long)
 	}

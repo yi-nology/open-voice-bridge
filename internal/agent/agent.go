@@ -18,6 +18,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/audio"
 	"github.com/yi-nology/open-voice-bridge/internal/bluez"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
 	"github.com/yi-nology/open-voice-bridge/internal/keys"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
@@ -96,7 +97,7 @@ func New(cfg config.Config, engine asr.Engine, sink audio.Sink) *Agent {
 		watcher:     keys.NewF24Watcher(),
 		reconnectCh: make(chan struct{}, 1),
 		transcripts: make(chan Transcript, 16),
-		maxSample:   cfg.MaxUtterance * atvv.SampleRate,
+		maxSample:   core.Cap(cfg.MaxUtterance),
 	}
 	a.pipeline = a.newPipeline()
 	return a
@@ -465,7 +466,7 @@ func (a *Agent) handleControl(data []byte) {
 				"frame", caps.FrameSize,
 				"rate", caps.SampleRate,
 			)
-			if caps.SampleRate != atvv.SampleRate {
+			if caps.SampleRate != core.SampleRate {
 				// The decoder is rate-agnostic, but cloud providers are not:
 				// an 8 kHz remote will be refused by MiMo instead of being
 				// silently transcribed as sped-up speech (DOM-01).
@@ -601,7 +602,7 @@ func (a *Agent) currentSampleRate() int {
 	session := a.session
 	a.mu.Unlock()
 	if session == nil {
-		return atvv.SampleRate
+		return core.SampleRate
 	}
 	return session.SampleRate()
 }

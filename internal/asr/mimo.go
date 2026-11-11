@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/yi-nology/open-voice-bridge/internal/atvv"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/redact"
 )
 
@@ -86,12 +87,12 @@ func (m *Mimo) Close(ctx context.Context) error { return nil }
 func (m *Mimo) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 	rate := audio.SampleRate
 	if rate == 0 {
-		rate = atvv.SampleRate
+		rate = core.SampleRate
 	}
-	if rate != atvv.SampleRate {
+	if rate != core.SampleRate {
 		return Result{}, oeerrors.Errorf("MiMo requires 16 kHz audio, got %d", rate)
 	}
-	if len(audio.Samples) < rate/4 || atvv.Peak(audio.Samples) < 400 {
+	if len(audio.Samples) < core.MinUtterance(rate) || atvv.Peak(audio.Samples) < 400 {
 		return Result{}, ErrNoSpeech
 	}
 	encoded := base64.StdEncoding.EncodeToString(WAV(audio.Samples, rate))

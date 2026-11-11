@@ -5,6 +5,8 @@ package audio
 import (
 	"context"
 	oeerrors "github.com/oekit/pkg/errors"
+
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 var ErrUnsupported = oeerrors.New("audio backend not implemented on this platform")
@@ -31,7 +33,7 @@ func New(cfg Config) (Sink, error) {
 		cfg.SourceName = "xiaomi_mic"
 	}
 	if cfg.Rate == 0 {
-		cfg.Rate = 16000
+		cfg.Rate = core.SampleRate
 	}
 	return newSink(cfg)
 }

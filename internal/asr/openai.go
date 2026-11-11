@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/yi-nology/open-voice-bridge/internal/atvv"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/redact"
 )
 
@@ -63,9 +64,9 @@ func (o *OpenAI) Close(ctx context.Context) error { return nil }
 func (o *OpenAI) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 	rate := audio.SampleRate
 	if rate == 0 {
-		rate = atvv.SampleRate
+		rate = core.SampleRate
 	}
-	if len(audio.Samples) < rate/4 || atvv.Peak(audio.Samples) < 400 {
+	if len(audio.Samples) < core.MinUtterance(rate) || atvv.Peak(audio.Samples) < 400 {
 		return Result{}, ErrNoSpeech
 	}
 

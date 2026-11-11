@@ -1,6 +1,10 @@
 package atvv
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/yi-nology/open-voice-bridge/internal/core"
+)
 
 func TestParseCaps(t *testing.T) {
 	caps, ok := ParseCaps([]byte{0x0B, 0x01, 0x00, 0x02, 0x03, 0x00, 0x78, 0x00, 0x00})
@@ -40,8 +44,8 @@ func TestParseCapsRejectsUnusableFrameSize(t *testing.T) {
 		if !ok {
 			t.Fatalf("frame %d: caps not parsed", frame)
 		}
-		if caps.FrameSize != DefaultFrame {
-			t.Fatalf("frame %d: FrameSize = %d, want the default %d", frame, caps.FrameSize, DefaultFrame)
+		if caps.FrameSize != core.FrameBytes {
+			t.Fatalf("frame %d: FrameSize = %d, want the default %d", frame, caps.FrameSize, core.FrameBytes)
 		}
 	}
 	caps, ok := ParseCaps([]byte{0x0B, 0x01, 0x00, 0x02, 0x03, 0x01, 0x90, 0x00, 0x00})
@@ -54,8 +58,8 @@ func TestSessionSampleRateFollowsCaps(t *testing.T) {
 	// An 8 kHz device must not be reported as 16 kHz: providers and the WAV
 	// header take that label as truth (DOM-01).
 	session := NewSession()
-	if session.SampleRate() != SampleRate {
-		t.Fatalf("before caps = %d, want %d", session.SampleRate(), SampleRate)
+	if session.SampleRate() != core.SampleRate {
+		t.Fatalf("before caps = %d, want %d", session.SampleRate(), core.SampleRate)
 	}
 	payload := []byte{0x0B, 0x01, 0x00, 0x01, 0x00, 0x00, 0x78, 0x00, 0x00}
 	if event := session.HandleControl(payload); event != EventCaps {
@@ -68,7 +72,7 @@ func TestSessionSampleRateFollowsCaps(t *testing.T) {
 
 func TestFrameAccumulatorResyncsOnUnframeableInput(t *testing.T) {
 	var acc FrameAccumulator
-	if frames := acc.Append(make([]byte, maxPending+1), DefaultFrame); frames != nil {
+	if frames := acc.Append(make([]byte, maxPending+1), core.FrameBytes); frames != nil {
 		t.Fatalf("oversized input must be discarded, got %d frames", len(frames))
 	}
 	if acc.Dropped() != 1 {
@@ -77,7 +81,7 @@ func TestFrameAccumulatorResyncsOnUnframeableInput(t *testing.T) {
 	if len(acc.pending) != 0 {
 		t.Fatalf("resync must release the buffer, %d bytes held", len(acc.pending))
 	}
-	frames := acc.Append(make([]byte, DefaultFrame), DefaultFrame)
+	frames := acc.Append(make([]byte, core.FrameBytes), core.FrameBytes)
 	if len(frames) != 1 || acc.Dropped() != 1 {
 		t.Fatalf("frames = %d, dropped = %d", len(frames), acc.Dropped())
 	}

@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
-	"github.com/yi-nology/open-voice-bridge/internal/atvv"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
 
@@ -31,7 +31,7 @@ func newFinalizeAgent(engine asr.Engine) *Agent {
 }
 
 func fillDictation(a *Agent, seconds int) {
-	a.dictation = make([]int16, seconds*atvv.SampleRate)
+	a.dictation = make([]int16, seconds*core.SampleRate)
 }
 
 func assertNoTranscript(t *testing.T, a *Agent) {
@@ -109,7 +109,7 @@ func TestFinalizeNoSpeech(t *testing.T) {
 func TestFinalizeShortAudioSkipsASR(t *testing.T) {
 	engine := &fakeEngine{result: asr.Result{Text: "hi", Provider: "fake"}}
 	a := newFinalizeAgent(engine)
-	a.dictation = make([]int16, atvv.SampleRate/8)
+	a.dictation = make([]int16, core.SampleRate/8)
 	a.finalize()
 	assertNoTranscript(t, a)
 	if engine.calls != 0 {

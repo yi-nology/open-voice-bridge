@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/device"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
 	"github.com/yi-nology/open-voice-bridge/internal/remap"
@@ -128,7 +129,7 @@ func Default() Config {
 		UIAddr:       "127.0.0.1:8787",
 		HelperSocket: "/run/xiaomi-remote-helper.sock",
 		KeydConfig:   "/etc/keyd/xiaomi.conf",
-		MaxUtterance: 30,
+		MaxUtterance: core.DefaultUtteranceSeconds,
 		PasteEnabled: true,
 	}
 	cfg.ASR = asr.DefaultConfig()
@@ -149,7 +150,7 @@ func Default() Config {
 		TLS:                 "auto",
 		PairCodeTTLSeconds:  300,
 		MaxClients:          4,
-		MaxUtteranceSeconds: 30,
+		MaxUtteranceSeconds: core.DefaultUtteranceSeconds,
 	}
 	cfg.Devices = []DeviceConfig{{
 		ID:      "rc003",
@@ -338,7 +339,7 @@ func (c *Config) normalizePhone() {
 		c.Phone.MaxClients = 4
 	}
 	if c.Phone.MaxUtteranceSeconds == 0 {
-		c.Phone.MaxUtteranceSeconds = 30
+		c.Phone.MaxUtteranceSeconds = core.DefaultUtteranceSeconds
 	}
 }
 
@@ -420,8 +421,8 @@ func (c Config) Validate() error {
 	if value, err := strconv.Atoi(port); err != nil || value < 1 || value > 65535 {
 		return oeerrors.Errorf("invalid ui_addr port %q", port)
 	}
-	if c.MaxUtterance < 5 || c.MaxUtterance > 60 {
-		return oeerrors.Errorf("max_utterance_seconds must be 5..60")
+	if c.MaxUtterance < core.MinUtteranceSeconds || c.MaxUtterance > core.MaxUtteranceSeconds {
+		return oeerrors.Errorf("max_utterance_seconds must be %d..%d", core.MinUtteranceSeconds, core.MaxUtteranceSeconds)
 	}
 	if strings.TrimSpace(c.HelperSocket) == "" {
 		return oeerrors.Errorf("helper_socket is required")
@@ -533,8 +534,8 @@ func (c Config) validatePhone() error {
 	if c.Phone.MaxClients < 1 || c.Phone.MaxClients > 16 {
 		return oeerrors.Errorf("phone.max_clients must be 1..16")
 	}
-	if c.Phone.MaxUtteranceSeconds < 5 || c.Phone.MaxUtteranceSeconds > 60 {
-		return oeerrors.Errorf("phone.max_utterance_seconds must be 5..60")
+	if c.Phone.MaxUtteranceSeconds < core.MinUtteranceSeconds || c.Phone.MaxUtteranceSeconds > core.MaxUtteranceSeconds {
+		return oeerrors.Errorf("phone.max_utterance_seconds must be %d..%d", core.MinUtteranceSeconds, core.MaxUtteranceSeconds)
 	}
 	return nil
 }

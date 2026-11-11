@@ -6,15 +6,15 @@ import (
 	"encoding/binary"
 	"sync"
 	"time"
+
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 const (
-	ServiceUUID  = "ab5e0001-5a21-4f05-bc7d-af01f617b664"
-	TXUUID       = "ab5e0002-5a21-4f05-bc7d-af01f617b664"
-	AudioUUID    = "ab5e0003-5a21-4f05-bc7d-af01f617b664"
-	ControlUUID  = "ab5e0004-5a21-4f05-bc7d-af01f617b664"
-	SampleRate   = 16000
-	DefaultFrame = 120
+	ServiceUUID = "ab5e0001-5a21-4f05-bc7d-af01f617b664"
+	TXUUID      = "ab5e0002-5a21-4f05-bc7d-af01f617b664"
+	AudioUUID   = "ab5e0003-5a21-4f05-bc7d-af01f617b664"
+	ControlUUID = "ab5e0004-5a21-4f05-bc7d-af01f617b664"
 
 	// MaxFrameSize is the ceiling for a device-reported frame. At 16 kHz ADPCM
 	// (4:1) 4096 bytes already spans about a second of audio; anything larger
@@ -80,13 +80,13 @@ func ParseCaps(data []byte) (Caps, bool) {
 		// The field is a 16-bit device value; an unusable size must not be
 		// trusted, or the accumulator waits for a frame that never fills
 		// (DOM-05).
-		frameSize = DefaultFrame
+		frameSize = core.FrameBytes
 	}
 	selected := 0x01
 	rate := 8000
 	if codecs&0x02 != 0 {
 		selected = 0x02
-		rate = 16000
+		rate = core.SampleRate
 	}
 	return Caps{
 		Version:       version,
@@ -257,7 +257,7 @@ type Session struct {
 }
 
 func NewSession() *Session {
-	return &Session{frameSize: DefaultFrame, sampleRate: SampleRate}
+	return &Session{frameSize: core.FrameBytes, sampleRate: core.SampleRate}
 }
 
 // SampleRate reports the rate the device negotiated in caps. Decoded samples
