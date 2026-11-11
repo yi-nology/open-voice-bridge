@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+Wave-0 handover closed — the last two residuals (roadmap R1):
+
+- SEC-06 residual: an ASR `binary` may no longer be a shell or generic
+  runtime (sh/bash/dash/zsh/env/busybox/python*/perl/ruby/node). The guard
+  checks the basename both before PATH lookup and after symlink resolution,
+  so a friendly link name cannot smuggle an interpreter in; the error says
+  the ASR command must be the recogniser itself.
+- DOM-12 residual: the unused `Profile.Voice` / `Profile.Keys` fields and
+  the `VoiceSpec` type are gone, and the embedded device presets no longer
+  carry the dead `voice`/`keys` blobs. Older JSON that still has the keys
+  keeps loading — they are ignored, as before.
+
 Security, correctness and product work from the wave-0 audit handover
 (`docs/design/evolution-roadmap.md`), plus the first SayAll-inspired feature:
 

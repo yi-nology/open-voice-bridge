@@ -10,7 +10,7 @@
 
 ## 执行交接（第二轮：骨架与发布就绪，从这里接）
 
-波 0 已收官（2026-11-11）：SEC-01–08、CON-01–08、DOM-01–14 全部落地（只余下文两条残余），并带出 SayAll 对标功能增量十余项（使用统计、常用语、组合动作、按 App 键位、本地 Agent 访问（MCP）、热力图、长会话提醒、按键计数、能力矩阵、配置导出导入、诊断摘要）与 macOS 平台兼容。逐项证据见本页「波 0」勾选项与 `CHANGELOG.md` Unreleased 各段。
+波 0 已收官（2026-11-11）：SEC-01–08、CON-01–08、DOM-01–14 全部落地（两条残余亦于 2026-11-12 随 R1 收口），并带出 SayAll 对标功能增量十余项（使用统计、常用语、组合动作、按 App 键位、本地 Agent 访问（MCP）、热力图、长会话提醒、按键计数、能力矩阵、配置导出导入、诊断摘要）与 macOS 平台兼容。逐项证据见本页「波 0」勾选项与 `CHANGELOG.md` Unreleased 各段。
 
 工作方式已固定，不需要重新商量：**一条缺陷一个提交，TDD 先写失败测试**（失败输出留作证据，实现后同批转绿），每步跑三件套，一个批次做完再推远端。
 
@@ -23,16 +23,16 @@
 
 结论：**波 1 骨架必须在下一个功能高峰前立住**。下面批次顺序的硬约束是：从 R2 起，新代码不得再自带 tmp+rename、采样率字面量或 `map[string]any` 状态字段；R9 把它变成 CI 门禁。
 
-### 波 0 残余（先做，两个小提交）
+### 波 0 残余（已收官 2026-11-12，两个小提交）
 
-1. **SEC-06 残余**：`asr.command` 的 `binary` 守卫不挡解释器——`binary=/bin/sh args=["-c",…]` 仍可过（SEC-06 批只加了属主/可执行位/防篡改检查）。**已定做法**：在既有守卫上加解释器黑名单（按 basename 拒绝 `sh`/`bash`/`dash`/`zsh`/`env`/`busybox`/`python*`/`perl`/`ruby`/`node`），报错点名「ASR 命令必须是识别器本体，不能是解释器」。不做 args 白名单——`exec.Command` 不经 shell，args 里的元字符无害，攻击面全在「binary 是解释器」这一层。测试：表驱动 `TestCommandBinaryRejectsInterpreters`（含 `env` 垫底用例）。
-2. **DOM-12 残余**：`Profile.Keys`/`Profile.Voice` 死字段（`internal/device/device.go:35-36`，全仓零读点）。**已定做法**：两个都删。`Voice` 的音频真相随 ARC-01 进 `core/audiofmt`；`Keys` 没有消费方，键位走的是 keymap profile 而非设备 profile，键位图鉴另有渲染。旧 JSON 里的这两个键由装载层静默丢弃（现状本就不 `DisallowUnknownFields`），兼容无损。将来若要「按设备出键名表」，按 typed 字段重新设计，不复活 map。
+1. **SEC-06 残余**（已做 2026-11-12）：`asr.command` 的 `binary` 守卫不挡解释器——`binary=/bin/sh args=["-c",…]` 仍可过（SEC-06 批只加了属主/可执行位/防篡改检查）。**已定做法**：在既有守卫上加解释器黑名单（按 basename 拒绝 `sh`/`bash`/`dash`/`zsh`/`env`/`busybox`/`python*`/`perl`/`ruby`/`node`），报错点名「ASR 命令必须是识别器本体，不能是解释器」。不做 args 白名单——`exec.Command` 不经 shell，args 里的元字符无害，攻击面全在「binary 是解释器」这一层。测试：表驱动 `TestCommandBinaryRejectsInterpreters`（含 `env` 垫底用例）。
+2. **DOM-12 残余**（已做 2026-11-12）：`Profile.Keys`/`Profile.Voice` 死字段（`internal/device/device.go:35-36`，全仓零读点）。**已定做法**：两个都删。`Voice` 的音频真相随 ARC-01 进 `core/audiofmt`；`Keys` 没有消费方，键位走的是 keymap profile 而非设备 profile，键位图鉴另有渲染。旧 JSON 里的这两个键由装载层静默丢弃（现状本就不 `DisallowUnknownFields`），兼容无损。将来若要「按设备出键名表」，按 typed 字段重新设计，不复活 map。
 
 ### 批次顺序（每批 = 一串单缺陷提交，做完推远端再进下一批）
 
 编号 R* 是执行批次；括号里是本文/架构稿的条目号，提交信息继续引用原编号。为避免撞名：**执行批次一律写作 R1–R10（本节），波次清单与缺陷条目里的（R5）/（R7）等是 architecture.md 的依赖规则编号**。批次在 ARC 与 OPS 之间交错，与 architecture.md §9 的纯波次顺序有一处有意偏离：**R3/R6 两个产品面批次插在骨架批次之间**——手机功能目前从任何文档化入口都打不开（OPS-01），把用户可达性排在全部重构之后代价太高；骨架的保护靠「R2 起新代码不加副本」的纪律与 R9 的 CI 门禁，不靠功能冻结。
 
-- **R1 · 波 0 收官**：上文两条残余 + 本页勾选同步（3 个提交量级）。
+- **R1 · 波 0 收官**（已完成 2026-11-12）：上文两条残余 + 本页勾选同步（2 个代码提交 + 1 个文档提交）。下一批 R2。
 - **R2 · 叶子抽取（ARC-01、ARC-02）**：立 `core` 与 `core/audiofmt`（采样率/帧长/时长上下限/最小可转写时长单点定义，5 处字面量与 `audio`/`atvv` 双常量收拢，architecture.md R5）；`fsutil` 收拢 8 份原子写与 JSONL 追加（带 `Sync`，architecture.md R7）。纯搬运、零行为变化，三件套全绿即过。
 - **R3 · 手机可达（OPS-01、OPS-06）**：管理 UI 开关 `phone.enabled`（落盘 + `restart_required` 口径，对齐配置导出导入的既有语义）；`/readyz` 与 UI「就绪」拆核心必需/可选项两组——口径以「无 root helper 时纯语音键能否听写」为准（见「未验证」第 5 条），真机确认前先按「核心 = agent+ASR+粘贴链，可选 = root helper/BLE」切，手机-only 用户不再永久 503；README 补「配对手机」整节（同局域网要求、自签证书「只接受一次例外」警告、排错链到能力矩阵）。
 - **R4 · 边界守卫合一（ARC-04、ARC-12）**：抽 `edge/netguard`（一份 origin 检查、一份安全头、一份地址整形），`internal/phone` 删 `web` import 与 mime/CSP 段，管理端换用同一套（architecture.md R4）；手机按键白名单里的 `power` 类危险键收进显式配置开关，默认关。
@@ -77,7 +77,7 @@
 - [x] **SEC-03** `phone.tls: "off"` 被允许，非回环地址上配对码与长效令牌走明文（`internal/config/config.go:503-507`、`internal/phone/util.go:80-90`）。动作：装载与保存都拒绝"非回环 + 关闭 TLS"（I6）。**已定做法**：在 `validatePhone` 里判断 `Phone.Addr` 的主机部分，`tls: off` 时只放行 `127.0.0.1`/`localhost`/`::1`（以及回环段 `127.0.0.0/8`），其余（`0.0.0.0`、`[::]`、局域网 IP、主机名）一律报错，错误文案要点名"要么开 `tls: auto`，要么把地址收到回环"；测试写 `TestPhonePlainTLSNeedsLoopback`（表驱动，拒绝列 + 放行列各一组）与 `TestPhoneValidatedEvenWhenDisabled`。`PairingBase` 的 `off → http` 映射保留不动，`internal/phone/util_test.go:13` 已把它钉住——校验层负责堵死非回环明文，不需要改 URL 语义。
 - [x] **SEC-04** 自签叶子证书被签成 CA：`IsCA:true` + `KeyUsageCertSign`、825 天、无 pinning（`internal/phone/tls.go:119-122`），而文档让用户信任它（`docs/design/external-input-sources.md:268`）——信任之后这台 Pi 的 key 就成了通用 CA。动作：去掉 `IsCA`/`CertSign`，寿命缩短，文档同步。**已定做法**：`KeyUsage` 从 `DigitalSignature|CertSign` 收成只留 `DigitalSignature`，`IsCA` 置假（`BasicConstraintsValid` 保持真，让扩展以 CA=FALSE 正常编码），`certValidFor` 从 825 天降到一年量级，`stillValid` 增加"剩余寿命不足阈值即重建"的续期余量（现在只按已过期判断，长跑进程会卡在临期证书上）；`internal/phone/tls_test.go:38-40` 现在断言 `IsCA` 为真，要反过来断言"叶子不是 CA、`KeyUsage == DigitalSignature`"，并把临期重建加进 `TestCertificateManagerRebuildsExpired`。文档同步两处口径：`docs/design/external-input-sources.md:32`（"手机首次访问手动信任"）与 `:268`（"iOS 额外提示安装证书"）要改成"接受一次例外即可，不要把这张证书导入为长期信任的根"；`SECURITY.md` 里的 MitM 窗口说明跟着更新。
 - [x] **SEC-05** 撤销设备不断现有会话：`Store.Revoke` 只清令牌/ticket（`internal/phone/store.go:304-319`），而 `serveConn` 只在 ticket 兑换时鉴权一次（`internal/phone/server.go:279`）→ 被撤销的手机还能继续按键与听写。动作：撤销即丢弃该 device 的活动连接（与 DOM-04/I5 同批做）。**已做**：`Server.Disconnect(deviceID)` 摘注册表 + `hub.Unregister` + 在锁外 `CloseNow()`；`main.go` 的 `PhoneRevoke` 在 Revoke 成功后立刻调用并回 `disconnected` 字段。撤销是有意切断，所以那半句只丢弃、不进转写（不会把文字打到别人眼前）。
-- [x] **SEC-06** 管理端 origin 检查在 `Origin` 为空且无 `Sec-Fetch-Site` 时直接放行（`biz/handler/ui/server.go:126-143`），而 `asr.command.binary` 会原样执行（`internal/asr/command.go:81`）→ 摸到管理 API ≈ 本机 RCE。动作：收紧到"必须有同源证据"（I9），并把 `binary` 路径限定为白名单目录/要求可执行位与属主检查。**残余**：解释器黑名单待 R1 补（见「执行交接」SEC-06 残余）。
+- [x] **SEC-06** 管理端 origin 检查在 `Origin` 为空且无 `Sec-Fetch-Site` 时直接放行（`biz/handler/ui/server.go:126-143`），而 `asr.command.binary` 会原样执行（`internal/asr/command.go:81`）→ 摸到管理 API ≈ 本机 RCE。动作：收紧到"必须有同源证据"（I9），并把 `binary` 路径限定为白名单目录/要求可执行位与属主检查。**残余已补（R1，2026-11-12）**：解释器黑名单落地（basename `sh`/`bash`/`dash`/`zsh`/`env`/`busybox`/`python*`/`perl`/`ruby`/`node`，PATH 解析前与 symlink 解析后各判一次；`TestCommandBinaryRejectsInterpreters` 表驱动 + 符号链接用例，失败输出先留证后同批转绿）。
 - [x] **SEC-07** 预鉴权 map 无界增长：配对尝试计数的 `ip` 项从不清理、ticket 表从不清理（`internal/phone/store.go:86,246-258,276-286`），任何局域网 TCP 源都能灌。动作：过期清扫 + 条目上限。
 - [x] **SEC-08** 转写任务无并发上限：每句起一个 goroutine 并各持约 960 KB PCM（`internal/phone/server.go:396-436`、`server.go:81`），而 `speech` 用一把锁串行（`internal/agent/pipeline.go:56`）→ 内存增长 + 遥控器听写被饿死。动作：有界队列/在途上限，超出即回 `busy`。**范围追加**：队列要按采集顺序消费——DOM-04 把排空改成同步取、异步跑之后，两句同时在飞时到达 ASR 的先后取决于谁先抢到 `p.mu`，字幕与历史会偶发调换顺序。
 
@@ -105,7 +105,7 @@
 - [x] **DOM-09** 手机句子丢身份：`SourceRef.Kind` 写了却没人读，`main.go:139` 忽略 `meta.Name`/`meta.DeviceID` → 字幕/历史只有 IP；两源上限口径还不同（`config.MaxUtterance` vs `Phone.MaxUtteranceSeconds`），BLE 超限静默截断而手机有 `too_long`（`agent.go:489-496` vs `phone/server.go`）。动作：统一标注与超限语义（I8）。
 - [x] **DOM-10** 字典替换把 `To` 当正则模板（`internal/text/text.go:93`），含 `$1` 的替换文本会展开成不存在的分组；规则还会链式二次改写。动作：字面替换 + 规则不叠加。
 - [x] **DOM-11** keymap 应用与落盘不原子：`biz/service/service.go:138-223` 先动 helper 再 `config.Save`，保存可能失败 → 运行中的守护进程对应一份存不出去的配置。
-- [ ] **DOM-12**（半完成）长按重复已修（`value==2` 触发重按 / 宏重执行，`daemon_inject_test.go` 覆盖）；剩余：`Profile.Keys`/`Voice` 死字段（`device.go:26-37`，JSON 预置表里有数据但无人读）——产品决策已定：**删除**，随 R1 执行，见「执行交接」。
+- [x] **DOM-12** 长按重复已修（`value==2` 触发重按 / 宏重执行，`daemon_inject_test.go` 覆盖）；`Profile.Keys`/`Voice` 死字段已删（R1，2026-11-12）——`VoiceSpec` 类型同删，预置 JSON 的死 `voice`/`keys` 一并清除；旧 JSON 装载时静默丢弃这两键，兼容无损。
 - [x] **DOM-13** `Store.Pair` 在 `MaxDevices` 拒绝时不消耗配对码（`internal/phone/store.go:199`），也不防 deviceID 撞车（:204）；`serveConn` 退出时不关 ws（`internal/phone/server.go:276-292`）；`asrTimeout` 固定 180 s 而三提供商链可能更久（`pipeline.go:122`）。
 - [x] **DOM-14** `Agent.SetHub` 裸写 `a.hub`（`internal/agent/agent.go:148`）对上周期的读；`history.rewrite` 改名缺 `Sync`（`internal/history/history.go:154-181`），掉电可清空历史，且 ID 用墙上时钟使 `Delete` 可能删多条。
 
