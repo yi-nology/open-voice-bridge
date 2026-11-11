@@ -51,16 +51,23 @@ type Backend interface {
 	ConnectDevice(context.Context, string, bool) (*api.OperationResp, error)
 }
 
-var backend Backend
+type backendKey struct{}
 
-func SetBackend(value Backend) { backend = value }
+// WithBackend binds a backend to the engine it is installed on, so two engines
+// in one process keep their own service instead of sharing a package global.
+func WithBackend(value Backend) app.HandlerFunc {
+	return func(ctx context.Context, c *app.RequestContext) {
+		c.Next(context.WithValue(ctx, backendKey{}, value))
+	}
+}
 
-func requireBackend(ctx context.Context, c *app.RequestContext) bool {
+func requireBackend(ctx context.Context, c *app.RequestContext) (Backend, bool) {
+	backend, _ := ctx.Value(backendKey{}).(Backend)
 	if backend == nil {
 		mw.Fail(ctx, c, oeerrors.NewBizErrorWithStatus(5002, consts.StatusServiceUnavailable, "service not ready"))
-		return false
+		return nil, false
 	}
-	return true
+	return backend, true
 }
 
 func respond(ctx context.Context, c *app.RequestContext, resp any, err error) {

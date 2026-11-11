@@ -128,8 +128,8 @@ func (f *fakeBackend) DeleteKeymapProfile(context.Context, string) (*api.Operati
 }
 
 func newTestEngine(backend *fakeBackend) *server.Hertz {
-	apihandler.SetBackend(backend)
 	h := server.New(server.WithHandleMethodNotAllowed(true))
+	h.Use(apihandler.WithBackend(backend))
 	router.GeneratedRegister(h)
 	return h
 }

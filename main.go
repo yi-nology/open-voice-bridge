@@ -406,7 +406,6 @@ func runAgent(args []string, stderr io.Writer) int {
 		}
 
 		uiServer := ui.New(deps)
-		apihandler.SetBackend(uiServer)
 		// 切得准: follow the frontmost app's WM_CLASS into its keymap profile
 		// at runtime (X11; the switcher stays idle where focus is not visible).
 		if len(cfg.Keymap.AppRules) > 0 {
@@ -496,6 +495,7 @@ func runAgent(args []string, stderr io.Writer) int {
 			hertzServer.Use(middleware)
 		}
 		hertzServer.Use(uiServer.Security)
+		hertzServer.Use(apihandler.WithBackend(uiServer))
 		register(hertzServer, uiServer)
 		hertzmetrics.InitAndRegister("xiaomi-remote", hertzServer)
 

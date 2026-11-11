@@ -21,7 +21,8 @@ func Health(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.Health(ctx)
@@ -36,7 +37,8 @@ func Ready(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.Ready(ctx)
@@ -59,7 +61,8 @@ func Status(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.Status(ctx)
@@ -74,7 +77,8 @@ func Apply(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.Apply(ctx, req.Mapping)
@@ -89,7 +93,8 @@ func CaptureStart(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.CaptureStart(ctx)
@@ -104,7 +109,8 @@ func CaptureStop(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.CaptureStop(ctx)
@@ -119,7 +125,8 @@ func Reconnect(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.Reconnect(ctx)
@@ -134,7 +141,8 @@ func RestartMic(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.RestartMic(ctx)
@@ -149,7 +157,8 @@ func SwitchASR(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.SwitchASR(ctx, req.Provider)
@@ -164,7 +173,8 @@ func GetASRConfig(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.GetASRConfig(ctx)
@@ -179,7 +189,8 @@ func UpdateASRConfig(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.UpdateASRConfig(ctx, &req)
@@ -194,7 +205,8 @@ func TestASR(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.TestASR(ctx, req.Provider)
@@ -209,7 +221,8 @@ func KeymapProfiles(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.KeymapProfiles(ctx)
@@ -224,7 +237,8 @@ func ApplyKeymapProfile(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.ApplyKeymapProfile(ctx, req.Profile)
@@ -239,7 +253,8 @@ func SaveKeymapProfile(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.SaveKeymapProfile(ctx, req.Name, req.Mapping)
@@ -254,7 +269,8 @@ func DeleteKeymapProfile(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.DeleteKeymapProfile(ctx, req.Name)
@@ -269,7 +285,8 @@ func GetDevices(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.GetDevices(ctx)
@@ -284,7 +301,8 @@ func SelectDevice(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.SelectDevice(ctx, req.ID)
@@ -299,7 +317,8 @@ func ToggleDevice(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.ToggleDevice(ctx, req.ID, req.Enabled)
@@ -314,7 +333,8 @@ func SaveDevice(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.SaveDevice(ctx, &req)
@@ -329,7 +349,8 @@ func DeleteDevice(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.DeleteDevice(ctx, req.ID)
@@ -344,7 +365,8 @@ func DiscoverDevices(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.DiscoverDevices(ctx)
@@ -359,7 +381,8 @@ func ConnectDevice(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.ConnectDevice(ctx, req.ID, req.Connect)
@@ -374,7 +397,8 @@ func GetLLMConfig(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.GetLLMConfig(ctx)
@@ -389,7 +413,8 @@ func UpdateLLMConfig(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.UpdateLLMConfig(ctx, &req)
@@ -404,7 +429,8 @@ func TestLLM(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.TestLLM(ctx, req.Provider, req.Live)
@@ -419,7 +445,8 @@ func SaveLLMKey(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.SaveLLMKey(ctx, req.Key)
@@ -434,7 +461,8 @@ func GetHistory(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.GetHistory(ctx)
@@ -449,7 +477,8 @@ func DeleteHistory(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.DeleteHistory(ctx, req.ID)
@@ -464,7 +493,8 @@ func ClearHistory(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.ClearHistory(ctx)
@@ -479,7 +509,8 @@ func GetTextConfig(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.GetTextConfig(ctx)
@@ -494,7 +525,8 @@ func UpdateTextConfig(ctx context.Context, c *app.RequestContext) {
 		mw.Fail(ctx, c, oeerrors.NewBadRequestError(err.Error()))
 		return
 	}
-	if !requireBackend(ctx, c) {
+	backend, ok := requireBackend(ctx, c)
+	if !ok {
 		return
 	}
 	resp, err := backend.UpdateTextConfig(ctx, &req)
