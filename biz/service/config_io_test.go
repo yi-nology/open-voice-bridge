@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/oekit/logx"
 
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 func testService(t *testing.T) *Service {
@@ -104,6 +106,39 @@ func TestDiagnosticsRedactsAddressAndHome(t *testing.T) {
 	}
 	if summary["version"] != "test-version" {
 		t.Fatalf("version = %v", summary["version"])
+	}
+}
+
+// I7: the readiness view is typed, so scrubHome no longer walks into it. Its
+// error strings must still be scrubbed -- a helper socket path under the home
+// directory would otherwise reach a report the user attaches to a public issue.
+func TestDiagnosticsScrubsHomeFromReadyErrors(t *testing.T) {
+	home, _ := os.UserHomeDir()
+	if home == "" {
+		t.Skip("no home dir")
+	}
+	svc := testService(t)
+	svc.helper = &fakeHelper{callErr: errors.New("dial " + filepath.Join(home, ".local", "run", "helper.sock"))}
+
+	summary := svc.Diagnostics(context.Background(), "test-version")
+	encoded, err := json.Marshal(summary)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(encoded), home) {
+		t.Fatalf("summary leaked the home directory: %s", encoded)
+	}
+	ready, ok := summary["ready"].(core.ReadyView)
+	if !ok {
+		t.Fatalf("ready = %T, want core.ReadyView", summary["ready"])
+	}
+	if !strings.Contains(ready.HelperError, "~/.local/run/helper.sock") {
+		t.Fatalf("helper error = %q", ready.HelperError)
+	}
+	// The report's keys are part of its shape; typing the view must not turn
+	// them into Go field names.
+	if !strings.Contains(string(encoded), `"keyd_active":`) {
+		t.Fatalf("ready lost its snake_case keys: %s", encoded)
 	}
 }
 

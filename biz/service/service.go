@@ -319,30 +319,27 @@ func (s *Service) TestASR(ctx context.Context, provider string) []asr.Diagnostic
 	return asr.Diagnose(testCfg)
 }
 
-func (s *Service) Ready(ctx context.Context) map[string]any {
-	checks := map[string]any{"ok": true}
+func (s *Service) Ready(ctx context.Context) core.ReadyView {
+	view := core.ReadyView{OK: true}
+	// The helper's reply stays a map: that is the root daemon's IPC protocol,
+	// not a status model this repo owns (R6).
 	helperStatus, err := s.helper.Call(ctx, map[string]string{"cmd": "status"})
-	keyd := false
-	remote := false
 	if err != nil {
-		checks["helper_error"] = err.Error()
+		view.HelperError = err.Error()
 	} else {
-		keyd, _ = helperStatus["keyd_active"].(bool)
-		remote, _ = helperStatus["remote_present"].(bool)
+		view.KeydActive, _ = helperStatus["keyd_active"].(bool)
+		view.RemotePresent, _ = helperStatus["remote_present"].(bool)
 	}
 	agentStatus := s.agent.Status()
-	checks["keyd_active"] = keyd
-	checks["remote_present"] = remote
-	checks["ble_connected"] = agentStatus.Connected
-	checks["atvv_ready"] = agentStatus.Ready
-	checks["mic_healthy"] = agentStatus.MicHealthy
+	view.BleConnected = agentStatus.Connected
+	view.AtvvReady = agentStatus.Ready
+	view.MicHealthy = agentStatus.MicHealthy
 	s.cfgMu.RLock()
 	asrReadyErr := s.asrErr
 	s.cfgMu.RUnlock()
-	asrReady := asrReadyErr == nil
-	checks["asr_ready"] = asrReady
+	view.AsrReady = asrReadyErr == nil
 	if asrReadyErr != nil {
-		checks["asr_error"] = asrReadyErr.Error()
+		view.AsrError = asrReadyErr.Error()
 	}
 	// OPS-06: readiness answers "can dictation work". The ASR chain is the
 	// core; the root remapper, the BLE remote and the virtual mic are
@@ -350,11 +347,10 @@ func (s *Service) Ready(ctx context.Context) map[string]any {
 	// optional_ok instead of failing ok. Until the hardware run confirms
 	// the yardstick (roadmap 未验证 #5), the split is:
 	// core = agent + ASR + paste chain, optional = helper + BLE.
-	optional := keyd && remote && agentStatus.Connected && agentStatus.Ready && agentStatus.MicHealthy
-	checks["core_ok"] = asrReady
-	checks["optional_ok"] = optional
-	checks["ok"] = asrReady
-	return checks
+	view.CoreOK = view.AsrReady
+	view.OptionalOK = view.KeydActive && view.RemotePresent && view.BleConnected && view.AtvvReady && view.MicHealthy
+	view.OK = view.AsrReady
+	return view
 }
 
 func (s *Service) Devices(ctx context.Context) map[string]any {

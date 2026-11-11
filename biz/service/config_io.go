@@ -80,27 +80,38 @@ func (s *Service) Diagnostics(ctx context.Context, version string) map[string]an
 			"detail":   item.Detail,
 		})
 	}
+	ready := s.Ready(ctx)
+	// scrubHome walks maps and slices; a typed view is neither, so its error
+	// strings are scrubbed here or a helper socket path under the home
+	// directory would reach a shared report (I7).
+	ready.HelperError = scrubHomeString(ready.HelperError)
+	ready.AsrError = scrubHomeString(ready.AsrError)
 	return scrubHome(map[string]any{
 		"ok":           true,
 		"generated_at": time.Now().UTC().Format(time.RFC3339),
 		"version":      version,
 		"platform":     runtime.GOOS + "/" + runtime.GOARCH,
-		"ready":        s.Ready(ctx),
+		"ready":        ready,
 		"status":       status,
 		"asr":          checks,
 	}).(map[string]any)
 }
 
-// scrubHome replaces the home directory prefix with "~" so a shared summary
-// carries no personal paths.
-func scrubHome(value any) any {
+// scrubHomeString replaces the home directory prefix with "~" so a shared
+// summary carries no personal paths.
+func scrubHomeString(value string) string {
 	home, err := os.UserHomeDir()
 	if err != nil || home == "" {
 		return value
 	}
+	return strings.ReplaceAll(value, home, "~")
+}
+
+// scrubHome is scrubHomeString over the free-form parts of the report.
+func scrubHome(value any) any {
 	switch typed := value.(type) {
 	case string:
-		return strings.ReplaceAll(typed, home, "~")
+		return scrubHomeString(typed)
 	case map[string]any:
 		for key, item := range typed {
 			typed[key] = scrubHome(item)

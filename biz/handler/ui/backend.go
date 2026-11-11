@@ -9,6 +9,7 @@ import (
 
 	api "github.com/yi-nology/open-voice-bridge/biz/model/api"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 var errCaptureRunning = oeerrors.New("capture already running")
@@ -18,24 +19,24 @@ func (s *Server) Health(ctx context.Context) (*api.HealthResp, error) {
 }
 
 func (s *Server) Ready(ctx context.Context) (*api.ReadyResp, error) {
-	checks := map[string]any{}
+	var view core.ReadyView
 	if s.deps.Ready != nil {
-		checks = s.deps.Ready(ctx)
+		view = s.deps.Ready(ctx)
 	}
 	resp := &api.ReadyResp{
-		Ok:            boolValue(checks["ok"]),
-		KeydActive:    boolValue(checks["keyd_active"]),
-		RemotePresent: boolValue(checks["remote_present"]),
-		BleConnected:  boolValue(checks["ble_connected"]),
-		AtvvReady:     boolValue(checks["atvv_ready"]),
-		AsrReady:      boolValue(checks["asr_ready"]),
-		MicHealthy:    boolValue(checks["mic_healthy"]),
+		Ok:            view.OK,
+		KeydActive:    view.KeydActive,
+		RemotePresent: view.RemotePresent,
+		BleConnected:  view.BleConnected,
+		AtvvReady:     view.AtvvReady,
+		AsrReady:      view.AsrReady,
+		MicHealthy:    view.MicHealthy,
 	}
-	if value := stringValue(checks["helper_error"]); value != "" {
-		resp.HelperError = ptrx.Of(value)
+	if view.HelperError != "" {
+		resp.HelperError = ptrx.Of(view.HelperError)
 	}
-	if value := stringValue(checks["asr_error"]); value != "" {
-		resp.AsrError = ptrx.Of(value)
+	if view.AsrError != "" {
+		resp.AsrError = ptrx.Of(view.AsrError)
 	}
 	return resp, nil
 }

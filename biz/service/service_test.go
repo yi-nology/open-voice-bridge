@@ -63,6 +63,7 @@ type fakeHelper struct {
 	applied  map[string]string
 	devices  []device.Match
 	applyErr error
+	callErr  error
 }
 
 func (f *fakeHelper) appliedSnapshot() map[string]string {
@@ -78,6 +79,9 @@ func (f *fakeHelper) devicesSnapshot() []device.Match {
 }
 
 func (f *fakeHelper) Call(ctx context.Context, payload any) (map[string]any, error) {
+	if f.callErr != nil {
+		return nil, f.callErr
+	}
 	command, _ := payload.(map[string]any)
 	if command["cmd"] == "apply" && f.applyErr != nil {
 		return nil, f.applyErr
@@ -128,7 +132,7 @@ func TestStatusAndReady(t *testing.T) {
 		t.Fatalf("status = %+v", status)
 	}
 	ready := svc.Ready(context.Background())
-	if ready["ok"] != true || ready["asr_ready"] != true {
+	if !ready.OK || !ready.AsrReady {
 		t.Fatalf("ready = %+v", ready)
 	}
 }
@@ -142,13 +146,13 @@ func TestReadyCoreIgnoresOptionalGaps(t *testing.T) {
 	agent.view = &core.AgentView{Connected: false, Ready: false, MicHealthy: false}
 	helper.status = map[string]any{"keyd_active": false, "remote_present": false}
 	ready := svc.Ready(context.Background())
-	if ready["ok"] != true || ready["core_ok"] != true {
+	if !ready.OK || !ready.CoreOK {
 		t.Fatalf("core readiness failed on optional gaps: %+v", ready)
 	}
-	if ready["optional_ok"] != false {
-		t.Fatalf("optional_ok = %v, want false with helper/BLE/mic down", ready["optional_ok"])
+	if ready.OptionalOK {
+		t.Fatalf("optional_ok = %v, want false with helper/BLE/mic down", ready.OptionalOK)
 	}
-	if ready["mic_healthy"] != false || ready["ble_connected"] != false {
+	if ready.MicHealthy || ready.BleConnected {
 		t.Fatalf("individual checks lost: %+v", ready)
 	}
 }
@@ -159,11 +163,11 @@ func TestReadyFailsWhenASRBroken(t *testing.T) {
 	svc := New(cfg, path, &fakeAgent{connected: true, ready: true}, &fakeHelper{},
 		errors.New("no ASR provider could be built"), logx.NewSlogLogger("service-test"))
 	ready := svc.Ready(context.Background())
-	if ready["ok"] != false || ready["core_ok"] != false {
+	if ready.OK || ready.CoreOK {
 		t.Fatalf("core readiness passed without ASR: %+v", ready)
 	}
-	if ready["optional_ok"] != true {
-		t.Fatalf("optional_ok = %v, want true when only ASR is broken", ready["optional_ok"])
+	if !ready.OptionalOK {
+		t.Fatalf("optional_ok = %v, want true when only ASR is broken", ready.OptionalOK)
 	}
 }
 

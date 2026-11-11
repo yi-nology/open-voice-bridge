@@ -17,6 +17,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/edge/netguard"
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/helper"
 	"github.com/yi-nology/open-voice-bridge/internal/history"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
@@ -56,7 +57,7 @@ type Deps struct {
 	SaveDevice          func(context.Context, config.DeviceConfig) error
 	DeleteDevice        func(context.Context, string) error
 	ConnectDevice       func(context.Context, string, bool) error
-	Ready               func(context.Context) map[string]any
+	Ready               func(context.Context) core.ReadyView
 	Inputs              func(context.Context) map[string]any
 	SnapshotState       func() map[string]any
 	ExportConfig        func() ([]byte, error)
