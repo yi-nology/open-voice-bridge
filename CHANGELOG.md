@@ -88,6 +88,23 @@ long-session warning.
 - The phone hold-to-talk button warms to amber and then red as a hold nears
   the server's utterance cap (SayAll 长会话提醒).
 
+macOS platform verification and UI adaptation (compat, not a port):
+
+- Deep verification on darwin/arm64 against a real ARN9 remote: CGO and
+  nocgo builds both produce a working binary; `parseSPBluetooth` matched the
+  remote as `rc003` from live `system_profiler` data; the CoreBluetooth bridge
+  negotiated ATVV caps (16 kHz / codec 0x02); `pbcopy` + `osascript` paste
+  round-tripped; doctor, status/readyz/metrics/diagnostics, config export and
+  the MCP stdio server (token mint → handshake → tools → 401 rejection) all
+  pass.
+- The admin UI is now platform-aware: `StatusResp` carries `platform`
+  (IDL field 24, model and handler in step). On macOS the keymap card reads
+  "不适用（原生 HID）", the mic card "直采模式（ASR 直采，无虚拟麦）", the
+  autostart card "手动启动（launchd）", the permissions page swaps to the
+  Bluetooth/Accessibility list, and the quickstart treats mapping and the
+  virtual mic as satisfied by design — `mic_healthy=false` is expected there,
+  not a fault. The banner chip says "原生 HID" instead of "映射不可用".
+
 Phone as a second input source — Phase 1 (virtual remote control) and
 Phase 2 (phone microphone).
 

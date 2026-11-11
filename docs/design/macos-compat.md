@@ -97,6 +97,32 @@ CoreBluetooth 不暴露 BLE MAC。v1 解析顺序：
   （`latency_ms` 个位数）。**剩两项用户动作**：辅助功能授权后粘贴上屏；配置 ASR 凭据后真实听写
   （未配时可用 `asr.command` 桩验证管道）。
 
+### 平台适配验证（2026-11-11 第二轮，darwin/arm64）
+
+对 macOS 平台做了一轮系统性验证与界面适配：
+
+- **构建**：`CGO_ENABLED=1`（CoreBluetooth 桥）与 `CGO_ENABLED=0`（nocgo 桩）双路径均产出
+  Mach-O arm64；21 个包 `go test` 全绿，关键包 `-race` 通过。
+- **蓝牙设备发现**：`system_profiler SPBluetoothDataType -json` 真机数据经 `parseSPBluetooth`
+  解析出 11 台设备，ARN9（`2717:32b8`）自动匹配 `rc003` profile、能力 `[keys voice]`；
+  `KnownDevices`/`DiscoverInputDevices`/`/api/devices/discover` 三条路径一致。
+- **粘贴链路**：`pbcopy`→`pbpaste` 往返一致；`osascript` 合成 ⌘V 在辅助功能已授权的宿主上成功。
+- **CoreBluetooth 桥**：agent 连上真机 ARN9，`ATVV bridge ready`、caps 协商
+  `codec=0x02 rate=16000 version=0x100`；`/api/status` 的 `ble_connected=true`、`atvv_ready=true`。
+- **doctor**：macOS 分支只报平台相关项（遥控器可见/已连接、辅助功能提示），不再误报 systemd、
+  PipeWire、xsel、uinput 缺失。
+- **UI 平台感知**（本轮修复）：`StatusResp` 新增 `platform` 字段（IDL 24 + 生成模型 + handler 同步），
+  界面据此改写——按键映射卡「不适用（原生 HID）」、麦克风卡「直采模式（ASR 直采，无虚拟麦）」、
+  自启卡「手动启动（launchd）」、权限页切换为蓝牙/辅助功能清单、快速开始里映射与麦克风两项
+  在 macOS 上按设计视为就绪；顶部徽标「映射不可用」改为「原生 HID」。`mic_healthy=false` 在
+  macOS 是预期状态，界面不再标红。
+- **MCP 本地 Agent 访问**：`xiaomi-remote mcp --token …` 在 macOS 上完成 stdio 握手、
+  `tools/list`（`history_list`/`history_search`/`usage_stats`）、真实工具调用与错误令牌 401 拒绝；
+  客户端配置里的二进制路径经 `EvalSymlinks` 解析为 `/private/tmp/…` 真实路径。
+
+**仍未在本轮验证**（需要物理按键或用户授权）：按住语音键的完整听写出字（需配 ASR 凭据）、
+辅助功能未授权时的降级表现、launchd 常驻部署。
+
 ## 明确不做（v1 边界）
 
 - 虚拟音频设备（AudioServerPlugin / BlackHole 式 CABLE Output）；
