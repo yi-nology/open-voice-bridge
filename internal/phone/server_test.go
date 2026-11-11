@@ -13,6 +13,7 @@ import (
 	"github.com/coder/websocket"
 
 	"github.com/yi-nology/open-voice-bridge/internal/input"
+	"github.com/yi-nology/open-voice-bridge/web"
 )
 
 type testEnv struct {
@@ -25,6 +26,9 @@ type testEnv struct {
 
 func newTestEnv(t *testing.T, cfg ServerConfig) *testEnv {
 	t.Helper()
+	if cfg.Assets == nil {
+		cfg.Assets = web.FS
+	}
 	store := newTestStore(t, DefaultConfig())
 	transport := &fakeTransport{}
 	hub := input.NewHub()
@@ -49,6 +53,9 @@ func postJSON(t *testing.T, url string, body any, header map[string]string) (int
 		t.Fatalf("new request: %v", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	// A browser fetch from the phone page always carries this; tests that mean
+	// to look cross-origin override it.
+	req.Header.Set("Sec-Fetch-Site", "same-origin")
 	for key, value := range header {
 		req.Header.Set(key, value)
 	}
@@ -218,7 +225,7 @@ func TestUnknownTicketRejected(t *testing.T) {
 func TestExpiredTicketRejected(t *testing.T) {
 	store, clock := fixedClock(t)
 	transport := &fakeTransport{}
-	server := NewServer(store, NewKeyInjector(transport), input.NewHub(), ServerConfig{TLSMode: "off", MaxClients: 4})
+	server := NewServer(store, NewKeyInjector(transport), input.NewHub(), ServerConfig{TLSMode: "off", MaxClients: 4, Assets: web.FS})
 	ts := httptest.NewServer(server.Handler())
 	defer ts.Close()
 

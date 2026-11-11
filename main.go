@@ -39,6 +39,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/phone"
 	"github.com/yi-nology/open-voice-bridge/internal/remap"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
+	"github.com/yi-nology/open-voice-bridge/web"
 )
 
 var version = "dev"
@@ -301,6 +302,7 @@ func runAgent(args []string, stderr io.Writer) int {
 					MaxClients:          cfg.Phone.MaxClients,
 					MaxUtteranceSeconds: cfg.Phone.MaxUtteranceSeconds,
 					Transcriber:         phoneSpeech{pipeline: ag.Speech()},
+					Assets:              web.FS,
 				})
 			}
 		}

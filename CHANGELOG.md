@@ -279,6 +279,26 @@ Configuration boundaries (ARC-03, internal — the config file format is unchang
   the provider client and the generated config both read it instead of each
   carrying the same literal.
 
+One guard for both network boundaries (ARC-04):
+
+- Fixed: the phone listener did not check the origin of its HTTP POSTs at all.
+  Only the WebSocket handshake did. A page on any other site could therefore
+  send a pairing code to `/api/phone/pair` and receive a device token, or spend
+  a stolen token on `/api/phone/ticket`. The same-origin rule the admin UI
+  gained in SEC-06 — an empty `Origin` is not evidence — now applies to the
+  phone boundary too, and to PUT/PATCH/DELETE as well as POST.
+- The origin rule, the loopback-host rule and the security headers now have one
+  implementation (`edge/netguard`) that both boundaries call. The two pages
+  keep their own Content-Security-Policy and Permissions-Policy, because the
+  admin page denies the microphone and the phone page must allow it; that
+  difference is a parameter now, not a second copy of the code.
+- If you front the phone listener with a reverse proxy (`phone.tls: off`), the
+  proxy must preserve the `Host` header. Otherwise the browser's `Origin` will
+  not match it and pairing is refused with 403.
+- Internal: the phone listener no longer embeds the web asset tree. The
+  composition root injects it, so a LAN-facing transport does not depend on the
+  presentation layer.
+
 ## 0.1.1 — 2026-11-10
 
 Maintenance and quality baseline.

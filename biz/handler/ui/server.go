@@ -4,8 +4,6 @@ package ui
 import (
 	"context"
 	"io/fs"
-	"net"
-	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -16,6 +14,7 @@ import (
 	ekithsse "github.com/oekit/hertz/sse"
 	"github.com/oekit/logx"
 
+	"github.com/yi-nology/open-voice-bridge/edge/netguard"
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/helper"
@@ -108,54 +107,18 @@ func AssetsFS() fs.FS {
 
 // Security is the loopback/origin middleware applied to every Hertz route.
 func (s *Server) Security(ctx context.Context, c *app.RequestContext) {
-	c.Response.Header.Set("X-Content-Type-Options", "nosniff")
-	c.Response.Header.Set("Referrer-Policy", "no-referrer")
-	c.Response.Header.Set("Content-Security-Policy",
-		"default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; base-uri 'none'")
-	c.Response.Header.Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+	netguard.WriteHeaders(netguard.Admin, func(key, value string) { c.Response.Header.Set(key, value) })
 	if strings.HasPrefix(string(c.Request.URI().Path()), "/api/") {
 		c.Response.Header.Set("Cache-Control", "no-store")
 	}
-	if !validHost(string(c.Request.Host())) || !validOrigin(c) {
+	host := string(c.Request.Host())
+	origin := string(c.Request.Header.Peek("Origin"))
+	site := string(c.Request.Header.Peek("Sec-Fetch-Site"))
+	if !netguard.IsLoopback(host) || !netguard.SameOrigin(string(c.Method()), host, origin, site) {
 		c.AbortWithStatus(consts.StatusForbidden)
 		return
 	}
 	c.Next(ctx)
-}
-
-func validHost(host string) bool {
-	if h, _, err := net.SplitHostPort(host); err == nil {
-		host = h
-	}
-	host = strings.Trim(host, "[]")
-	switch host {
-	case "127.0.0.1", "localhost", "::1":
-		return true
-	default:
-		return false
-	}
-}
-
-func validOrigin(c *app.RequestContext) bool {
-	if string(c.Method()) != "POST" {
-		return true
-	}
-	site := string(c.Request.Header.Peek("Sec-Fetch-Site"))
-	origin := string(c.Request.Header.Peek("Origin"))
-	// I9: an empty Origin is not same-origin evidence. Without it a bare
-	// request (curl, a foreign process) could reach POST endpoints whose
-	// worst case is executing asr.command.binary (SEC-06).
-	if origin == "" {
-		return site == "same-origin"
-	}
-	if site != "" && site != "same-origin" && site != "none" {
-		return false
-	}
-	parsed, err := url.Parse(origin)
-	if err != nil {
-		return false
-	}
-	return parsed.Host == string(c.Request.Host())
 }
 
 // Stats returns the cumulative usage statistics ("使用统计"): lifetime totals

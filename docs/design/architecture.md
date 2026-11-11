@@ -90,7 +90,7 @@ main.go ──┬──> internal/agent ──┬──> internal/bluez ──> 
 | `source/ble` | ATVV 遥控器：连接、退避、解码、缓冲 | `Run(ctx)`、`Status()` | `core`、`transport`、`input`、`speech` | 300 LOC/文件 |
 | `source/phone` | 手机源：配对、令牌、WS、PCM 累积 | `Run(ctx)`、`Pair`/`Revoke` | `core`、`input`、`speech` | 300 LOC/文件 |
 | `actuate` | 文本与按键落到桌面 | `Paste(ctx,text)`/`Inject(ctx,key)`/`Subtitle(t)` | `core`、`keys` | 250 LOC |
-| `edge/netguard` | 一份 origin/安全头/回环保证 | `SameOrigin(r)`/`AdminHeaders()`/`PhoneHeaders()` | 无 | 120 LOC |
+| `edge/netguard` | 一份 origin/安全头/回环保证 | `SameOrigin(method,host,origin,site)`/`IsLoopback(host)`/`WriteHeaders(policy,set)`、`Admin`/`Phone` 两份 `Policy` | 无 | 120 LOC |
 | `edge/admin` | 管理 UI 的 HTTP 面 | `Handler() http.Handler` | `core`、`config`、speech/源接口 | 300 LOC/文件 |
 | `edge/phone` | 手机 PWA 的 HTTP 面（含 CSP 与资源） | `Handler() http.Handler` | `core`、`edge/netguard` | 300 LOC/文件 |
 | `app/runtime` | 组合根：构造、启动、关闭、状态视图 | `New(cfg) (*Runtime, error)`、`Start(ctx)`/`Stop(ctx)` | 全部具体实现 | 400 LOC |

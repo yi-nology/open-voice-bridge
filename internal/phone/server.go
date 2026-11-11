@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"io"
+	"io/fs"
 	"net"
 	"net/http"
 	"strings"
@@ -15,9 +16,9 @@ import (
 	"github.com/oekit/concurrency/async"
 	"github.com/oekit/logx"
 
+	"github.com/yi-nology/open-voice-bridge/edge/netguard"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
-	"github.com/yi-nology/open-voice-bridge/web"
 )
 
 var log = logx.Delegating("phone")
@@ -48,6 +49,9 @@ type ServerConfig struct {
 	// slot; 0 falls back to defaultWSIdleTimeout. Tests shorten it.
 	WSIdleTimeout time.Duration
 	Transcriber   Transcriber
+	// Assets carries the phone page and its scripts. The composition root
+	// supplies the embedded tree so this transport does not import web (R4).
+	Assets fs.FS
 }
 
 // Server serves the phone pairing endpoints, the WebSocket key channel and, in
@@ -60,6 +64,7 @@ type Server struct {
 	certs        *CertificateManager
 	cfg          ServerConfig
 	transcriber  Transcriber
+	assets       fs.FS
 	maxSamples   int
 	queue        *utteranceQueue
 	srv          *http.Server
@@ -109,6 +114,7 @@ func NewServer(store *Store, injector *KeyInjector, hub *input.Hub, cfg ServerCo
 		hub:          hub,
 		cfg:          cfg,
 		transcriber:  cfg.Transcriber,
+		assets:       cfg.Assets,
 		maxSamples:   core.Cap(maxUtterance),
 		queue:        newUtteranceQueue(cfg.MaxQueuedUtterances),
 		idleTimeout:  cfg.WSIdleTimeout,
@@ -144,10 +150,27 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/phone/ping", s.handlePing)
 	mux.HandleFunc("/ws/phone", s.handleWS)
 	mux.HandleFunc("/phone", s.handlePhonePage)
-	mux.HandleFunc("/phone/app.js", servePhoneAsset("phone_app.js", "text/javascript; charset=utf-8"))
-	mux.HandleFunc("/phone/worklet.js", servePhoneAsset("phone_worklet.js", "text/javascript; charset=utf-8"))
-	mux.HandleFunc("/phone/app.css", servePhoneAsset("phone.css", "text/css; charset=utf-8"))
-	return mux
+	mux.HandleFunc("/phone/app.js", s.servePhoneAsset("phone_app.js", "text/javascript; charset=utf-8"))
+	mux.HandleFunc("/phone/worklet.js", s.servePhoneAsset("phone_worklet.js", "text/javascript; charset=utf-8"))
+	mux.HandleFunc("/phone/app.css", s.servePhoneAsset("phone.css", "text/css; charset=utf-8"))
+	return s.guardOrigin(mux)
+}
+
+// guardOrigin applies the same rule the admin boundary uses. This listener is
+// the one exposed to the LAN, and /api/phone/pair spends a pairing code, so a
+// foreign page must not reach it. The WebSocket handshake keeps its own check
+// inside websocket.Accept.
+//
+// A fronting proxy (phone.tls: off) must preserve the Host header, or the
+// browser's Origin will not match it.
+func (s *Server) guardOrigin(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !netguard.SameOrigin(r.Method, r.Host, r.Header.Get("Origin"), r.Header.Get("Sec-Fetch-Site")) {
+			writeJSONError(w, http.StatusForbidden, "cross-origin request")
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // Serve listens on the configured address and shuts down with ctx.
@@ -253,23 +276,16 @@ func (s *Server) handlePing(w http.ResponseWriter, r *http.Request) {
 }
 
 // phoneSecurityHeaders is deliberately NOT the admin UI's policy: that page
-// denies the microphone, this one must allow it for getUserMedia. WebSockets
-// need ws:/wss: spelled out because CSP treats them as separate schemes from
-// the page origin.
+// denies the microphone, this one must allow it for getUserMedia. The shared
+// guards and the two policies live in edge/netguard so a fix reaches both.
 func phoneSecurityHeaders(w http.ResponseWriter) {
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.Header().Set("Referrer-Policy", "no-referrer")
-	w.Header().Set("Content-Security-Policy",
-		"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "+
-			"connect-src 'self' ws: wss:; media-src 'self'; worker-src 'self'; "+
-			"frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
-	w.Header().Set("Permissions-Policy", "microphone=(self), camera=(), geolocation=(), display-capture=()")
+	netguard.WriteHeaders(netguard.Phone, w.Header().Set)
 	w.Header().Set("Cache-Control", "no-store")
 }
 
-func servePhoneAsset(name, contentType string) http.HandlerFunc {
+func (s *Server) servePhoneAsset(name, contentType string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		data, err := web.FS.ReadFile(name)
+		data, err := fs.ReadFile(s.assets, name)
 		if err != nil {
 			http.Error(w, "asset not found", http.StatusNotFound)
 			return
@@ -281,7 +297,7 @@ func servePhoneAsset(name, contentType string) http.HandlerFunc {
 }
 
 func (s *Server) handlePhonePage(w http.ResponseWriter, r *http.Request) {
-	data, err := web.FS.ReadFile("phone.html")
+	data, err := fs.ReadFile(s.assets, "phone.html")
 	if err != nil {
 		http.Error(w, "phone page not found", http.StatusInternalServerError)
 		return
