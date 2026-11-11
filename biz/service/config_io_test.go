@@ -142,6 +142,32 @@ func TestDiagnosticsScrubsHomeFromReadyErrors(t *testing.T) {
 	}
 }
 
+// I7: both Diagnostics doc comments promise "no speech", but the report embedded
+// the whole status map, which carries the last dictated sentence. Attaching it
+// to a public issue would publish what the user last said.
+func TestDiagnosticsOmitsSpeech(t *testing.T) {
+	svc, agent, _, _ := newTestService(t)
+	const spoken = "明天上午十点开会"
+	agent.view = &core.AgentView{Connected: true, Ready: true, MicHealthy: true, LastText: spoken}
+
+	summary := svc.Diagnostics(context.Background(), "test-version")
+	encoded, err := json.Marshal(summary)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(encoded), spoken) {
+		t.Fatalf("summary leaked the last transcript: %s", encoded)
+	}
+	// The rest of the status still has to be there, or the report is useless.
+	status, ok := summary["status"].(map[string]any)
+	if !ok {
+		t.Fatalf("status = %T", summary["status"])
+	}
+	if status["asr_provider"] != "mimo" {
+		t.Fatalf("status lost its provider: %+v", status)
+	}
+}
+
 // DOM-11: a keymap change must not reach the root helper before the config
 // saves. Otherwise a failed save leaves the daemon running a mapping that
 // exists nowhere on disk.

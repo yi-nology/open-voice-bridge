@@ -279,6 +279,14 @@ Configuration boundaries (ARC-03, internal — the config file format is unchang
   the provider client and the generated config both read it instead of each
   carrying the same literal.
 
+Diagnostics export no longer contains speech (I7):
+
+- Fixed: `GET /api/diagnostics` promised "no device addresses, no home paths, no
+  speech" but embedded the whole status object, including `last_text` — the last
+  sentence you dictated. Anyone attaching that summary to a public issue was
+  publishing it. The transcript is now dropped from the report; the rest of the
+  status, the redacted address and the readiness checks are unchanged.
+
 One guard for both network boundaries (ARC-04):
 
 - Fixed: the phone listener did not check the origin of its HTTP POSTs at all.

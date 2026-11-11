@@ -69,6 +69,10 @@ func (s *Service) Diagnostics(ctx context.Context, version string) map[string]an
 	if addr, ok := status["address"].(string); ok {
 		status["address"] = redact.MAC(addr)
 	}
+	// The report promises no speech, and the status carries the last dictated
+	// sentence. Dropping it here is what keeps that promise true for a summary
+	// the user attaches to a public issue (I7).
+	delete(status, "last_text")
 	s.cfgMu.RLock()
 	asrChecks := asr.Diagnose(s.cfg.ASR)
 	s.cfgMu.RUnlock()
