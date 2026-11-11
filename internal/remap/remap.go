@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
 )
 
 var OrderedKeys = []string{
@@ -247,11 +249,7 @@ func Save(path string, mapping map[string]string) error {
 	if err != nil {
 		return err
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, append(data, '\n'), 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path)
+	return fsutil.WriteAtomic(path, append(data, '\n'), 0o600)
 }
 
 func ConfigText(mapping map[string]string) string {

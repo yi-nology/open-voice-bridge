@@ -21,6 +21,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/bluez"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/device"
+	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
 	"github.com/yi-nology/open-voice-bridge/internal/mcp"
 	"github.com/yi-nology/open-voice-bridge/internal/remap"
@@ -712,11 +713,7 @@ func (s *Service) SaveLLMKey(ctx context.Context, key string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, []byte(key+"\n"), 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path)
+	return fsutil.WriteAtomic(path, []byte(key+"\n"), 0o600)
 }
 
 func (s *Service) UpdateLLMConfig(ctx context.Context, next llm.Config) error {

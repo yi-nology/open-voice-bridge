@@ -16,6 +16,8 @@ import (
 	"time"
 
 	oeerrors "github.com/oekit/pkg/errors"
+
+	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
 )
 
 // TokenInfo is the displayable record of one client grant. The raw token and
@@ -86,11 +88,7 @@ func (s *Store) persistLocked() error {
 	if err := os.MkdirAll(filepath.Dir(s.path), 0o700); err != nil {
 		return err
 	}
-	tmp := s.path + ".tmp"
-	if err := os.WriteFile(tmp, append(data, '\n'), 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, s.path)
+	return fsutil.WriteAtomic(s.path, append(data, '\n'), 0o600)
 }
 
 // Create mints a grant and returns the raw token exactly once; only its hash

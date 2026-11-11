@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/oekit/logx"
+
+	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
 )
 
 var log = logx.Delegating("history")
@@ -117,23 +119,7 @@ func (s *Store) Append(entry Entry) error {
 	if err := os.MkdirAll(filepath.Dir(s.path), 0o700); err != nil {
 		return err
 	}
-	file, err := os.OpenFile(s.path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			log.Debug("close history file", "err", err)
-		}
-	}()
-	data, err := json.Marshal(entry)
-	if err != nil {
-		return err
-	}
-	if _, err := file.Write(append(data, '\n')); err != nil {
-		return err
-	}
-	return file.Sync()
+	return fsutil.AppendJSONL(s.path, entry)
 }
 
 func (s *Store) List(limit int) []Entry {
@@ -174,38 +160,12 @@ func (s *Store) Clear() error {
 	return s.rewrite()
 }
 
+// rewrite replaces the JSONL file with the in-memory entries in one durable
+// step (tmp + fsync + rename), so a crash can never leave the history empty
+// (DOM-14).
 func (s *Store) rewrite() error {
 	if s.path == "" {
 		return nil
 	}
-	tmp := s.path + ".tmp"
-	file, err := os.OpenFile(tmp, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
-	if err != nil {
-		return err
-	}
-	writer := bufio.NewWriter(file)
-	for _, entry := range s.entries {
-		data, err := json.Marshal(entry)
-		if err != nil {
-			continue
-		}
-		if _, err := writer.Write(append(data, '\n')); err != nil {
-			file.Close()
-			return err
-		}
-	}
-	if err := writer.Flush(); err != nil {
-		file.Close()
-		return err
-	}
-	// Without Sync a crash can rename a not-yet-durable tmp over the history
-	// and leave it empty (DOM-14).
-	if err := file.Sync(); err != nil {
-		file.Close()
-		return err
-	}
-	if err := file.Close(); err != nil {
-		return err
-	}
-	return os.Rename(tmp, s.path)
+	return fsutil.RewriteJSONL(s.path, s.entries)
 }

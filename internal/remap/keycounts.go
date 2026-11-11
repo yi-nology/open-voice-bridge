@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+
+	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
 )
 
 // Key counts ("按键次数统计"): presses are counted at the single applyKey
@@ -92,11 +94,7 @@ func (d *Daemon) flushKeyCounts() error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, append(data, '\n'), 0o644); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path)
+	return fsutil.WriteAtomic(path, append(data, '\n'), 0o644)
 }
 
 // keySnapshot renders the counts for the status response.

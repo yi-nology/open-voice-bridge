@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
 )
 
 // UsageStats is the cumulative dictation record ("使用统计"). It lives in its
@@ -103,12 +105,7 @@ func (s *Stats) Record(speech time.Duration, chars int) {
 		log.Warn("create stats dir", "err", err)
 		return
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, append(data, '\n'), 0o600); err != nil {
-		log.Warn("write usage stats", "err", err)
-		return
-	}
-	if err := os.Rename(tmp, path); err != nil {
+	if err := fsutil.WriteAtomic(path, append(data, '\n'), 0o600); err != nil {
 		log.Warn("replace usage stats", "err", err)
 	}
 }

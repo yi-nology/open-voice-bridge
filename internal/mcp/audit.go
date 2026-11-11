@@ -1,11 +1,12 @@
 package mcp
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
 )
 
 // AuditEntry records one agent query for the local audit trail ("按天审计").
@@ -28,19 +29,7 @@ func AppendAudit(path string, entry AuditEntry) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err
 	}
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	data, err := json.Marshal(entry)
-	if err != nil {
-		return err
-	}
-	if _, err := file.Write(append(data, '\n')); err != nil {
-		return err
-	}
-	return file.Sync()
+	return fsutil.AppendJSONL(path, entry)
 }
 
 // auditMu serialises appends from concurrent query handlers.
