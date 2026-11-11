@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+Wave-1 leaf extraction (roadmap R2): two new foundation packages.
+
+- `internal/core/audiofmt.go` is now the single definition of the shared PCM
+  geometry and duration policy: the 16 kHz rate, the default ADPCM frame
+  length, the 5–60 s utterance window with its 30 s default, the per-second
+  sample cap and the rate-aware 250 ms transcription floor. The scattered
+  16000 literals and the `atvv.SampleRate` / `phone.sampleRate` pair are
+  gone; production code greps to exactly one rate definition (R5).
+- `internal/fsutil` owns every durable file write: `WriteAtomic`
+  (tmp + fsync + rename), `AppendJSONL` and `RewriteJSONL`. The eight
+  hand-rolled tmp+rename copies and the two JSONL appends all call it, and
+  every path now fsyncs before rename, so a crash cannot leave a half-written
+  state file (R7).
+
 Wave-0 handover closed — the last two residuals (roadmap R1):
 
 - SEC-06 residual: an ASR `binary` may no longer be a shell or generic

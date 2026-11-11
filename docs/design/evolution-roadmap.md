@@ -17,8 +17,8 @@
 ### 债务盘点（2026-11-11 复测，比 [`architecture.md`](architecture.md) 写作时更糟——功能增量在持续加副本）
 
 - `map[string]any` 非测试代码 **213 处**（architecture.md 记 121；分布前列：`biz/service/service.go` 33、`internal/mcp/server.go` 31、`biz/handler/ui/server.go` 30、`main.go` 20）。
-- tmp+rename 原子写 **8 份副本**（architecture.md 记 5）：`internal/remap/{remap,keycounts}.go`、`internal/config/config.go`、`internal/mcp/store.go`、`internal/history/{stats,history}.go`、`internal/phone/store.go`、`biz/service/service.go`。
-- 采样率字面量/双常量 **5 处**：`internal/audio/audio.go:34`、`internal/asr/wav.go:10`、`internal/phone/audio.go:10`、`internal/atvv/protocol.go:16,89`；`asr` 其余处在 `audio.SampleRate` 与 `atvv.SampleRate` 两个并存常量间取值。
+- tmp+rename 原子写 **8 份副本**（architecture.md 记 5；**R2 已收拢进 `fsutil`**）：`internal/remap/{remap,keycounts}.go`、`internal/config/config.go`、`internal/mcp/store.go`、`internal/history/{stats,history}.go`、`internal/phone/store.go`、`biz/service/service.go`。
+- 采样率字面量/双常量 **5 处**（**R2 已收拢进 `internal/core/audiofmt.go`**）：`internal/audio/audio.go:34`、`internal/asr/wav.go:10`、`internal/phone/audio.go:10`、`internal/atvv/protocol.go:16,89`；`asr` 其余处在 `audio.SampleRate` 与 `atvv.SampleRate` 两个并存常量间取值。
 - 超规模文件 7 个：`web/ui.html` 4021、`biz/service/service.go` 858、`internal/phone/server.go` 734、`internal/remap/daemon.go` 710、`internal/agent/agent.go` 701、`biz/handler/ui/backend.go` 693、`main.go` 685。
 
 结论：**波 1 骨架必须在下一个功能高峰前立住**。下面批次顺序的硬约束是：从 R2 起，新代码不得再自带 tmp+rename、采样率字面量或 `map[string]any` 状态字段；R9 把它变成 CI 门禁。
@@ -33,7 +33,7 @@
 编号 R* 是执行批次；括号里是本文/架构稿的条目号，提交信息继续引用原编号。为避免撞名：**执行批次一律写作 R1–R10（本节），波次清单与缺陷条目里的（R5）/（R7）等是 architecture.md 的依赖规则编号**。批次在 ARC 与 OPS 之间交错，与 architecture.md §9 的纯波次顺序有一处有意偏离：**R3/R6 两个产品面批次插在骨架批次之间**——手机功能目前从任何文档化入口都打不开（OPS-01），把用户可达性排在全部重构之后代价太高；骨架的保护靠「R2 起新代码不加副本」的纪律与 R9 的 CI 门禁，不靠功能冻结。
 
 - **R1 · 波 0 收官**（已完成 2026-11-12）：上文两条残余 + 本页勾选同步（2 个代码提交 + 1 个文档提交）。下一批 R2。
-- **R2 · 叶子抽取（ARC-01、ARC-02）**：立 `core` 与 `core/audiofmt`（采样率/帧长/时长上下限/最小可转写时长单点定义，5 处字面量与 `audio`/`atvv` 双常量收拢，architecture.md R5）；`fsutil` 收拢 8 份原子写与 JSONL 追加（带 `Sync`，architecture.md R7）。纯搬运、零行为变化，三件套全绿即过。
+- **R2 · 叶子抽取（ARC-01、ARC-02）**（已完成 2026-11-12）：立 `core` 与 `core/audiofmt`（采样率/帧长/时长上下限/最小可转写时长单点定义，5 处字面量与 `audio`/`atvv` 双常量收拢，architecture.md R5）；`fsutil` 收拢 8 份原子写与 JSONL 追加（带 `Sync`，architecture.md R7）。纯搬运、零行为变化，三件套全绿即过。**落地口径**：`core/audiofmt.go` 是 `internal/core` 包内的文件（R5 的文件名），这样 R1「`config` 只 import `core`」成立；帧长即原 `atvv.DefaultFrame`（ADPCM 线字节，改名 `core.FrameBytes`）。下一批 R3。
 - **R3 · 手机可达（OPS-01、OPS-06）**：管理 UI 开关 `phone.enabled`（落盘 + `restart_required` 口径，对齐配置导出导入的既有语义）；`/readyz` 与 UI「就绪」拆核心必需/可选项两组——口径以「无 root helper 时纯语音键能否听写」为准（见「未验证」第 5 条），真机确认前先按「核心 = agent+ASR+粘贴链，可选 = root helper/BLE」切，手机-only 用户不再永久 503；README 补「配对手机」整节（同局域网要求、自签证书「只接受一次例外」警告、排错链到能力矩阵）。
 - **R4 · 边界守卫合一（ARC-04、ARC-12）**：抽 `edge/netguard`（一份 origin 检查、一份安全头、一份地址整形），`internal/phone` 删 `web` import 与 mime/CSP 段，管理端换用同一套（architecture.md R4）；手机按键白名单里的 `power` 类危险键收进显式配置开关，默认关。
 - **R5 · 状态视图单点（ARC-05）**：`core.StatusView`/`ReadyView`/`DevicesView` 由 runtime 生成、edge 只序列化，替换 agent Status → service → ui → `api.StatusResp` 四段重复断言（architecture.md R6）；`map[string]any` 收敛到真正的自由格式字段（目标 <20 处，集中在 keymap 自定义动作与 LLM 预设参数）。碰面最广的一批，放在 R2 的 `core` 类型就位之后。
@@ -111,8 +111,8 @@
 
 ## 波 1 · 架构骨架（§3 依赖规则与 §4 单元）
 
-- [ ] **ARC-01** 抽 `core` + `core/audiofmt`：16k/帧长/上下限/最小可转写时长单点定义，`asr` 四处副本删除（R5）。
-- [ ] **ARC-02** 抽 `fsutil`：五处原子写与 JSONL 追加合一（R7），带 `Sync`。
+- [x] **ARC-01** 抽 `core` + `core/audiofmt`（R2，2026-11-12）：16k/帧长/上下限/最小可转写时长单点定义在 `internal/core/audiofmt.go`，`asr` 四处副本与 `atvv.SampleRate`/`phone.sampleRate` 双常量删除，生产代码 `16000` 只剩一处定义（R5）。
+- [x] **ARC-02** 抽 `fsutil`（R2，2026-11-12）：8 份原子写与 2 处 JSONL 追加合一为 `WriteAtomic`/`AppendJSONL`/`RewriteJSONL`，全部带 `Sync`；`os.Rename`/tmp 拼接全仓只剩 `fsutil` 一处（R7）。
 - [ ] **ARC-03** `internal/config` 变叶子：删掉对 `device`/`llm`/`asr`/`remap` 的 import，结构校验留在 config，语义校验交回各子系统、由 runtime 在构造时调用（R1）。
 - [ ] **ARC-04** 抽 `edge/netguard`：一份 origin 检查、一份安全头、一份地址整形；`internal/phone` 删掉 `web` import 与 mime/CSP 段（`internal/phone/server.go:100-102,210-243`），管理端复用同一套（R4）。
 - [ ] **ARC-05** typed view 端到端：`core.StatusView`/`ReadyView`/`DevicesView` 由 runtime 生成，替换 agent Status → service → ui → `api.StatusResp` 的四段重复断言；`map[string]any` 降到自由格式字段（R6）。
