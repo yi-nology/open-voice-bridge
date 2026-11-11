@@ -88,6 +88,23 @@ long-session warning.
 - The phone hold-to-talk button warms to amber and then red as a hold nears
   the server's utterance cap (SayAll 长会话提醒).
 
+DOM-09/13 and two more SayAll ports:
+
+- Source identity now travels with every utterance: history rows and the
+  subtitle stream carry the source kind and friendly device name instead of
+  a bare address, and a capture cut at its time cap is labelled `truncated`
+  uniformly for the remote and the phone (I8).
+- Pairing codes are consumed exactly once even when the pair is then
+  rejected, generated device ids can never overwrite an existing device,
+  and a phone socket closes with its session.
+- New: lifetime key-press statistics. The root helper counts presses at the
+  single applyKey funnel (physical keys and phone injection alike), keeps
+  them in `keycounts.json` across restarts and reports them through status;
+  the usage panel shows the total and the three most-used keys.
+- New: docs/capability-matrix.md — device × capability, source × behaviour
+  and a symptom table for the mismatches that do exist on Linux (SayAll
+  能力矩阵移植).
+
 macOS platform verification and UI adaptation (compat, not a port):
 
 - Deep verification on darwin/arm64 against a real ARN9 remote: CGO and
