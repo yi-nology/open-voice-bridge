@@ -46,6 +46,7 @@ struct StatusResp {
   21: optional string asr_error
   22: bool mic_healthy
   23: i64 last_latency_ms
+  24: string platform
 }
 
 struct ApplyReq {

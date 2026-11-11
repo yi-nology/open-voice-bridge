@@ -70,6 +70,7 @@ func (s *Server) Status(ctx context.Context) (*api.StatusResp, error) {
 		Capturing:      s.IsCapturing(),
 		MicHealthy:     boolValue(status["mic_healthy"]),
 		LastLatencyMs:  int64Value(status["last_latency_ms"]),
+		Platform:       stringValue(status["platform"]),
 	}
 	if value := stringValue(status["helper_error"]); value != "" {
 		resp.HelperError = ptrx.Of(value)

@@ -958,20 +958,20 @@
           <button class="hotspot" data-key="compose" style="--x:40.6%;--y:56.9%;--w:17%;--h:8.0%" title="菜单"></button>
           <button class="hotspot" data-key="grave" style="--x:60.4%;--y:56.9%;--w:17%;--h:8.0%" title="TV"></button>
         </div>
-        <div class="remote-photo" data-model="arn9" hidden style="--figure-w:172px;--figure-ratio:218 / 770">
-          <img src="/assets/ARN9-remote-photo.png" alt="Xiaomi ARN9 remote">
-          <button class="hotspot" data-key="power" style="--x:50%;--y:7.3%;--w:20%;--h:5.2%" title="电源键"></button>
-          <button class="hotspot" data-key="f5" style="--x:50%;--y:14.7%;--w:20%;--h:5.2%" title="语音键"></button>
-          <button class="hotspot" data-key="up" style="--x:50%;--y:23%;--w:26%;--h:5.2%" title="上"></button>
-          <button class="hotspot" data-key="left" style="--x:18%;--y:30%;--w:14%;--h:8%" title="左"></button>
-          <button class="hotspot" data-key="enter" style="--x:50%;--y:30%;--w:26%;--h:8%" title="确定"></button>
-          <button class="hotspot" data-key="right" style="--x:82%;--y:30%;--w:14%;--h:8%" title="右"></button>
-          <button class="hotspot" data-key="down" style="--x:50%;--y:37%;--w:26%;--h:5.2%" title="下"></button>
-          <button class="hotspot" data-key="home" style="--x:25%;--y:44.5%;--w:23%;--h:5.5%" title="主页"></button>
-          <button class="hotspot" data-key="back" style="--x:50%;--y:44.5%;--w:23%;--h:5.5%" title="返回"></button>
-          <button class="hotspot" data-key="compose" style="--x:75%;--y:44.5%;--w:23%;--h:5.5%" title="菜单"></button>
-          <button class="hotspot" data-key="volumeup" style="--x:50%;--y:52.2%;--w:22%;--h:4.8%" title="音量 +"></button>
-          <button class="hotspot" data-key="volumedown" style="--x:50%;--y:57%;--w:22%;--h:4.8%" title="音量 −"></button>
+        <div class="remote-photo" data-model="arn9" hidden style="--figure-w:165px;--figure-ratio:261 / 980">
+          <img src="/assets/ARN9-white-remote-photo.png" alt="Xiaomi ARN9 remote (white)">
+          <button class="hotspot" data-key="power" style="--x:50.5%;--y:6.9%;--w:22%;--h:5.8%" title="电源键"></button>
+          <button class="hotspot" data-key="f5" style="--x:50.5%;--y:14.6%;--w:22%;--h:5.8%" title="语音键"></button>
+          <button class="hotspot" data-key="up" style="--x:50%;--y:22.1%;--w:26%;--h:5.2%" title="上"></button>
+          <button class="hotspot" data-key="left" style="--x:26.2%;--y:29.8%;--w:15%;--h:8%" title="左"></button>
+          <button class="hotspot" data-key="enter" style="--x:49.5%;--y:29.8%;--w:23%;--h:9%" title="确定"></button>
+          <button class="hotspot" data-key="right" style="--x:73.8%;--y:29.8%;--w:15%;--h:8%" title="右"></button>
+          <button class="hotspot" data-key="down" style="--x:50%;--y:37.3%;--w:26%;--h:5.2%" title="下"></button>
+          <button class="hotspot" data-key="home" style="--x:21.5%;--y:44.9%;--w:22%;--h:5.8%" title="主页"></button>
+          <button class="hotspot" data-key="back" style="--x:49.4%;--y:44.9%;--w:22%;--h:5.8%" title="返回"></button>
+          <button class="hotspot" data-key="compose" style="--x:77.4%;--y:44.9%;--w:22%;--h:5.8%" title="菜单"></button>
+          <button class="hotspot" data-key="volumeup" style="--x:48.9%;--y:52.4%;--w:21%;--h:5.2%" title="音量 +"></button>
+          <button class="hotspot" data-key="volumedown" style="--x:48.9%;--y:63%;--w:21%;--h:5.5%" title="音量 −"></button>
         </div>
         </div>
         <p class="photo-hint">点击实物按键定位映射；包括语音键在内均可自定义快捷键。</p>
@@ -1042,12 +1042,12 @@
       <div class="card">
         <h3>按键映射</h3>
         <div id="conn-keyd" class="value">…</div>
-        <div class="sub">Go remapper；捕获时暂停，结束后自动恢复</div>
+        <div class="sub" id="conn-keyd-sub">Go remapper；捕获时暂停，结束后自动恢复</div>
       </div>
       <div class="card">
         <h3>麦克风桥接</h3>
         <div id="conn-mic" class="value">…</div>
-        <div class="sub">XiaomiRemoteMic → PipeWire</div>
+        <div class="sub" id="conn-mic-sub">XiaomiRemoteMic → PipeWire</div>
       </div>
       <div class="card">
         <h3>语音识别</h3>
@@ -1059,7 +1059,7 @@
       <div class="card">
         <h3>开机自启</h3>
         <div id="conn-autostart" class="value">…</div>
-        <div class="sub">systemd 用户 agent + 系统 remap 服务</div>
+        <div class="sub" id="conn-autostart-sub">systemd 用户 agent + 系统 remap 服务</div>
       </div>
     </div>
 
@@ -1249,12 +1249,19 @@
     <div class="panel">
       <div class="panel-head"><div><h3>系统权限与服务</h3>
         <p>网页本身以普通用户运行；只有下面这个 root 助手拥有额外权限。</p></div></div>
-      <ul class="perm-list">
+      <ul class="perm-list" id="perm-linux">
         <li><b>xiaomi-remote-remap.service</b>（root）：Go 按键 remapper，独占遥控器 evdev 并通过 uinput 注入映射按键。</li>
         <li><b>xiaomi-remote-go.service</b>（用户）：Go agent，负责 BLE/ATVV、ASR、PipeWire 和网页 UI，监听 127.0.0.1:8787。</li>
         <li><b>开机自启</b>：用户 agent 通过 systemd + linger 在登录前启动，root remap 随系统启动；<code>xiaomi-remote doctor</code> 可检查启用状态。</li>
         <li><b>keyd.service / xiaomi-remote-helper.service</b>（旧实现，已停用，保留回退）。</li>
         <li><b>xiaomi-mic.service / xiaomi-remote-ui.service</b>（旧 Python 版，已停用，保留回退）。</li>
+      </ul>
+      <ul class="perm-list" id="perm-mac" hidden>
+        <li><b>蓝牙</b>：系统设置 → 隐私与安全性 → 蓝牙，允许运行 agent 的宿主（终端或 launchd）连接遥控器。</li>
+        <li><b>辅助功能</b>：粘贴识别结果需要合成 ⌘V，授予运行该二进制的宿主；未授权时字幕与历史照常，只是不会自动上屏。</li>
+        <li><b>按键映射不适用</b>：evdev/uinput 是 Linux 原语，macOS 上按键走遥控器原生 HID，不注入。</li>
+        <li><b>虚拟麦克风不适用</b>：macOS 需要 AudioServerPlugin 才能造虚拟麦，v1 直接把解码样本喂给 ASR。</li>
+        <li><b>开机自启</b>：用 <code>launchd</code> 或终端手动运行 <code>xiaomi-remote agent</code>；<code>xiaomi-remote doctor</code> 检查遥控器与权限。</li>
       </ul>
       <p class="note" style="margin-top:12px;">
         ASR provider 可在侧边栏「语音识别」中编辑并热切换，也可直接修改
@@ -1691,20 +1698,53 @@ function setChip(id, text, cls) {
   if (cls) chip.classList.add(cls);
 }
 
+function remoteConnectedOf(status) {
+  return !!(status.remote_present || status.ble_connected);
+}
+
+function mapStateOf(status) {
+  return status.capturing ? "捕获中"
+    : status.keyd_active ? "映射运行中"
+    : status.helper_error ? "映射不可用"
+    : "映射未运行";
+}
+
 function updateConnection(status) {
   lastStatus = status;
   renderQuickstart(status);
+  const remoteConnected = remoteConnectedOf(status);
+  const mapState = mapStateOf(status);
+  // macOS ships no virtual microphone by design (docs/design/macos-compat.md):
+  // the ASR chain consumes the decoded stream directly, so an unhealthy sink
+  // is the normal state there and must not read as a fault.
+  const isMac = status.platform === "darwin";
   const remote = document.getElementById("conn-remote");
-  remote.textContent = status.remote_present ? "已连接" : "未连接";
-  remote.className = "value " + (status.remote_present ? "good" : "bad");
+  remote.textContent = remoteConnected ? "已连接" : "未连接";
+  remote.className = "value " + (remoteConnected ? "good" : "bad");
   document.getElementById("conn-address").textContent = status.address || "";
   const keyd = document.getElementById("conn-keyd");
-  keyd.textContent = status.keyd_active ? "运行中" : "已暂停";
-  keyd.className = "value " + (status.keyd_active ? "good" : "bad");
+  const keydSub = document.getElementById("conn-keyd-sub");
+  if (isMac) {
+    keyd.textContent = "不适用";
+    keyd.className = "value";
+    if (keydSub) keydSub.textContent = "macOS 无 evdev/uinput，按键走遥控器原生 HID";
+  } else {
+    keyd.textContent = mapState;
+    keyd.className = "value " + (status.keyd_active ? "good" : "warn");
+    if (keydSub) keydSub.textContent = "Go remapper；捕获时暂停，结束后自动恢复";
+  }
   const micHealthy = status.mic_healthy !== false;
   const mic = document.getElementById("conn-mic");
-  mic.textContent = status.mic_active ? (micHealthy ? "运行中" : "节点恢复中") : "未运行";
-  mic.className = "value " + (status.mic_active && micHealthy ? "good" : (status.mic_active ? "warn" : "bad"));
+  const micSub = document.getElementById("conn-mic-sub");
+  if (isMac) {
+    mic.textContent = status.mic_active ? "直采模式" : "未连接";
+    mic.className = "value " + (status.mic_active ? "good" : "bad");
+    if (micSub) micSub.textContent = "ASR 直采（macOS 无虚拟麦）";
+  } else {
+    mic.textContent = status.mic_active ? (micHealthy ? "运行中" : "节点恢复中") : "未运行";
+    mic.className = "value " + (status.mic_active && micHealthy ? "good" : (status.mic_active ? "warn" : "bad"));
+    if (micSub) micSub.textContent = "XiaomiRemoteMic → PipeWire";
+  }
   const asr = document.getElementById("conn-asr");
   asr.textContent = status.asr_error ? "配置不可用" : (status.asr_backend || "未知");
   asr.className = "value " + (status.asr_error ? "bad" : "good");
@@ -1753,19 +1793,27 @@ function updateConnection(status) {
   }
   const autostart = document.getElementById("conn-autostart");
   if (autostart) {
-    autostart.textContent =
-      "agent " + (status.agent_autostart ? "已启用" : "未启用") +
-      " · remap " + (status.remap_autostart ? "已启用" : "未启用");
-    autostart.className = "value " + (status.agent_autostart && status.remap_autostart ? "good" : "bad");
+    const autostartSub = document.getElementById("conn-autostart-sub");
+    if (isMac) {
+      autostart.textContent = "手动启动";
+      autostart.className = "value warn";
+      if (autostartSub) autostartSub.textContent = "macOS 用 launchd 或终端手动运行 agent";
+    } else {
+      autostart.textContent =
+        "agent " + (status.agent_autostart ? "已启用" : "未启用") +
+        " · remap " + (status.remap_autostart ? "已启用" : "未启用");
+      autostart.className = "value " + (status.agent_autostart && status.remap_autostart ? "good" : "bad");
+      if (autostartSub) autostartSub.textContent = "systemd 用户 agent + 系统 remap 服务";
+    }
   }
-  setChip("chip-remote", status.remote_present ? "遥控器已连接" : "遥控器未连接",
-          status.remote_present ? "good" : "bad");
-  setChip("chip-keyd", status.keyd_active ? "映射运行中" : "捕获中",
+  setChip("chip-remote", remoteConnected ? "遥控器已连接" : "遥控器未连接",
+          remoteConnected ? "good" : "bad");
+  setChip("chip-keyd", mapState,
           status.keyd_active ? "good" : "warn");
   setChip("chip-mic",
-    status.mic_active ? (micHealthy ? "语音就绪" : "音频节点异常") : "语音未运行",
-    status.mic_active ? (micHealthy ? "good" : "warn") : "bad");
-  const coreReady = !!(status.remote_present && status.keyd_active && status.mic_active && micHealthy && !status.asr_error);
+    status.mic_active ? ((micHealthy || status.atvv_ready) ? "语音就绪" : "音频节点异常") : "语音未运行",
+    status.mic_active ? ((micHealthy || status.atvv_ready) ? "good" : "warn") : "bad");
+  const coreReady = !!(remoteConnected && status.mic_active && (micHealthy || status.atvv_ready) && !status.asr_error);
   const guidedState = document.getElementById("guided-state");
   const guidedAsr = document.getElementById("guided-asr");
   const guidedMeta = document.getElementById("guided-meta");
@@ -1778,15 +1826,20 @@ function updateConnection(status) {
       : ((status.asr_backend || "ASR") + (latency > 0 ? " · " + latency + " ms" : (coreReady ? " · 就绪" : " · 待检查")));
   }
   const sideStatus = document.getElementById("side-status");
-  if (sideStatus) sideStatus.textContent = status.remote_present ? "遥控器在线" : "等待遥控器";
+  if (sideStatus) sideStatus.textContent = remoteConnected ? "遥控器在线" : "等待遥控器";
   const sideDot = document.querySelector(".side-foot i");
-  if (sideDot) sideDot.style.background = status.remote_present ? "var(--green)" : "var(--orange)";
+  if (sideDot) sideDot.style.background = remoteConnected ? "var(--green)" : "var(--orange)";
   document.getElementById("perm-config").textContent = status.config || "";
+  const permLinux = document.getElementById("perm-linux");
+  const permMac = document.getElementById("perm-mac");
+  if (permLinux && permMac) {
+    permLinux.hidden = isMac;
+    permMac.hidden = !isMac;
+  }
   const right = document.getElementById("status-right");
   if (right && enabled) {
-    right.textContent = "按键状态：" +
-      (status.keyd_active ? "映射运行中" : "捕获中") +
-      " · " + (status.remote_present ? "遥控器已连接" : "遥控器未连接");
+    right.textContent = "按键状态：" + mapState +
+      " · " + (remoteConnected ? "遥控器已连接" : "遥控器未连接");
   }
   if (status.capturing && !capturing) setCaptureUi(true);
   if (!status.capturing && capturing) setCaptureUi(false);
@@ -1824,9 +1877,8 @@ async function loadStatus(initial, syncMapping) {
       if (enabled) {
         const right = document.getElementById("status-right");
         if (right) {
-          right.textContent = "按键状态：" +
-            (status.keyd_active ? "映射运行中" : "捕获中") +
-            " · " + (status.remote_present ? "遥控器已连接" : "遥控器未连接");
+          right.textContent = "按键状态：" + mapStateOf(status) +
+            " · " + (remoteConnectedOf(status) ? "遥控器已连接" : "遥控器未连接");
         }
       }
       if (status.last_text && subtitleLinesEl && subtitleLinesEl.children.length === 0) {
@@ -3333,8 +3385,12 @@ function renderQuickstart(status) {
   const toggle = document.getElementById("quickstart-toggle");
   const dismiss = document.getElementById("quickstart-dismiss");
   const remoteReady = !!(status.remote_present && status.ble_connected);
-  const mapReady = !!status.keyd_active;
-  const micReady = !!status.mic_active && status.mic_healthy !== false;
+  // On macOS key remapping has no equivalent primitive and there is no
+  // virtual mic (docs/design/macos-compat.md); both items are satisfied by
+  // design so the checklist measures what the platform actually promises.
+  const isMac = status.platform === "darwin";
+  const mapReady = isMac ? true : !!status.keyd_active;
+  const micReady = isMac ? !!status.mic_active : (!!status.mic_active && status.mic_healthy !== false);
   const asrReady = !status.asr_error && !!status.asr_provider;
   const llmReady = !!llmConfigData?.config?.enabled;
   const coreReady = remoteReady && mapReady && micReady && asrReady;
@@ -3360,11 +3416,17 @@ function renderQuickstart(status) {
   toggle.textContent = "收起";
   dismiss.hidden = false;
   list.appendChild(quickRow("1. 遥控器已连接", remoteReady, remoteReady ? "BLE 已连接，按键和语音都可用" : "先在系统蓝牙中配对/连接，再到设备页扫描", "去设备", () => goTab("devices")));
-  list.appendChild(quickRow("2. 按键映射运行", mapReady, mapReady ? "remap 正在运行" : "映射服务未就绪", "查看按键", () => goTab("keys")));
-  list.appendChild(quickRow("3. 麦克风桥接", micReady, micReady ? "虚拟麦克风已就绪" : "麦克风桥接未运行，可尝试重启", "去修复", async () => {
-    await fetch("/api/restart-mic", {method: "POST", headers: {"Content-Type": "application/json"}, body: "{}"});
-    setTimeout(() => loadStatus(false), 1200);
-  }));
+  list.appendChild(quickRow("2. 按键映射运行", mapReady,
+    isMac ? "macOS 不做映射，按键走遥控器原生 HID"
+          : (mapReady ? "remap 正在运行" : "映射服务未就绪"),
+    "查看按键", () => goTab("keys")));
+  list.appendChild(quickRow("3. 麦克风桥接", micReady,
+    isMac ? (micReady ? "直采模式，ASR 直接消费解码样本" : "遥控器未连接，暂无音频")
+          : (micReady ? "虚拟麦克风已就绪" : "麦克风桥接未运行，可尝试重启"),
+    "去修复", async () => {
+      await fetch("/api/restart-mic", {method: "POST", headers: {"Content-Type": "application/json"}, body: "{}"});
+      setTimeout(() => loadStatus(false), 1200);
+    }));
   list.appendChild(quickRow("4. 语音识别", asrReady, asrReady ? "ASR 就绪：" + (status.asr_backend || "") : (status.asr_error || "请配置 ASR 模型"), "去配置", () => { goTab("connection"); showConfigPanel("asr"); }));
   list.appendChild(quickRow("5. 文本润色（可选）", llmReady, llmReady ? "已启用大模型后处理" : "未启用，不影响基础听写", "去配置", () => {
     goTab("connection");

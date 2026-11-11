@@ -951,6 +951,7 @@ type StatusResp struct {
 	AsrError       *string           `thrift:"asr_error,21,optional" form:"asr_error" json:"asr_error,omitempty" query:"asr_error"`
 	MicHealthy     bool              `thrift:"mic_healthy,22" form:"mic_healthy" json:"mic_healthy" query:"mic_healthy"`
 	LastLatencyMs  int64             `thrift:"last_latency_ms,23" form:"last_latency_ms" json:"last_latency_ms" query:"last_latency_ms"`
+	Platform       string            `thrift:"platform,24" form:"platform" json:"platform" query:"platform"`
 }
 
 func NewStatusResp() *StatusResp {
