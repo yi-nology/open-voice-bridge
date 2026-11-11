@@ -33,6 +33,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/history"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
+	"github.com/yi-nology/open-voice-bridge/internal/mcp"
 	"github.com/yi-nology/open-voice-bridge/internal/phone"
 	"github.com/yi-nology/open-voice-bridge/internal/remap"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
@@ -64,6 +65,13 @@ func main() {
 				Summary: "check config, services, devices, and ASR providers",
 				Run: func(_ context.Context, args []string, stdout, stderr io.Writer) int {
 					return runDoctor(args, stdout, stderr)
+				},
+			},
+			{
+				Name:    "mcp",
+				Summary: "serve one AI client over stdio MCP (read-only history/stats)",
+				Run: func(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+					return runMCP(ctx, args, stdout, stderr)
 				},
 			},
 		},
@@ -327,6 +335,11 @@ func runAgent(args []string, stderr io.Writer) int {
 			ExportConfig:        svc.ExportConfig,
 			ImportConfig:        svc.ImportConfig,
 			Diagnostics:         func(ctx context.Context) map[string]any { return svc.Diagnostics(ctx, version) },
+			MCPVerify:           svc.MCPVerify,
+			MCPAudit:            svc.MCPAudit,
+			MCPCreateToken:      func(label string) (map[string]any, error) { return svc.MCPCreateToken(label, mcpBinaryPath()) },
+			MCPListTokens:       svc.MCPListTokens,
+			MCPRevokeToken:      svc.MCPRevokeToken,
 			SnapshotState: func() map[string]any {
 				owner := inputHub.AudioOwner()
 				active, source, name := speakingLabel(
@@ -528,6 +541,45 @@ func runRemap(args []string, stderr io.Writer) int {
 	})
 	if err != nil {
 		logger.Error("remapper stopped", "err", err)
+		return 1
+	}
+	return 0
+}
+
+// mcpBinaryPath is the absolute path AI clients put in their MCP config.
+func mcpBinaryPath() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return "xiaomi-remote"
+	}
+	if resolved, err := filepath.EvalSymlinks(exe); err == nil {
+		return resolved
+	}
+	return exe
+}
+
+// runMCP serves one AI client over stdio MCP: read-only history and stats
+// behind a per-client token ("本地 Agent 访问").
+func runMCP(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	fs := cli.NewFlagSet("mcp", stderr)
+	token := fs.String("token", os.Getenv("XIAOMI_REMOTE_TOKEN"), "client token (or XIAOMI_REMOTE_TOKEN)")
+	base := fs.String("base", "http://127.0.0.1:8787", "admin API base URL")
+	if _, code := cli.ParseFlags(fs, args); code != cli.ExitOK {
+		return code
+	}
+	if strings.TrimSpace(*token) == "" {
+		fmt.Fprintln(stderr, "mcp: a token is required — create one in the admin UI under 本地 Agent 访问")
+		return 1
+	}
+	server := mcp.NewServer(*base, *token, nil)
+	label, err := server.Verify(ctx)
+	if err != nil {
+		fmt.Fprintln(stderr, "mcp: token rejected:", err)
+		return 1
+	}
+	fmt.Fprintln(stderr, "mcp: serving", label, "(read-only)")
+	if err := server.Serve(ctx, os.Stdin, stdout); err != nil {
+		fmt.Fprintln(stderr, "mcp:", err)
 		return 1
 	}
 	return 0

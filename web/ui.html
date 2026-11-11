@@ -700,6 +700,13 @@
   .stats-day { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; min-width: 0; height: 100%; }
   .stats-bar { width: 100%; max-width: 18px; border-radius: 3px 3px 0 0; background: var(--blue); opacity: .85; min-height: 2px; }
   .stats-day-label { font-size: 10px; color: var(--muted); white-space: nowrap; }
+  .stats-heat { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 10px); gap: 3px; margin: 14px 4px 0; overflow-x: auto; }
+  .heat-cell { width: 10px; height: 10px; border-radius: 2px; background: var(--panel2, #f2f2f5); }
+  .heat-cell.l1 { background: rgba(10,132,255,.22); }
+  .heat-cell.l2 { background: rgba(10,132,255,.45); }
+  .heat-cell.l3 { background: rgba(10,132,255,.7); }
+  .heat-cell.l4 { background: rgba(10,132,255,.95); }
+  .heat-caption { font-size: 11px; color: var(--muted); margin: 6px 4px 0; }
 
   /* ---- config as settings groups (A direction) ---- */
   #cfg-asr > .card, #cfg-llm > .card, #cfg-text > .card {
@@ -1103,6 +1110,21 @@
         </div>
       </div>
       <div class="stats-days" id="stats-days" title="最近 14 天语音时长"></div>
+      <div class="stats-heat" id="stats-heat" title="最近 26 周使用热力图"></div>
+      <div class="heat-caption">最近 26 周 · 颜色越深表示当天说话越多</div>
+    </div>
+
+    <div class="panel" id="agent-access-panel" style="margin-top:14px;">
+      <div class="panel-head">
+        <div><h3>本地 Agent 访问</h3><p>为每个 AI 客户端创建独立、可撤销的只读授权（MCP）。历史只读、查询留审计计数；客户端可能把读到的内容发到它的云端。</p></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <input id="mcp-label" placeholder="客户端名称，如 Claude Code" style="flex:1;min-width:180px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;">
+        <button class="btn small" id="mcp-create">创建授权</button>
+      </div>
+      <pre id="mcp-snippet" class="sub" style="display:none;white-space:pre-wrap;background:var(--panel2);border-radius:8px;padding:10px;margin-top:10px;"></pre>
+      <div class="sub" id="mcp-msg" style="margin-top:8px;"></div>
+      <div id="mcp-token-list" style="margin-top:10px;"></div>
     </div>
 
     <div class="panel" id="maintenance-panel" style="margin-top:14px;">
@@ -2691,6 +2713,7 @@ async function loadStats() {
     document.getElementById("stats-speech").textContent = fmtDuration(data.speech_ms);
     document.getElementById("stats-longest").textContent = data.longest_ms ? fmtDuration(data.longest_ms) : "—";
     renderStatsDays(data.days || {});
+    renderStatsHeatmap(data.days || {});
   } catch (error) {
     /* overview stays usable without stats */
   }
@@ -2753,6 +2776,103 @@ if (diagnosticsBtn) diagnosticsBtn.addEventListener("click", async () => {
     maintenanceMsg("生成失败：" + error, "err");
   }
 });
+
+// renderStatsHeatmap draws the 26-week calendar (SayAll 182 天热力图).
+function renderStatsHeatmap(days) {
+  const host = document.getElementById("stats-heat");
+  if (!host) return;
+  host.innerHTML = "";
+  const today = new Date();
+  const start = new Date(today);
+  start.setDate(today.getDate() - 181);
+  // Align the first column to a full week (start on Sunday).
+  start.setDate(start.getDate() - start.getDay());
+  let peak = 1;
+  for (const key in days) {
+    const ms = (days[key] && days[key].speech_ms) || 0;
+    if (ms > peak) peak = ms;
+  }
+  for (let cursor = new Date(start); cursor <= today; cursor.setDate(cursor.getDate() + 1)) {
+    const key = cursor.getFullYear() + "-" + String(cursor.getMonth() + 1).padStart(2, "0") + "-" + String(cursor.getDate()).padStart(2, "0");
+    const cell = document.createElement("div");
+    const stat = days[key];
+    const ms = (stat && stat.speech_ms) || 0;
+    cell.className = "heat-cell";
+    if (ms > 0) {
+      const level = Math.ceil((ms / peak) * 4);
+      cell.classList.add("l" + Math.min(4, Math.max(1, level)));
+    }
+    cell.title = key + (stat ? "：" + stat.utterances + " 次，" + fmtDuration(stat.speech_ms) : "：无记录");
+    host.appendChild(cell);
+  }
+}
+
+const mcpCreateBtn = document.getElementById("mcp-create");
+if (mcpCreateBtn) mcpCreateBtn.addEventListener("click", async () => {
+  const label = (document.getElementById("mcp-label").value || "").trim();
+  if (!label) return mcpMsg("请填写客户端名称。", "err");
+  try {
+    const res = await fetch("/api/mcp/tokens", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ label }) });
+    const data = await res.json();
+    if (!res.ok) return mcpMsg("创建失败：" + (data.error || res.status), "err");
+    const snippet = document.getElementById("mcp-snippet");
+    snippet.style.display = "block";
+    snippet.textContent = "把下面这段粘进该客户端的 MCP 配置（只显示这一次）：\n" + JSON.stringify(data.snippet, null, 2);
+    document.getElementById("mcp-label").value = "";
+    mcpMsg("授权已创建，请立刻复制上面的配置。", "ok");
+    loadMCPTokens();
+  } catch (error) {
+    mcpMsg("创建失败：" + error, "err");
+  }
+});
+
+async function loadMCPTokens() {
+  const host = document.getElementById("mcp-token-list");
+  if (!host) return;
+  try {
+    const res = await fetch("/api/mcp/tokens");
+    const data = await res.json();
+    host.innerHTML = "";
+    const tokens = data.tokens || [];
+    if (!tokens.length) {
+      host.innerHTML = '<div class="sub">还没有授权。创建后，把生成的配置粘进 Claude Code、Codex 等客户端即可只读查询听写历史。</div>';
+      return;
+    }
+    for (const item of tokens) {
+      const row = document.createElement("div");
+      row.style.cssText = "display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);flex-wrap:wrap;";
+      const label = document.createElement("span");
+      label.textContent = item.label + (item.revoked ? "（已撤销）" : "");
+      label.style.cssText = "flex:1;min-width:140px;" + (item.revoked ? "opacity:.5;" : "");
+      const used = document.createElement("span");
+      used.className = "sub";
+      used.textContent = item.last_used ? "最近使用 " + new Date(item.last_used).toLocaleString() : "尚未使用";
+      row.appendChild(label);
+      row.appendChild(used);
+      if (!item.revoked) {
+        const btn = document.createElement("button");
+        btn.className = "btn small";
+        btn.textContent = "撤销";
+        btn.addEventListener("click", async () => {
+          const res = await fetch("/api/mcp/tokens/revoke", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: item.id }) });
+          if (res.ok) { mcpMsg("已撤销，" + item.label + " 的下一次调用即失败。", "ok"); loadMCPTokens(); }
+        });
+        row.appendChild(btn);
+      }
+      host.appendChild(row);
+    }
+  } catch (error) {
+    host.innerHTML = '<div class="sub">加载授权列表失败。</div>';
+  }
+}
+
+function mcpMsg(text, kind) {
+  const el = document.getElementById("mcp-msg");
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = kind === "err" ? "var(--red)" : "var(--muted)";
+}
+loadMCPTokens();
 
 function renderStatsDays(days) {
   const host = document.getElementById("stats-days");

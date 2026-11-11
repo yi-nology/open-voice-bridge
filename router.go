@@ -26,6 +26,12 @@ func customizedRegister(r *server.Hertz) {
 	r.GET("/api/config/export", customUI.ConfigExport)
 	r.POST("/api/config/import", customUI.ConfigImport)
 	r.GET("/api/diagnostics", customUI.Diagnostics)
+	r.GET("/api/agent/verify", customUI.AgentVerify)
+	r.GET("/api/agent/history", customUI.AgentHistory)
+	r.GET("/api/agent/stats", customUI.AgentStats)
+	r.GET("/api/mcp/tokens", customUI.MCPTokens)
+	r.POST("/api/mcp/tokens", customUI.MCPCreateToken)
+	r.POST("/api/mcp/tokens/revoke", customUI.MCPRevokeToken)
 
 	// Management-plane phone/input endpoints (loopback + same-site only).
 	r.GET("/api/inputs", customUI.Inputs)

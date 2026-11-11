@@ -21,6 +21,7 @@
 /agent.log
 
 # editor / agent state
+edited-*.png
 .qoder/
 .idea/
 .vscode/

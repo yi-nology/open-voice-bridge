@@ -32,6 +32,7 @@
 - **CON-07**：手机 HTTP Read/Write/Idle 超时；WS 每读 75s 空闲 deadline（客户端 15s 心跳×5）；服务端 30s ping，无 pong 即断开释放槽位。
 - **DOM-06 / I1**：`input.Preemptable` 接口；`AcquireAudioForce` 锁外通知被抢占源；手机原子停采（竞态-safe）、半句送达链路（DOM-04）、`preempted` 帧告知 UI；双源并发 e2e 测试。
 - **产品增量（SayAll Windows 对标）**：配置导出/导入（校验先行、失败不动盘、旧档 `.bak-时间戳` 备份、`restart_required` 口径）；一键诊断摘要（`GET /api/diagnostics`：版本/平台/ready/status/ASR 检查，MAC 脱敏 + HOME 路径打码）。
+- **产品增量（SayAll 对标）**：常用语——`text.snippets` 按序兼任短语库，keymap 新增 `phrase1`–`phrase8` 动作（注入 F13–F20 私有信号，与语音键 F24 同通道）；按下即经共享粘贴链路上屏，SSE/字幕播报，不进历史与日志正文；未占用槽位为空操作。UI：短语行标槽位、按键选择器加「常用语」组。
 - **DOM-10**：词典替换改字面插入（`$1` 不再被展开）+ 单遍 alternation 匹配，规则不链式叠加。
 - **DOM-11**：keymap 三处（Apply/ApplyKeymapProfile/SaveKeymapProfile）改"先落盘、后动 helper"，保存失败即闭合失败（daemon 不会跑到不存在的配置上）。
 - **DOM-12（半）**：长按 `value==2` 不再丢——键动作重按、宏重执行（按住连续执行）；死字段待产品决策。
@@ -42,7 +43,7 @@
 1. **SEC-06 剩余半句**：`asr.command.args` 可夹带任意程序（`binary=/bin/sh args=["-c",...]`）——闸门是管理端 origin（已收紧）；若要再加一层：args 白名单或命令模板，交波 1 决定。
 2. **DOM-07**：手机按键通道同步调 helper（10s），卡住时同一连接的 PCM 也停——把按键注入挪出读循环或异步化。
 3. **DOM-09、DOM-13 与 DOM-12 残余**：输入源身份贯穿字幕与历史（DOM-09）；`Pair` 不消耗配对码/deviceID 撞车/`serveConn` 退出不关 ws（DOM-13，asrTimeout 半句已被 CON-03 解掉）；`Profile.Keys`/`Voice` 接线或删除（DOM-12 残余）。
-4. **产品增量（SayAll 对标，未做）**：常用语面板、组合动作宏、按键次数统计（需 root helper 计数回传）、按 App 自动切换键位方案（Linux 按 WM_CLASS）。
+4. **产品增量（SayAll 对标）**：已落——只读 MCP「本地 Agent 访问」（`internal/mcp`：256-bit token/SHA-256 存储、撤销即失效、审计只记计数、客户端配置片段、`xiaomi-remote mcp` 子命令、26 周热力图、长会话提醒（手机端按住进度 80%/95% 变色）。未做——常用语浮层面板（桌面 overlay 选句，当前是按键直达）、组合动作宏、按键次数统计（需 root helper 计数回传）、按 App 自动切换键位方案（Linux 按 WM_CLASS）、回眸可选录音、加密诊断日志、首次运行引导（Onboarding）、收音能力矩阵文档、稳定/预发布双通道。
 5. **波 2（OPS）与波 3（打磨）**：按原清单。
 
 硬门禁（不要为了赶进度绕过）：

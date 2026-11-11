@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -21,6 +22,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/device"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
+	"github.com/yi-nology/open-voice-bridge/internal/mcp"
 	"github.com/yi-nology/open-voice-bridge/internal/remap"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
@@ -51,23 +53,25 @@ type Helper interface {
 
 // Service owns runtime configuration and coordinates the agent and remapper.
 type Service struct {
-	cfg    config.Config
-	path   string
-	cfgMu  sync.RWMutex
-	asrErr error
-	agent  Agent
-	helper Helper
-	logger logx.Logger
+	cfg       config.Config
+	path      string
+	cfgMu     sync.RWMutex
+	asrErr    error
+	agent     Agent
+	helper    Helper
+	logger    logx.Logger
+	mcpTokens *mcp.Store
 }
 
 func New(cfg config.Config, path string, agent Agent, helper Helper, asrErr error, logger logx.Logger) *Service {
 	return &Service{
-		cfg:    cfg,
-		path:   path,
-		agent:  agent,
-		helper: helper,
-		asrErr: asrErr,
-		logger: logger,
+		cfg:       cfg,
+		path:      path,
+		agent:     agent,
+		helper:    helper,
+		asrErr:    asrErr,
+		logger:    logger,
+		mcpTokens: mcp.NewStore(filepath.Join(filepath.Dir(path), "mcp-tokens.json")),
 	}
 }
 
@@ -90,7 +94,7 @@ func (s *Service) Status(ctx context.Context) map[string]any {
 	sort.Strings(asrProviders)
 	sort.Strings(keymapProfiles)
 
-	status := map[string]any{"ok": true, "address": address}
+	status := map[string]any{"ok": true, "address": address, "platform": runtime.GOOS}
 	if helperStatus, err := s.helper.Call(ctx, map[string]string{"cmd": "status"}); err == nil {
 		for _, key := range []string{"keyd_active", "remote_present", "mapping", "config"} {
 			if value, ok := helperStatus[key]; ok {

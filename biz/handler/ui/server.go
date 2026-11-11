@@ -21,6 +21,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/helper"
 	"github.com/yi-nology/open-voice-bridge/internal/history"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
+	"github.com/yi-nology/open-voice-bridge/internal/mcp"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
 	"github.com/yi-nology/open-voice-bridge/web"
 )
@@ -63,6 +64,11 @@ type Deps struct {
 	ExportConfig        func() ([]byte, error)
 	ImportConfig        func([]byte) error
 	Diagnostics         func(context.Context) map[string]any
+	MCPVerify           func(string) (mcp.TokenInfo, bool)
+	MCPAudit            func(mcp.TokenInfo, string, int)
+	MCPCreateToken      func(label string) (map[string]any, error)
+	MCPListTokens       func() map[string]any
+	MCPRevokeToken      func(id string) map[string]any
 	PhonePairing        func(context.Context) map[string]any
 	PhoneDevices        func(context.Context) map[string]any
 	PhoneRevoke         func(context.Context, string) map[string]any

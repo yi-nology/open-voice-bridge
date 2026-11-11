@@ -20,6 +20,9 @@
     carry: new Int16Array(FRAME_SAMPLES),
     carryLen: 0,
     micAvailable: false,
+    maxAudioSeconds: 30,
+    limitTimer: 0,
+    limitWarned: false,
     wake: null,
   };
 
@@ -121,12 +124,15 @@
     switch (frame.type) {
       case 'ready':
         state.micAvailable = !!frame.mic_available;
+        state.maxAudioSeconds = frame.max_audio_seconds || 30;
         $('talk').hidden = !state.micAvailable;
         setKeysEnabled(true);
         setStatus('已连接 · ' + (frame.name || ''), 'good');
         break;
       case 'listening':
         $('talk').classList.toggle('recording', frame.active === true);
+        if (frame.active) startLimitWatch();
+        else stopLimitWatch();
         break;
       case 'transcript':
         renderTranscript(frame);
@@ -216,6 +222,33 @@
   }
 
   // --- microphone --------------------------------------------------------
+
+  // startLimitWatch colors the talk button as a hold approaches the server's
+  // cap (SayAll 长会话提醒: amber near the limit, red right before it).
+  function startLimitWatch() {
+    stopLimitWatch();
+    state.limitWarned = false;
+    const startedAt = Date.now();
+    const talk = $('talk');
+    state.limitTimer = setInterval(() => {
+      const limit = Math.max(5, state.maxAudioSeconds);
+      const elapsed = (Date.now() - startedAt) / 1000;
+      const ratio = elapsed / limit;
+      talk.classList.toggle('limit-warn', ratio >= 0.8 && ratio < 0.95);
+      talk.classList.toggle('limit-red', ratio >= 0.95);
+      if (ratio >= 0.95 && !state.limitWarned) {
+        state.limitWarned = true;
+        toast('即将达到单次上限 ' + limit + ' 秒');
+      }
+    }, 400);
+  }
+
+  function stopLimitWatch() {
+    clearInterval(state.limitTimer);
+    state.limitTimer = 0;
+    const talk = $('talk');
+    talk.classList.remove('limit-warn', 'limit-red');
+  }
 
   // Linear-interpolation resampler to 16 kHz mono. phase and prev persist
   // across blocks, so 44.1/48/96 kHz inputs stay on pitch for a whole

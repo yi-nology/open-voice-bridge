@@ -53,6 +53,14 @@ features:
   previous file, restart to apply) and a one-click redacted diagnostics
   summary (version/platform/ready/status/ASR checks; MAC addresses redacted,
   home paths scrubbed).
+- New: common phrases ("常用语", SayAll 对标). The snippet library doubles as
+  a phrase list in config order; the keymap gains `phrase1`–`phrase8` actions
+  injected as private F13–F20 signals (the same channel the voice key already
+  uses). Pressing a bound key pastes that phrase into the focused window
+  through the same serialised paste as a transcript, announces it on the SSE
+  stream and the subtitle panel, and never writes it to history or the log.
+  Unbound slots are a no-op. The text panel labels each snippet with its slot
+  and the keymap picker offers a 常用语 group.
 
 Small correctness fixes (DOM-10/11/12/14):
 
@@ -66,6 +74,19 @@ Small correctness fixes (DOM-10/11/12/14):
 - History entry ids are unique even within one clock tick (Delete removes
   exactly one entry), and the rewrite path fsyncs before the rename so a
   crash cannot leave the history empty. `Agent.SetHub` is mutex-guarded.
+
+SayAll feature ports: local Agent access, the usage calendar, and a
+long-session warning.
+
+- New: read-only MCP access for AI clients ("本地 Agent 访问"). The admin UI
+  mints one 256-bit token per client (SHA-256 stored, raw shown once) with a
+  ready-to-paste stdio config snippet; `xiaomi-remote mcp --token …` serves
+  history_list / history_search / usage_stats. Revoking a grant fails the
+  next call immediately, device addresses in responses are redacted, and the
+  0600 audit log records counts only — never speech or query text.
+- The usage panel gains a 26-week calendar heatmap alongside the 14-day bars.
+- The phone hold-to-talk button warms to amber and then red as a hold nears
+  the server's utterance cap (SayAll 长会话提醒).
 
 Phone as a second input source — Phase 1 (virtual remote control) and
 Phase 2 (phone microphone).
