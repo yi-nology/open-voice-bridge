@@ -208,3 +208,40 @@ func TestApplyKeyRepeatRetriggersMacro(t *testing.T) {
 		t.Fatalf("repeat should leave the chord pressed, got %v", events)
 	}
 }
+
+// 按键次数统计: presses are counted at the single applyKey funnel (evdev and
+// phone inject alike), exposed through status, and survive a restart.
+func TestKeyCountsTrackPressesAndPersist(t *testing.T) {
+	dir := t.TempDir()
+	kb := &fakeKeyboard{}
+	d := newInjectDaemon()
+	d.kb = kb
+	d.cfg.MappingPath = filepath.Join(dir, "mapping.json")
+	d.mapping = MergeDefaults(map[string]string{"up": "native"})
+	d.loadKeyCounts()
+
+	d.applyKey(1, "up", 1) // press
+	d.applyKey(1, "up", 2) // repeat: not a new press
+	d.applyKey(1, "up", 1) // press
+	d.applyKey(1, "up", 0) // release
+	d.applyKey(2, "home", 1)
+
+	status := d.status()
+	if status["key_total"] != int64(3) {
+		t.Fatalf("key_total = %v, want 3 presses", status["key_total"])
+	}
+	counts, _ := status["key_counts"].(map[string]int64)
+	if counts["up"] != 2 || counts["home"] != 1 {
+		t.Fatalf("key_counts = %v", counts)
+	}
+
+	if err := d.flushKeyCounts(); err != nil {
+		t.Fatalf("flush: %v", err)
+	}
+	restarted := newInjectDaemon()
+	restarted.cfg.MappingPath = filepath.Join(dir, "mapping.json")
+	restarted.loadKeyCounts()
+	if restarted.status()["key_total"] != int64(3) {
+		t.Fatalf("counts lost across restart: %v", restarted.status()["key_total"])
+	}
+}

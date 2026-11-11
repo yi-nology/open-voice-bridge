@@ -52,6 +52,12 @@ type Daemon struct {
 	kb       uinput.Keyboard
 	listener net.Listener
 
+	keyMu     sync.Mutex
+	keyTotal  int64
+	keyCounts map[string]int64
+	keyDirty  bool
+	keySince  int
+
 	closeOnce sync.Once
 }
 
@@ -91,6 +97,7 @@ func (d *Daemon) Run(ctx context.Context) error {
 		return oeerrors.Errorf("load mapping: %w", err)
 	}
 	d.mapping = mapping
+	d.loadKeyCounts()
 	if _, err := os.Stat(d.cfg.MappingPath); os.IsNotExist(err) {
 		if err := Save(d.cfg.MappingPath, mapping); err != nil {
 			log.Warn("write default mapping", "err", err)
@@ -128,6 +135,9 @@ func (d *Daemon) Run(ctx context.Context) error {
 
 func (d *Daemon) Close(ctx context.Context) error {
 	d.closeOnce.Do(func() {
+		if err := d.flushKeyCounts(); err != nil {
+			log.Warn("flush key counts on close", "err", err)
+		}
 		d.closeClients()
 		if d.listener != nil {
 			if err := d.listener.Close(); err != nil {
@@ -297,6 +307,7 @@ func (d *Daemon) handleConn(conn net.Conn) {
 }
 
 func (d *Daemon) status() map[string]any {
+	keyTotal, keyCounts := d.keySnapshot()
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return map[string]any{
@@ -305,6 +316,8 @@ func (d *Daemon) status() map[string]any {
 		"remote_present": d.remotePresent,
 		"mapping":        Copy(d.mapping),
 		"config":         ConfigText(d.mapping),
+		"key_total":      keyTotal,
+		"key_counts":     keyCounts,
 	}
 }
 
@@ -505,6 +518,11 @@ func (d *Daemon) streamRaw(name string, code, value int) {
 }
 
 func (d *Daemon) applyKey(sourceCode int, name string, value int) {
+	if value == 1 && d.countPress(name) {
+		if err := d.flushKeyCounts(); err != nil {
+			log.Warn("flush key counts", "err", err)
+		}
+	}
 	d.mu.RLock()
 	action := d.mapping[name]
 	d.mu.RUnlock()
