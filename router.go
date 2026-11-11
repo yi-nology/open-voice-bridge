@@ -9,10 +9,8 @@ import (
 	"github.com/yi-nology/open-voice-bridge/biz/handler/ui"
 )
 
-var customUI *ui.Server
-
 // customizedRegister registers non-IDL routes: the embedded UI, assets, and SSE.
-func customizedRegister(r *server.Hertz) {
+func customizedRegister(r *server.Hertz, customUI *ui.Server) {
 	if customUI == nil {
 		return
 	}

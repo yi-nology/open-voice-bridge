@@ -5,11 +5,12 @@ package main
 import (
 	"github.com/cloudwego/hertz/pkg/app/server"
 
+	"github.com/yi-nology/open-voice-bridge/biz/handler/ui"
 	"github.com/yi-nology/open-voice-bridge/biz/router"
 )
 
 // register registers all routers.
-func register(r *server.Hertz) {
+func register(r *server.Hertz, uiServer *ui.Server) {
 	router.GeneratedRegister(r)
-	customizedRegister(r)
+	customizedRegister(r, uiServer)
 }
