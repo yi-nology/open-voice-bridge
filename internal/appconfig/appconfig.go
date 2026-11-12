@@ -24,6 +24,17 @@ func Load(path string) (config.Config, error) {
 	return cfg, Validate(cfg)
 }
 
+// Read is Load without the writes, for callers that report on the document
+// rather than run it: a missing file stays missing.
+func Read(path string) (config.Config, error) {
+	cfg, err := config.Read(path)
+	if err != nil {
+		return cfg, err
+	}
+	Normalize(&cfg)
+	return cfg, Validate(cfg)
+}
+
 // Save normalises and validates before writing, so a rejected document leaves
 // the previous file exactly as it was.
 func Save(path string, cfg config.Config) error {

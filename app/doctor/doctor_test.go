@@ -86,6 +86,75 @@ func TestRunWarnsOnAGroupReadableKey(t *testing.T) {
 	}
 }
 
+// OPS-03: doctor is the command the README sends people to first, so it must
+// not create or migrate the config behind their back.
+func TestRunDoesNotWriteTheConfig(t *testing.T) {
+	dir := t.TempDir()
+	missing := filepath.Join(dir, "absent.json")
+	var out bytes.Buffer
+	if code := Run(missing, quietLogger(), &out); code != 1 {
+		t.Fatalf("exit = %d, want 1 for a missing config\n%s", code, out.String())
+	}
+	if _, err := os.Stat(missing); !os.IsNotExist(err) {
+		t.Fatalf("doctor created the config file (stat err = %v)", err)
+	}
+	if !strings.Contains(out.String(), "FAIL: config") {
+		t.Fatalf("report must name the missing config\n%s", out.String())
+	}
+
+	// A pre-sections document is exactly what config.Load migrates in place;
+	// doctor must leave those bytes alone.
+	legacy := filepath.Join(dir, "legacy.json")
+	if err := os.WriteFile(legacy, []byte(`{"address":"11:22:33:44:55:66"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	before, err := os.ReadFile(legacy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out.Reset()
+	Run(legacy, quietLogger(), &out)
+	after, err := os.ReadFile(legacy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(before, after) {
+		t.Fatalf("doctor rewrote the config:\nbefore %s\nafter  %s", before, after)
+	}
+}
+
+// OPS-03: the example address passes Validate's shape check but is not a
+// remote. doctor must say "not configured" instead of printing it as if set.
+func TestRunWarnsOnThePlaceholderAddress(t *testing.T) {
+	keyFile := filepath.Join(t.TempDir(), "mimo.key")
+	if err := os.WriteFile(keyFile, []byte("test-key"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	path := mimoConfig(t, keyFile)
+	var out bytes.Buffer
+	Run(path, quietLogger(), &out)
+	if !strings.Contains(out.String(), "WARN: address is still the example") {
+		t.Fatalf("report must flag the placeholder address\n%s", out.String())
+	}
+
+	cfg, err := config.Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg.Address = "11:22:33:44:55:66"
+	for index := range cfg.Devices {
+		cfg.Devices[index].Address = cfg.Address
+	}
+	if err := config.Save(path, cfg); err != nil {
+		t.Fatal(err)
+	}
+	out.Reset()
+	Run(path, quietLogger(), &out)
+	if strings.Contains(out.String(), "WARN: address is still the example") {
+		t.Fatalf("a configured address must not warn\n%s", out.String())
+	}
+}
+
 func TestExpandHome(t *testing.T) {
 	home, err := os.UserHomeDir()
 	if err != nil {

@@ -91,6 +91,42 @@ func TestLoadRejectsSemanticallyBrokenFile(t *testing.T) {
 	}
 }
 
+// OPS-03: doctor goes through Read, so the wrapper must keep the not-exist
+// signal that decides its "copy the example config" hint, and write nothing.
+func TestReadReportsAMissingFileWithoutCreatingIt(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "absent.json")
+	if _, err := Read(path); !os.IsNotExist(err) {
+		t.Fatalf("err = %v, want a not-exist error", err)
+	}
+	assertNotWritten(t, path)
+}
+
+// Read is still a load: the subsystem defaults Load applies must not be lost
+// on the read-only path, or doctor would report a document the agent reads
+// differently (R5).
+func TestReadAppliesSubsystemDefaults(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.json")
+	raw := `{
+  "address": "AA:BB:CC:DD:EE:FF",
+  "active_device": "rc003",
+  "devices": [{"id": "rc003", "address": "AA:BB:CC:DD:EE:FF", "profile": "rc003", "enabled": true}],
+  "llm": {"provider": "minimax"}
+}`
+	if err := os.WriteFile(path, []byte(raw), 0o600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	cfg, err := Read(path)
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	if cfg.LLM.BaseURL == "" || cfg.LLM.Model == "" {
+		t.Fatalf("llm preset not applied: %+v", cfg.LLM)
+	}
+	if cfg.Devices[0].Name == "" || cfg.Devices[0].Name == "rc003" {
+		t.Fatalf("device profile name not applied: %+v", cfg.Devices[0])
+	}
+}
+
 func assertNotWritten(t *testing.T, path string) {
 	t.Helper()
 	if _, err := os.Stat(path); !os.IsNotExist(err) {

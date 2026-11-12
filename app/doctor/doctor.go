@@ -1,6 +1,7 @@
 // Package doctor reports whether this host can run the agent: the config
 // document, the ASR provider chain, the key files and the platform
-// prerequisites. It only reads and prints — it never starts a subsystem.
+// prerequisites. It only reads and prints — it never writes the config and
+// never starts a subsystem.
 package doctor
 
 import (
@@ -14,20 +15,27 @@ import (
 
 	"github.com/yi-nology/open-voice-bridge/internal/appconfig"
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
+	"github.com/yi-nology/open-voice-bridge/internal/config"
 )
 
 // Run prints one line per check and returns 1 when any of them failed.
 // Warnings do not fail the run: they are things the user may not need.
 func Run(configPath string, logger logx.Logger, stdout io.Writer) int {
-	cfg, err := appconfig.Load(configPath)
+	cfg, err := appconfig.Read(configPath)
 	if err != nil {
 		logger.Error("load config", "err", err)
+		if os.IsNotExist(err) {
+			fmt.Fprintf(stdout, "FAIL: config %s not found; copy conf/config.example.json there, or run the agent once to write the defaults\n", configPath)
+		} else {
+			fmt.Fprintf(stdout, "FAIL: config %s: %v\n", configPath, err)
+		}
 		return 1
 	}
 	fmt.Fprintln(stdout, "config:", configPath)
 	fmt.Fprintln(stdout, "address:", cfg.Address)
 	fmt.Fprintln(stdout, "ui_addr:", cfg.UIAddr)
 	fmt.Fprintln(stdout, "helper_socket:", cfg.HelperSocket)
+	warnPlaceholderAddress(stdout, cfg)
 
 	failures := 0
 	for _, diagnostic := range asr.Diagnose(cfg.ASR) {
@@ -71,6 +79,15 @@ func Run(configPath string, logger logx.Logger, stdout io.Writer) int {
 		return 1
 	}
 	return 0
+}
+
+// The example MAC passes the address format check, so a fresh document looks
+// configured. Say it is not. A warning rather than a failure: a phone-only
+// setup legitimately has no Bluetooth remote (OPS-06).
+func warnPlaceholderAddress(stdout io.Writer, cfg config.Config) {
+	if strings.EqualFold(cfg.Address, config.PlaceholderAddress) {
+		fmt.Fprintf(stdout, "WARN: address is still the example %s (no remote configured); put the remote's Bluetooth MAC in devices[].address, or pair a phone as the input source\n", cfg.Address)
+	}
 }
 
 func expandHome(path string) string {

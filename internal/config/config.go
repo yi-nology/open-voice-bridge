@@ -117,10 +117,15 @@ func DefaultProfiles() map[string]map[string]string {
 	}
 }
 
+// PlaceholderAddress is the example MAC shipped in the defaults. It passes
+// Validate's shape check, so anything reporting "configured" must compare
+// against it rather than trust the format.
+const PlaceholderAddress = "AA:BB:CC:DD:EE:FF"
+
 func Default() Config {
 	home, _ := os.UserHomeDir()
 	cfg := Config{
-		Address:      "AA:BB:CC:DD:EE:FF",
+		Address:      PlaceholderAddress,
 		APIKeyFile:   filepath.Join(home, ".config", "xiaomi-mimo", "api_key"),
 		ASRModel:     DefaultASRModel,
 		ASRLanguage:  "auto",
@@ -236,45 +241,23 @@ func DefaultPath() string {
 	return filepath.Join(dir, "xiaomi-remote", "config.json")
 }
 
+// Load reads the document, creating defaults when the file is absent and
+// migrating it when whole sections are missing. Diagnostics must use Read
+// instead: they report on the user's file, they do not rewrite it.
 func Load(path string) (Config, error) {
-	cfg := Default()
-	if path == "" {
-		path = DefaultPath()
-	}
-	data, err := os.ReadFile(path)
-	if os.IsNotExist(err) {
-		if err := writeDefault(path, cfg); err != nil {
-			return cfg, err
-		}
-		return cfg, cfg.Validate()
-	}
+	cfg, state, err := readConfig(path)
 	if err != nil {
 		return cfg, err
 	}
-	// Maps merge on unmarshal; clear them so the file is authoritative.
-	cfg.ASR.Providers = nil
-	cfg.Keymap.Profiles = nil
-	cfg.Devices = nil
-	cfg.ActiveDevice = ""
-	if err := json.Unmarshal(data, &cfg); err != nil {
-		return cfg, oeerrors.Errorf("parse config: %w", err)
+	if path == "" {
+		path = DefaultPath()
 	}
-	cfg.normalizeASR()
-	cfg.normalizeLLM()
-	cfg.normalizeText()
-	cfg.normalizeKeymap()
-	cfg.normalizePhone()
-	cfg.normalizeDevices()
-	var raw map[string]json.RawMessage
-	if err := json.Unmarshal(data, &raw); err != nil {
-		return cfg, oeerrors.Errorf("parse config: %w", err)
-	}
-	_, hasASR := raw["asr"]
-	_, hasKeymap := raw["keymap"]
-	_, hasDevices := raw["devices"]
-	_, hasLLM := raw["llm"]
-	_, hasPhone := raw["phone"]
-	if !hasASR || !hasKeymap || !hasDevices || !hasLLM || !hasPhone {
+	switch state {
+	case stateMissing:
+		if err := writeDefault(path, cfg); err != nil {
+			return cfg, err
+		}
+	case stateOutdated:
 		// Migrate older configs so the new sections are visible/editable.
 		if err := writeConfig(path, cfg); err != nil {
 			return cfg, oeerrors.Errorf("migrate config: %w", err)
