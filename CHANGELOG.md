@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 — 2026-11-13
+
+- Fixed: sweep audit defects (#8-#13) — Revoke 落盘失败回滚分裂态（被撤销手机
+  活会话切断、重启无复活）；诊断摘要不再带出最后一次转写正文（no speech 承诺）；
+  同设备重连把缓冲半句话转写而非丢弃（I5 断开不丢音频）；ASRConfig 深拷贝交付 +
+  copy-on-write 发布（并发 map 读写 panic 消除）；按键队列永不 close（send on
+  closed channel 结构性消灭）；配置持久化锁外落盘（读侧不再被磁盘 IO 锁死，
+  MCP 鉴权免整份 fsync）。
+
 
 - New: the 常用语浮层 (S2, SayAll 对标收尾). The phrase-picker keymap
   action (F21) opens an eight-slot overlay — click or press 1–8 to insert
