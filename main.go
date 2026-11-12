@@ -10,21 +10,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/oekit/bootstrap"
 	"github.com/oekit/concurrency/async"
 	ekithertz "github.com/oekit/hertz"
-	hertzmetrics "github.com/oekit/hertz/metrics"
 	"github.com/oekit/logx"
 	oekitmetrics "github.com/oekit/metrics"
-	mw "github.com/oekit/middleware"
 	"github.com/oekit/pkg/cli"
 
 	"github.com/yi-nology/open-voice-bridge/app/doctor"
 	"github.com/yi-nology/open-voice-bridge/app/runtime"
-	apihandler "github.com/yi-nology/open-voice-bridge/biz/handler/api"
-	"github.com/yi-nology/open-voice-bridge/biz/handler/ui"
 	"github.com/yi-nology/open-voice-bridge/biz/service"
 	"github.com/yi-nology/open-voice-bridge/internal/agent"
 	"github.com/yi-nology/open-voice-bridge/internal/appconfig"
@@ -232,62 +227,20 @@ func runAgent(args []string, stderr io.Writer) int {
 			Addr:       cfg.Phone.Addr,
 		}
 
-		deps := ui.Deps{
-			Status:              svc.Status,
-			Apply:               svc.Apply,
-			Reconnect:           svc.Reconnect,
-			RestartMic:          svc.RestartMic,
-			SwitchASR:           svc.SwitchASR,
-			KeymapProfiles:      svc.KeymapProfiles,
-			ApplyKeymapProfile:  svc.ApplyKeymapProfile,
-			SaveKeymapProfile:   svc.SaveKeymapProfile,
-			DeleteKeymapProfile: svc.DeleteKeymapProfile,
-			ASRConfig:           svc.ASRConfig,
-			UpdateASRConfig:     svc.UpdateASRConfig,
-			TestASR:             svc.TestASR,
-			LLMConfig:           svc.LLMConfig,
-			UpdateLLMConfig:     svc.UpdateLLMConfig,
-			TestLLM:             svc.TestLLM,
-			SaveLLMKey:          svc.SaveLLMKey,
-			TextConfig:          svc.TextConfig,
-			UpdateTextConfig:    svc.UpdateTextConfig,
-			History:             func(context.Context) []history.Entry { return historyStore.List(200) },
-			DeleteHistory:       func(_ context.Context, id string) error { return historyStore.Delete(id) },
-			ClearHistory:        func(context.Context) error { return historyStore.Clear() },
-			Stats:               func() history.UsageStats { return statsStore.Snapshot() },
-			ExportConfig:        svc.ExportConfig,
-			ImportConfig:        svc.ImportConfig,
-			Diagnostics:         func(ctx context.Context) map[string]any { return svc.Diagnostics(ctx, version) },
-			MCPVerify:           svc.MCPVerify,
-			MCPAudit:            svc.MCPAudit,
-			MCPCreateToken:      func(label string) (map[string]any, error) { return svc.MCPCreateToken(label, mcpBinaryPath()) },
-			MCPListTokens:       svc.MCPListTokens,
-			MCPRevokeToken:      svc.MCPRevokeToken,
-			SnapshotState: func() map[string]any {
-				owner := inputHub.AudioOwner()
-				active, source, name := runtime.SpeakingLabel(
-					input.AudioState{Speaking: owner != "", Owner: owner}, inputHub.Sources())
-				return map[string]any{
-					"listening": map[string]any{"active": active, "source": source, "source_name": name},
-				}
-			},
-			Devices:          svc.Devices,
-			DiscoverDevices:  svc.DiscoverDevices,
-			SelectDevice:     svc.SelectDevice,
-			SetDeviceEnabled: svc.SetDeviceEnabled,
-			SaveDevice:       svc.SaveDevice,
-			DeleteDevice:     svc.DeleteDevice,
-			ConnectDevice:    svc.ConnectDevice,
-			Ready:            svc.Ready,
-			Inputs:           phoneAdmin.Inputs,
-			PhonePairing:     phoneAdmin.Pairing,
-			PhoneDevices:     phoneAdmin.Devices,
-			PhoneRevoke:      phoneAdmin.Revoke,
-			SetPhoneEnabled:  svc.SetPhoneEnabled,
-			HelperSocket:     cfg.HelperSocket,
+		admin := runtime.Admin{
+			Service:       svc,
+			History:       historyStore,
+			Stats:         statsStore,
+			Hub:           inputHub,
+			Phone:         phoneAdmin,
+			Addr:          cfg.UIAddr,
+			HelperSocket:  cfg.HelperSocket,
+			Version:       version,
+			MCPBinaryPath: mcpBinaryPath,
+			Logger:        logger,
+			Register:      register,
 		}
-
-		uiServer := ui.New(deps)
+		uiServer := admin.UI()
 		// 切得准: follow the frontmost app's WM_CLASS into its keymap profile
 		// at runtime (X11; the switcher stays idle where focus is not visible).
 		if len(cfg.Keymap.AppRules) > 0 {
@@ -308,29 +261,7 @@ func runAgent(args []string, stderr io.Writer) int {
 			Logger:           logger,
 		}
 		async.GoSafe(func() { events.Run(ctx) })
-		hertzServer := server.New(
-			server.WithHostPorts(cfg.UIAddr),
-			server.WithMaxRequestBodySize(1<<20),
-			server.WithReadTimeout(10*time.Second),
-			server.WithIdleTimeout(60*time.Second),
-			server.WithExitWaitTime(5*time.Second),
-			server.WithHandleMethodNotAllowed(true),
-		)
-		for _, middleware := range mw.DefaultMiddleware(mw.StackConfig{
-			DisableResponseWrap: true,
-			SkipPaths:           []string{"/", "/assets/*", "/healthz", "/readyz", "/metrics", "/events", "/api/status"},
-			Prometheus: &mw.PrometheusConfig{
-				Namespace:   "xiaomi_remote",
-				ServiceName: "xiaomi-remote",
-			},
-			AccessLogOptions: []mw.AccessLogOption{mw.WithAccessLogLogger(logger)},
-		}) {
-			hertzServer.Use(middleware)
-		}
-		hertzServer.Use(uiServer.Security)
-		hertzServer.Use(apihandler.WithBackend(uiServer))
-		register(hertzServer, uiServer)
-		hertzmetrics.InitAndRegister("xiaomi-remote", hertzServer)
+		hertzServer := admin.HTTP(uiServer)
 
 		app.GoBackground("keymap-sync", svc.SyncKeymap)
 		app.GoBackground("device-sync", svc.SyncDevices)
