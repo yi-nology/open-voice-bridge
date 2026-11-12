@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"errors"
 	"os"
 	"regexp"
 	"strings"
@@ -34,15 +35,20 @@ type inputEvent struct {
 }
 
 type f24Watcher struct {
-	ch      chan struct{}
-	phrases chan int
-	ctx     context.Context
-	cancel  context.CancelFunc
-	wg      sync.WaitGroup
+	ch         chan struct{}
+	phrases    chan int
+	ctx        context.Context
+	cancel     context.CancelFunc
+	wg         sync.WaitGroup
+	openFailed map[string]bool
 }
 
 func newF24Watcher() F24Watcher {
-	return &f24Watcher{ch: make(chan struct{}, 8), phrases: make(chan int, 8)}
+	return &f24Watcher{
+		ch:         make(chan struct{}, 8),
+		phrases:    make(chan int, 8),
+		openFailed: map[string]bool{},
+	}
 }
 
 func (w *f24Watcher) C() <-chan struct{}  { return w.ch }
@@ -76,7 +82,7 @@ func (w *f24Watcher) loop() {
 			}
 			continue
 		}
-		fd, err := unix.Open(path, unix.O_RDONLY|unix.O_NONBLOCK|unix.O_CLOEXEC, 0)
+		fd, err := w.openEventNode(path)
 		if err != nil {
 			if !sleep(w.ctx, 2*time.Second) {
 				return
@@ -93,6 +99,39 @@ func (w *f24Watcher) loop() {
 			return
 		}
 	}
+}
+
+// openEventNode opens the watcher's device and reports the first failure for
+// that node. The retry loop runs every 2s, so a silent EACCES looks like a dead
+// voice key with an empty journal (OPS-05).
+func (w *f24Watcher) openEventNode(path string) (int, error) {
+	fd, err := unix.Open(path, unix.O_RDONLY|unix.O_NONBLOCK|unix.O_CLOEXEC, 0)
+	if err != nil {
+		w.noteOpenFailure(path, err)
+		return 0, err
+	}
+	w.noteOpenSuccess(path)
+	return fd, nil
+}
+
+// The map is only reached from loop's goroutine, so it needs no lock. Success
+// clears the entry: a later outage is a new event, not a repeat.
+func (w *f24Watcher) noteOpenFailure(path string, err error) {
+	if w.openFailed[path] {
+		return
+	}
+	w.openFailed[path] = true
+	if errors.Is(err, unix.EACCES) || errors.Is(err, unix.EPERM) {
+		log.Warn("voice-key watcher cannot read the input device; the voice key does nothing until this is fixed",
+			"path", path, "err", err,
+			"fix", `sudo usermod -aG input "$USER", then log out and back in`)
+		return
+	}
+	log.Warn("voice-key watcher cannot open the input device", "path", path, "err", err)
+}
+
+func (w *f24Watcher) noteOpenSuccess(path string) {
+	delete(w.openFailed, path)
 }
 
 func (w *f24Watcher) readLoop(fd int) {
