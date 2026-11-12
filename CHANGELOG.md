@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- New: voice commands (语音命令, SayAll 超越). An exactly-matched command
+  utterance — 「复制」 — runs its key combo (「ctrl+c」) instead of being
+  pasted as dictation; 「复制。」 fires the same. Opt-in per the 词典短语
+  page's new section (toggle + editable rows + a one-fill recommended
+  list); when off, the same words stay literal text. Commands are spoken
+  acts like phrases: no history, no "last text", and the subtitle stream
+  announces 〔指令〕复制 → ctrl+c. A failed combo falls back to plain
+  dictation. `paste.Key` executes the combo (wtype / xdotool / System
+  Events).
+
 - Redesigned the admin web UI as the "一眼掌控台" glance console: one
   readiness verdict with live telemetry, three attention cards (phone,
   ASR engine, key mapping), and a 最近听写 list on the overview; the
