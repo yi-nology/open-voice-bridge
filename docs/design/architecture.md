@@ -93,7 +93,7 @@ main.go ──┬──> internal/agent ──┬──> internal/bluez ──> 
 | `edge/netguard` | 一份 origin/安全头/回环保证 | `SameOrigin(method,host,origin,site)`/`IsLoopback(host)`/`WriteHeaders(policy,set)`、`Admin`/`Phone` 两份 `Policy` | 无 | 120 LOC |
 | `edge/admin` | 管理 UI 的 HTTP 面 | `Handler() http.Handler` | `core`、`config`、speech/源接口 | 300 LOC/文件 |
 | `edge/phone` | 手机 PWA 的 HTTP 面（含 CSP 与资源） | `Handler() http.Handler` | `core`、`edge/netguard` | 300 LOC/文件 |
-| `app/runtime` | 组合根：构造、启动、关闭、状态视图 | `New(cfg) (*Runtime, error)`、`Start(ctx)`/`Stop(ctx)` | 全部具体实现 | 400 LOC |
+| `app/runtime` | 组合根：构造、启动、关闭、状态视图 | `PhoneSpeech`、`PhoneAdmin`（已落地）；`New(cfg) (*Runtime, error)`、`Start(ctx)`/`Stop(ctx)`（ARC-07） | 全部具体实现 | 400 LOC |
 
 约定继续沿用现状里已经验证有效的做法：**接口由消费者声明**（`asr.Engine`、`llm.Processor`、`audio.Sink`、`input.Source`、`phone.Transcriber`、`api.Backend`），而不是在被实现方定义一个大接口。这条不改。
 

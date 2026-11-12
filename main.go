@@ -22,6 +22,7 @@ import (
 	"github.com/oekit/pkg/cli"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/yi-nology/open-voice-bridge/app/runtime"
 	apihandler "github.com/yi-nology/open-voice-bridge/biz/handler/api"
 	"github.com/yi-nology/open-voice-bridge/biz/handler/ui"
 	"github.com/yi-nology/open-voice-bridge/biz/service"
@@ -134,37 +135,6 @@ func boolGauge(ag *agent.Agent, pick func(core.AgentView) bool) float64 {
 		return 1
 	}
 	return 0
-}
-
-// phoneSpeech adapts the shared transcription chain to the phone listener's
-// narrow interface. It lives in package main so internal/phone never has to
-// import internal/agent, and both input sources provably run one chain.
-type phoneSpeech struct {
-	pipeline *agent.SpeechPipeline
-}
-
-func (s phoneSpeech) TranscribeUtterance(ctx context.Context, samples []int16, meta phone.UtteranceMeta) (phone.UtteranceResult, bool) {
-	transcript, ok := s.pipeline.Transcribe(ctx, agent.Utterance{
-		Samples:    samples,
-		SampleRate: meta.SampleRate,
-		Ref: agent.SourceRef{
-			Kind:    string(input.KindPhone),
-			Name:    meta.Name,
-			Address: meta.Address,
-		},
-		Truncated: meta.Truncated,
-	})
-	if !ok {
-		return phone.UtteranceResult{}, false
-	}
-	return phone.UtteranceResult{
-		Text:      transcript.Text,
-		RawText:   transcript.RawText,
-		Provider:  transcript.Provider,
-		Processed: transcript.Processed,
-		LatencyMS: transcript.Latency.Milliseconds(),
-		At:        transcript.At,
-	}, true
 }
 
 // speakingLabel turns a microphone transition into the desktop pill's copy.
@@ -300,7 +270,7 @@ func runAgent(args []string, stderr io.Writer) int {
 					CertDir:             filepath.Dir(*path),
 					MaxClients:          cfg.Phone.MaxClients,
 					MaxUtteranceSeconds: cfg.Phone.MaxUtteranceSeconds,
-					Transcriber:         phoneSpeech{pipeline: ag.Speech()},
+					Transcriber:         runtime.PhoneSpeech{Pipeline: ag.Speech()},
 					Assets:              web.FS,
 				})
 			}
@@ -312,6 +282,16 @@ func runAgent(args []string, stderr io.Writer) int {
 				}
 			})
 			logger.Info("phone input listener started", "addr", cfg.Phone.Addr, "tls", cfg.Phone.TLS)
+		}
+
+		phoneAdmin := runtime.PhoneAdmin{
+			Enabled:    phoneEnabled,
+			Configured: svc.PhoneEnabled,
+			Store:      phoneStore,
+			Server:     phoneServer,
+			Hub:        inputHub,
+			TLSMode:    cfg.Phone.TLS,
+			Addr:       cfg.Phone.Addr,
 		}
 
 		deps := ui.Deps{
@@ -361,48 +341,12 @@ func runAgent(args []string, stderr io.Writer) int {
 			DeleteDevice:     svc.DeleteDevice,
 			ConnectDevice:    svc.ConnectDevice,
 			Ready:            svc.Ready,
-			Inputs: func(context.Context) map[string]any {
-				return map[string]any{"enabled": phoneEnabled, "configured": svc.PhoneEnabled(), "sources": inputHub.Sources()}
-			},
-			PhonePairing: func(context.Context) map[string]any {
-				if !phoneEnabled {
-					return map[string]any{"enabled": false}
-				}
-				code, expires := phoneStore.GeneratePairCode()
-				scheme, host, port := phone.PairingBase(cfg.Phone.TLS, cfg.Phone.Addr)
-				out := map[string]any{
-					"enabled":    true,
-					"code":       code,
-					"expires_at": expires.Format(time.RFC3339),
-					"scheme":     scheme,
-					"port":       port,
-				}
-				if host != "" {
-					out["host"] = host
-					out["link"] = scheme + "://" + host + ":" + port + "/phone"
-				}
-				return out
-			},
-			PhoneDevices: func(context.Context) map[string]any {
-				if !phoneEnabled {
-					return map[string]any{"enabled": false, "devices": []phone.Device{}}
-				}
-				return map[string]any{"enabled": true, "devices": phoneStore.ListDevices(), "connected": phoneServer.ConnectedDevices()}
-			},
-			PhoneRevoke: func(_ context.Context, deviceID string) map[string]any {
-				if !phoneEnabled {
-					return map[string]any{"ok": false, "error": "phone input disabled"}
-				}
-				if err := phoneStore.Revoke(deviceID); err != nil {
-					return map[string]any{"ok": false, "error": err.Error()}
-				}
-				// The token is gone, but the WebSocket that is already open needs
-				// closing or a revoked phone keeps speaking until it reconnects.
-				disconnected := phoneServer.Disconnect(deviceID)
-				return map[string]any{"ok": true, "disconnected": disconnected}
-			},
-			SetPhoneEnabled: svc.SetPhoneEnabled,
-			HelperSocket:    cfg.HelperSocket,
+			Inputs:           phoneAdmin.Inputs,
+			PhonePairing:     phoneAdmin.Pairing,
+			PhoneDevices:     phoneAdmin.Devices,
+			PhoneRevoke:      phoneAdmin.Revoke,
+			SetPhoneEnabled:  svc.SetPhoneEnabled,
+			HelperSocket:     cfg.HelperSocket,
 		}
 
 		uiServer := ui.New(deps)
