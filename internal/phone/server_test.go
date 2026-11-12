@@ -170,6 +170,56 @@ func TestPhoneKeyRejectedNotWhitelisted(t *testing.T) {
 	}
 }
 
+// ARC-12: the page must learn the power-key policy from the greeting, so the
+// button can be disabled instead of failing on every press. The flag comes from
+// the injector, which is the same object that decides whether a press passes.
+func TestPhoneReadyAdvertisesThePowerKeyPolicy(t *testing.T) {
+	e := newTestEnv(t, ServerConfig{TLSMode: "off", MaxClients: 4})
+	_, ticket, _ := pairAndTicket(t, e, "Phone")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	conn, _, err := websocket.Dial(ctx, e.wsURL(ticket), nil)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	defer conn.CloseNow()
+	if ready := readMessage(t, ctx, conn); ready["allow_power"] != false {
+		t.Fatalf("ready = %v, want allow_power false by default", ready)
+	}
+
+	body, _ := json.Marshal(controlMessage{Type: "key", Key: "power", Value: intPtr(1)})
+	if err := conn.Write(ctx, websocket.MessageText, body); err != nil {
+		t.Fatalf("write power: %v", err)
+	}
+	if msg := readMessage(t, ctx, conn); msg["type"] != "error" || msg["code"] != "denied" {
+		t.Fatalf("power without the opt-in = %v, want denied", msg)
+	}
+	if len(e.transport.calls) != 0 {
+		t.Fatalf("power reached the helper without the opt-in: %v", e.transport.calls)
+	}
+
+	opted := newTestEnv(t, ServerConfig{TLSMode: "off", MaxClients: 4})
+	opted.server.injector = NewKeyInjector(opted.transport, true)
+	_, optedTicket, _ := pairAndTicket(t, opted, "Phone")
+	optedConn, _, err := websocket.Dial(ctx, opted.wsURL(optedTicket), nil)
+	if err != nil {
+		t.Fatalf("dial opted-in: %v", err)
+	}
+	defer optedConn.CloseNow()
+	if ready := readMessage(t, ctx, optedConn); ready["allow_power"] != true {
+		t.Fatalf("ready with the opt-in = %v, want allow_power true", ready)
+	}
+	if err := optedConn.Write(ctx, websocket.MessageText, body); err != nil {
+		t.Fatalf("write opted-in power: %v", err)
+	}
+	if ack := readMessage(t, ctx, optedConn); ack["type"] != "key_ack" || ack["key"] != "power" {
+		t.Fatalf("power with the opt-in = %v, want key_ack", ack)
+	}
+	if len(opted.transport.calls) != 1 || opted.transport.calls[0] != "power" {
+		t.Fatalf("opted-in inject calls = %v", opted.transport.calls)
+	}
+}
+
 func TestPhonePingRequiresBearer(t *testing.T) {
 	e := newTestEnv(t, ServerConfig{TLSMode: "off", MaxClients: 4})
 	token, _, _ := pairAndTicket(t, e, "Phone")

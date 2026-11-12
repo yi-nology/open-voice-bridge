@@ -341,6 +341,10 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 		"name":              name,
 		"mic_available":     s.transcriber != nil,
 		"max_audio_seconds": s.maxSamples / core.SampleRate,
+		// Asked of the injector rather than copied from ServerConfig: the same
+		// object decides whether a press passes, so the page cannot advertise
+		// a key the channel would then deny (R5, ARC-12).
+		"allow_power": s.injector.Allowed("power"),
 	})
 	s.serveConn(ctx, conn, active)
 }

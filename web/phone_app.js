@@ -20,6 +20,7 @@
     carry: new Int16Array(FRAME_SAMPLES),
     carryLen: 0,
     micAvailable: false,
+    allowPower: false,
     maxAudioSeconds: 30,
     limitTimer: 0,
     limitWarned: false,
@@ -27,9 +28,15 @@
   };
 
   // Keys travel over the WebSocket, so they are only usable once the server
-  // has greeted this device.
+  // has greeted this device. Power additionally needs the desktop's opt-in
+  // (ARC-12): the greeting carries the policy, so the button never offers a
+  // press the channel would deny.
   function setKeysEnabled(enabled) {
-    document.querySelectorAll('[data-key]').forEach((button) => { button.disabled = !enabled; });
+    document.querySelectorAll('[data-key]').forEach((button) => {
+      const blocked = button.dataset.key === 'power' && !state.allowPower;
+      button.disabled = !enabled || blocked;
+    });
+    $('power-note').hidden = !enabled || state.allowPower;
   }
 
   function setStatus(text, cls) {
@@ -124,6 +131,7 @@
     switch (frame.type) {
       case 'ready':
         state.micAvailable = !!frame.mic_available;
+        state.allowPower = frame.allow_power === true;
         state.maxAudioSeconds = frame.max_audio_seconds || 30;
         $('talk').hidden = !state.micAvailable;
         setKeysEnabled(true);
