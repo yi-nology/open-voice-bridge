@@ -130,6 +130,40 @@ func TestEventsTranscriptReachesHistoryUsageAndSubtitle(t *testing.T) {
 	}
 }
 
+// The store owns entry ids: Append mints a unique one when the caller leaves
+// it empty, and Delete removes every entry carrying an id (DOM-14). A
+// pre-minted id skips that guard, so two transcripts sharing a timestamp
+// collapse into one deletable row.
+func TestEventsLetTheHistoryStoreOwnEntryIDs(t *testing.T) {
+	recorder := newEventRecorder()
+	events, feeds := testEvents(recorder)
+	store := history.New("", 10)
+	events.History = store
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go events.Run(ctx)
+
+	at := time.Date(2026, 11, 12, 9, 32, 0, 0, time.UTC)
+	feeds.transcripts <- agent.Transcript{Text: "第一句", At: at}
+	feeds.transcripts <- agent.Transcript{Text: "第二句", At: at}
+	recorder.next(t)
+	recorder.next(t)
+
+	entries := store.List(0)
+	if len(entries) != 2 {
+		t.Fatalf("history = %+v", entries)
+	}
+	if entries[0].ID == entries[1].ID {
+		t.Fatalf("two transcripts share id %q", entries[0].ID)
+	}
+	if err := store.Delete(entries[0].ID); err != nil {
+		t.Fatal(err)
+	}
+	if remaining := store.List(0); len(remaining) != 1 {
+		t.Fatalf("deleting one row left %d: %+v", len(remaining), remaining)
+	}
+}
+
 // Common phrases are user-authored text, not speech: they show up live but
 // must never enter history or the usage counters.
 func TestEventsPhraseIsLiveOnly(t *testing.T) {

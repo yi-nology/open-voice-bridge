@@ -49,8 +49,8 @@ func (e Events) Run(ctx context.Context) {
 			if transcript.Latency > 0 {
 				e.ASRLatency.Observe(transcript.Latency.Seconds())
 			}
+			// ID stays empty: the store mints it and guards same-tick uniqueness (DOM-14).
 			if err := e.History.Append(history.Entry{
-				ID:         transcript.At.Format("20060102-150405.000000000"),
 				Text:       transcript.Text,
 				RawText:    transcript.RawText,
 				Provider:   transcript.Provider,
