@@ -120,11 +120,14 @@ BLE 链路把 `agent.finalize` 改为调用 `SpeechPipeline.Transcribe`；手机
   "tls": "auto",                 // auto | off（off 表示前置可信 HTTPS 代理）
   "pair_code_ttl_seconds": 300,
   "max_clients": 4,
-  "max_utterance_seconds": 30
+  "max_utterance_seconds": 30,
+  "allow_power_key": false      // 允许已配对手机注入电源键；默认关（ARC-12）
 }
 ```
 
 兼容策略：旧配置没有 `phone` 段时默认关闭，不影响现有启动与校验。校验规则：`phone.enabled=false` 时不监听；`phone.addr` 不得与 `ui_addr` 相同；`tls=off` 时必须由前置代理提供 HTTPS，否则手机页只能用于按键、不能录音。
+
+`allow_power_key` 是危险键的显式开关（ARC-12）：`KEY_POWER` 会被 logind 当作关机请求，而 helper 的 `inject` 命令对任何通过 socket 组检查的对端开放，白名单曾是唯一边界。默认 `false` 时手机侧注入器与 root helper 各自独立拒绝 `power`；开关随 `set_devices` 这条已有的特权策略推送下发（仅 root/agent uid 可发），helper 在收到策略前一律拒绝，之后一次不带该标志的同步即收回授权。手机页的 `ready` 问候带 `allow_power`，页面据此禁用「电源」按钮。与其余 `phone.*` 一样，改后重启服务生效。
 
 ## 5. 数据流
 

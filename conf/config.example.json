@@ -110,7 +110,8 @@
     "tls": "auto",
     "pair_code_ttl_seconds": 300,
     "max_clients": 4,
-    "max_utterance_seconds": 30
+    "max_utterance_seconds": 30,
+    "allow_power_key": false
   },
   "active_device": "rc003",
   "devices": [

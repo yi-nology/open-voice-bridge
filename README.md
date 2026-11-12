@@ -174,6 +174,8 @@ xdg-open http://127.0.0.1:8787
 | `asr.providers{}` | `type`（`mimo` / `openai` / `whispercpp` / `command`）、模型、Base URL、密钥文件、超时等 |
 | `llm` | 是否启用改写、provider、模型、Base URL、Key 文件、模式与超时 |
 | `text.dictionary` / `text.snippets` | 本地词典纠错与语音短语；`snippets` 按序兼任「常用语 1–8」，可绑定 `phrase1`–`phrase8` 按键动作 |
+| `phone.enabled` / `phone.addr` / `phone.tls` | 手机输入开关、监听地址与 TLS 模式（`off` 仅接受回环地址） |
+| `phone.allow_power_key` | 允许已配对手机注入电源键，默认 `false`；改后重启服务生效 |
 
 密钥永远只以**文件路径**保存；服务端不会把 Key 内容写入日志或 API 响应。
 
@@ -199,7 +201,8 @@ xdg-open http://127.0.0.1:8787
 - **按 App 自动切换**（切得准）：`keymap.app_rules` 按前台窗口类名匹配键位方案，
   如 `{"class": "firefox", "profile": "media"}`；不匹配时回到当前方案。
   运行时覆盖、不改你的持久配置；仅 X11/XWayland 生效（Wayland 合成器不外露焦点）。
-- 电源键默认映射为 Escape；设为「原生」会触发系统关机。
+- 电源键默认映射为 Escape；设为「原生」会触发系统关机。手机端的电源键另受
+  `phone.allow_power_key` 约束，默认关闭（见「配对手机」）。
 
 ## 配对手机
 
@@ -218,6 +221,9 @@ xdg-open http://127.0.0.1:8787
    一年期叶子证书，导入为长期信任会把这台机器的私钥变成通用 CA（见 [SECURITY.md](SECURITY.md)）。
 5. **使用**：按住「说话」按钮听写，松开即出字；方向键等控制焦点窗口。多台手机可同时
    配对，说话互斥；遥控器抢麦优先，手机的半句仍会送进识别链路。
+6. **电源键默认关闭**：手机页的「电源」按钮默认禁用——注入 `KEY_POWER` 可能被系统
+   当作关机请求。确有需要时在配置里把 `phone.allow_power_key` 设为 `true` 并重启服务；
+   手机页会随连接自动反映该开关。
 
 排错见[能力矩阵](docs/capability-matrix.md)的症状表（配对失败、证书警告、音频截断等）。
 管理页面始终只监听 `127.0.0.1:8787`；撤销配对会立即断开该手机正在进行的会话。

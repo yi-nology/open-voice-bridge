@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+Wave-1 boundary hardening (roadmap R4, ARC-12): the phone's power key is
+an explicit opt-in, off by default.
+
+- New: `phone.allow_power_key` (default `false`). The helper's `inject`
+  command is open to any peer that passes the socket group check, and
+  logind treats KEY_POWER as a shutdown request, so the inject whitelist
+  used to let every paired phone power the host off. Both ends now refuse
+  `power` independently until the agent pushes the policy over the
+  privileged `set_devices` command; a later sync without the flag
+  withdraws it. Like the rest of `phone.*`, it applies on restart.
+- The phone greeting carries `allow_power`, asked of the same injector
+  that decides whether a press passes, and the page disables the 电源
+  button (with a one-line note) while the policy is off.
+- Fixed: on the phone page, author display rules (`.panel` grid in
+  landscape, `.talk` block) outranked the UA's `[hidden]` style, so the
+  pairing panel stayed beside the remote in landscape and hold-to-talk
+  stayed visible without a microphone. One `[hidden]` rule restores it.
+
 Wave-2 product work first slice (roadmap R3): the phone is reachable.
 
 - New: a 手机输入 switch in the 输入源 panel (`POST /api/phone/enabled`).
