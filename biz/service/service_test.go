@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -133,16 +134,41 @@ func TestStatusAndReady(t *testing.T) {
 	}
 }
 
-func TestReadyRequiresHealthyMic(t *testing.T) {
-	svc, agent, _, _ := newTestService(t)
+// OPS-06: readiness answers "can dictation work" (the voice key without a
+// root helper is the yardstick). Core is the ASR chain; the remapper, BLE
+// and the virtual mic are optional gaps that must not 503 a phone-only
+// setup. The old contract (any mic hiccup fails readiness) dies here.
+func TestReadyCoreIgnoresOptionalGaps(t *testing.T) {
+	svc, agent, helper, _ := newTestService(t)
 	agent.status = map[string]any{
-		"connected":   true,
-		"ready":       true,
+		"connected":   false,
+		"ready":       false,
 		"mic_healthy": false,
 	}
+	helper.status = map[string]any{"keyd_active": false, "remote_present": false}
 	ready := svc.Ready(context.Background())
-	if ready["ok"] != false || ready["mic_healthy"] != false {
-		t.Fatalf("ready = %+v", ready)
+	if ready["ok"] != true || ready["core_ok"] != true {
+		t.Fatalf("core readiness failed on optional gaps: %+v", ready)
+	}
+	if ready["optional_ok"] != false {
+		t.Fatalf("optional_ok = %v, want false with helper/BLE/mic down", ready["optional_ok"])
+	}
+	if ready["mic_healthy"] != false || ready["ble_connected"] != false {
+		t.Fatalf("individual checks lost: %+v", ready)
+	}
+}
+
+func TestReadyFailsWhenASRBroken(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.json")
+	cfg := config.Default()
+	svc := New(cfg, path, &fakeAgent{connected: true, ready: true}, &fakeHelper{},
+		errors.New("no ASR provider could be built"), logx.NewSlogLogger("service-test"))
+	ready := svc.Ready(context.Background())
+	if ready["ok"] != false || ready["core_ok"] != false {
+		t.Fatalf("core readiness passed without ASR: %+v", ready)
+	}
+	if ready["optional_ok"] != true {
+		t.Fatalf("optional_ok = %v, want true when only ASR is broken", ready["optional_ok"])
 	}
 }
 

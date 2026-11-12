@@ -1834,7 +1834,10 @@ function updateConnection(status) {
   setChip("chip-mic",
     status.mic_active ? ((micHealthy || status.atvv_ready) ? "语音就绪" : "音频节点异常") : "语音未运行",
     status.mic_active ? ((micHealthy || status.atvv_ready) ? "good" : "warn") : "bad");
-  const coreReady = !!(remoteConnected && status.mic_active && (micHealthy || status.atvv_ready) && !status.asr_error);
+  // OPS-06: readiness is "can dictation work" — the ASR chain is the core;
+  // the remote, the remapper and the virtual mic are optional gaps (see the
+  // quickstart groups) and must not hold the verdict hostage.
+  const coreReady = !!(!status.asr_error && status.asr_provider);
   const guidedState = document.getElementById("guided-state");
   const guidedAsr = document.getElementById("guided-asr");
   const guidedMeta = document.getElementById("guided-meta");
@@ -2743,7 +2746,7 @@ function setListening(active, source, name) {
     if (active) {
       state.textContent = label;
     } else if (lastStatus) {
-      const ready = lastStatus.remote_present && lastStatus.keyd_active && lastStatus.mic_active && !lastStatus.asr_error;
+      const ready = !lastStatus.asr_error && !!lastStatus.asr_provider;
       state.textContent = ready ? "已就绪" : "待检查";
     } else {
       state.textContent = "已就绪";
@@ -3412,6 +3415,17 @@ function goTab(name) {
   if (button) button.click();
 }
 
+// OPS-06: the checklist is split into the core that decides readiness and
+// the optional items that only enrich the remote experience. A phone-only
+// setup leaves the optional group empty and is still 已就绪.
+function quickGroup(text) {
+  const node = document.createElement("div");
+  node.className = "note";
+  node.style.margin = "10px 0 4px";
+  node.textContent = text;
+  return node;
+}
+
 function quickRow(label, ok, detail, actionLabel, action) {
   const row = document.createElement("div");
   row.className = "device-row";
@@ -3466,16 +3480,16 @@ function renderQuickstart(status) {
   const micReady = isMac ? !!status.mic_active : (!!status.mic_active && status.mic_healthy !== false);
   const asrReady = !status.asr_error && !!status.asr_provider;
   const llmReady = !!llmConfigData?.config?.enabled;
-  const coreReady = remoteReady && mapReady && micReady && asrReady;
+  const coreReady = asrReady;
   panel.classList.toggle("ready", coreReady && !quickstartExpanded);
 
   if (coreReady && !quickstartExpanded) {
     title.textContent = "核心链路已就绪";
-    desc.textContent = "遥控器、按键映射、麦克风桥接与语音识别都正常。";
+    desc.textContent = "语音识别正常，听写随时可用；可选项不影响就绪。";
     toggle.hidden = true;
     dismiss.hidden = true;
     list.appendChild(quickRow("可以开始语音输入", true,
-      "把光标放进任意输入框，按住遥控器语音键说话。",
+      "把光标放进任意输入框，按住遥控器语音键（或手机上的说话按钮）说话。",
       "查看详情", () => {
         quickstartExpanded = true;
         renderQuickstart(lastStatus || {});
@@ -3484,28 +3498,30 @@ function renderQuickstart(status) {
   }
 
   title.textContent = "快速开始";
-  desc.textContent = "按顺序完成下面几项，就可以按住遥控器语音键直接出字和字幕。";
+  desc.textContent = "核心项决定能否听写；可选项用于遥控器体验，未完成也不影响就绪。";
   toggle.hidden = !coreReady;
   toggle.textContent = "收起";
   dismiss.hidden = false;
-  list.appendChild(quickRow("1. 遥控器已连接", remoteReady, remoteReady ? "BLE 已连接，按键和语音都可用" : "先在系统蓝牙中配对/连接，再到设备页扫描", "去设备", () => goTab("devices")));
-  list.appendChild(quickRow("2. 按键映射运行", mapReady,
+  list.appendChild(quickGroup("核心必需"));
+  list.appendChild(quickRow("语音识别", asrReady, asrReady ? "ASR 就绪：" + (status.asr_backend || "") : (status.asr_error || "请配置 ASR 模型"), "去配置", () => { goTab("connection"); showConfigPanel("asr"); }));
+  list.appendChild(quickGroup("可选（不影响就绪）"));
+  list.appendChild(quickRow("遥控器已连接", remoteReady, remoteReady ? "BLE 已连接，按键和语音都可用" : "先在系统蓝牙中配对/连接，再到设备页扫描", "去设备", () => goTab("devices")));
+  list.appendChild(quickRow("按键映射运行", mapReady,
     isMac ? "macOS 不做映射，按键走遥控器原生 HID"
           : (mapReady ? "remap 正在运行" : "映射服务未就绪"),
     "查看按键", () => goTab("keys")));
-  list.appendChild(quickRow("3. 麦克风桥接", micReady,
+  list.appendChild(quickRow("麦克风桥接", micReady,
     isMac ? (micReady ? "直采模式，ASR 直接消费解码样本" : "遥控器未连接，暂无音频")
           : (micReady ? "虚拟麦克风已就绪" : "麦克风桥接未运行，可尝试重启"),
     "去修复", async () => {
       await fetch("/api/restart-mic", {method: "POST", headers: {"Content-Type": "application/json"}, body: "{}"});
       setTimeout(() => loadStatus(false), 1200);
     }));
-  list.appendChild(quickRow("4. 语音识别", asrReady, asrReady ? "ASR 就绪：" + (status.asr_backend || "") : (status.asr_error || "请配置 ASR 模型"), "去配置", () => { goTab("connection"); showConfigPanel("asr"); }));
-  list.appendChild(quickRow("5. 文本润色（可选）", llmReady, llmReady ? "已启用大模型后处理" : "未启用，不影响基础听写", "去配置", () => {
+  list.appendChild(quickRow("文本润色", llmReady, llmReady ? "已启用大模型后处理" : "未启用，不影响基础听写", "去配置", () => {
     goTab("connection");
     showConfigPanel("llm");
   }));
-  list.appendChild(quickRow("6. 字幕预览", true, "按住语音键说一句，打开字幕页查看歌词效果", "去字幕", () => goTab("subtitle")));
+  list.appendChild(quickRow("字幕预览", true, "按住语音键说一句，打开字幕页查看歌词效果", "去字幕", () => goTab("subtitle")));
 }
 
 document.getElementById("quickstart-toggle").addEventListener("click", () => {

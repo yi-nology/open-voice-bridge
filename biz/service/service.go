@@ -323,7 +323,6 @@ func (s *Service) Ready(ctx context.Context) map[string]any {
 	keyd := false
 	remote := false
 	if err != nil {
-		checks["ok"] = false
 		checks["helper_error"] = err.Error()
 	} else {
 		keyd, _ = helperStatus["keyd_active"].(bool)
@@ -341,13 +340,21 @@ func (s *Service) Ready(ctx context.Context) map[string]any {
 	s.cfgMu.RLock()
 	asrReadyErr := s.asrErr
 	s.cfgMu.RUnlock()
-	checks["asr_ready"] = asrReadyErr == nil
+	asrReady := asrReadyErr == nil
+	checks["asr_ready"] = asrReady
 	if asrReadyErr != nil {
 		checks["asr_error"] = asrReadyErr.Error()
 	}
-	if !keyd || !remote || !connected || !atvvReady || !micKnown || !micHealthy || asrReadyErr != nil {
-		checks["ok"] = false
-	}
+	// OPS-06: readiness answers "can dictation work". The ASR chain is the
+	// core; the root remapper, the BLE remote and the virtual mic are
+	// optional gaps a phone-only setup never fills, so they move to
+	// optional_ok instead of failing ok. Until the hardware run confirms
+	// the yardstick (roadmap 未验证 #5), the split is:
+	// core = agent + ASR + paste chain, optional = helper + BLE.
+	optional := keyd && remote && connected && atvvReady && micKnown && micHealthy
+	checks["core_ok"] = asrReady
+	checks["optional_ok"] = optional
+	checks["ok"] = asrReady
 	return checks
 }
 
