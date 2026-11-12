@@ -173,16 +173,19 @@ func (s *Server) guardOrigin(next http.Handler) http.Handler {
 	})
 }
 
-// Serve listens on the configured address and shuts down with ctx.
-func (s *Server) Serve(ctx context.Context) error {
+// Listen binds the configured address and resolves the certificate. It is
+// separate from Serve so the caller can report a bind failure as a failure
+// instead of announcing a listener that never came up (OPS-08).
+func (s *Server) Listen() (net.Listener, error) {
 	listener, err := net.Listen("tcp", s.cfg.Addr)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if s.cfg.TLSMode == "auto" && s.certs != nil {
 		cert, err := s.certs.Get()
 		if err != nil {
-			return err
+			_ = listener.Close()
+			return nil, err
 		}
 		s.srv.TLSConfig = &tls.Config{
 			Certificates: []tls.Certificate{cert},
@@ -190,6 +193,12 @@ func (s *Server) Serve(ctx context.Context) error {
 		}
 		listener = tls.NewListener(listener, s.srv.TLSConfig)
 	}
+	return listener, nil
+}
+
+// Serve accepts connections on an already-bound listener and shuts down with
+// ctx. The listener comes from Listen, which is where a port conflict surfaces.
+func (s *Server) Serve(ctx context.Context, listener net.Listener) error {
 	serveErr := make(chan error, 1)
 	async.GoSafe(func() {
 		if err := s.srv.Serve(listener); err != nil && err != http.ErrServerClosed {
@@ -208,7 +217,8 @@ func (s *Server) Serve(ctx context.Context) error {
 	}
 }
 
-// Addr reports the resolved listen address once Serve is bound.
+// Addr reports the configured listen address. The bound address, which differs
+// when the port is 0, comes from the listener Listen returns.
 func (s *Server) Addr() string { return s.cfg.Addr }
 
 // ConnectedDevices lists live phone sessions for the dashboard.

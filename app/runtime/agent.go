@@ -155,12 +155,16 @@ func RunAgent(opts AgentOptions) int {
 			}
 		}
 		if phoneEnabled {
-			app.GoBackground("phone", func(ctx context.Context) {
-				if err := phoneServer.Serve(ctx); err != nil {
-					logger.Error("phone server stopped", "err", err)
-				}
-			})
-			logger.Info("phone input listener started", "addr", cfg.Phone.Addr, "tls", cfg.Phone.TLS)
+			listener, live := listenPhone(logger, phoneServer, cfg.Phone.TLS)
+			if !live {
+				phoneEnabled = false
+			} else {
+				app.GoBackground("phone", func(ctx context.Context) {
+					if err := phoneServer.Serve(ctx, listener); err != nil {
+						logger.Error("phone server stopped", "err", err)
+					}
+				})
+			}
 		}
 
 		admin := Admin{
