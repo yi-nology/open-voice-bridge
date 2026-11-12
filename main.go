@@ -22,6 +22,7 @@ import (
 	"github.com/oekit/pkg/cli"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/yi-nology/open-voice-bridge/app/doctor"
 	"github.com/yi-nology/open-voice-bridge/app/runtime"
 	apihandler "github.com/yi-nology/open-voice-bridge/biz/handler/api"
 	"github.com/yi-nology/open-voice-bridge/biz/handler/ui"
@@ -69,7 +70,11 @@ func main() {
 				Name:    "doctor",
 				Summary: "check config, services, devices, and ASR providers",
 				Run: func(_ context.Context, args []string, stdout, stderr io.Writer) int {
-					return runDoctor(args, stdout, stderr)
+					fs, path := flagSet("doctor", stderr)
+					if _, code := cli.ParseFlags(fs, args); code != cli.ExitOK {
+						return code
+					}
+					return doctor.Run(*path, newLogger("xiaomi-remote"), stdout)
 				},
 			},
 			{
@@ -545,75 +550,6 @@ func runMCP(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	return 0
-}
-
-func runDoctor(args []string, stdout, stderr io.Writer) int {
-	fs, path := flagSet("doctor", stderr)
-	if _, code := cli.ParseFlags(fs, args); code != cli.ExitOK {
-		return code
-	}
-	logger := newLogger("xiaomi-remote")
-	cfg, err := appconfig.Load(*path)
-	if err != nil {
-		logger.Error("load config", "err", err)
-		return 1
-	}
-	fmt.Fprintln(stdout, "config:", *path)
-	fmt.Fprintln(stdout, "address:", cfg.Address)
-	fmt.Fprintln(stdout, "ui_addr:", cfg.UIAddr)
-	fmt.Fprintln(stdout, "helper_socket:", cfg.HelperSocket)
-
-	failures := 0
-	for _, diagnostic := range asr.Diagnose(cfg.ASR) {
-		if diagnostic.OK {
-			fmt.Fprintf(stdout, "ok: asr/%s: %s\n", diagnostic.Provider, diagnostic.Detail)
-		} else {
-			fmt.Fprintf(stdout, "FAIL: asr/%s: %s\n", diagnostic.Provider, diagnostic.Detail)
-			failures++
-		}
-	}
-	if info, err := os.Stat(cfg.APIKeyFile); err == nil {
-		perm := info.Mode().Perm()
-		if perm&0o077 != 0 {
-			fmt.Fprintln(stdout, "WARN: legacy api_key_file is readable by group/other; chmod 600 recommended")
-		}
-	}
-
-	primary := cfg.ASR.Providers[cfg.ASR.Provider]
-	providerType := strings.ToLower(primary.Type)
-	if providerType == "" && cfg.ASR.Provider == "mimo" {
-		providerType = "mimo"
-	}
-	if providerType == "mimo" || providerType == "openai" {
-		keyFile := expandHome(primary.APIKeyFile)
-		if keyFile == "" {
-			fmt.Fprintln(stdout, "FAIL: api_key_file missing for provider", cfg.ASR.Provider)
-			failures++
-		} else if info, err := os.Stat(keyFile); err != nil {
-			fmt.Fprintf(stdout, "FAIL: API key %s: %v\n", keyFile, err)
-			failures++
-		} else {
-			perm := info.Mode().Perm()
-			fmt.Fprintf(stdout, "ok: API key %s (%d bytes, %04o)\n", keyFile, info.Size(), perm)
-			if perm&0o077 != 0 {
-				fmt.Fprintln(stdout, "WARN: API key is readable by group/other; chmod 600 recommended")
-			}
-		}
-	}
-	failures += doctorHostChecks(stdout, cfg)
-	if failures > 0 {
-		return 1
-	}
-	return 0
-}
-
-func expandHome(path string) string {
-	if strings.HasPrefix(path, "~/") {
-		if home, err := os.UserHomeDir(); err == nil {
-			return filepath.Join(home, path[2:])
-		}
-	}
-	return path
 }
 
 func warnKeyPerms(logger logx.Logger, path string) {

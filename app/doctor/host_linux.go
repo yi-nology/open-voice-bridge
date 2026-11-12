@@ -1,6 +1,6 @@
 //go:build linux
 
-package main
+package doctor
 
 import (
 	"context"
@@ -17,9 +17,9 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/remap"
 )
 
-// doctorHostChecks reports the Linux host prerequisites: root remap helper,
+// hostChecks reports the Linux host prerequisites: root remap helper,
 // PipeWire/X11 tooling, systemd units, uinput and the evdev remote.
-func doctorHostChecks(stdout io.Writer, cfg config.Config) int {
+func hostChecks(stdout io.Writer, cfg config.Config) int {
 	failures := 0
 	doctorCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()

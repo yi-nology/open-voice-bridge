@@ -1,6 +1,6 @@
 //go:build darwin
 
-package main
+package doctor
 
 import (
 	"context"
@@ -13,11 +13,11 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/config"
 )
 
-// doctorHostChecks reports the macOS host prerequisites. Key remapping, the
+// hostChecks reports the macOS host prerequisites. Key remapping, the
 // PipeWire virtual mic and the root helper are Linux-only (see
 // docs/design/macos-compat.md); what must hold here is that the remote is
 // visible to the system and that the paste target is permitted.
-func doctorHostChecks(stdout io.Writer, cfg config.Config) int {
+func hostChecks(stdout io.Writer, cfg config.Config) int {
 	failures := 0
 	fmt.Fprintln(stdout, "ok: remap helper not used on macOS (key remapping is Linux-only)")
 	fmt.Fprintln(stdout, "ok: virtual mic not used on macOS (ASR consumes the stream directly)")
