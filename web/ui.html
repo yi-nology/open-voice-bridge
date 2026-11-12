@@ -533,6 +533,111 @@ input.history-search { width: 220px; }
   .side-item.active { background: var(--green-soft); }
 }
 
+
+/* ============================================================
+   inner-page polish: forms, cards, checkbox, photo, subtitle
+   ============================================================ */
+input, select, textarea {
+  font: inherit; font-size: 14.5px; color: var(--text);
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius-inner); padding: 10px 12px; width: 100%;
+}
+input[type="checkbox"], input[type="radio"] {
+  width: auto; padding: 0; accent-color: var(--accent);
+}
+input[type="file"] { padding: 8px; background: none; }
+label > input, label > select, label > textarea { display: block; width: 100%; margin-top: 6px; }
+
+/* custom switch checkbox (enable-card) */
+.check { position: relative; display: inline-flex; align-items: center; cursor: pointer; margin: 0; }
+.check input { position: absolute; opacity: 0; width: 0; height: 0; }
+.check .box {
+  width: 24px; height: 24px; border: 1.5px solid var(--line); border-radius: 8px;
+  background: var(--panel); display: inline-block; position: relative;
+}
+.check input:checked + .box { background: var(--accent); border-color: var(--accent); }
+.check input:checked + .box::after {
+  content: ""; position: absolute; left: 8px; top: 3.5px; width: 5.5px; height: 11px;
+  border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg);
+}
+.check input:focus-visible + .box { outline: 2px solid var(--blue-soft); outline-offset: 1px; }
+
+/* cards on the settings pages */
+.card {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius-panel); padding: 24px 26px;
+}
+.card > h3 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+.card > .sub { margin-bottom: 16px; }
+.cards {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px; margin: 12px 0 16px;
+}
+.cards .card { padding: 14px 16px; }
+.cards .card h3 { font-size: 12.5px; font-weight: 500; color: var(--muted); margin: 0; }
+.cards .card .value { font-size: 21px; font-weight: 600; margin-top: 4px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 16px; }
+
+/* advanced options */
+details.adv {
+  grid-column: 1 / -1; margin-top: 6px;
+  border-top: 1px solid var(--line-soft); padding-top: 12px;
+}
+details.adv summary { cursor: pointer; font-size: 13.5px; color: var(--muted); }
+details.adv summary:hover { color: var(--text); }
+.adv-body {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px; padding-top: 14px;
+}
+.adv-body .wide { grid-column: 1 / -1; }
+
+/* keymap: photo column, segmented model toggle */
+.mapping-grid { grid-template-columns: minmax(0, 380px) minmax(0, 1fr); }
+.photo-panel { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.figure-toggle {
+  display: inline-flex; gap: 2px; border: 1px solid var(--line);
+  border-radius: 999px; padding: 3px; background: var(--panel2);
+}
+.figure-btn {
+  border: 0; background: none; padding: 6px 16px; border-radius: 999px;
+  font: inherit; font-size: 13px; cursor: pointer; color: var(--muted);
+}
+.figure-btn:hover { color: var(--text); }
+.figure-btn.active, .figure-btn.selected { background: var(--panel); color: var(--text); font-weight: 500; }
+.remote-photo { position: relative; width: min(var(--figure-w, 300px), 100%); margin: 0 auto; }
+.remote-photo img { width: 100%; height: auto; display: block; border-radius: var(--radius-panel); }
+.key-row select { width: auto; flex: 1; min-width: 150px; }
+.panel-tools select { width: auto; min-width: 130px; }
+.enable-top h2 { font-size: 18px; font-weight: 600; }
+
+/* subtitle page */
+.subtitle-scene { position: relative; max-width: 100%; }
+.subtitle-orb { display: none; }
+.subtitle-title { font-size: 17px; font-weight: 600; color: var(--text); }
+.subtitle-hint { color: var(--muted); font-size: 13px; }
+.subtitle-live {
+  position: static; display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--muted); margin-left: 10px;
+}
+.subtitle-live i { width: 8px; height: 8px; border-radius: 50%; background: var(--label); display: inline-block; }
+body.listening .subtitle-live i { background: var(--accent); }
+.subtitle-stage { min-height: 460px; padding: 56px 52px; }
+.subtitle-toolbar { gap: 10px; margin-bottom: 4px; }
+
+
+/* round-2 inner-page polish */
+[hidden] { display: none !important; }
+.remote-photo img { max-height: 560px; object-fit: contain; }
+.rule-row { align-items: start; }
+.rule-row textarea { resize: vertical; }
+.model-grid .check-line { align-self: start; margin-top: 2px; }
+.actions select { width: auto; min-width: 170px; padding: 9px 12px; }
+.subtitle-empty {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: 20px;
+}
+
 </style>
 </head>
 <body>
@@ -752,7 +857,7 @@ input.history-search { width: 220px; }
         </details>
       </div>
       <div class="actions">
-        <select id="asr-preset" title="语音识别快速模板" style="padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:#f2f2f4;font:inherit"></select>
+        <select id="asr-preset" title="语音识别快速模板"></select>
         <button id="btn-asr-add" class="btn">新增配置</button>
         <button id="btn-asr-delete" class="btn">删除此配置</button>
         <button id="btn-asr-save" class="btn primary">保存并启用</button>
