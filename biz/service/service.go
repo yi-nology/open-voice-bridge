@@ -768,12 +768,14 @@ func (s *Service) TestLLM(ctx context.Context, provider string, live bool) []llm
 	return append(diagnostics, llm.Diagnostic{OK: true, Detail: fmt.Sprintf("live: %s", latency.Round(time.Millisecond))})
 }
 
-// SyncDevices sends the configured input matchers to the root remapper.
+// SyncDevices sends the configured input matchers and the phone key policy to
+// the root remapper. The helper refuses KEY_POWER until this arrives (ARC-12).
 func (s *Service) SyncDevices(ctx context.Context) {
 	var lastErr error
 	for attempt := 0; attempt < 30; attempt++ {
 		s.cfgMu.RLock()
 		devices := append([]config.DeviceConfig(nil), s.cfg.Devices...)
+		allowPower := s.cfg.Phone.AllowPowerKey
 		s.cfgMu.RUnlock()
 		matches := make([]device.Match, 0, len(devices))
 		appleEnabled := false
@@ -800,8 +802,8 @@ func (s *Service) SyncDevices(ctx context.Context) {
 				appleEnabled = true
 			}
 		}
-		if _, err := s.helper.Call(ctx, map[string]any{"cmd": "set_devices", "devices": matches, "apple": appleEnabled}); err == nil {
-			s.logger.Info("device matchers applied", "count", len(matches), "apple", appleEnabled)
+		if _, err := s.helper.Call(ctx, map[string]any{"cmd": "set_devices", "devices": matches, "apple": appleEnabled, "allow_power": allowPower}); err == nil {
+			s.logger.Info("device matchers applied", "count", len(matches), "apple", appleEnabled, "allow_power", allowPower)
 			return
 		} else {
 			lastErr = err

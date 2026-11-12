@@ -58,12 +58,19 @@ func (f *fakeAgent) ASRName() string {
 }
 
 type fakeHelper struct {
-	mu       sync.Mutex
-	status   map[string]any
-	applied  map[string]string
-	devices  []device.Match
-	applyErr error
-	callErr  error
+	mu         sync.Mutex
+	status     map[string]any
+	applied    map[string]string
+	devices    []device.Match
+	allowPower bool
+	applyErr   error
+	callErr    error
+}
+
+func (f *fakeHelper) powerPolicy() bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.allowPower
 }
 
 func (f *fakeHelper) appliedSnapshot() map[string]string {
@@ -97,6 +104,7 @@ func (f *fakeHelper) Call(ctx context.Context, payload any) (map[string]any, err
 	if command["cmd"] == "set_devices" {
 		f.mu.Lock()
 		f.devices, _ = command["devices"].([]device.Match)
+		f.allowPower, _ = command["allow_power"].(bool)
 		n := len(f.devices)
 		f.mu.Unlock()
 		return map[string]any{"ok": true, "devices": n}, nil
@@ -415,5 +423,30 @@ func TestSetPhoneEnabledRejectsInvalidPhoneSection(t *testing.T) {
 	svc.cfgMu.RUnlock()
 	if enabled {
 		t.Fatal("in-memory flag flipped despite the failed save")
+	}
+}
+
+// ARC-12: the helper refuses KEY_POWER until the agent pushes the policy, so
+// SyncDevices must carry phone.allow_power_key — in both directions, because a
+// stale true would outlive the user's decision to turn it off.
+func TestSyncDevicesCarriesThePowerKeyPolicy(t *testing.T) {
+	svc, _, helper, _ := newTestService(t)
+	svc.SyncDevices(context.Background())
+	if helper.powerPolicy() {
+		t.Fatal("a default config pushed the power policy as enabled")
+	}
+	svc.cfgMu.Lock()
+	svc.cfg.Phone.AllowPowerKey = true
+	svc.cfgMu.Unlock()
+	svc.SyncDevices(context.Background())
+	if !helper.powerPolicy() {
+		t.Fatal("the opt-in never reached the helper")
+	}
+	svc.cfgMu.Lock()
+	svc.cfg.Phone.AllowPowerKey = false
+	svc.cfgMu.Unlock()
+	svc.SyncDevices(context.Background())
+	if helper.powerPolicy() {
+		t.Fatal("withdrawing the opt-in left the helper enabled")
 	}
 }

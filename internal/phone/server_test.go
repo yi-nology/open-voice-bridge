@@ -32,7 +32,7 @@ func newTestEnv(t *testing.T, cfg ServerConfig) *testEnv {
 	store := newTestStore(t, DefaultConfig())
 	transport := &fakeTransport{}
 	hub := input.NewHub()
-	server := NewServer(store, NewKeyInjector(transport), hub, cfg)
+	server := NewServer(store, NewKeyInjector(transport, false), hub, cfg)
 	ts := httptest.NewServer(server.Handler())
 	t.Cleanup(ts.Close)
 	return &testEnv{server: server, store: store, transport: transport, hub: hub, http: ts}
@@ -225,7 +225,7 @@ func TestUnknownTicketRejected(t *testing.T) {
 func TestExpiredTicketRejected(t *testing.T) {
 	store, clock := fixedClock(t)
 	transport := &fakeTransport{}
-	server := NewServer(store, NewKeyInjector(transport), input.NewHub(), ServerConfig{TLSMode: "off", MaxClients: 4, Assets: web.FS})
+	server := NewServer(store, NewKeyInjector(transport, false), input.NewHub(), ServerConfig{TLSMode: "off", MaxClients: 4, Assets: web.FS})
 	ts := httptest.NewServer(server.Handler())
 	defer ts.Close()
 

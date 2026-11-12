@@ -9,25 +9,49 @@ import (
 func TestInjectAllowed(t *testing.T) {
 	allowed := []string{
 		"up", "down", "left", "right", "enter", "back", "home",
-		"menu", "volumeup", "volumedown", "power", "f5",
+		"menu", "volumeup", "volumedown", "f5",
 	}
-	for _, key := range allowed {
-		if !InjectAllowed(key) {
-			t.Fatalf("expected %q to be allowed", key)
-		}
-		code, ok := InjectKeyCode(key)
-		if !ok || code != SourceCodes[key] {
-			t.Fatalf("InjectKeyCode(%q) = (%d,%v), want (%d,true)", key, code, ok, SourceCodes[key])
+	for _, allowPower := range []bool{false, true} {
+		for _, key := range allowed {
+			if !InjectAllowed(key, allowPower) {
+				t.Fatalf("expected %q to be allowed (allowPower=%v)", key, allowPower)
+			}
+			code, ok := InjectKeyCode(key, allowPower)
+			if !ok || code != SourceCodes[key] {
+				t.Fatalf("InjectKeyCode(%q) = (%d,%v), want (%d,true)", key, code, ok, SourceCodes[key])
+			}
 		}
 	}
 	rejected := []string{"", "ok", "homepage", "playpause", "compose", "grave", "siri", "nope", "UP", "Enter"}
-	for _, key := range rejected {
-		if InjectAllowed(key) {
-			t.Fatalf("expected %q to be rejected", key)
+	for _, allowPower := range []bool{false, true} {
+		for _, key := range rejected {
+			if InjectAllowed(key, allowPower) {
+				t.Fatalf("expected %q to be rejected (allowPower=%v)", key, allowPower)
+			}
+			if code, ok := InjectKeyCode(key, allowPower); ok || code != 0 {
+				t.Fatalf("InjectKeyCode(%q) = (%d,%v), want (0,false)", key, code, ok)
+			}
 		}
-		if code, ok := InjectKeyCode(key); ok || code != 0 {
-			t.Fatalf("InjectKeyCode(%q) = (%d,%v), want (0,false)", key, code, ok)
-		}
+	}
+}
+
+// ARC-12: KEY_POWER reaches logind, so injecting it can shut the host down.
+// cmdInject is open to any peer that passed the socket group check (auth.go),
+// which makes this whitelist the only boundary — power must not be on it by
+// default, and the opt-in must be the only way through.
+func TestPowerKeyNeedsAnExplicitOptIn(t *testing.T) {
+	if InjectAllowed("power", false) {
+		t.Fatal("power is injectable by default; a paired phone can power off the host")
+	}
+	if code, ok := InjectKeyCode("power", false); ok || code != 0 {
+		t.Fatalf("InjectKeyCode(power, false) = (%d,%v), want (0,false)", code, ok)
+	}
+	if !InjectAllowed("power", true) {
+		t.Fatal("the opt-in must let power through")
+	}
+	code, ok := InjectKeyCode("power", true)
+	if !ok || code != SourceCodes["power"] {
+		t.Fatalf("InjectKeyCode(power, true) = (%d,%v), want (%d,true)", code, ok, SourceCodes["power"])
 	}
 }
 
@@ -36,6 +60,12 @@ func TestInjectWhitelistIsSubsetOfSourceCodes(t *testing.T) {
 		if _, ok := SourceCodes[key]; !ok {
 			t.Fatalf("whitelisted key %q has no source code", key)
 		}
+	}
+	if _, ok := SourceCodes[powerInjectKey]; !ok {
+		t.Fatalf("gated key %q has no source code", powerInjectKey)
+	}
+	if injectWhitelist[powerInjectKey] {
+		t.Fatalf("%q must stay out of the unconditional whitelist", powerInjectKey)
 	}
 }
 

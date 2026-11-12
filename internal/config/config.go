@@ -49,6 +49,9 @@ type PhoneConfig struct {
 	PairCodeTTLSeconds  int    `json:"pair_code_ttl_seconds"`
 	MaxClients          int    `json:"max_clients"`
 	MaxUtteranceSeconds int    `json:"max_utterance_seconds"`
+	// AllowPowerKey opts in to injecting KEY_POWER from a paired phone. Off by
+	// default: logind acts on that key, so it can shut the host down (ARC-12).
+	AllowPowerKey bool `json:"allow_power_key"`
 }
 
 type Config struct {

@@ -466,7 +466,7 @@ func TestSlowKeyInjectionDoesNotBlockAudio(t *testing.T) {
 	transport := &blockingTransport{entered: make(chan struct{}, 1), release: make(chan struct{})}
 	transcriber := &fakeTranscriber{ok: true, result: UtteranceResult{Text: "你好", At: time.Now()}}
 	e := newTestEnv(t, ServerConfig{Transcriber: transcriber, MaxUtteranceSeconds: 30, MaxClients: 4})
-	e.server.injector = NewKeyInjector(transport)
+	e.server.injector = NewKeyInjector(transport, false)
 	conn, ctx := dialPhone(t, e, "Pixel")
 
 	// A key press wedges inside the helper...

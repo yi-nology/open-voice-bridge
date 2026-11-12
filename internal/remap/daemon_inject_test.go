@@ -97,6 +97,44 @@ func TestDaemonInject(t *testing.T) {
 	}
 }
 
+// ARC-12: the helper is the authoritative boundary — cmdInject is open to any
+// peer that passed the socket group check, so a group member must not be able
+// to reach KEY_POWER (logind acts on it) without an explicit opt-in.
+func TestDaemonRefusesPowerByDefault(t *testing.T) {
+	d := newInjectDaemon()
+	conn := serveInject(t, d)
+	w := bufio.NewWriter(conn)
+	r := bufio.NewReader(conn)
+
+	resp := exchange(t, conn, w, r, map[string]any{"cmd": "inject", "key": "power", "value": 1})
+	if resp["ok"] != false || resp["error"] != "key not allowed" {
+		t.Fatalf("power accepted without opt-in: %+v", resp)
+	}
+}
+
+// The opt-in rides set_devices, which only root or the agent uid may send
+// (SEC-01), so a group peer cannot turn power on for itself. A later sync
+// without the flag withdraws it again: config is the source of truth, not a
+// latch the first push sets forever.
+func TestDaemonInjectsPowerOnlyWhileThePolicySaysSo(t *testing.T) {
+	d := newInjectDaemon()
+	conn := serveInject(t, d)
+	w := bufio.NewWriter(conn)
+	r := bufio.NewReader(conn)
+
+	resp := exchange(t, conn, w, r, map[string]any{"cmd": "set_devices", "devices": []any{}, "allow_power": true})
+	if resp["ok"] != true || resp["allow_power"] != true {
+		t.Fatalf("policy push not acknowledged: %+v", resp)
+	}
+	if resp := exchange(t, conn, w, r, map[string]any{"cmd": "inject", "key": "power", "value": 1}); resp["ok"] != true {
+		t.Fatalf("power refused after opt-in: %+v", resp)
+	}
+	exchange(t, conn, w, r, map[string]any{"cmd": "set_devices", "devices": []any{}})
+	if resp := exchange(t, conn, w, r, map[string]any{"cmd": "inject", "key": "power", "value": 1}); resp["ok"] != false {
+		t.Fatalf("power still allowed after the policy was withdrawn: %+v", resp)
+	}
+}
+
 // SEC-01 wiring: a peer without kernel credentials (net.Pipe yields uid -1)
 // must not reach privileged commands or even the inject whitelist. Foreign
 // uids on a real socket are covered by TestHelperSocketPeerAuth.

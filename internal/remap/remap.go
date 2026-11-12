@@ -163,21 +163,32 @@ func MacroTokenCodes(action string) ([]int, bool) {
 }
 
 // injectWhitelist lists the logical keys a phone remote may inject. It is a
-// deliberate subset of SourceCodes: only navigation/media/power keys the
-// virtual remote exposes, never arbitrary bindings.
+// deliberate subset of SourceCodes: only navigation and media keys the virtual
+// remote exposes, never arbitrary bindings.
 var injectWhitelist = map[string]bool{
 	"up": true, "down": true, "left": true, "right": true,
 	"enter": true, "back": true, "home": true, "menu": true,
-	"volumeup": true, "volumedown": true, "power": true, "f5": true,
+	"volumeup": true, "volumedown": true, "f5": true,
 }
 
+// powerInjectKey stays out of injectWhitelist: logind acts on KEY_POWER, so
+// injecting it can shut the host down. cmdInject is open to any peer that
+// passed the socket group check, which makes this list the only boundary —
+// power needs an explicit opt-in (phone.allow_power_key, ARC-12).
+const powerInjectKey = "power"
+
 // InjectAllowed reports whether a logical key name may be injected remotely.
-func InjectAllowed(name string) bool { return injectWhitelist[name] }
+func InjectAllowed(name string, allowPower bool) bool {
+	if name == powerInjectKey {
+		return allowPower
+	}
+	return injectWhitelist[name]
+}
 
 // InjectKeyCode resolves an allowed logical key to its evdev source code.
 // Disallowed or unknown names return ok=false so callers reject them.
-func InjectKeyCode(name string) (int, bool) {
-	if !injectWhitelist[name] {
+func InjectKeyCode(name string, allowPower bool) (int, bool) {
+	if !InjectAllowed(name, allowPower) {
 		return 0, false
 	}
 	code, ok := SourceCodes[name]

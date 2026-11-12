@@ -143,7 +143,7 @@ func RunAgent(opts AgentOptions) int {
 				phoneEnabled = false
 			} else {
 				phoneStore = store
-				phoneServer = phone.NewServer(store, phone.NewKeyInjector(helperClient), inputHub, phone.ServerConfig{
+				phoneServer = phone.NewServer(store, phone.NewKeyInjector(helperClient, cfg.Phone.AllowPowerKey), inputHub, phone.ServerConfig{
 					Addr:                cfg.Phone.Addr,
 					TLSMode:             cfg.Phone.TLS,
 					CertDir:             filepath.Dir(opts.ConfigPath),

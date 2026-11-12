@@ -44,6 +44,7 @@ type Daemon struct {
 	mapping       map[string]string
 	matchers      []device.Match
 	appleEnabled  bool
+	allowPowerKey bool
 	capturing     bool
 	remotePresent bool
 	clients       map[*captureClient]struct{}
@@ -233,8 +234,12 @@ func (d *Daemon) handleConn(conn net.Conn) {
 			Mapping map[string]string `json:"mapping"`
 			Devices []device.Match    `json:"devices"`
 			Apple   bool              `json:"apple"`
-			Key     string            `json:"key"`
-			Value   int               `json:"value"`
+			// AllowPower carries phone.allow_power_key. It rides set_devices
+			// because that command is already the agent's policy push and is
+			// restricted to root/agent uid — a group peer cannot flip it.
+			AllowPower bool   `json:"allow_power"`
+			Key        string `json:"key"`
+			Value      int    `json:"value"`
 		}
 		if err := json.Unmarshal(scanner.Bytes(), &command); err != nil {
 			d.writeConn(conn, map[string]any{"ok": false, "error": "bad json"})
@@ -269,8 +274,9 @@ func (d *Daemon) handleConn(conn net.Conn) {
 			d.mu.Lock()
 			d.matchers = append([]device.Match(nil), command.Devices...)
 			d.appleEnabled = command.Apple
+			d.allowPowerKey = command.AllowPower
 			d.mu.Unlock()
-			d.writeConn(conn, map[string]any{"ok": true, "devices": len(command.Devices), "apple": command.Apple})
+			d.writeConn(conn, map[string]any{"ok": true, "devices": len(command.Devices), "apple": command.Apple, "allow_power": command.AllowPower})
 		case "capture_start":
 			if client == nil {
 				client = &captureClient{conn: conn}
@@ -285,7 +291,7 @@ func (d *Daemon) handleConn(conn net.Conn) {
 			d.writeConn(conn, map[string]any{"ok": true, "event": "capture_stopped"})
 			return
 		case "inject":
-			code, ok := InjectKeyCode(command.Key)
+			code, ok := InjectKeyCode(command.Key, d.powerAllowed())
 			if !ok {
 				log.Warn("rejected phone key injection", "key", command.Key)
 				d.writeConn(conn, map[string]any{"ok": false, "error": "key not allowed"})
@@ -476,6 +482,14 @@ func (d *Daemon) appleActive() bool {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.appleEnabled
+}
+
+// powerAllowed is false until the agent pushes the policy, so a helper that
+// has not heard from the agent yet refuses KEY_POWER (ARC-12).
+func (d *Daemon) powerAllowed() bool {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.allowPowerKey
 }
 
 func (d *Daemon) setRemote(present bool) {
