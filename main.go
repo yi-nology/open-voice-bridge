@@ -20,7 +20,6 @@ import (
 	oekitmetrics "github.com/oekit/metrics"
 	mw "github.com/oekit/middleware"
 	"github.com/oekit/pkg/cli"
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/yi-nology/open-voice-bridge/app/doctor"
 	"github.com/yi-nology/open-voice-bridge/app/runtime"
@@ -32,7 +31,6 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/audio"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
-	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/focus"
 	"github.com/yi-nology/open-voice-bridge/internal/helper"
 	"github.com/yi-nology/open-voice-bridge/internal/history"
@@ -98,48 +96,6 @@ func flagSet(name string, stderr io.Writer) (*flag.FlagSet, *string) {
 func newLogger(service string) logx.Logger {
 	logx.UseSlog(service)
 	return logx.WithService(service)
-}
-
-func registerAgentMetrics(ag *agent.Agent) (prometheus.Counter, prometheus.Histogram) {
-	transcriptsTotal := prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "xiaomi_remote_transcripts_total",
-		Help: "Total number of recognized transcripts.",
-	})
-	asrLatency := prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name:    "xiaomi_remote_asr_duration_seconds",
-		Help:    "ASR latency per transcript.",
-		Buckets: []float64{0.1, 0.25, 0.5, 1, 2, 5, 10, 30},
-	})
-	oekitmetrics.Registry.MustRegister(
-		transcriptsTotal,
-		asrLatency,
-		prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-			Name: "xiaomi_remote_ble_connected",
-			Help: "Whether the remote is connected over BLE (1/0).",
-		}, func() float64 { return boolGauge(ag, func(v core.AgentView) bool { return v.Connected }) }),
-		prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-			Name: "xiaomi_remote_atvv_ready",
-			Help: "Whether the ATVV voice bridge is ready (1/0).",
-		}, func() float64 { return boolGauge(ag, func(v core.AgentView) bool { return v.Ready }) }),
-		prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-			Name: "xiaomi_remote_mic_healthy",
-			Help: "Whether the virtual microphone node is present (1/0).",
-		}, func() float64 { return boolGauge(ag, func(v core.AgentView) bool { return v.MicHealthy }) }),
-		prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-			Name: "xiaomi_remote_last_asr_latency_seconds",
-			Help: "Latency of the most recent transcription in seconds.",
-		}, func() float64 {
-			return ag.Status().LastLatency.Seconds()
-		}),
-	)
-	return transcriptsTotal, asrLatency
-}
-
-func boolGauge(ag *agent.Agent, pick func(core.AgentView) bool) float64 {
-	if pick(ag.Status()) {
-		return 1
-	}
-	return 0
 }
 
 // speakingLabel turns a microphone transition into the desktop pill's copy.
@@ -224,7 +180,7 @@ func runAgent(args []string, stderr io.Writer) int {
 		ag := agent.New(cfg, engine, sink)
 		inputHub := input.NewHub()
 		ag.SetHub(inputHub)
-		transcriptsTotal, asrLatency := registerAgentMetrics(ag)
+		transcriptsTotal, asrLatency := runtime.RegisterAgentMetrics(ag, oekitmetrics.Registry)
 		llmProcessor, llmErr := llm.Build(cfg.LLM)
 		if llmErr != nil {
 			logger.Error("LLM unavailable; continuing without post-processing", "err", llmErr)
