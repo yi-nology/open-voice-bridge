@@ -91,10 +91,10 @@ func (d *Daemon) flushKeyCounts() error {
 		return err
 	}
 	path := d.keyCountsPath()
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err
 	}
-	return fsutil.WriteAtomic(path, append(data, '\n'), 0o644)
+	return fsutil.WriteAtomic(path, append(data, '\n'), 0o600)
 }
 
 // keySnapshot renders the counts for the status response.

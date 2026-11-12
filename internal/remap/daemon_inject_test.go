@@ -284,6 +284,32 @@ func TestKeyCountsTrackPressesAndPersist(t *testing.T) {
 	}
 }
 
+// Key counts are activity data — which keys, how often. Every other durable
+// file lands 0600 inside a 0700 directory; this one has to as well.
+func TestKeyCountsAreOwnerOnly(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "state")
+	d := newInjectDaemon()
+	d.cfg.MappingPath = filepath.Join(dir, "mapping.json")
+	d.countPress("up")
+	if err := d.flushKeyCounts(); err != nil {
+		t.Fatalf("flush: %v", err)
+	}
+	info, err := os.Stat(filepath.Join(dir, "keycounts.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if perm := info.Mode().Perm(); perm != 0o600 {
+		t.Fatalf("keycounts perm = %04o, want 0600", perm)
+	}
+	dirInfo, err := os.Stat(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if perm := dirInfo.Mode().Perm(); perm&0o077 != 0 {
+		t.Fatalf("state dir perm = %04o, want no group/other access", perm)
+	}
+}
+
 // 组合动作 executes its steps in order; a repeat replays the whole sequence
 // (按住连续执行), and the release is a no-op because every step is a tap.
 func TestSeqActionPlaysStepsInOrder(t *testing.T) {
