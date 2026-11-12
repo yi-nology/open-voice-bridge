@@ -68,6 +68,28 @@ func TestWriteAtomicLeavesTargetAloneWhenTmpFails(t *testing.T) {
 	}
 }
 
+// A failed replace must not leave a stray tmp beside the target: the next
+// writer inherits it, and anything globbing the directory sees a state file
+// that was never committed (R7).
+func TestWriteAtomicCleansTmpWhenRenameFails(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "state.json")
+	// A non-empty directory at the target fails the rename after the tmp file
+	// has been written and synced.
+	if err := os.Mkdir(path, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(path, "occupied"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := WriteAtomic(path, []byte("new\n"), 0o600); err == nil {
+		t.Fatal("WriteAtomic succeeded despite an unreplaceable target")
+	}
+	if _, err := os.Stat(path + ".tmp"); !os.IsNotExist(err) {
+		t.Fatalf("tmp file left behind, stat err = %v", err)
+	}
+}
+
 func TestAppendJSONLAddsOneLinePerEntry(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "log.jsonl")

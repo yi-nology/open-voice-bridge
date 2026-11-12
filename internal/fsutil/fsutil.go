@@ -13,21 +13,28 @@ import (
 // WriteAtomic replaces path with data in one durable step: the payload goes
 // to a sibling tmp file, is fsynced, and only then renamed over path. perm
 // applies when the file is created; the parent directory must already exist.
-func WriteAtomic(path string, data []byte, perm os.FileMode) error {
+func WriteAtomic(path string, data []byte, perm os.FileMode) (err error) {
 	tmp := path + ".tmp"
 	file, err := os.OpenFile(tmp, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, perm)
 	if err != nil {
 		return err
 	}
-	if _, err := file.Write(data); err != nil {
+	// A stray tmp is inherited by the next writer and looks like committed
+	// state to anything globbing the directory (R7).
+	defer func() {
+		if err != nil {
+			_ = os.Remove(tmp)
+		}
+	}()
+	if _, err = file.Write(data); err != nil {
 		_ = file.Close()
 		return err
 	}
-	if err := file.Sync(); err != nil {
+	if err = file.Sync(); err != nil {
 		_ = file.Close()
 		return err
 	}
-	if err := file.Close(); err != nil {
+	if err = file.Close(); err != nil {
 		return err
 	}
 	return os.Rename(tmp, path)
