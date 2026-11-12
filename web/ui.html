@@ -8,17 +8,23 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232a2a2e'/%3E%3Crect x='13' y='7' width='6' height='11' rx='3' fill='white'/%3E%3Cpath d='M9 16a7 7 0 0 0 14 0M16 23v3' stroke='white' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
   :root {
-    --bg: #f5f5f7;
-    --panel: #ffffff;
-    --panel2: #f2f2f5;
-    --line: #e4e4e9;
-    --text: #1d1d1f;
-    --muted: #6e6e73;
-    --blue: #0a84ff;
-    --blue-soft: #e8f2ff;
-    --green: #34c759;
-    --red: #ff3b30;
-    --orange: #ff9f0a;
+    /* 「任务旅程」暖色设计系统（方向稿 2） */
+    --bg: #f4f2ee;
+    --panel: #faf8f5;
+    --panel2: #eeece7;
+    --line: #e6e1d8;
+    --text: #22201c;
+    --muted: #928e86;
+    --blue: #c4482c;
+    --blue-soft: #f6e7e1;
+    --green: #2f7a4e;
+    --green-soft: #e2eee4;
+    --red: #b3402e;
+    --orange: #c4482c;
+    --accent: #c4482c;
+    --radius-card: 20px;
+    --radius-panel: 28px;
+    --radius-inner: 16px;
   }
   * { box-sizing: border-box; }
   html { scrollbar-width: thin; scrollbar-color: #c9c9d1 transparent; }
@@ -859,6 +865,208 @@
       width: 100%; max-width: none;
     }
   }
+  /* ============================================================
+     任务旅程外壳（方向稿 2）——暖米白 + 陶土橙，主屏即引导
+     ============================================================ */
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+  .window { background: transparent; box-shadow: none; border-radius: 0; min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* 顶栏：品牌 + 状态药丸 */
+  .titlebar {
+    display: flex; align-items: center; gap: 18px;
+    padding: 22px 34px 10px;
+    background: transparent; border-bottom: 0;
+  }
+  .titlebar .dots { display: none; }
+  .titlebar .brand-mark {
+    width: 46px; height: 46px; border-radius: 14px;
+    background: var(--text); color: var(--panel);
+    display: grid; place-items: center;
+  }
+  .titlebar .brand-mark svg { width: 26px; height: 26px; }
+  .brand-name { font-size: 26px; font-weight: 700; letter-spacing: .02em; }
+  .brand-caption { font-size: 14px; color: var(--muted); }
+  .titlebar .crumb, .titlebar .tabs { display: none; }
+  .titlebar .chips { margin-left: auto; display: flex; gap: 10px; }
+  .chip {
+    border-radius: 999px; padding: 8px 16px; font-size: 14px; font-weight: 500;
+    background: var(--panel2); color: var(--muted); border: 0;
+  }
+  .chip.good { background: var(--green-soft); color: var(--green); }
+  .chip.warn { background: var(--blue-soft); color: var(--blue); }
+  .chip.bad { background: #f3ddd8; color: var(--red); }
+
+  /* 舞台：主容器（时间轴 + 内容 + 工具行 同居一卡） */
+  .shell { display: block; padding: 10px 34px 34px; }
+  .sidebar { display: none; }
+  main { max-width: 1240px; margin: 0 auto; width: 100%; }
+
+  .journey {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 22px;
+    align-items: start;
+  }
+
+  /* 左列：四个任务入口 */
+  .task-list { display: flex; flex-direction: column; gap: 16px; }
+  .task-card {
+    display: flex; align-items: center; gap: 16px;
+    padding: 26px 22px;
+    background: var(--panel2);
+    border: 0; border-radius: var(--radius-card);
+    font-size: 22px; font-weight: 500; color: var(--text);
+    cursor: pointer; text-align: left;
+    transition: background .15s ease, transform .15s ease;
+  }
+  .task-card:hover { background: #e7e4dc; }
+  .task-card.active { background: var(--panel); box-shadow: 0 6px 22px rgba(80, 60, 40, .08); }
+  .task-card .task-icon {
+    width: 40px; height: 40px; border-radius: 12px; flex: none;
+    display: grid; place-items: center;
+    background: var(--panel); color: var(--text);
+  }
+  .task-card.active .task-icon { background: var(--text); color: var(--panel); }
+  .task-card .task-icon svg { width: 24px; height: 24px; }
+  .task-card .task-done {
+    margin-left: auto; width: 10px; height: 10px; border-radius: 50%;
+    background: transparent; border: 2px solid #c9c2b4; flex: none;
+  }
+  .task-card.done .task-done { background: var(--green); border-color: var(--green); }
+
+  /* 主卡：向导容器 */
+  .wizard-wrap {
+    background: var(--panel);
+    border-radius: var(--radius-panel);
+    border: 1px solid var(--line);
+    box-shadow: 0 18px 50px rgba(90, 70, 45, .07);
+    padding: 40px 48px 0;
+    display: flex; flex-direction: column;
+    min-height: 560px;
+  }
+
+  /* 时间轴 */
+  .timeline { display: flex; align-items: flex-start; gap: 0; padding: 6px 12px 30px; }
+  .timeline-step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; position: relative; }
+  .timeline-step::before {
+    content: ""; position: absolute; top: 9px; left: -50%; width: 100%; height: 2px;
+    background: var(--line); z-index: 0;
+  }
+  .timeline-step:first-child::before { display: none; }
+  .timeline-dot {
+    width: 18px; height: 18px; border-radius: 50%; z-index: 1;
+    background: var(--panel); border: 2px solid var(--line);
+  }
+  .timeline-step.done .timeline-dot { background: var(--line); border-color: var(--line); }
+  .timeline-step.current .timeline-dot { background: var(--green); border-color: var(--green); }
+  .timeline-label { font-size: 14px; color: var(--muted); }
+  .timeline-step.current .timeline-label { color: var(--text); font-weight: 600; }
+  .timeline-step.done .timeline-label { color: var(--text); }
+
+  /* 向导内页 */
+  .wizard-panel {
+    background: linear-gradient(180deg, #fcfaf7 0%, #f7f3ec 100%);
+    border-radius: var(--radius-inner);
+    padding: 52px 56px;
+    flex: 1;
+    display: flex; flex-direction: column;
+  }
+  .wizard-hero {
+    font-size: 40px; font-weight: 750; line-height: 1.35;
+    letter-spacing: .01em; margin: 0 0 18px; max-width: 21em;
+  }
+  .wizard-body {
+    font-size: 18px; line-height: 1.85; color: var(--muted);
+    margin: 0 0 40px; max-width: 34em;
+  }
+  .wizard-actions { display: flex; align-items: center; gap: 26px; margin-top: auto; }
+  .btn-primary-lg {
+    height: 56px; padding: 0 42px; border-radius: 999px; border: 0;
+    background: var(--accent); color: #fff; font-size: 18px; font-weight: 700;
+    cursor: pointer; box-shadow: 0 10px 26px rgba(196, 72, 44, .28);
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .btn-primary-lg:hover { transform: translateY(-1px); box-shadow: 0 14px 30px rgba(196, 72, 44, .34); }
+  .btn-primary-lg:disabled { opacity: .55; cursor: default; transform: none; }
+  .wizard-link {
+    background: none; border: 0; color: var(--muted); font-size: 16px;
+    cursor: pointer; text-decoration: underline; text-underline-offset: 4px;
+  }
+  .wizard-link:hover { color: var(--text); }
+
+  /* 工具行：主卡底部 */
+  .tool-row {
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 26px 12px 30px; margin-top: 26px;
+    border-top: 1px solid var(--line);
+  }
+  .tool-item {
+    display: flex; align-items: center; gap: 10px;
+    background: none; border: 0; cursor: pointer;
+    color: var(--text); font-size: 16px; font-weight: 500;
+    padding: 8px 14px; border-radius: 12px;
+  }
+  .tool-item:hover { background: var(--panel2); }
+  .tool-item svg { width: 22px; height: 22px; color: var(--muted); }
+
+  /* 视图切换（工具页 / 任务详情页） */
+  .view { display: none; }
+  .view.active { display: block; }
+  .view-head { display: flex; align-items: center; gap: 16px; margin: 8px 0 18px; }
+  .view-head h2 { font-size: 28px; font-weight: 700; margin: 0; }
+  .back-home {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 0; background: var(--panel2); color: var(--text);
+    border-radius: 999px; padding: 10px 20px; font-size: 15px; cursor: pointer;
+  }
+  .back-home:hover { background: #e7e4dc; }
+
+  /* 面板顺色：旧组件跟上暖色与圆角 */
+  .panel {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--radius-card); box-shadow: none;
+  }
+  .panel-head h3 { font-size: 17px; font-weight: 650; }
+  .device-sub { background: var(--panel2); border-radius: var(--radius-inner); border: 0; }
+  .btn {
+    border-radius: 999px; padding: 11px 22px; font-size: 15px;
+    background: var(--panel2); color: var(--text); border: 1px solid transparent;
+  }
+  .btn:hover { background: #e7e4dc; }
+  .btn.primary, .btn.small.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn.small { padding: 8px 16px; font-size: 14px; }
+  input, select, textarea {
+    border-radius: 12px; border: 1px solid var(--line);
+    background: var(--panel); padding: 11px 14px; font-size: 15px;
+    color: var(--text);
+  }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--blue-soft); border-color: var(--accent); }
+  .device-badge { border-radius: 999px; }
+  .sub, .note, .device-meta, .panel-head p { color: var(--muted); }
+  .pair-code-card { border-radius: var(--radius-inner); }
+  .mic-orb { box-shadow: none; }
+  .guided { border-radius: var(--radius-card); }
+
+  /* 响应式 */
+  @media (max-width: 1080px) {
+    .journey { grid-template-columns: 1fr; }
+    .task-list { flex-direction: row; overflow-x: auto; }
+    .task-card { min-width: 220px; font-size: 18px; padding: 18px; }
+    .wizard-hero { font-size: 30px; }
+    .wizard-panel { padding: 36px 28px; }
+    .wizard-wrap { padding: 24px 20px 0; }
+  }
+  @media (max-width: 720px) {
+    .titlebar { padding: 16px 16px 6px; }
+    .shell { padding: 8px 14px 22px; }
+    .timeline-label { display: none; }
+    .tool-row { flex-wrap: wrap; gap: 8px; }
+  }
 </style>
 </head>
 <body>
@@ -877,7 +1085,6 @@
 
 <div class="window">
 <header class="titlebar">
-  <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
   <div class="brand">
     <span class="brand-mark"><svg><use href="#ic-remote"/></svg></span>
     <div>
@@ -885,38 +1092,58 @@
       <div class="brand-caption">Remote Studio</div>
     </div>
   </div>
-  <div class="crumb" id="crumb">概览</div>
+  <div class="crumb" id="crumb">任务</div>
   <div class="chips">
     <span id="chip-remote" class="chip">遥控器 …</span>
     <span id="chip-keyd" class="chip">映射 …</span>
     <span id="chip-mic" class="chip">语音 …</span>
   </div>
-  <div class="tabs" role="tablist">
-    <button class="tab-btn active" data-tab="connection">概览</button>
-    <button class="tab-btn" data-tab="keys">按键</button>
-    <button class="tab-btn" data-tab="devices">设备</button>
-    <button class="tab-btn" data-tab="subtitle">字幕</button>
-    <button class="tab-btn" data-tab="history">历史</button>
-    <button class="tab-btn" data-tab="permissions">权限</button>
-  </div>
 </header>
 
 <div class="shell">
-<aside class="sidebar">
-  <p class="side-label">遥控器</p>
-  <button class="side-item active" data-cfg="overview"><svg><use href="#ic-grid"/></svg>概览</button>
-  <button class="side-item" data-tab="keys"><svg><use href="#ic-key"/></svg>按键映射</button>
-  <button class="side-item" data-tab="devices"><svg><use href="#ic-bt"/></svg>设备</button>
-  <p class="side-label">语音</p>
-  <button class="side-item" data-cfg="asr"><svg><use href="#ic-mic"/></svg>语音识别</button>
-  <button class="side-item" data-cfg="llm"><svg><use href="#ic-spark"/></svg>文本模型</button>
-  <button class="side-item" data-cfg="text"><svg><use href="#ic-text"/></svg>词典短语</button>
-  <p class="side-label">其他</p>
-  <button class="side-item" data-tab="subtitle"><svg><use href="#ic-cc"/></svg>字幕</button>
-  <button class="side-item" data-tab="history"><svg><use href="#ic-history"/></svg>历史</button>
-  <button class="side-item" data-tab="permissions"><svg><use href="#ic-shield"/></svg>权限</button>
-  <div class="side-foot"><i></i><span id="side-status">服务运行中</span></div>
-</aside>
+<main>
+  <!-- ================= 任务旅程（主屏） ================= -->
+  <section id="view-home" class="view active">
+    <div class="journey">
+      <div class="task-list" id="task-list">
+        <button class="task-card" data-task="connect">
+          <span class="task-icon"><svg><use href="#ic-bt"/></svg></span>连接遥控器<span class="task-done"></span>
+        </button>
+        <button class="task-card" data-task="asr">
+          <span class="task-icon"><svg><use href="#ic-mic"/></svg></span>配置识别<span class="task-done"></span>
+        </button>
+        <button class="task-card" data-task="phone">
+          <span class="task-icon"><svg><use href="#ic-spark"/></svg></span>配对手机<span class="task-done"></span>
+        </button>
+        <button class="task-card" data-task="start">
+          <span class="task-icon"><svg><use href="#ic-remote"/></svg></span>开始听写<span class="task-done"></span>
+        </button>
+      </div>
+      <div class="wizard-wrap">
+        <div class="timeline" id="timeline">
+          <div class="timeline-step" data-step="connect"><span class="timeline-dot"></span><span class="timeline-label">连接遥控器</span></div>
+          <div class="timeline-step" data-step="asr"><span class="timeline-dot"></span><span class="timeline-label">配置识别</span></div>
+          <div class="timeline-step" data-step="phone"><span class="timeline-dot"></span><span class="timeline-label">配对手机</span></div>
+          <div class="timeline-step" data-step="start"><span class="timeline-dot"></span><span class="timeline-label">开始听写</span></div>
+        </div>
+        <div class="wizard-panel">
+          <h1 class="wizard-hero" id="wizard-hero">把光标放进输入框，按住遥控器语音键直接说话</h1>
+          <p class="wizard-body" id="wizard-body">识别结果会直接填入当前应用，同时弹出实时字幕，全程不需要切回本页面。</p>
+          <div class="wizard-actions">
+            <button class="btn-primary-lg" id="wizard-primary">开始听写</button>
+            <button class="wizard-link" id="wizard-secondary">打开字幕设置</button>
+          </div>
+          <div class="wizard-detail" id="wizard-detail"></div>
+        </div>
+        <div class="tool-row">
+          <button class="tool-item" data-view="history"><svg><use href="#ic-history"/></svg>听写历史</button>
+          <button class="tool-item" data-view="keys"><svg><use href="#ic-key"/></svg>按键映射</button>
+          <button class="tool-item" data-view="subtitle"><svg><use href="#ic-cc"/></svg>字幕设置</button>
+          <button class="tool-item" data-view="settings"><svg><use href="#ic-grid"/></svg>设置</button>
+        </div>
+      </div>
+    </div>
+  </section>
 
 <main>
   <!-- ================= KEYS ================= -->
@@ -1007,32 +1234,18 @@
   </section>
 
   <!-- ================= CONNECTION ================= -->
-  <section id="tab-connection" class="tab active">
+  <section id="tab-connection" class="tab view">
+    <div class="view-head">
+      <button class="back-home" data-view="home">← 任务</button>
+      <h2>设置</h2>
+    </div>
     <div class="config-nav" role="tablist">
+      <button class="config-tab" data-cfg="overview">状态</button>
       <button class="config-tab" data-cfg="asr">语音识别</button>
       <button class="config-tab" data-cfg="llm">文本模型</button>
       <button class="config-tab" data-cfg="text">词典短语</button>
     </div>
     <div id="cfg-overview" class="cfg-panel active">
-    <section class="guided">
-      <div class="guided-copy">
-        <div class="guided-eyebrow"><i></i><span class="guided-eyebrow-long">XIAOMI REMOTE 2 PRO · </span><span id="guided-state">已就绪</span></div>
-        <h2><span class="guided-long">把光标放进输入框，</span><br class="guided-long">按住语音键直接说话。</h2>
-        <p>识别结果会输入到当前应用，同时出现在字幕里。不用切换窗口，也不用先打开这个页面。</p>
-        <div class="guided-actions">
-          <button class="btn primary" id="guided-subtitle">打开字幕屏</button>
-          <button class="btn" id="guided-settings">语音设置</button>
-          <span class="guided-meta" id="guided-meta">MiMo · 就绪</span>
-        </div>
-      </div>
-      <div class="guided-visual" aria-hidden="true">
-        <div class="orb-ring"></div>
-        <div class="mic-orb"><svg><use href="#ic-mic"/></svg></div>
-        <div class="orb-chip chip-a"><span>语音识别</span><b id="guided-asr">MiMo</b></div>
-        <div class="orb-chip chip-b"><span>音频</span><b>16 kHz</b></div>
-      </div>
-    </section>
-
     <div class="cards">
       <div class="card">
         <h3>遥控器</h3>
@@ -1061,16 +1274,6 @@
         <div id="conn-autostart" class="value">…</div>
         <div class="sub" id="conn-autostart-sub">systemd 用户 agent + 系统 remap 服务</div>
       </div>
-    </div>
-
-    <div class="panel" id="quickstart" style="margin-top:14px;">
-      <div class="panel-head">
-        <div><h3>准备步骤</h3><p>按顺序完成下面几项，就可以按住遥控器语音键直接出字和字幕。</p></div>
-        <div class="spacer"></div>
-        <button id="quickstart-toggle" class="btn small">展开</button>
-        <button id="quickstart-dismiss" class="btn small">隐藏</button>
-      </div>
-      <div id="quickstart-list" class="device-list"></div>
     </div>
 
     <div class="panel recent-panel" id="overview-recent-panel" style="margin-top:14px;">

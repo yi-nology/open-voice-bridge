@@ -34,3 +34,4 @@ edited-*.png
 
 # agent working drafts: plans carry machine-specific absolute paths
 docs/superpowers/plans/
+design-opt*-ref.png
