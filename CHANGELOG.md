@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-11-12
+
+Security hardening from the wave-0 audit, a real phone input source, and
+the first skeleton extraction. Heads-up: the phone hardware path ships
+ahead of its on-device acceptance run — pairing and hold-to-talk are
+ready for use, but the acceptance checklist (roadmap 未验证) is still
+open and a follow-up release will confirm it.
 
 Wave-1 boundary hardening (roadmap R4, ARC-12): the phone's power key is
 an explicit opt-in, off by default.
