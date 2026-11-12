@@ -136,6 +136,12 @@ func (a *Agent) newPipeline() *SpeechPipeline {
 // BLE remote: same engine, same rules, same subtitle and history sink.
 func (a *Agent) Speech() *SpeechPipeline { return a.pipeline }
 
+// InsertPhrase pastes the phrase bound to slot n via the shared pipeline —
+// the UI picker path beside the phrase1..phrase8 key actions.
+func (a *Agent) InsertPhrase(slot int) (string, bool) {
+	return a.pipeline.InsertPhrase(slot)
+}
+
 // recordTranscript updates the agent's last-result fields and forwards the
 // utterance to the subtitle stream.
 func (a *Agent) recordTranscript(transcript Transcript) {

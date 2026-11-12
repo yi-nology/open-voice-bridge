@@ -26,10 +26,16 @@ type PhraseEvent struct {
 // for phrase1..phrase8 into clipboard insertions on the shared speech
 // pipeline. It lives outside Agent so a keymap rebind and a dictation can
 // proceed independently.
+// PickerEvent asks the live UIs to open the phrase-picker overlay (F21).
+type PickerEvent struct {
+	At time.Time
+}
+
 type PhraseWatcher struct {
 	watcher  keys.F24Watcher
 	pipeline *SpeechPipeline
 	events   chan PhraseEvent
+	pickers  chan PickerEvent
 }
 
 func NewPhraseWatcher(watcher keys.F24Watcher, pipeline *SpeechPipeline) *PhraseWatcher {
@@ -37,11 +43,15 @@ func NewPhraseWatcher(watcher keys.F24Watcher, pipeline *SpeechPipeline) *Phrase
 		watcher:  watcher,
 		pipeline: pipeline,
 		events:   make(chan PhraseEvent, 8),
+		pickers:  make(chan PickerEvent, 1),
 	}
 }
 
 // Events yields insertion notices for the live UI.
 func (w *PhraseWatcher) Events() <-chan PhraseEvent { return w.events }
+
+// Pickers yields open-the-overlay requests for the live UI.
+func (w *PhraseWatcher) Pickers() <-chan PickerEvent { return w.pickers }
 
 // Run consumes phrase key-downs until ctx ends. Key-downs that name an empty
 // slot stay silent so a stale keymap is a no-op, never a wrong paste.
@@ -50,6 +60,11 @@ func (w *PhraseWatcher) Run(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
+		case <-w.watcher.Picker():
+			select {
+			case w.pickers <- PickerEvent{At: time.Now()}:
+			default:
+			}
 		case slot := <-w.watcher.Phrases():
 			text, ok := w.pipeline.InsertPhrase(slot)
 			if !ok {

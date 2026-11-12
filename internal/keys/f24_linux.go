@@ -37,6 +37,7 @@ type inputEvent struct {
 type f24Watcher struct {
 	ch         chan struct{}
 	phrases    chan int
+	picker     chan struct{}
 	ctx        context.Context
 	cancel     context.CancelFunc
 	wg         sync.WaitGroup
@@ -47,12 +48,15 @@ func newF24Watcher() F24Watcher {
 	return &f24Watcher{
 		ch:         make(chan struct{}, 8),
 		phrases:    make(chan int, 8),
+		picker:     make(chan struct{}, 1),
 		openFailed: map[string]bool{},
 	}
 }
 
 func (w *f24Watcher) C() <-chan struct{}  { return w.ch }
 func (w *f24Watcher) Phrases() <-chan int { return w.phrases }
+
+func (w *f24Watcher) Picker() <-chan struct{} { return w.picker }
 
 func (w *f24Watcher) Start(ctx context.Context) error {
 	w.ctx, w.cancel = context.WithCancel(ctx)
@@ -164,6 +168,13 @@ func (w *f24Watcher) readLoop(fd int) {
 			if ev.Code == keyF24 {
 				select {
 				case w.ch <- struct{}{}:
+				default:
+				}
+				continue
+			}
+			if ev.Code == PickerKey {
+				select {
+				case w.picker <- struct{}{}:
 				default:
 				}
 				continue

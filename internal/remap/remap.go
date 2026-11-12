@@ -42,6 +42,9 @@ var ActionCodes = map[string]int{
 	// the nth phrase", and desktops map them to bare F-keys nothing binds.
 	"phrase1": 183, "phrase2": 184, "phrase3": 185, "phrase4": 186,
 	"phrase5": 187, "phrase6": 188, "phrase7": 189, "phrase8": 190,
+	// phrase-picker opens the overlay that lists the phrases (F21): the
+	// agent broadcasts it and the desktop/phone UIs offer the pick.
+	"phrase-picker": 191,
 }
 
 var MacroTokens = map[string]int{

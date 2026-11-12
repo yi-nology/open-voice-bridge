@@ -200,6 +200,7 @@ func RunAgent(opts AgentOptions) int {
 			Transcripts:      ag.Transcripts(),
 			Microphone:       inputHub.Watch(),
 			Phrases:          phraseWatcher.Events(),
+			Pickers:          phraseWatcher.Pickers(),
 			Sources:          inputHub.Sources,
 			History:          historyStore,
 			Usage:            statsStore,

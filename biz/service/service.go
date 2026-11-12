@@ -48,6 +48,7 @@ type Agent interface {
 	SetLLM(llm.Processor)
 	SetTextRules(*text.Rules)
 	ASRName() string
+	InsertPhrase(slot int) (string, bool)
 }
 
 // Helper is the root remapper client.
@@ -771,6 +772,12 @@ func (s *Service) UpdateTextConfig(ctx context.Context, next config.TextConfig) 
 	s.cfgMu.Unlock()
 	s.agent.SetTextRules(rules)
 	return nil
+}
+
+// PastePhrase inserts the phrase bound to slot n into the focused window —
+// the picker path of the common-phrase feature (S2).
+func (s *Service) PastePhrase(slot int) (string, bool) {
+	return s.agent.InsertPhrase(slot)
 }
 
 // TextCommands returns the voice-command toggle and map (语音命令). They ride

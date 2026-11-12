@@ -654,6 +654,46 @@ body.listening .subtitle-live i { background: var(--accent); }
 .panel-head .btn, .pair-head .btn { flex: 0 0 auto; white-space: nowrap; }
 .panel-head > div:first-child { min-width: 0; }
 
+
+/* phrase picker overlay (S2) */
+.phrase-fab {
+  position: fixed; right: 28px; bottom: 28px; z-index: 60;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--accent); color: #fff; border: 0; cursor: pointer;
+  font: inherit; font-size: 13px; box-shadow: none;
+  border: 1px solid rgba(0,0,0,.06);
+}
+.phrase-fab:hover { background: #256349; }
+#phrase-picker {
+  position: fixed; inset: 0; z-index: 70;
+  background: rgba(26,26,26,.28);
+  display: none; align-items: center; justify-content: center;
+}
+#phrase-picker.open { display: flex; }
+.phrase-card {
+  width: min(440px, 92vw); background: var(--panel);
+  border: 1px solid var(--line); border-radius: var(--radius-panel);
+  padding: 22px 24px;
+}
+.phrase-card h3 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+.phrase-card .sub { margin-bottom: 12px; }
+.phrase-item {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 12px 12px; border: 0; border-bottom: 1px solid var(--line-soft);
+  background: none; font: inherit; font-size: 15px; cursor: pointer;
+  color: var(--text); text-align: left; border-radius: 8px;
+}
+.phrase-item:hover { background: var(--green-soft); }
+.phrase-item .num {
+  width: 24px; height: 24px; border-radius: 7px; flex: 0 0 auto;
+  background: var(--panel2); color: var(--muted); font-size: 12px;
+  display: grid; place-items: center;
+}
+.phrase-item .txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.phrase-item .empty { color: var(--label); font-size: 13px; }
+.phrase-foot { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+.phrase-foot .msg { flex: 1; margin: 0; }
+
 </style>
 </head>
 <body>
@@ -1171,6 +1211,19 @@ body.listening .subtitle-live i { background: var(--accent); }
 </main>
 </div>
 
+<button id="phrase-fab" class="phrase-fab" title="常用语选单">词句</button>
+<div id="phrase-picker" role="dialog" aria-label="常用语选单">
+  <div class="phrase-card">
+    <h3>常用语</h3>
+    <p class="sub">点一句直接插入当前焦点窗口；数字键 1–8 选择，Esc 关闭。</p>
+    <div id="phrase-picker-list"></div>
+    <div class="phrase-foot">
+      <div id="phrase-picker-msg" class="msg"></div>
+      <button id="phrase-picker-close" class="btn small">关闭</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const KEYS = [
   {key: "power",      chip: "电源", name: "电源键",   hid: "0x66", def: "esc"},
@@ -1206,6 +1259,7 @@ const ACTION_GROUPS = [
     ["phrase3", "常用语 3（按下插入）"], ["phrase4", "常用语 4（按下插入）"],
     ["phrase5", "常用语 5（按下插入）"], ["phrase6", "常用语 6（按下插入）"],
     ["phrase7", "常用语 7（按下插入）"], ["phrase8", "常用语 8（按下插入）"],
+    ["phrase-picker", "常用语选单（打开选句浮层）"],
   ]},
   {label: "媒体 / 其他", items: [
     ["playpause", "播放 / 暂停"], ["volumeup", "系统音量 +"],
@@ -2883,6 +2937,8 @@ function connectEvents() {
       // A common phrase is user-authored text, not speech: it shows up live
       // with its own styling and never enters the history panel.
       addSubtitle("〔常用语 " + data.slot + "〕 " + data.text, data.at, {kind: "phrase"});
+    } else if (data.event === "phrase_picker") {
+      openPhrasePicker();
     } else if (data.event === "command") {
       // A voice command is a spoken act: it runs a key combo and, like a
       // phrase, never enters history.
@@ -3337,6 +3393,80 @@ async function loadTextConfig() {
     textMessage("加载词典失败：" + error, "err");
   }
 }
+
+// ---- phrase picker overlay (S2) ----
+function phraseTextsForPicker() {
+  return (textConfigData?.config?.snippets || []).map(item => item.text || "");
+}
+
+function renderPhrasePicker() {
+  const list = document.getElementById("phrase-picker-list");
+  if (!list) return;
+  list.innerHTML = "";
+  const texts = phraseTextsForPicker();
+  for (let slot = 1; slot <= 8; slot++) {
+    const text = texts[slot - 1] || "";
+    const item = document.createElement("button");
+    item.className = "phrase-item";
+    const num = document.createElement("span");
+    num.className = "num";
+    num.textContent = String(slot);
+    const body = document.createElement("span");
+    body.className = "txt" + (text ? "" : " empty");
+    body.textContent = text || "（空槽位）";
+    item.append(num, body);
+    item.addEventListener("click", () => pickPhrase(slot));
+    list.appendChild(item);
+  }
+}
+
+function openPhrasePicker() {
+  const picker = document.getElementById("phrase-picker");
+  if (!picker) return;
+  renderPhrasePicker();
+  const msg = document.getElementById("phrase-picker-msg");
+  if (msg) msg.textContent = "";
+  picker.classList.add("open");
+}
+
+function closePhrasePicker() {
+  document.getElementById("phrase-picker")?.classList.remove("open");
+}
+
+async function pickPhrase(slot) {
+  const msg = document.getElementById("phrase-picker-msg");
+  try {
+    const res = await fetch("/api/phrases/paste", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({slot}),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      if (msg) msg.textContent = errorText(data, "插入失败");
+      return;
+    }
+    if (msg) msg.textContent = "已插入：" + data.text;
+    setTimeout(closePhrasePicker, 600);
+  } catch (error) {
+    if (msg) msg.textContent = "插入失败：" + error;
+  }
+}
+
+document.getElementById("phrase-fab")?.addEventListener("click", openPhrasePicker);
+document.getElementById("phrase-picker-close")?.addEventListener("click", closePhrasePicker);
+document.getElementById("phrase-picker")?.addEventListener("click", (event) => {
+  if (event.target.id === "phrase-picker") closePhrasePicker();
+});
+document.addEventListener("keydown", (event) => {
+  const picker = document.getElementById("phrase-picker");
+  if (!picker?.classList.contains("open")) return;
+  if (event.key === "Escape") {
+    closePhrasePicker();
+  } else if (event.key >= "1" && event.key <= "8") {
+    pickPhrase(Number(event.key));
+  }
+});
 
 const DEFAULT_COMMANDS = {
   "复制": "ctrl+c", "粘贴": "ctrl+v", "撤销": "ctrl+z", "全选": "ctrl+a",

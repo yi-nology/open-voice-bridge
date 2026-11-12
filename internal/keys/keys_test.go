@@ -21,3 +21,13 @@ func TestSlotForCode(t *testing.T) {
 		}
 	}
 }
+
+// S2: F21 is the picker signal beside the F13–F20 phrase slots.
+func TestPickerCode(t *testing.T) {
+	if PickerKey != 191 {
+		t.Fatalf("PickerKey = %d, want 191", PickerKey)
+	}
+	if _, ok := SlotForCode(PickerKey); ok {
+		t.Fatal("picker code must not read as a phrase slot")
+	}
+}

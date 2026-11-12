@@ -41,3 +41,25 @@ func (s *Server) TextCommandsSave(ctx context.Context, c *app.RequestContext) {
 	}
 	c.JSON(consts.StatusOK, map[string]any{"ok": true})
 }
+
+// PhrasePaste inserts a common phrase into the focused window on request —
+// the click path behind the picker overlay.
+func (s *Server) PhrasePaste(ctx context.Context, c *app.RequestContext) {
+	if s.deps.PastePhrase == nil {
+		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "phrases unavailable"})
+		return
+	}
+	var req struct {
+		Slot int `json:"slot"`
+	}
+	if err := json.Unmarshal(c.Request.Body(), &req); err != nil || req.Slot < 1 {
+		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": "slot required"})
+		return
+	}
+	text, ok := s.deps.PastePhrase(req.Slot)
+	if !ok {
+		c.JSON(consts.StatusOK, map[string]any{"ok": false, "error": "该槽位没有短语"})
+		return
+	}
+	c.JSON(consts.StatusOK, map[string]any{"ok": true, "slot": req.Slot, "text": text})
+}

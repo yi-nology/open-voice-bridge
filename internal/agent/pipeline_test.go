@@ -336,12 +336,21 @@ func TestInsertPhrasePastesTheNthSnippet(t *testing.T) {
 }
 
 // phraseStub feeds phrase slots to the watcher without any evdev.
-type phraseStub struct{ ch chan int }
+type phraseStub struct {
+	ch       chan int
+	pickerCh chan struct{}
+}
 
 func (p *phraseStub) Start(context.Context) error { return nil }
 func (p *phraseStub) Close(context.Context) error { return nil }
 func (p *phraseStub) C() <-chan struct{}          { return nil }
 func (p *phraseStub) Phrases() <-chan int         { return p.ch }
+func (p *phraseStub) Picker() <-chan struct{} {
+	if p.pickerCh == nil {
+		p.pickerCh = make(chan struct{})
+	}
+	return p.pickerCh
+}
 
 // End to end over the watcher: a phrase key-down pastes the phrase and
 // surfaces a notice for the UI, while an unbound slot stays silent.

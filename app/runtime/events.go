@@ -29,6 +29,7 @@ type Events struct {
 	Transcripts      <-chan agent.Transcript
 	Microphone       <-chan input.AudioState
 	Phrases          <-chan agent.PhraseEvent
+	Pickers          <-chan agent.PickerEvent
 	Sources          func() []input.Status
 	History          HistorySink
 	Usage            UsageSink
@@ -89,6 +90,11 @@ func (e Events) Run(ctx context.Context) {
 				"truncated":   transcript.Truncated,
 				"latency_ms":  transcript.Latency.Milliseconds(),
 				"at":          transcript.At.Format(time.RFC3339),
+			})
+		case picker := <-e.Pickers:
+			e.Publish(map[string]any{
+				"event": "phrase_picker",
+				"at":    picker.At.Format(time.RFC3339),
 			})
 		case state := <-e.Microphone:
 			active, source, name := SpeakingLabel(state, e.Sources())

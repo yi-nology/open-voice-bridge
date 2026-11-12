@@ -22,11 +22,12 @@ import (
 )
 
 type fakeAgent struct {
-	connected bool
-	ready     bool
-	engine    asr.Engine
-	view      *core.AgentView
-	address   string
+	phraseText string
+	connected  bool
+	ready      bool
+	engine     asr.Engine
+	view       *core.AgentView
+	address    string
 }
 
 func (f *fakeAgent) Status() core.AgentView {
@@ -42,6 +43,12 @@ func (f *fakeAgent) Status() core.AgentView {
 }
 
 func (f *fakeAgent) Reconnect() error { return nil }
+func (f *fakeAgent) InsertPhrase(slot int) (string, bool) {
+	if f.phraseText == "" {
+		return "", false
+	}
+	return f.phraseText, true
+}
 func (f *fakeAgent) SetAddress(address string) error {
 	f.address = address
 	return nil
@@ -448,5 +455,23 @@ func TestSyncDevicesCarriesThePowerKeyPolicy(t *testing.T) {
 	svc.SyncDevices(context.Background())
 	if helper.powerPolicy() {
 		t.Fatal("withdrawing the opt-in left the helper enabled")
+	}
+}
+
+// S2: the picker path pastes the phrase bound to a slot and reports the text
+// so the overlay can confirm the insert.
+func TestPastePhraseForwardsToAgent(t *testing.T) {
+	svc, agent, _, _ := newTestService(t)
+	agent.phraseText = "收货地址：北京市海淀区"
+	text, ok := svc.PastePhrase(3)
+	if !ok || text != "收货地址：北京市海淀区" {
+		t.Fatalf("PastePhrase = %q,%v", text, ok)
+	}
+	if _, ok := svc.PastePhrase(1); !ok {
+		t.Fatal("second pick dropped")
+	}
+	agent.phraseText = ""
+	if _, ok := svc.PastePhrase(1); ok {
+		t.Fatal("empty slot reported as pasted")
 	}
 }

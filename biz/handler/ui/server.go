@@ -74,6 +74,7 @@ type Deps struct {
 	SetPhoneEnabled     func(bool) error
 	TextCommands        func() (bool, map[string]string)
 	UpdateTextCommands  func(bool, map[string]string) error
+	PastePhrase         func(int) (string, bool)
 	HelperSocket        string
 }
 
