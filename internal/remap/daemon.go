@@ -714,6 +714,13 @@ func RemotePresent() bool {
 	return len(defaultFinder().findRemoteEvents()) > 0
 }
 
+// RemoteEventPaths lists the matching input nodes. Diagnostics need the paths,
+// not just their existence: a node can be present and still unreadable by the
+// user the agent runs as (OPS-05).
+func RemoteEventPaths() []string {
+	return defaultFinder().findRemoteEvents()
+}
+
 func defaultFinder() *Daemon {
 	return &Daemon{matchers: defaultMatchers()}
 }

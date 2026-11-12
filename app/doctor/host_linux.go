@@ -4,6 +4,7 @@ package doctor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -24,7 +25,8 @@ func hostChecks(cfg config.Config) []check {
 	checks := helperCheck(cfg)
 	checks = append(checks, binaryChecks()...)
 	checks = append(checks, unitChecks()...)
-	checks = append(checks, lingerCheck(), uinputCheck(), sessionCheck(), remoteCheck(cfg))
+	checks = append(checks, lingerCheck(), uinputCheck(), sessionCheck())
+	checks = append(checks, remoteChecks(cfg)...)
 	return checks
 }
 
@@ -120,9 +122,33 @@ func sessionCheck() check {
 	return ok(fmt.Sprintf("session DISPLAY=%q WAYLAND_DISPLAY=%q", os.Getenv("DISPLAY"), os.Getenv("WAYLAND_DISPLAY")))
 }
 
-func remoteCheck(cfg config.Config) check {
-	if remap.RemotePresent() {
-		return ok("RC003 evdev device present")
+func remoteChecks(cfg config.Config) []check {
+	paths := remap.RemoteEventPaths()
+	if len(paths) == 0 {
+		return []check{warn("RC003 evdev device not found", "bluetoothctl connect "+cfg.Address)}
 	}
-	return warn("RC003 evdev device not found", "bluetoothctl connect "+cfg.Address)
+	checks := []check{ok("RC003 evdev device present")}
+	return append(checks, evdevReadChecks(paths)...)
+}
+
+// evdevReadChecks reports whether the agent's user can actually read the input
+// nodes. Presence is not permission: /dev/input/eventN is root:input 0660, so a
+// user outside the input group sees the device and still gets EACCES — the
+// silent voice-key failure OPS-05 logs at runtime.
+func evdevReadChecks(paths []string) []check {
+	var checks []check
+	for _, path := range paths {
+		file, err := os.Open(path)
+		if err == nil {
+			_ = file.Close()
+			checks = append(checks, ok("evdev readable: "+path))
+			continue
+		}
+		fix := "ls -l " + path
+		if errors.Is(err, os.ErrPermission) {
+			fix = `sudo usermod -aG input "$USER", then log out and back in`
+		}
+		checks = append(checks, gap(core.DepRemote, "cannot read "+path+": "+err.Error(), fix))
+	}
+	return checks
 }

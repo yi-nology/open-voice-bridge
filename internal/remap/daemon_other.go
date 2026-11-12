@@ -26,3 +26,5 @@ func (d *Daemon) Run(ctx context.Context) error { return ErrUnsupported }
 func (d *Daemon) Close(ctx context.Context) error { return nil }
 
 func RemotePresent() bool { return false }
+
+func RemoteEventPaths() []string { return nil }
