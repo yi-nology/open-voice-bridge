@@ -37,10 +37,12 @@ type storedToken struct {
 
 // Store persists client grants as SHA-256 hashes in a 0600 JSON file.
 type Store struct {
-	mu     sync.Mutex
-	path   string
-	now    func() time.Time
-	tokens map[string]*storedToken
+	mu        sync.Mutex
+	persistMu sync.Mutex // serialises disk writes; never held together with s.mu
+	path      string
+	now       func() time.Time
+	tokens    map[string]*storedToken
+	lastFlush time.Time // last time LastUsed bookkeeping reached the disk
 }
 
 func NewStore(path string) *Store {
@@ -72,19 +74,31 @@ func (s *Store) load() {
 	}
 }
 
-func (s *Store) persistLocked() error {
-	if s.path == "" {
-		return nil
-	}
+// snapshotLocked copies the persisted view of the token table. Callers hold
+// s.mu only for this copy — the disk write happens in persist (R8/I3).
+func (s *Store) snapshotLocked() []*storedToken {
 	items := make([]*storedToken, 0, len(s.tokens))
 	for _, item := range s.tokens {
 		items = append(items, item)
 	}
 	sort.Slice(items, func(i, j int) bool { return items[i].ID < items[j].ID })
+	return items
+}
+
+// persist writes the token table to disk. It must be called without s.mu
+// held: the write is serialised by persistMu so concurrent commits cannot
+// interleave, and a slow disk cannot freeze Validate or List (R8, I3, and the
+// CON-08 discipline the phone store applies to its own file).
+func (s *Store) persist(items []*storedToken) error {
+	if s.path == "" {
+		return nil
+	}
 	data, err := json.MarshalIndent(items, "", "  ")
 	if err != nil {
 		return err
 	}
+	s.persistMu.Lock()
+	defer s.persistMu.Unlock()
 	if err := os.MkdirAll(filepath.Dir(s.path), 0o700); err != nil {
 		return err
 	}
@@ -112,10 +126,13 @@ func (s *Store) Create(label string) (id, raw string, err error) {
 		Hash: hashToken(raw),
 	}
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	s.tokens[id] = entry
-	if err := s.persistLocked(); err != nil {
+	items := s.snapshotLocked()
+	s.mu.Unlock()
+	if err := s.persist(items); err != nil {
+		s.mu.Lock()
 		delete(s.tokens, id)
+		s.mu.Unlock()
 		return "", "", err
 	}
 	return id, raw, nil
@@ -133,37 +150,66 @@ func (s *Store) List() []TokenInfo {
 	return out
 }
 
-// Revoke retires a grant; validation fails immediately afterwards.
+// Revoke retires a grant; validation fails immediately afterwards. If the
+// disk write fails the in-memory flag is rolled back — the same contract
+// Create follows: the revoke either fully takes effect or fails loudly,
+// never leaving a grant that memory says is dead but the persisted file
+// would resurrect on the next restart (#8).
 func (s *Store) Revoke(id string) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	item, ok := s.tokens[id]
 	if !ok {
+		s.mu.Unlock()
 		return oeerrors.Errorf("unknown token %q", id)
 	}
 	if item.Revoked {
+		s.mu.Unlock()
 		return oeerrors.Errorf("token %q is already revoked", id)
 	}
 	item.Revoked = true
-	return s.persistLocked()
+	items := s.snapshotLocked()
+	s.mu.Unlock()
+	if err := s.persist(items); err != nil {
+		s.mu.Lock()
+		item.Revoked = false
+		s.mu.Unlock()
+		return err
+	}
+	return nil
 }
 
+// lastUsedFlushInterval throttles the LastUsed bookkeeping writes: Validate
+// runs on every MCP request, and flushing the whole token file per
+// authentication paid one fsync each time under the store lock (R8/I3).
+const lastUsedFlushInterval = time.Minute
+
 // Validate checks a raw token and refreshes LastUsed. Revoked or unknown
-// tokens report false (SayAll 撤销即失效).
+// tokens report false (SayAll 撤销即失效). LastUsed stays in memory and
+// reaches the disk at most once per flush interval, always outside s.mu.
 func (s *Store) Validate(raw string) (TokenInfo, bool) {
 	if raw == "" {
 		return TokenInfo{}, false
 	}
 	hash := hashToken(raw)
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	var items []*storedToken
 	for _, item := range s.tokens {
 		if item.Hash == hash && !item.Revoked {
 			item.LastUsed = s.now()
-			_ = s.persistLocked()
-			return item.TokenInfo, true
+			info := item.TokenInfo
+			now := s.now()
+			if now.Sub(s.lastFlush) >= lastUsedFlushInterval {
+				s.lastFlush = now
+				items = s.snapshotLocked()
+			}
+			s.mu.Unlock()
+			if items != nil {
+				_ = s.persist(items)
+			}
+			return info, true
 		}
 	}
+	s.mu.Unlock()
 	return TokenInfo{}, false
 }
 

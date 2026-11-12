@@ -389,7 +389,11 @@ func (s *Store) RedeemTicket(value string) (string, bool) {
 	return t.deviceID, true
 }
 
-// Revoke removes a device and any outstanding tickets for it.
+// Revoke removes a device and any outstanding tickets for it. If the disk
+// write fails the in-memory state is rolled back — the same contract Pair
+// follows: a revoke either fully takes effect or fails loudly, never leaving
+// a half-revoked store whose persisted file would resurrect the device and
+// its long-lived token on the next restart (#8).
 func (s *Store) Revoke(deviceID string) error {
 	s.mu.Lock()
 	device, ok := s.devices[deviceID]
@@ -399,14 +403,26 @@ func (s *Store) Revoke(deviceID string) error {
 	}
 	delete(s.tokens, device.tokenHash)
 	delete(s.devices, deviceID)
+	droppedTickets := make(map[string]ticket)
 	for value, t := range s.tickets {
 		if t.deviceID == deviceID {
+			droppedTickets[value] = t
 			delete(s.tickets, value)
 		}
 	}
 	items := s.snapshotLocked()
 	s.mu.Unlock()
-	return s.persistFlush(items)
+	if err := s.persistFlush(items); err != nil {
+		s.mu.Lock()
+		s.devices[deviceID] = device
+		s.tokens[device.tokenHash] = deviceID
+		for value, t := range droppedTickets {
+			s.tickets[value] = t
+		}
+		s.mu.Unlock()
+		return oeerrors.Wrap(err, "persist phone device")
+	}
+	return nil
 }
 
 // Rename updates a device's display name.
