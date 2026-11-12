@@ -98,29 +98,6 @@ func newLogger(service string) logx.Logger {
 	return logx.WithService(service)
 }
 
-// speakingLabel turns a microphone transition into the desktop pill's copy.
-func speakingLabel(state input.AudioState, devices []input.Status) (bool, string, string) {
-	if !state.Speaking || state.Owner == "" {
-		return false, "", ""
-	}
-	if state.Owner == input.RemoteID {
-		for _, device := range devices {
-			if device.ID == input.RemoteID {
-				return true, "remote", device.Name
-			}
-		}
-		return true, "remote", "遥控器"
-	}
-	for _, device := range devices {
-		if device.ID == state.Owner {
-			return true, "phone", device.Name
-		}
-	}
-	// An owner that dropped out of the list still counts as speaking; the pill
-	// must not go quiet just because a label is missing.
-	return true, "phone", state.Owner
-}
-
 func runAgent(args []string, stderr io.Writer) int {
 	fs, path := flagSet("agent", stderr)
 	if _, code := cli.ParseFlags(fs, args); code != cli.ExitOK {
@@ -288,7 +265,7 @@ func runAgent(args []string, stderr io.Writer) int {
 			MCPRevokeToken:      svc.MCPRevokeToken,
 			SnapshotState: func() map[string]any {
 				owner := inputHub.AudioOwner()
-				active, source, name := speakingLabel(
+				active, source, name := runtime.SpeakingLabel(
 					input.AudioState{Speaking: owner != "", Owner: owner}, inputHub.Sources())
 				return map[string]any{
 					"listening": map[string]any{"active": active, "source": source, "source_name": name},
@@ -318,68 +295,19 @@ func runAgent(args []string, stderr io.Writer) int {
 				svc.StartAppSwitcher(ctx, 0, focus.ActiveClass)
 			})
 		}
-		micOwner := inputHub.Watch()
-		async.GoSafe(func() {
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case transcript := <-ag.Transcripts():
-					transcriptsTotal.Inc()
-					if transcript.Latency > 0 {
-						asrLatency.Observe(transcript.Latency.Seconds())
-					}
-					if err := historyStore.Append(history.Entry{
-						ID:         transcript.At.Format("20060102-150405.000000000"),
-						Text:       transcript.Text,
-						RawText:    transcript.RawText,
-						Provider:   transcript.Provider,
-						Language:   transcript.Language,
-						Source:     transcript.Source,
-						SourceName: transcript.SourceName,
-						Address:    transcript.Address,
-						Processed:  transcript.Processed,
-						Truncated:  transcript.Truncated,
-						LatencyMS:  transcript.Latency.Milliseconds(),
-						At:         transcript.At,
-					}); err != nil {
-						logger.Warn("append history", "err", err)
-					}
-					statsStore.Record(transcript.Duration, len([]rune(transcript.Text)))
-					uiServer.Publish(map[string]any{
-						"event":       "transcript",
-						"text":        transcript.Text,
-						"raw_text":    transcript.RawText,
-						"language":    transcript.Language,
-						"provider":    transcript.Provider,
-						"source":      transcript.Source,
-						"source_name": transcript.SourceName,
-						"address":     transcript.Address,
-						"processed":   transcript.Processed,
-						"truncated":   transcript.Truncated,
-						"latency_ms":  transcript.Latency.Milliseconds(),
-						"at":          transcript.At.Format(time.RFC3339),
-					})
-				case state := <-micOwner:
-					active, source, name := speakingLabel(state, inputHub.Sources())
-					uiServer.Publish(map[string]any{
-						"event":       "listening",
-						"active":      active,
-						"source":      source,
-						"source_name": name,
-					})
-				case phrase := <-phraseWatcher.Events():
-					// Common phrases are user-authored text, not speech: they
-					// show up live but never enter history or the log body.
-					uiServer.Publish(map[string]any{
-						"event": "phrase",
-						"slot":  phrase.Slot,
-						"text":  phrase.Text,
-						"at":    phrase.At.Format(time.RFC3339),
-					})
-				}
-			}
-		})
+		events := runtime.Events{
+			Transcripts:      ag.Transcripts(),
+			Microphone:       inputHub.Watch(),
+			Phrases:          phraseWatcher.Events(),
+			Sources:          inputHub.Sources,
+			History:          historyStore,
+			Usage:            statsStore,
+			Publish:          uiServer.Publish,
+			TranscriptsTotal: transcriptsTotal,
+			ASRLatency:       asrLatency,
+			Logger:           logger,
+		}
+		async.GoSafe(func() { events.Run(ctx) })
 		hertzServer := server.New(
 			server.WithHostPorts(cfg.UIAddr),
 			server.WithMaxRequestBodySize(1<<20),
