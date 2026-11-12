@@ -141,3 +141,35 @@ func TestRewriteJSONLReplacesAllLines(t *testing.T) {
 		t.Fatalf("content = %q, want %q", got, `{"n":9}`)
 	}
 }
+
+// R7: persistence goes through this package only. A second tmp+rename is how
+// the history rewrite got a Sync while seven other writers did not (DOM-14).
+func TestNoOtherPackageRollsItsOwnAtomicWrite(t *testing.T) {
+	root := filepath.Join("..", "..")
+	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			switch entry.Name() {
+			case ".git", "node_modules", "fsutil":
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		if strings.Contains(string(data), "os.Rename(") {
+			t.Errorf("%s renames files itself; use internal/fsutil instead (R7)", path)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("walk: %v", err)
+	}
+}
