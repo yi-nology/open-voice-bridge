@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -59,11 +60,31 @@ type Service struct {
 	cfg       config.Config
 	path      string
 	cfgMu     sync.RWMutex
+	saveMu    sync.Mutex // serialises config disk writes; never held with cfgMu (R8/I3)
 	asrErr    error
 	agent     Agent
 	helper    Helper
 	logger    logx.Logger
 	mcpTokens *mcp.Store
+}
+
+// configSnapshotLocked returns a deep copy of the live configuration for the
+// disk write. Callers hold cfgMu only for this copy — the write happens in
+// persistConfig, outside the lock (R8/I3).
+func (s *Service) configSnapshotLocked() config.Config {
+	return s.cfg.Clone()
+}
+
+// persistConfig writes a configuration snapshot to disk. It must be called
+// without cfgMu held: the write is serialised by saveMu so concurrent commits
+// cannot interleave, and a slow disk cannot freeze the config readers (R8, I3,
+// CON-08 — the discipline the phone store already applies to its token file).
+// The snapshot is a deep copy, so the normalisers inside Save can adjust it
+// without ever touching the running state.
+func (s *Service) persistConfig(snapshot config.Config) error {
+	s.saveMu.Lock()
+	defer s.saveMu.Unlock()
+	return appconfig.Save(s.path, snapshot)
 }
 
 func New(cfg config.Config, path string, agent Agent, helper Helper, asrErr error, logger logx.Logger) *Service {
@@ -142,17 +163,25 @@ func (s *Service) Status(ctx context.Context) core.StatusView {
 }
 
 func (s *Service) Apply(ctx context.Context, mapping map[string]string) (map[string]any, error) {
+	merged := remap.MergeDefaults(mapping)
 	s.cfgMu.Lock()
 	if s.cfg.Keymap.Profiles == nil {
 		s.cfg.Keymap.Profiles = map[string]map[string]string{}
 	}
-	s.cfg.Keymap.Profiles["custom"] = remap.MergeDefaults(mapping)
-	s.cfg.Keymap.Profile = "custom"
-	saveErr := appconfig.Save(s.path, s.cfg)
+	snapshot := s.configSnapshotLocked()
+	snapshot.Keymap.Profiles["custom"] = merged
+	snapshot.Keymap.Profile = "custom"
 	s.cfgMu.Unlock()
-	if saveErr != nil {
-		return nil, saveErr
+	if err := s.persistConfig(snapshot); err != nil {
+		return nil, err
 	}
+	s.cfgMu.Lock()
+	if s.cfg.Keymap.Profiles == nil {
+		s.cfg.Keymap.Profiles = map[string]map[string]string{}
+	}
+	s.cfg.Keymap.Profiles["custom"] = merged
+	s.cfg.Keymap.Profile = "custom"
+	s.cfgMu.Unlock()
 	// DOM-11: the helper only hears about a mapping that is already on disk;
 	// a failed save must not leave the daemon running a config that exists
 	// nowhere.
@@ -170,25 +199,26 @@ func (s *Service) SwitchASR(ctx context.Context, name string) error {
 		s.cfgMu.Unlock()
 		return oeerrors.Errorf("unknown ASR provider %q", name)
 	}
-	next := s.cfg.ASR
-	next.Provider = name
-	engine, err := asr.Build(next)
+	snapshot := s.configSnapshotLocked()
+	snapshot.ASR.Provider = name
+	engine, err := asr.Build(snapshot.ASR)
 	if err != nil {
 		s.cfgMu.Unlock()
 		return err
 	}
-	s.cfg.ASR.Provider = name
-	saveErr := appconfig.Save(s.path, s.cfg)
-	if saveErr == nil {
-		s.asrErr = nil
-	}
 	s.cfgMu.Unlock()
-	if saveErr != nil {
+	if err := s.persistConfig(snapshot); err != nil {
 		if closeErr := engine.Close(ctx); closeErr != nil {
 			s.logger.Warn("close rejected ASR engine", "err", closeErr)
 		}
-		return saveErr
+		return err
 	}
+	// The saved snapshot is the normalised section; adopting it keeps the
+	// running state identical to what the disk now holds.
+	s.cfgMu.Lock()
+	s.cfg.ASR = snapshot.ASR
+	s.asrErr = nil
+	s.cfgMu.Unlock()
 	s.agent.SetEngine(engine)
 	return nil
 }
@@ -214,12 +244,15 @@ func (s *Service) ApplyKeymapProfile(ctx context.Context, name string) (map[stri
 		return nil, oeerrors.Errorf("unknown keymap profile %q", name)
 	}
 	s.cfgMu.Lock()
-	s.cfg.Keymap.Profile = name
-	saveErr := appconfig.Save(s.path, s.cfg)
+	snapshot := s.configSnapshotLocked()
+	snapshot.Keymap.Profile = name
 	s.cfgMu.Unlock()
-	if saveErr != nil {
-		return nil, saveErr
+	if err := s.persistConfig(snapshot); err != nil {
+		return nil, err
 	}
+	s.cfgMu.Lock()
+	s.cfg.Keymap.Profile = name
+	s.cfgMu.Unlock()
 	return s.helper.Call(ctx, map[string]any{"cmd": "apply", "mapping": mapping})
 }
 
@@ -236,16 +269,23 @@ func (s *Service) SaveKeymapProfile(ctx context.Context, name string, mapping ma
 		return nil, err
 	}
 	s.cfgMu.Lock()
+	snapshot := s.configSnapshotLocked()
+	if snapshot.Keymap.Profiles == nil {
+		snapshot.Keymap.Profiles = map[string]map[string]string{}
+	}
+	snapshot.Keymap.Profiles[name] = cleaned
+	snapshot.Keymap.Profile = name
+	s.cfgMu.Unlock()
+	if err := s.persistConfig(snapshot); err != nil {
+		return nil, err
+	}
+	s.cfgMu.Lock()
 	if s.cfg.Keymap.Profiles == nil {
 		s.cfg.Keymap.Profiles = map[string]map[string]string{}
 	}
 	s.cfg.Keymap.Profiles[name] = cleaned
 	s.cfg.Keymap.Profile = name
-	saveErr := appconfig.Save(s.path, s.cfg)
 	s.cfgMu.Unlock()
-	if saveErr != nil {
-		return nil, saveErr
-	}
 	return s.helper.Call(ctx, map[string]any{"cmd": "apply", "mapping": cleaned})
 }
 
@@ -255,26 +295,45 @@ func (s *Service) DeleteKeymapProfile(ctx context.Context, name string) error {
 		return oeerrors.Errorf("%q is a built-in profile and cannot be deleted", name)
 	}
 	s.cfgMu.Lock()
-	defer s.cfgMu.Unlock()
 	if s.cfg.Keymap.Profile == name {
+		s.cfgMu.Unlock()
 		return oeerrors.Errorf("switch to another profile before deleting %q", name)
 	}
 	if _, ok := s.cfg.Keymap.Profiles[name]; !ok {
+		s.cfgMu.Unlock()
 		return oeerrors.Errorf("unknown keymap profile %q", name)
 	}
+	snapshot := s.configSnapshotLocked()
+	delete(snapshot.Keymap.Profiles, name)
+	s.cfgMu.Unlock()
+	if err := s.persistConfig(snapshot); err != nil {
+		return err
+	}
+	s.cfgMu.Lock()
 	delete(s.cfg.Keymap.Profiles, name)
-	return appconfig.Save(s.path, s.cfg)
+	s.cfgMu.Unlock()
+	return nil
 }
 
 func (s *Service) ASRConfig(ctx context.Context) map[string]any {
 	s.cfgMu.RLock()
 	defer s.cfgMu.RUnlock()
+	// The provider table is owned state (R6): hand out a copy, never the live
+	// map — a caller writing into the returned map would otherwise rewrite the
+	// running configuration, and readers iterating it outside cfgMu race the
+	// next save's writers (#11).
+	providers := make(map[string]config.ASRProviderConfig, len(s.cfg.ASR.Providers))
+	for name, provider := range s.cfg.ASR.Providers {
+		provider.Args = slices.Clone(provider.Args)
+		providers[name] = provider
+	}
+	fallback := slices.Clone(s.cfg.ASR.Fallback)
 	return map[string]any{
 		"ok":        true,
 		"provider":  s.cfg.ASR.Provider,
-		"fallback":  s.cfg.ASR.Fallback,
+		"fallback":  fallback,
 		"language":  s.cfg.ASR.Language,
-		"providers": s.cfg.ASR.Providers,
+		"providers": providers,
 	}
 }
 
@@ -287,21 +346,22 @@ func (s *Service) UpdateASRConfig(ctx context.Context, next config.ASRConfig) er
 		return err
 	}
 	s.cfgMu.Lock()
-	previous := s.cfg.ASR
-	s.cfg.ASR = next
-	saveErr := appconfig.Save(s.path, s.cfg)
-	if saveErr != nil {
-		s.cfg.ASR = previous
-	} else {
-		s.asrErr = nil
-	}
+	snapshot := s.configSnapshotLocked()
+	snapshot.ASR = next
 	s.cfgMu.Unlock()
-	if saveErr != nil {
+	if err := s.persistConfig(snapshot); err != nil {
 		if closeErr := engine.Close(ctx); closeErr != nil {
 			s.logger.Warn("close rejected ASR engine", "err", closeErr)
 		}
-		return saveErr
+		return err
 	}
+	// The saved snapshot is the normalised section; adopting it keeps the
+	// running state identical to what the disk now holds. A failed save leaves
+	// the live section untouched — no rollback window needed.
+	s.cfgMu.Lock()
+	s.cfg.ASR = snapshot.ASR
+	s.asrErr = nil
+	s.cfgMu.Unlock()
 	s.agent.SetEngine(engine)
 	return nil
 }
@@ -503,13 +563,17 @@ func (s *Service) SelectDevice(ctx context.Context, id string) error {
 		s.cfgMu.Unlock()
 		return oeerrors.Errorf("device %q does not support voice", id)
 	}
+	snapshot := s.configSnapshotLocked()
+	snapshot.ActiveDevice = id
+	snapshot.Address = item.Address
+	s.cfgMu.Unlock()
+	if err := s.persistConfig(snapshot); err != nil {
+		return err
+	}
+	s.cfgMu.Lock()
 	s.cfg.ActiveDevice = id
 	s.cfg.Address = item.Address
-	saveErr := appconfig.Save(s.path, s.cfg)
 	s.cfgMu.Unlock()
-	if saveErr != nil {
-		return saveErr
-	}
 	return s.agent.SetAddress(item.Address)
 }
 
@@ -531,13 +595,17 @@ func (s *Service) SetDeviceEnabled(ctx context.Context, id string, enabled bool)
 		s.cfgMu.Unlock()
 		return oeerrors.Errorf("select another device before disabling %q", id)
 	}
-	s.cfg.Devices[index].Enabled = enabled
-	saveErr := appconfig.Save(s.path, s.cfg)
+	snapshot := s.configSnapshotLocked()
+	snapshot.Devices[index].Enabled = enabled
 	s.cfgMu.Unlock()
-	if saveErr == nil {
-		s.syncDevicesEventually()
+	if err := s.persistConfig(snapshot); err != nil {
+		return err
 	}
-	return saveErr
+	s.cfgMu.Lock()
+	s.cfg.Devices[index].Enabled = enabled
+	s.cfgMu.Unlock()
+	s.syncDevicesEventually()
+	return nil
 }
 
 func (s *Service) ConnectDevice(ctx context.Context, id string, connect bool) error {
@@ -594,7 +662,24 @@ func (s *Service) SaveDevice(ctx context.Context, item config.DeviceConfig) erro
 		return oeerrors.New("device id is required")
 	}
 	s.cfgMu.Lock()
+	snapshot := s.configSnapshotLocked()
 	found := false
+	for i := range snapshot.Devices {
+		if snapshot.Devices[i].ID == item.ID {
+			snapshot.Devices[i] = item
+			found = true
+			break
+		}
+	}
+	if !found {
+		snapshot.Devices = append(snapshot.Devices, item)
+	}
+	s.cfgMu.Unlock()
+	if err := s.persistConfig(snapshot); err != nil {
+		return err
+	}
+	s.cfgMu.Lock()
+	found = false
 	for i := range s.cfg.Devices {
 		if s.cfg.Devices[i].ID == item.ID {
 			s.cfg.Devices[i] = item
@@ -605,12 +690,9 @@ func (s *Service) SaveDevice(ctx context.Context, item config.DeviceConfig) erro
 	if !found {
 		s.cfg.Devices = append(s.cfg.Devices, item)
 	}
-	saveErr := appconfig.Save(s.path, s.cfg)
 	s.cfgMu.Unlock()
-	if saveErr == nil {
-		s.syncDevicesEventually()
-	}
-	return saveErr
+	s.syncDevicesEventually()
+	return nil
 }
 
 func (s *Service) DeleteDevice(ctx context.Context, id string) error {
@@ -627,7 +709,6 @@ func (s *Service) DeleteDevice(ctx context.Context, id string) error {
 	found := false
 	for i := range s.cfg.Devices {
 		if s.cfg.Devices[i].ID == id {
-			s.cfg.Devices = append(s.cfg.Devices[:i], s.cfg.Devices[i+1:]...)
 			found = true
 			break
 		}
@@ -636,12 +717,27 @@ func (s *Service) DeleteDevice(ctx context.Context, id string) error {
 		s.cfgMu.Unlock()
 		return oeerrors.Errorf("unknown device %q", id)
 	}
-	saveErr := appconfig.Save(s.path, s.cfg)
-	s.cfgMu.Unlock()
-	if saveErr == nil {
-		s.syncDevicesEventually()
+	snapshot := s.configSnapshotLocked()
+	for i := range snapshot.Devices {
+		if snapshot.Devices[i].ID == id {
+			snapshot.Devices = append(snapshot.Devices[:i], snapshot.Devices[i+1:]...)
+			break
+		}
 	}
-	return saveErr
+	s.cfgMu.Unlock()
+	if err := s.persistConfig(snapshot); err != nil {
+		return err
+	}
+	s.cfgMu.Lock()
+	for i := range s.cfg.Devices {
+		if s.cfg.Devices[i].ID == id {
+			s.cfg.Devices = append(s.cfg.Devices[:i], s.cfg.Devices[i+1:]...)
+			break
+		}
+	}
+	s.cfgMu.Unlock()
+	s.syncDevicesEventually()
+	return nil
 }
 
 func (s *Service) syncDevicesEventually() {
@@ -664,16 +760,15 @@ func (s *Service) UpdateTextConfig(ctx context.Context, next config.TextConfig) 
 		return err
 	}
 	s.cfgMu.Lock()
-	previous := s.cfg.Text
-	s.cfg.Text = next
-	saveErr := appconfig.Save(s.path, s.cfg)
-	if saveErr != nil {
-		s.cfg.Text = previous
-	}
+	snapshot := s.configSnapshotLocked()
+	snapshot.Text = next
 	s.cfgMu.Unlock()
-	if saveErr != nil {
-		return saveErr
+	if err := s.persistConfig(snapshot); err != nil {
+		return err
 	}
+	s.cfgMu.Lock()
+	s.cfg.Text = next
+	s.cfgMu.Unlock()
 	s.agent.SetTextRules(rules)
 	return nil
 }
@@ -729,20 +824,27 @@ func (s *Service) SaveLLMKey(ctx context.Context, key string) error {
 	}
 	s.cfgMu.Lock()
 	path := strings.TrimSpace(s.cfg.LLM.APIKeyFile)
-	if path == "" {
+	needSave := path == ""
+	var snapshot config.Config
+	if needSave {
 		home, err := os.UserHomeDir()
 		if err != nil {
 			s.cfgMu.Unlock()
 			return err
 		}
 		path = filepath.Join(home, ".config", "xiaomi-remote", "llm.key")
-		s.cfg.LLM.APIKeyFile = path
-		if err := appconfig.Save(s.path, s.cfg); err != nil {
-			s.cfgMu.Unlock()
-			return err
-		}
+		snapshot = s.configSnapshotLocked()
+		snapshot.LLM.APIKeyFile = path
 	}
 	s.cfgMu.Unlock()
+	if needSave {
+		if err := s.persistConfig(snapshot); err != nil {
+			return err
+		}
+		s.cfgMu.Lock()
+		s.cfg.LLM.APIKeyFile = path
+		s.cfgMu.Unlock()
+	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err
 	}
@@ -755,21 +857,20 @@ func (s *Service) UpdateLLMConfig(ctx context.Context, next config.LLMConfig) er
 		return err
 	}
 	s.cfgMu.Lock()
-	previous := s.cfg.LLM
-	s.cfg.LLM = next
-	saveErr := appconfig.Save(s.path, s.cfg)
-	if saveErr != nil {
-		s.cfg.LLM = previous
-	}
+	snapshot := s.configSnapshotLocked()
+	snapshot.LLM = next
 	s.cfgMu.Unlock()
-	if saveErr != nil {
+	if err := s.persistConfig(snapshot); err != nil {
 		if processor != nil {
 			if closeErr := processor.Close(ctx); closeErr != nil {
 				s.logger.Warn("close rejected LLM processor", "err", closeErr)
 			}
 		}
-		return saveErr
+		return err
 	}
+	s.cfgMu.Lock()
+	s.cfg.LLM = snapshot.LLM
+	s.cfgMu.Unlock()
 	s.agent.SetLLM(processor)
 	return nil
 }

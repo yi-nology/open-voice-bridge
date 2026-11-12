@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -367,7 +368,43 @@ func (c *Config) normalizeASR() {
 	if mimo.BaseURL == "" {
 		mimo.BaseURL = c.ASRBaseURL
 	}
-	c.ASR.Providers["mimo"] = mimo
+	// Write-side discipline (#11): Save receives a value copy whose Providers
+	// map is still shared with the caller, so an in-place write here rewrote
+	// the running configuration behind the config lock. Publish the adjusted
+	// table as a new map instead: the caller's map never changes.
+	providers := make(map[string]ASRProviderConfig, len(c.ASR.Providers)+1)
+	for name, provider := range c.ASR.Providers {
+		providers[name] = provider
+	}
+	providers["mimo"] = mimo
+	c.ASR.Providers = providers
+}
+
+// Clone returns a deep copy of the document. The persist path serialises a
+// snapshot outside the config lock (R8/I3), so no shared map or slice backing
+// array may leak into the writer's hands: the normalisers must be free to
+// adjust the copy without touching the running state.
+func (c Config) Clone() Config {
+	out := c
+	out.Devices = slices.Clone(c.Devices)
+	out.ASR.Fallback = slices.Clone(c.ASR.Fallback)
+	if c.ASR.Providers != nil {
+		out.ASR.Providers = make(map[string]ASRProviderConfig, len(c.ASR.Providers))
+		for name, provider := range c.ASR.Providers {
+			provider.Args = slices.Clone(provider.Args)
+			out.ASR.Providers[name] = provider
+		}
+	}
+	if c.Keymap.Profiles != nil {
+		out.Keymap.Profiles = make(map[string]map[string]string, len(c.Keymap.Profiles))
+		for name, mapping := range c.Keymap.Profiles {
+			out.Keymap.Profiles[name] = maps.Clone(mapping)
+		}
+	}
+	out.Keymap.AppRules = slices.Clone(c.Keymap.AppRules)
+	out.Text.Dictionary = slices.Clone(c.Text.Dictionary)
+	out.Text.Snippets = slices.Clone(c.Text.Snippets)
+	return out
 }
 
 func (c Config) Validate() error {

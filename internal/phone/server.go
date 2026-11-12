@@ -83,7 +83,8 @@ type activeConn struct {
 	source   *Source
 	buffer   *utteranceBuffer
 	writeMu  sync.Mutex
-	keyJobs  chan keyJob // ordered injection queue (DOM-07)
+	keyJobs  chan keyJob // ordered injection queue (DOM-07); never closed (#12)
+	keyDone  chan struct{}
 	keyOnce  sync.Once
 }
 
@@ -444,6 +445,15 @@ func (s *Server) handleKey(ctx context.Context, active *activeConn, msg controlM
 		active.send(ctx, errorFrame("bad_message", "key value required"))
 		return
 	}
+	// A dropped session (reconnect replacement, revocation) has already
+	// stopped its worker; answering busy keeps the protocol whole instead of
+	// panicking the read loop on a send into a retired queue (#12).
+	select {
+	case <-active.keyDone:
+		active.send(ctx, errorFrame("busy", "key queue is full"))
+		return
+	default:
+	}
 	// The helper round-trip runs on its own ordered queue (DOM-07): a wedged
 	// root helper must not stall the same connection's audio frames.
 	select {
@@ -456,26 +466,41 @@ func (s *Server) handleKey(ctx context.Context, active *activeConn, msg controlM
 
 // keyWorker injects one connection's keys in order and acknowledges each from
 // its own goroutine, so the read loop only ever does non-blocking hand-offs.
+// It exits via keyDone, never by draining a closed channel: closing keyJobs
+// would turn a key frame racing the teardown into "send on closed channel"
+// (#12), and draining would inject every already-queued press after a revoke.
 func (s *Server) keyWorker(active *activeConn) {
-	for job := range active.keyJobs {
-		sendCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		if err := s.injector.Inject(sendCtx, job.key, job.value); err != nil {
-			// The rejected value is never logged, only the reason.
-			log.Warn("phone key injection denied", "device", active.deviceID, "key", job.key, "err", err)
-			active.send(sendCtx, errorFrame("denied", err.Error()))
-		} else {
-			active.send(sendCtx, map[string]any{"type": "key_ack", "key": job.key, "value": job.value})
+	for {
+		select {
+		case <-active.keyDone:
+			return
+		default:
 		}
-		cancel()
+		select {
+		case <-active.keyDone:
+			return
+		case job := <-active.keyJobs:
+			sendCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+			if err := s.injector.Inject(sendCtx, job.key, job.value); err != nil {
+				// The rejected value is never logged, only the reason.
+				log.Warn("phone key injection denied", "device", active.deviceID, "key", job.key, "err", err)
+				active.send(sendCtx, errorFrame("denied", err.Error()))
+			} else {
+				active.send(sendCtx, map[string]any{"type": "key_ack", "key": job.key, "value": job.value})
+			}
+			cancel()
+		}
 	}
 }
 
-// closeKeyQueue stops the injection worker exactly once.
-func (active *activeConn) closeKeyQueue() {
+// stopKeyQueue stops the injection worker exactly once. The jobs channel is
+// never closed — the send side has no "closed" verdict of its own, so a send
+// into a closed channel would panic the read loop. A frame arriving after the
+// stop is refused up front, and any frame that slips past that check lands in
+// a buffer nobody reads while the socket dies (harmless by construction).
+func (active *activeConn) stopKeyQueue() {
 	active.keyOnce.Do(func() {
-		if active.keyJobs != nil {
-			close(active.keyJobs)
-		}
+		close(active.keyDone)
 	})
 }
 
@@ -631,11 +656,22 @@ func (s *Server) processUtterance(ctx context.Context, job utteranceJob) {
 
 func (s *Server) register(deviceID string, ws *websocket.Conn, name, ip string) *activeConn {
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	var replaced *activeConn
+	var samples []int16
 	if existing, ok := s.conns[deviceID]; ok {
 		existing.ws.CloseNow()
+		replaced = existing
+		// I5: a reconnecting phone did speak — take the replaced session's
+		// buffered samples before the registry forgets it. Only a copy happens
+		// under the lock; the transcription runs outside it (R8), exactly like
+		// the plain-dropped path in unregister. Without this, a network blip
+		// mid-sentence silently ate the half utterance (#10).
+		if existing.source.isSpeaking() {
+			samples = existing.buffer.take()
+		}
 		s.dropLocked(existing)
 	} else if s.cfg.MaxClients > 0 && len(s.conns) >= s.cfg.MaxClients {
+		s.mu.Unlock()
 		return nil
 	}
 	active := &activeConn{
@@ -644,6 +680,7 @@ func (s *Server) register(deviceID string, ws *websocket.Conn, name, ip string) 
 		source:   newSource(deviceID, name, ip),
 		buffer:   newUtteranceBuffer(s.maxSamples),
 		keyJobs:  make(chan keyJob, 32),
+		keyDone:  make(chan struct{}),
 	}
 	async.GoSafe(func() { s.keyWorker(active) })
 	// DOM-06: the hub calls Preempt when the remote steals the microphone.
@@ -656,6 +693,10 @@ func (s *Server) register(deviceID string, ws *websocket.Conn, name, ip string) 
 	s.conns[deviceID] = active
 	if s.hub != nil {
 		s.hub.Register(active.source)
+	}
+	s.mu.Unlock()
+	if replaced != nil {
+		s.transcribeDropped(replaced, samples)
 	}
 	return active
 }
@@ -691,7 +732,7 @@ func (s *Server) dropLocked(active *activeConn) {
 	if s.hub != nil {
 		s.hub.Unregister(active.deviceID)
 	}
-	active.closeKeyQueue()
+	active.stopKeyQueue()
 	active.source.disconnect()
 }
 

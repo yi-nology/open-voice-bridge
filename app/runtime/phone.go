@@ -95,11 +95,14 @@ func (a PhoneAdmin) Revoke(_ context.Context, deviceID string) map[string]any {
 	if !a.Enabled {
 		return map[string]any{"ok": false, "error": "phone input disabled"}
 	}
-	if err := a.Store.Revoke(deviceID); err != nil {
-		return map[string]any{"ok": false, "error": err.Error()}
-	}
-	// The token is gone, but the WebSocket that is already open needs closing
-	// or a revoked phone keeps speaking until it reconnects.
+	err := a.Store.Revoke(deviceID)
+	// Revoking is a deliberate cut: the live WebSocket must die whether or not
+	// the persist step succeeded. Skipping Disconnect on a failed persist left
+	// the revoked phone injecting keys and streaming audio until it happened
+	// to reconnect (#8); the operator sees ok:false and can retry.
 	disconnected := a.Server.Disconnect(deviceID)
+	if err != nil {
+		return map[string]any{"ok": false, "error": err.Error(), "disconnected": disconnected}
+	}
 	return map[string]any{"ok": true, "disconnected": disconnected}
 }

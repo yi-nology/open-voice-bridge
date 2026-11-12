@@ -169,7 +169,7 @@ BLE 链路把 `agent.finalize` 改为调用 `SpeechPipeline.Transcribe`；手机
   SSE 的 `listening` 事件带 `source`（`remote` / `phone`）与 `source_name`。
 - 按键：BLE 与手机可同时注入，不做互斥；按键是瞬时事件。
 - 连接：最多 `max_clients` 个手机同时在线；超限拒绝并提示。
-- 断线：未结束的音频直接丢弃（不产生半句话），手机重连后需要重新按住说话。
+- 断线：普通断链（socket 消失、令牌被撤销）由 `unregister` 先取走已缓冲样本交给 `speech`（architecture.md I5），撤销（`Disconnect`）是刻意切断、丢弃缓冲。同 deviceID 重连顶掉旧会话同样先取缓冲再释放（2026-11-13 起，与 I5 对齐；本条旧的「直接丢弃」口径已被取代）。
 
 ## 6. 接口设计
 
