@@ -1,6 +1,7 @@
 package phone
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -342,7 +343,10 @@ visible:
 	defer reader.Close()
 	select {
 	case err := <-done:
-		if err != nil {
+		// The writer is parked on a FIFO, and fsync on a pipe is EINVAL. What
+		// this test guards is the lock discipline, proved above; the write's
+		// outcome on a pipe is not product behaviour.
+		if err != nil && !errors.Is(err, syscall.EINVAL) {
 			t.Fatalf("pair B: %v", err)
 		}
 	case <-time.After(3 * time.Second):
