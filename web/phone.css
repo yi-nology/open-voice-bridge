@@ -13,6 +13,10 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+/* Author display rules (.panel grid in landscape, .talk block) outrank the
+   UA's [hidden] style, so hidden panels and the talk button stayed visible. */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   background: var(--bg);
