@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Redesigned the admin web UI as the "一眼掌控台" glance console: one
+  readiness verdict with live telemetry, three attention cards (phone,
+  ASR engine, key mapping), and a 最近听写 list on the overview; the
+  remaining surfaces keep every feature in the new warm-light visual
+  language (deep emerald accent, hairline cards, no shadows). Usage
+  stats moved to 历史, MCP grants and config backup/diagnostics to 权限.
+  See `design-qa.md` for the visual QA record.
+
 ## 0.2.0 — 2026-11-12
 
 Security hardening from the wave-0 audit, a real phone input source, and
