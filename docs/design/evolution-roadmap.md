@@ -34,7 +34,7 @@
 
 - **R1 · 波 0 收官**（已完成 2026-11-12）：上文两条残余 + 本页勾选同步（2 个代码提交 + 1 个文档提交）。下一批 R2。
 - **R2 · 叶子抽取（ARC-01、ARC-02）**（已完成 2026-11-12）：立 `core` 与 `core/audiofmt`（采样率/帧长/时长上下限/最小可转写时长单点定义，5 处字面量与 `audio`/`atvv` 双常量收拢，architecture.md R5）；`fsutil` 收拢 8 份原子写与 JSONL 追加（带 `Sync`，architecture.md R7）。纯搬运、零行为变化，三件套全绿即过。**落地口径**：`core/audiofmt.go` 是 `internal/core` 包内的文件（R5 的文件名），这样 R1「`config` 只 import `core`」成立；帧长即原 `atvv.DefaultFrame`（ADPCM 线字节，改名 `core.FrameBytes`）。下一批 R3。
-- **R3 · 手机可达（OPS-01、OPS-06）**：管理 UI 开关 `phone.enabled`（落盘 + `restart_required` 口径，对齐配置导出导入的既有语义）；`/readyz` 与 UI「就绪」拆核心必需/可选项两组——口径以「无 root helper 时纯语音键能否听写」为准（见「未验证」第 5 条），真机确认前先按「核心 = agent+ASR+粘贴链，可选 = root helper/BLE」切，手机-only 用户不再永久 503；README 补「配对手机」整节（同局域网要求、自签证书「只接受一次例外」警告、排错链到能力矩阵）。
+- **R3 · 手机可达（OPS-01、OPS-06）**（已完成 2026-11-12）：管理 UI 开关 `phone.enabled`（落盘 + `restart_required` 口径，对齐配置导出导入的既有语义）；`/readyz` 与 UI「就绪」拆核心必需/可选项两组——口径以「无 root helper 时纯语音键能否听写」为准（见「未验证」第 5 条），真机确认前先按「核心 = agent+ASR+粘贴链，可选 = root helper/BLE」切，手机-only 用户不再永久 503；README 补「配对手机」整节（同局域网要求、自签证书「只接受一次例外」警告、排错链到能力矩阵）。下一批 R4。
 - **R4 · 边界守卫合一（ARC-04、ARC-12）**：抽 `edge/netguard`（一份 origin 检查、一份安全头、一份地址整形），`internal/phone` 删 `web` import 与 mime/CSP 段，管理端换用同一套（architecture.md R4）；手机按键白名单里的 `power` 类危险键收进显式配置开关，默认关。
 - **R5 · 状态视图单点（ARC-05）**：`core.StatusView`/`ReadyView`/`DevicesView` 由 runtime 生成、edge 只序列化，替换 agent Status → service → ui → `api.StatusResp` 四段重复断言（architecture.md R6）；`map[string]any` 收敛到真正的自由格式字段（目标 <20 处，集中在 keymap 自定义动作与 LLM 预设参数）。碰面最广的一批，放在 R2 的 `core` 类型就位之后。
 - **R6 · 开箱路径（OPS-02、OPS-03、OPS-04、OPS-05、OPS-08、OPS-12 版本部分）**：release tarball 带 unit 与安装脚本，`make install-user` 依赖 `build`；doctor 不再写配置、示例 MAC 视为未配置、补真实依赖检查（与 `readyz` 共享检查表）且每条给可执行命令；语音键 EACCES 首次失败即记一次可操作日志（含 udev/`input` 组指引）；`Serve` 真正 bind 成功后再播「已启动」；`version` 子命令。
@@ -126,12 +126,12 @@
 
 ## 波 2 · 产品与运维（外部用户能否跑起来）
 
-- [ ] **OPS-01** 手机功能从任何已文档化入口都打不开：`phone.*` 只在启动读一次（`internal/config/config.go:39-46`、`main.go:266`），UI 只显示 `config.phone.enabled = false`（`web/ui.html:2196`），没有子命令、README 无章节。动作：管理 UI 开关 + 落盘 + 提示重启，README 补"配对手机"整节（含自签证书警告步骤、两台设备同局域网要求）。
+- [x] **OPS-01** 手机功能从任何已文档化入口都打不开（R3，2026-11-12 已修）：输入源面板新增「手机输入」开关（`POST /api/phone/enabled` → `config.Save` 校验落盘，响应 `restart_required`，行内区分运行中/重启后生效；保存意图走 `/api/inputs` 的 `configured` 自由字段，typed status 在 R5 之前会丢新键）；README 补「配对手机」整节（同局域网、自签证书只接受一次例外、排错链能力矩阵）。本机冒烟：开/关双向落盘与 UI 联动均通过。
 - [ ] **OPS-02** 没有下载即跑路径：`release.yml:47-48` 只带 binary/README/LICENSE/CHANGELOG/example 配置，unit 要 `@ROOT@` 替换（`Makefile:44-58`、`deploy/xiaomi-remote-go.service:11-17`），`make install-user` 不依赖 `build`。动作：tarball 带 unit 与安装脚本。
 - [ ] **OPS-03** `doctor` 自己造配置并放过占位 MAC：README 让"先跑 doctor"（`README.md:95`），而 `config.Load` 会写默认值（`internal/config/config.go:246-250`）、`Validate` 只按正则放行 `AA:BB:CC:DD:EE:FF`（:400）。动作：示例地址视为未配置；doctor 不再写文件。
 - [ ] **OPS-04** `doctor` 缺真实依赖检查：只看 `bluetoothctl`/`xsel` 是否存在（`main.go:564-566`），不查 BlueZ 守护进程/适配器状态、PipeWire、`wtype`、8787/8788 端口、evdev 读权限、LLM key、`phone.*`；措辞只诊断不建议动作。动作：与 `readyz` 共享检查表，每条给可执行命令。
 - [ ] **OPS-05** 语音键静默失败：开 `/dev/input/eventN` 遇 EACCES 每 2 s 重试且不打日志（`internal/keys/f24_linux.go:77-83`），全仓没有 udev 规则或加 `input` 组这一步。动作：首次失败即记一次可操作日志 + doctor 覆盖。
-- [ ] **OPS-06** `/readyz` 与 UI 的"就绪"要求 root helper + BLE（`biz/service/service.go:352`、`web/ui.html:2950-2953`）→ 只用手机的用户永久 503/"待检查"。动作：核心必需项与可选项分组。
+- [x] **OPS-06** `/readyz` 与 UI 的"就绪"要求 root helper + BLE（R3，2026-11-12 已按临时口径修）：`Ready()` 拆 `core_ok`（ASR 链）/`optional_ok`（root helper/BLE/虚拟麦），`ok` = 核心；快速开始清单分「核心必需 / 可选（不影响就绪）」两组，hero 就绪徽标同口径。手机-only 冒烟：无 helper/无遥控/无麦但 ASR 正常 → 已就绪、`/readyz` 200。**分组是临时口径**，真机结论见「未验证」第 5 条。
 - [ ] **OPS-07** IDL 真相已失真：4 条管理/手机路由手写注册（`biz/router/router_gen.go:27-30`），不在 `idl/xiaomi_remote.thrift` 与 `docs/openapi.yaml`，CI 不重新生成也不 diff；`Makefile:34` 硬编 `-version 0.1.0`（I10）。
 - [ ] **OPS-08** 成功播报早于验证：`main.go:294` 在 `Serve` 真正 bind 前就打"phone input listener started"，端口被占只体现为稍后的 journal Error。
 - [ ] **OPS-09** 版本号与叙事：`CHANGELOG.md` 的 Unreleased 没有 `## 0.2.0` 标题（release notes 落回 `--generate-notes`）；`docs/design/external-input-sources.md:4-5` 仍写"待评审/不含实现"而阶段 1/2 已完成，§10 列的五个手机指标并不存在；`README.md:3` 与路线图仍把手机列为未来；架构图没有手机路径。
@@ -155,4 +155,4 @@
 - 自签证书在手机浏览器上的例外流程与缓存行为（MitM 窗口）。
 - `SO_PEERCRED` 的 uid 白名单在 systemd user unit 下是否仍然可用（需要 Pi）。
 - IPv6 扩散下 `Store.ip` 增长与转写队列内存，是推理不是实测。
-- 只按遥控器语音键（`agent.go:449`）在没有 root helper 时能否独立驱动听写——决定 OPS-06 的分组怎么切。
+- 只按遥控器语音键（`agent.go:449`）在没有 root helper 时能否独立驱动听写——决定 OPS-06 的分组怎么切（**OPS-06 已按「核心 = ASR 链」临时口径落地，真机结论不符再调**）。

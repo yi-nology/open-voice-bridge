@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+Wave-2 product work first slice (roadmap R3): the phone is reachable.
+
+- New: a 手机输入 switch in the 输入源 panel (`POST /api/phone/enabled`).
+  It saves `phone.enabled` through the same validated config write as every
+  other setting, answers `restart_required` like a config import (the
+  listener starts with the service), and shows running vs saved state until
+  the restart lands. The saved intent rides the free-form `/api/inputs`
+  payload as `configured` (typed status drops new keys until R5).
+- Readiness now answers "can dictation work": the ASR chain is the core,
+  and the root remapper, the BLE remote and the virtual mic move to
+  `optional_ok` — a phone-only setup is no longer permanently 503 /
+  待检查. The quickstart renders 核心必需 / 可选（不影响就绪） groups and
+  the hero follows the same rule. The split is provisional until the
+  hardware run confirms the voice-key-without-helper yardstick.
+- README gains the missing 配对手机 section: same-LAN requirement, the
+  pairing-code flow, and the "accept one TLS exception, never install the
+  certificate as a root" warning, with troubleshooting pointing at the
+  capability matrix.
+
 Wave-1 leaf extraction (roadmap R2): two new foundation packages.
 
 - `internal/core/audiofmt.go` is now the single definition of the shared PCM
