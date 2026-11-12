@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -208,6 +209,18 @@ func TestRunWarnsWithAFixWhenTheHelperIsAbsent(t *testing.T) {
 		t.Fatalf("exit = %d, want 0: an absent helper is optional (OPS-06)\n%s", code, report)
 	}
 	line := lineContaining(t, report, "remap helper")
+	// On macOS the remapper has no equivalent primitive
+	// (docs/design/macos-compat.md), so the helper is reported as not
+	// applicable rather than missing — there is nothing to start.
+	if runtime.GOOS == "darwin" {
+		if !strings.HasPrefix(line, "ok:") || !strings.Contains(line, "Linux-only") {
+			t.Fatalf("helper line = %q, want the macOS not-applicable note", line)
+		}
+		return
+	}
+	if runtime.GOOS != "linux" {
+		t.Skip("helper expectations are Linux-specific")
+	}
 	if !strings.HasPrefix(line, "WARN:") {
 		t.Fatalf("helper line = %q, want a WARN", line)
 	}
