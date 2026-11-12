@@ -22,6 +22,7 @@ func adminEngine(deps Deps) *server.Hertz {
 	h.POST("/api/phone/pairing", s.PhonePairing)
 	h.GET("/api/phone/devices", s.PhoneDevices)
 	h.POST("/api/phone/revoke", s.PhoneRevoke)
+	h.POST("/api/phone/enabled", s.PhoneEnabled)
 	return h
 }
 
@@ -137,5 +138,44 @@ func TestAdminStats(t *testing.T) {
 	}
 	if strings.Contains(body, `"text"`) {
 		t.Fatalf("stats body must not carry speech content: %s", body)
+	}
+}
+
+// OPS-01: the phone toggle saves configuration and must tell the UI to ask
+// for a restart — the listener only starts with the service, exactly like a
+// config import.
+func TestAdminPhoneEnabledSavesAndRequestsRestart(t *testing.T) {
+	var got *bool
+	h := adminEngine(Deps{
+		SetPhoneEnabled: func(enabled bool) error {
+			got = &enabled
+			return nil
+		},
+	})
+	resp := ut.PerformRequest(h.Engine, "POST", "http://127.0.0.1:8787/api/phone/enabled",
+		&ut.Body{Body: strings.NewReader(`{"enabled": true}`), Len: len(`{"enabled": true}`)},
+		ut.Header{Key: "Origin", Value: "http://127.0.0.1:8787"},
+		ut.Header{Key: "Sec-Fetch-Site", Value: "same-origin"},
+	)
+	if resp.Code != consts.StatusOK {
+		t.Fatalf("code = %d body = %s", resp.Code, resp.Body.String())
+	}
+	if got == nil || !*got {
+		t.Fatalf("SetPhoneEnabled got %v, want true", got)
+	}
+	if !strings.Contains(resp.Body.String(), "restart_required") {
+		t.Fatalf("body = %s, want restart_required", resp.Body.String())
+	}
+}
+
+func TestAdminPhoneEnabledRejectsBadBody(t *testing.T) {
+	h := adminEngine(Deps{SetPhoneEnabled: func(bool) error { return nil }})
+	resp := ut.PerformRequest(h.Engine, "POST", "http://127.0.0.1:8787/api/phone/enabled",
+		&ut.Body{Body: strings.NewReader(`{}`), Len: 2},
+		ut.Header{Key: "Origin", Value: "http://127.0.0.1:8787"},
+		ut.Header{Key: "Sec-Fetch-Site", Value: "same-origin"},
+	)
+	if resp.Code != consts.StatusBadRequest {
+		t.Fatalf("code = %d body = %s", resp.Code, resp.Body.String())
 	}
 }

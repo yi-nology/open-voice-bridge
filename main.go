@@ -360,7 +360,7 @@ func runAgent(args []string, stderr io.Writer) int {
 			ConnectDevice:    svc.ConnectDevice,
 			Ready:            svc.Ready,
 			Inputs: func(context.Context) map[string]any {
-				return map[string]any{"enabled": phoneEnabled, "sources": inputHub.Sources()}
+				return map[string]any{"enabled": phoneEnabled, "configured": svc.PhoneEnabled(), "sources": inputHub.Sources()}
 			},
 			PhonePairing: func(context.Context) map[string]any {
 				if !phoneEnabled {
@@ -399,7 +399,8 @@ func runAgent(args []string, stderr io.Writer) int {
 				disconnected := phoneServer.Disconnect(deviceID)
 				return map[string]any{"ok": true, "disconnected": disconnected}
 			},
-			HelperSocket: cfg.HelperSocket,
+			SetPhoneEnabled: svc.SetPhoneEnabled,
+			HelperSocket:    cfg.HelperSocket,
 		}
 
 		uiServer := ui.New(deps)

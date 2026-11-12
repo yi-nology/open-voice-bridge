@@ -35,6 +35,7 @@ func customizedRegister(r *server.Hertz) {
 
 	// Management-plane phone/input endpoints (loopback + same-site only).
 	r.GET("/api/inputs", customUI.Inputs)
+	r.POST("/api/phone/enabled", customUI.PhoneEnabled)
 	r.POST("/api/phone/pairing", customUI.PhonePairing)
 	r.GET("/api/phone/devices", customUI.PhoneDevices)
 	r.POST("/api/phone/revoke", customUI.PhoneRevoke)

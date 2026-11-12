@@ -37,6 +37,28 @@ func (s *Server) PhoneDevices(ctx context.Context, c *app.RequestContext) {
 	c.JSON(consts.StatusOK, s.deps.PhoneDevices(ctx))
 }
 
+// PhoneEnabled turns the phone input source on or off in the saved
+// configuration (OPS-01). The listener starts with the service, so the
+// response carries restart_required — the same contract as a config import.
+func (s *Server) PhoneEnabled(ctx context.Context, c *app.RequestContext) {
+	if s.deps.SetPhoneEnabled == nil {
+		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "phone toggle unavailable"})
+		return
+	}
+	var req struct {
+		Enabled *bool `json:"enabled"`
+	}
+	if err := json.Unmarshal(c.Request.Body(), &req); err != nil || req.Enabled == nil {
+		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": "enabled required"})
+		return
+	}
+	if err := s.deps.SetPhoneEnabled(*req.Enabled); err != nil {
+		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	c.JSON(consts.StatusOK, map[string]any{"ok": true, "restart_required": true})
+}
+
 // PhoneRevoke removes a paired device and any live session for it.
 func (s *Server) PhoneRevoke(ctx context.Context, c *app.RequestContext) {
 	if s.deps.PhoneRevoke == nil {

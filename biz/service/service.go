@@ -849,6 +849,31 @@ func (s *Service) SyncKeymap(ctx context.Context) {
 	s.logger.Warn("keymap profile not applied on startup", "err", lastErr)
 }
 
+// PhoneEnabled reports the saved phone-input intent, which can differ from
+// the running listener until the service restarts (OPS-01).
+func (s *Service) PhoneEnabled() bool {
+	s.cfgMu.RLock()
+	defer s.cfgMu.RUnlock()
+	return s.cfg.Phone.Enabled
+}
+
+// SetPhoneEnabled turns the phone input source on or off in the saved
+// configuration (OPS-01). The listener starts with the service, so callers
+// must ask for a restart — same contract as a config import. The write goes
+// through config.Save, so an invalid phone section is rejected (SEC-03/DOM-08)
+// and a failed save never leaves the in-memory flag flipped.
+func (s *Service) SetPhoneEnabled(enabled bool) error {
+	s.cfgMu.Lock()
+	previous := s.cfg.Phone.Enabled
+	s.cfg.Phone.Enabled = enabled
+	saveErr := config.Save(s.path, s.cfg)
+	if saveErr != nil {
+		s.cfg.Phone.Enabled = previous
+	}
+	s.cfgMu.Unlock()
+	return saveErr
+}
+
 func stringValue(value any) string {
 	text, _ := value.(string)
 	return text

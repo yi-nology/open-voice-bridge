@@ -2380,14 +2380,64 @@ function makeBadge(text, cls) {
   return badge;
 }
 
+// 手机输入开关（OPS-01）：落盘到 config.phone.enabled，监听器随服务启动，
+// 所以保存后提示重启——与配置导入同一口径。
+async function setPhoneEnabled(enabled, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch("/api/phone/enabled", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({enabled: enabled}),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      inputsMessage("保存失败：" + (data.error || res.status), "err");
+    } else {
+      inputsMessage("已保存，重启服务后生效。", "ok");
+    }
+  } catch (error) {
+    inputsMessage("保存失败：" + error, "err");
+  }
+  if (btn) btn.disabled = false;
+  await loadStatus(false);
+  loadInputs();
+}
+
 function renderInputs(data) {
   const list = document.getElementById("inputs-list");
   if (!list) return;
   list.innerHTML = "";
-  if (!data.enabled) {
+  const running = !!data.enabled;
+  const saved = !!data.configured;
+  const toggleRow = document.createElement("div");
+  toggleRow.className = "device-row";
+  const toggleMain = document.createElement("div");
+  toggleMain.className = "device-main";
+  const toggleName = document.createElement("div");
+  toggleName.className = "device-name";
+  toggleName.textContent = "手机输入";
+  toggleName.appendChild(makeBadge(running ? "运行中" : (saved ? "重启后生效" : "未启用"), running ? "connected" : (saved ? "warn" : "")));
+  const toggleMeta = document.createElement("div");
+  toggleMeta.className = "device-meta";
+  toggleMeta.textContent = "手机浏览器当虚拟遥控与外置麦克风；保存后重启服务生效。";
+  toggleMain.append(toggleName, toggleMeta);
+  const toggleActions = document.createElement("div");
+  toggleActions.className = "device-actions";
+  const toggleBtn = document.createElement("button");
+  toggleBtn.className = "btn small";
+  toggleBtn.textContent = saved ? "关闭手机输入" : "启用手机输入";
+  toggleBtn.addEventListener("click", () => setPhoneEnabled(!saved, toggleBtn));
+  toggleActions.appendChild(toggleBtn);
+  toggleRow.append(toggleMain, toggleActions);
+  list.appendChild(toggleRow);
+
+  if (!running) {
     const note = document.createElement("div");
     note.className = "note";
-    note.textContent = "手机输入未启用（config.phone.enabled = false）。开启后这里会显示遥控器与已连接手机。";
+    note.textContent = saved
+      ? "配置已启用手机输入，重启服务后这里会显示遥控器与已连接手机。"
+      : "手机输入未启用（config.phone.enabled = false）。开启后这里会显示遥控器与已连接手机。";
     list.appendChild(note);
     return;
   }

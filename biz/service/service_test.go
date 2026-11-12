@@ -345,3 +345,50 @@ func TestTextConfigService(t *testing.T) {
 		t.Fatalf("text config = %+v", data)
 	}
 }
+
+// OPS-01: phone input has been configurable only by editing the file before
+// boot. The UI switch must persist through the same validated Save as every
+// other setting and ask for a restart (the listener starts with the service).
+func TestSetPhoneEnabledPersistsConfig(t *testing.T) {
+	svc, _, _, path := newTestService(t)
+	if err := svc.SetPhoneEnabled(true); err != nil {
+		t.Fatalf("SetPhoneEnabled(true): %v", err)
+	}
+	loaded, err := config.Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if !loaded.Phone.Enabled {
+		t.Fatal("phone.enabled = false after enabling")
+	}
+	if err := svc.SetPhoneEnabled(false); err != nil {
+		t.Fatalf("SetPhoneEnabled(false): %v", err)
+	}
+	loaded, err = config.Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if loaded.Phone.Enabled {
+		t.Fatal("phone.enabled = true after disabling")
+	}
+}
+
+// The write goes through config.Save, so an invalid phone section cannot be
+// switched on (SEC-03/DOM-08) and a failed save must not leave the in-memory
+// flag flipped.
+func TestSetPhoneEnabledRejectsInvalidPhoneSection(t *testing.T) {
+	svc, _, _, _ := newTestService(t)
+	svc.cfgMu.Lock()
+	svc.cfg.Phone.TLS = "off"
+	svc.cfg.Phone.Addr = "0.0.0.0:8788"
+	svc.cfgMu.Unlock()
+	if err := svc.SetPhoneEnabled(true); err == nil {
+		t.Fatal("SetPhoneEnabled accepted non-loopback plaintext phone config")
+	}
+	svc.cfgMu.RLock()
+	enabled := svc.cfg.Phone.Enabled
+	svc.cfgMu.RUnlock()
+	if enabled {
+		t.Fatal("in-memory flag flipped despite the failed save")
+	}
+}

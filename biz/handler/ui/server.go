@@ -72,6 +72,7 @@ type Deps struct {
 	PhonePairing        func(context.Context) map[string]any
 	PhoneDevices        func(context.Context) map[string]any
 	PhoneRevoke         func(context.Context, string) map[string]any
+	SetPhoneEnabled     func(bool) error
 	HelperSocket        string
 }
 
