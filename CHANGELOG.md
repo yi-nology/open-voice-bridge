@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- New: the 常用语浮层 (S2, SayAll 对标收尾). The phrase-picker keymap
+  action (F21) opens an eight-slot overlay — click or press 1–8 to insert
+  a phrase into the focused window, Esc to close — and a floating 词句
+  button opens it without a key. Inserts ride the shared paste path and
+  never enter history.
+
 - New: voice commands (语音命令, SayAll 超越). An exactly-matched command
   utterance — 「复制」 — runs its key combo (「ctrl+c」) instead of being
   pasted as dictation; 「复制。」 fires the same. Opt-in per the 词典短语

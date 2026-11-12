@@ -73,7 +73,7 @@
 目标：功能面全面超越 SayAll。每批 = 一串单缺陷/单特性提交，三件套全绿推送。
 
 - **S1 · 语音命令**（已做 2026-11-12）：整句说中命令词即执行快捷键（`复制`→`ctrl+c`），opt-in + 推荐列表，字幕 `〔指令〕` 播报、失败回落听写、不进历史；`paste.Key` 为执行臂（wtype/xdotool/System Events）。
-- **S2 · 常用语浮层面板**：`phrase-picker` 键位动作（F21 私有键）→ SSE → 管理端/手机浮层选句；`POST /api/phrases/paste` 直插。
+- **S2 · 常用语浮层面板**（已做 2026-11-13）：`phrase-picker` 键位动作（F21 私有键）→ SSE → 管理端浮层选句（8 槽位、点选/数字键、Esc 关、右下角「词句」按钮亦可唤起）；`POST /api/phrases/paste` 走共享转写链直插焦点窗口。手机端浮层留待 phone 侧 WS 事件补齐。
 - **S3 · 组合动作 open()/type()**：`seq(open(firefox), 200, type(你好))`——type 走粘贴通道，open 经合成键通道委托 agent 执行（R7 边界已稳，解锁）。
 - **S4 · Onboarding 首次运行引导**：首访欢迎卡分步链接 + doctor 可执行建议（R6 已解锁）。
 - **S5 · 应用感知改写**：按前台应用类（邮件/代码/聊天）切 LLM 模式与词典档（app_rules → rewrite profile）。
