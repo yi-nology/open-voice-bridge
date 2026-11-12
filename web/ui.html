@@ -258,7 +258,7 @@ textarea { min-height: 96px; resize: vertical; }
 }
 .rule-row:last-child { border-bottom: 0; }
 .rule-slot { font-size: 12px; color: var(--label); min-width: 56px; }
-.check-line { display: flex; align-items: center; gap: 10px; font-size: 14.5px; cursor: pointer; margin: 8px 0; }
+.check-line { display: flex; align-items: center; gap: 10px; font-size: 14.5px; color: var(--text); cursor: pointer; margin: 8px 0; }
 .check-line input { width: auto; }
 .enable-card {
   display: flex; align-items: center; gap: 16px;
@@ -310,6 +310,7 @@ textarea { min-height: 96px; resize: vertical; }
 }
 .hotspot {
   position: absolute; transform: translate(-50%, -50%);
+  left: var(--x); top: var(--y); width: var(--w, auto); height: var(--h, auto);
   min-width: 34px; height: 34px; padding: 0 8px;
   border-radius: 999px; border: 1px solid var(--line);
   background: rgba(255,255,255,.92); color: var(--text);
@@ -972,10 +973,10 @@ body.listening .subtitle-live i { background: var(--accent); }
       <div id="commands-list" class="rule-list"></div>
       <div class="actions" style="margin-top:8px">
         <button id="commands-add" class="btn small">新增命令</button>
-        <button id="commands-defaults" class="btn small">填入推荐列表</button>
+        <button id="commands-defaults" class="btn small">追加推荐命令</button>
       </div>
       <div class="actions">
-        <button id="text-save" class="btn primary">保存词典与短语</button>
+        <button id="text-save" class="btn primary">保存全部更改</button>
       </div>
       <div id="text-config-msg" class="msg"></div>
     </div>
@@ -1637,7 +1638,7 @@ function updateConnection(status) {
   if (autostart) {
     const autostartSub = document.getElementById("conn-autostart-sub");
     if (isMac) {
-      autostart.textContent = "手动启动";
+      autostart.textContent = "启动方式：手动";
       autostart.className = "value warn";
       if (autostartSub) autostartSub.textContent = "macOS 用 launchd 或终端手动运行 agent";
     } else {
@@ -1662,9 +1663,15 @@ function updateConnection(status) {
   const guidedState = document.getElementById("guided-state");
   const guidedAsr = document.getElementById("guided-asr");
   const guidedMeta = document.getElementById("guided-meta");
-  if (guidedState) guidedState.textContent = coreReady ? "语音就绪" : "待检查";
+  // Three-state verdict: the chain must be ready AND some input source must
+  // be reachable, or the green "语音就绪" contradicts a red 未连接 beside it.
+  const phoneData = lastInputs || {};
+  const phoneLive = !!phoneData.enabled && (phoneData.sources || []).some(item => item.kind === "phone");
+  const hasSource = remoteConnected || phoneLive;
+  const verdict = !coreReady ? "待检查" : (hasSource ? "语音就绪" : "待连接");
+  if (guidedState) guidedState.textContent = verdict;
   const heroDot = document.getElementById("hero-dot");
-  if (heroDot) heroDot.className = "hero-dot" + (coreReady ? "" : (status.asr_error ? " bad" : " warn"));
+  if (heroDot) heroDot.className = "hero-dot" + (coreReady && hasSource ? "" : (coreReady ? " warn" : " bad"));
   if (guidedAsr) guidedAsr.textContent = status.asr_error ? "需检查" : ((status.asr_backend || "未知").split(" ")[0] || "未知");
   if (guidedMeta) {
     const latency = Number(status.last_latency_ms) || 0;
@@ -1764,6 +1771,15 @@ function persistSubtitles() {
   try { localStorage.setItem("xiaomiSubtitles", JSON.stringify(items)); } catch (error) {}
 }
 
+// 清空/复制 only make sense with lines on the stage (UX 验收 B#8).
+function syncSubtitleActions() {
+  const empty = !subtitleLinesEl || subtitleLinesEl.children.length === 0;
+  for (const id of ["subtitle-clear", "subtitle-copy"]) {
+    const btn = document.getElementById(id);
+    if (btn) btn.disabled = empty;
+  }
+}
+
 function addSubtitle(text, at, options = {}) {
   if (!subtitleLinesEl) return;
   text = (text || "").trim();
@@ -1796,6 +1812,7 @@ function addSubtitle(text, at, options = {}) {
     first.remove();
   }
   if (subtitleEmpty) subtitleEmpty.style.display = "none";
+  syncSubtitleActions();
   if (options.scroll !== false && document.getElementById("tab-subtitle").classList.contains("active")) {
     line.scrollIntoView({block: "center", behavior: "smooth"});
   }
@@ -1819,6 +1836,7 @@ function clearSubtitles() {
   subtitleLinesEl.innerHTML = "";
   subtitleKeys.clear();
   if (subtitleEmpty) subtitleEmpty.style.display = "";
+  syncSubtitleActions();
   try { localStorage.removeItem("xiaomiSubtitles"); } catch (error) {}
 }
 
@@ -1998,12 +2016,12 @@ function renderDiscovered(items) {
     if (item.configured) {
       const added = document.createElement("span");
       added.className = "note";
-      added.textContent = "已添加";
+      added.textContent = "已配置为遥控器";
       actions.appendChild(added);
     } else {
       const add = document.createElement("button");
       add.className = "btn small primary";
-      add.textContent = "添加";
+      add.textContent = "添加为遥控器";
       add.addEventListener("click", () => addDiscoveredDevice(item));
       actions.appendChild(add);
     }
@@ -2526,6 +2544,7 @@ async function loadHistory() {
     }
     historyEntries = data.entries || [];
     renderHistory();
+    syncHistoryActions();
     historyMessage("", "");
   } catch (error) {
     historyMessage("加载历史失败：" + error, "err");
@@ -2795,7 +2814,8 @@ async function loadMCPTokens() {
       label.style.cssText = "flex:1;min-width:140px;" + (item.revoked ? "opacity:.5;" : "");
       const used = document.createElement("span");
       used.className = "sub";
-      used.textContent = item.last_used ? "最近使用 " + new Date(item.last_used).toLocaleString() : "尚未使用";
+      const usedAt = item.last_used ? new Date(item.last_used) : null;
+  used.textContent = usedAt && usedAt.getFullYear() > 1970 ? "最近使用 " + usedAt.toLocaleString() : "从未使用";
       row.appendChild(label);
       row.appendChild(used);
       if (!item.revoked) {
@@ -2866,8 +2886,13 @@ async function loadOverviewRecent() {
     const data = await res.json();
     const entries = (data.entries || []).slice(0, 3);
     const count = document.getElementById("overview-recent-count");
+    const all = document.getElementById("overview-recent-all");
     list.innerHTML = "";
-    if (count) count.textContent = entries.length ? "最近 " + entries.length + " 条" : "暂无记录";
+    if (count) {
+      count.textContent = entries.length ? "最近 " + entries.length + " 条" : "";
+      count.hidden = !entries.length;
+    }
+    if (all) all.hidden = !entries.length;
     if (!entries.length) {
       const empty = document.createElement("div");
       empty.className = "recent-empty";
@@ -3482,7 +3507,7 @@ function commandRow(from = "", to = "") {
   source.value = from;
   const target = document.createElement("input");
   target.className = "rule-to";
-  target.placeholder = "快捷键，如：ctrl+c";
+  target.placeholder = "快捷键，如：ctrl+c / cmd+c";
   target.value = to;
   const remove = document.createElement("button");
   remove.className = "btn small";
@@ -3929,6 +3954,14 @@ document.getElementById("btn-llm-ping").addEventListener("click", () => testLLM(
 
 document.getElementById("history-refresh").addEventListener("click", loadHistory);
 document.getElementById("history-search").addEventListener("input", renderHistory);
+function syncHistoryActions() {
+  const empty = !historyEntries.length;
+  for (const id of ["history-export", "history-clear"]) {
+    const btn = document.getElementById(id);
+    if (btn) btn.disabled = empty;
+  }
+}
+
 document.getElementById("history-export").addEventListener("click", () => {
   if (!historyEntries.length) {
     historyMessage("没有可导出的记录", "");
@@ -3964,9 +3997,19 @@ document.getElementById("commands-add").addEventListener("click", () => {
   document.getElementById("commands-list").appendChild(commandRow());
 });
 document.getElementById("commands-defaults").addEventListener("click", () => {
+  // Append the recommended pairs the user does not already have — never
+  // clobber a command they wrote themselves.
   const list = document.getElementById("commands-list");
-  list.innerHTML = "";
-  for (const [spoken, combo] of Object.entries(DEFAULT_COMMANDS)) list.appendChild(commandRow(spoken, combo));
+  const have = new Set();
+  for (const row of list.querySelectorAll(".rule-row")) {
+    have.add(row.querySelector(".rule-from").value.trim());
+  }
+  for (const [spoken, combo] of Object.entries(DEFAULT_COMMANDS)) {
+    if (!have.has(spoken)) list.appendChild(commandRow(spoken, combo));
+  }
+  while (list.querySelectorAll(".rule-row").length > 1 && list.querySelector(".rule-row .rule-from").value === "") {
+    list.querySelector(".rule-row").remove();
+  }
 });
 document.getElementById("text-save").addEventListener("click", saveTextConfig);
 loadTextConfig();
