@@ -1,6 +1,11 @@
 package core
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+)
 
 // R5: the sample rate, frame length, utterance duration bounds and the
 // minimum transcribable duration live in exactly one place.
@@ -51,5 +56,37 @@ func TestDurationBoundsBracketTheDefault(t *testing.T) {
 	if DefaultUtteranceSeconds < MinUtteranceSeconds || DefaultUtteranceSeconds > MaxUtteranceSeconds {
 		t.Fatalf("DefaultUtteranceSeconds = %d, want within %d..%d",
 			DefaultUtteranceSeconds, MinUtteranceSeconds, MaxUtteranceSeconds)
+	}
+}
+
+// R5: a second copy of the rate is how the WAV header and the MiMo guard
+// drifted apart before (DOM-01). Scan the sources, not just this package.
+func TestNoOtherPackageRedefinesTheRate(t *testing.T) {
+	root := filepath.Join("..", "..")
+	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			switch entry.Name() {
+			case ".git", "node_modules", "core":
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		if strings.Contains(string(data), "16000") {
+			t.Errorf("%s hardcodes the sample rate; use internal/core instead (R5)", path)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("walk: %v", err)
 	}
 }
