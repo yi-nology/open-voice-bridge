@@ -346,9 +346,11 @@ func (s *Service) Ready(ctx context.Context) core.ReadyView {
 	// optional_ok instead of failing ok. Until the hardware run confirms
 	// the yardstick (roadmap 未验证 #5), the split is:
 	// core = agent + ASR + paste chain, optional = helper + BLE.
+	// The classification itself is core.Dependency.Core, which the offline
+	// doctor also uses so its exit code cannot disagree with ok (OPS-04).
 	view.CoreOK = view.AsrReady
 	view.OptionalOK = view.KeydActive && view.RemotePresent && view.BleConnected && view.AtvvReady && view.MicHealthy
-	view.OK = view.AsrReady
+	view.OK = view.CoreOK
 	return view
 }
 

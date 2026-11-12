@@ -2,14 +2,8 @@
 
 package doctor
 
-import (
-	"fmt"
-	"io"
+import "github.com/yi-nology/open-voice-bridge/internal/config"
 
-	"github.com/yi-nology/open-voice-bridge/internal/config"
-)
-
-func hostChecks(stdout io.Writer, cfg config.Config) int {
-	fmt.Fprintln(stdout, "WARN: host checks not implemented on this platform")
-	return 0
+func hostChecks(cfg config.Config) []check {
+	return []check{warn("host checks not implemented on this platform", "")}
 }

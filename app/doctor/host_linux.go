@@ -5,7 +5,6 @@ package doctor
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"os/user"
@@ -13,70 +12,117 @@ import (
 	"time"
 
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/helper"
 	"github.com/yi-nology/open-voice-bridge/internal/remap"
 )
 
 // hostChecks reports the Linux host prerequisites: root remap helper,
-// PipeWire/X11 tooling, systemd units, uinput and the evdev remote.
-func hostChecks(stdout io.Writer, cfg config.Config) int {
-	failures := 0
-	doctorCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+// PipeWire/X11 tooling, systemd units, uinput and the evdev remote. Every gap
+// carries the command that resolves it (OPS-04).
+func hostChecks(cfg config.Config) []check {
+	checks := helperCheck(cfg)
+	checks = append(checks, binaryChecks()...)
+	checks = append(checks, unitChecks()...)
+	checks = append(checks, lingerCheck(), uinputCheck(), sessionCheck(), remoteCheck(cfg))
+	return checks
+}
+
+func helperCheck(cfg config.Config) []check {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	if helperStatus, err := helper.New(cfg.HelperSocket).Call(doctorCtx, map[string]string{"cmd": "status"}); err != nil {
-		fmt.Fprintln(stdout, "FAIL: remap helper:", err)
-		failures++
-	} else {
-		fmt.Fprintf(stdout, "ok: remap helper (active=%v, remote_present=%v)\n",
-			helperStatus["keyd_active"], helperStatus["remote_present"])
+	status, err := helper.New(cfg.HelperSocket).Call(ctx, map[string]string{"cmd": "status"})
+	if err != nil {
+		return []check{gap(core.DepHelper, "remap helper: "+err.Error(),
+			"sudo systemctl start xiaomi-remote-remap.service")}
 	}
-	for _, binary := range []string{"pw-cat", "pw-loopback", "xsel", "bluetoothctl"} {
-		if _, err := exec.LookPath(binary); err != nil {
-			fmt.Fprintln(stdout, "FAIL: missing", binary)
-			failures++
-		} else {
-			fmt.Fprintln(stdout, "ok:", binary)
+	return []check{ok(fmt.Sprintf("remap helper (active=%v, remote_present=%v)",
+		status["keyd_active"], status["remote_present"]))}
+}
+
+// binaryChecks covers the external tools the agent shells out to. Each is an
+// optional dependency: a phone-only setup needs none of the PipeWire pair, and
+// Wayland injects text through wtype rather than xsel.
+func binaryChecks() []check {
+	tools := []struct {
+		binary string
+		dep    core.Dependency
+		fix    string
+	}{
+		{"pw-cat", core.DepMic, "sudo apt install pipewire-bin"},
+		{"pw-loopback", core.DepMic, "sudo apt install pipewire-bin"},
+		{"xsel", core.DepPaste, "sudo apt install xsel"},
+		{"bluetoothctl", core.DepBLE, "sudo apt install bluez"},
+	}
+	var checks []check
+	for _, tool := range tools {
+		if _, err := exec.LookPath(tool.binary); err != nil {
+			checks = append(checks, gap(tool.dep, "missing "+tool.binary, tool.fix))
+			continue
 		}
+		checks = append(checks, ok(tool.binary))
 	}
-	for _, unit := range []struct {
+	return checks
+}
+
+func unitChecks() []check {
+	units := []struct {
 		label string
 		args  []string
+		fix   string
 	}{
-		{"agent active", []string{"--user", "is-active", "xiaomi-remote-go"}},
-		{"agent autostart", []string{"--user", "is-enabled", "xiaomi-remote-go"}},
-		{"remap active", []string{"is-active", "xiaomi-remote-remap"}},
-		{"remap autostart", []string{"is-enabled", "xiaomi-remote-remap"}},
-	} {
+		{"agent active", []string{"--user", "is-active", "xiaomi-remote-go"}, "systemctl --user start xiaomi-remote-go.service"},
+		{"agent autostart", []string{"--user", "is-enabled", "xiaomi-remote-go"}, "systemctl --user enable xiaomi-remote-go.service"},
+		{"remap active", []string{"is-active", "xiaomi-remote-remap"}, "sudo systemctl start xiaomi-remote-remap.service"},
+		{"remap autostart", []string{"is-enabled", "xiaomi-remote-remap"}, "sudo systemctl enable xiaomi-remote-remap.service"},
+	}
+	var checks []check
+	for _, unit := range units {
 		out, err := exec.Command("systemctl", unit.args...).Output()
 		state := strings.TrimSpace(string(out))
 		if err != nil {
-			fmt.Fprintf(stdout, "WARN: %s: %s\n", unit.label, state)
+			checks = append(checks, warn(unit.label+": "+state, unit.fix))
 			continue
 		}
-		fmt.Fprintf(stdout, "ok: %s: %s\n", unit.label, state)
+		checks = append(checks, ok(unit.label+": "+state))
 	}
-	if current, err := user.Current(); err == nil {
-		out, err := exec.Command("loginctl", "show-user", current.Username, "-p", "Linger").Output()
-		if err == nil && strings.Contains(string(out), "Linger=yes") {
-			fmt.Fprintln(stdout, "ok: linger enabled (starts before login)")
-		} else {
-			fmt.Fprintln(stdout, "WARN: linger disabled; agent will not start until you log in")
-		}
+	return checks
+}
+
+func lingerCheck() check {
+	current, err := user.Current()
+	if err != nil {
+		return warn("linger: "+err.Error(), "sudo loginctl enable-linger $USER")
 	}
-	if info, err := os.Stat("/dev/uinput"); err != nil {
-		fmt.Fprintln(stdout, "WARN: /dev/uinput missing:", err)
-	} else {
-		fmt.Fprintf(stdout, "ok: /dev/uinput (%s)\n", info.Mode())
+	out, err := exec.Command("loginctl", "show-user", current.Username, "-p", "Linger").Output()
+	if err == nil && strings.Contains(string(out), "Linger=yes") {
+		return ok("linger enabled (starts before login)")
 	}
-	if os.Getenv("DISPLAY") == "" {
-		fmt.Fprintln(stdout, "WARN: DISPLAY is empty; text injection will fail")
-	} else {
-		fmt.Fprintln(stdout, "ok: DISPLAY", os.Getenv("DISPLAY"))
+	return warn("linger disabled; agent will not start until you log in", "sudo loginctl enable-linger $USER")
+}
+
+func uinputCheck() check {
+	info, err := os.Stat("/dev/uinput")
+	if err != nil {
+		return warn("/dev/uinput missing: "+err.Error(), "sudo modprobe uinput")
 	}
+	return ok(fmt.Sprintf("/dev/uinput (%s)", info.Mode()))
+}
+
+// sessionCheck reports the graphical session text injection needs. The user
+// unit hardcodes DISPLAY, so a session that never exported it is the common
+// cause of "recognition works but no text appears".
+func sessionCheck() check {
+	if os.Getenv("DISPLAY") == "" && os.Getenv("WAYLAND_DISPLAY") == "" {
+		return warn("no graphical session (DISPLAY and WAYLAND_DISPLAY are empty); text injection will fail",
+			"systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XAUTHORITY")
+	}
+	return ok(fmt.Sprintf("session DISPLAY=%q WAYLAND_DISPLAY=%q", os.Getenv("DISPLAY"), os.Getenv("WAYLAND_DISPLAY")))
+}
+
+func remoteCheck(cfg config.Config) check {
 	if remap.RemotePresent() {
-		fmt.Fprintln(stdout, "ok: RC003 evdev device present")
-	} else {
-		fmt.Fprintln(stdout, "WARN: RC003 evdev device not found (bluetoothctl connect?)")
+		return ok("RC003 evdev device present")
 	}
-	return failures
+	return warn("RC003 evdev device not found", "bluetoothctl connect "+cfg.Address)
 }

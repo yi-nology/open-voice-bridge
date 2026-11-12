@@ -155,6 +155,67 @@ func TestRunWarnsOnThePlaceholderAddress(t *testing.T) {
 	}
 }
 
+// lineContaining returns the single report line carrying needle, so a test can
+// assert on one check without matching the whole report.
+func lineContaining(t *testing.T, report, needle string) string {
+	t.Helper()
+	var found []string
+	for _, line := range strings.Split(report, "\n") {
+		if strings.Contains(line, needle) {
+			found = append(found, line)
+		}
+	}
+	if len(found) != 1 {
+		t.Fatalf("want exactly one line containing %q, got %d\n%s", needle, len(found), report)
+	}
+	return found[0]
+}
+
+// configWithHelper points a valid MiMo document at a helper socket, so a test
+// can decide whether the root remapper is reachable.
+func configWithHelper(t *testing.T, keyFile, socket string) string {
+	t.Helper()
+	path := mimoConfig(t, keyFile)
+	cfg, err := config.Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg.HelperSocket = socket
+	if err := config.Save(path, cfg); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
+func testKeyFile(t *testing.T) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "mimo.key")
+	if err := os.WriteFile(path, []byte("test-key"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
+// OPS-04: doctor and /readyz must agree on what dictation needs. The root
+// remapper is optional — a phone-only setup never has one — so its absence is a
+// warning carrying a command to run, not a failed run.
+func TestRunWarnsWithAFixWhenTheHelperIsAbsent(t *testing.T) {
+	path := configWithHelper(t, testKeyFile(t), filepath.Join(t.TempDir(), "absent.sock"))
+	var out bytes.Buffer
+	code := Run(path, quietLogger(), &out)
+	report := out.String()
+	if code != 0 {
+		t.Fatalf("exit = %d, want 0: an absent helper is optional (OPS-06)\n%s", code, report)
+	}
+	line := lineContaining(t, report, "remap helper")
+	if !strings.HasPrefix(line, "WARN:") {
+		t.Fatalf("helper line = %q, want a WARN", line)
+	}
+	if !strings.Contains(line, "systemctl") || !strings.Contains(line, "xiaomi-remote-remap") {
+		t.Fatalf("helper line must name a command to run: %q", line)
+	}
+}
+
 func TestExpandHome(t *testing.T) {
 	home, err := os.UserHomeDir()
 	if err != nil {
