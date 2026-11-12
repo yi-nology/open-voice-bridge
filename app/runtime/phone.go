@@ -32,8 +32,12 @@ func (s PhoneSpeech) TranscribeUtterance(ctx context.Context, samples []int16, m
 	if !ok {
 		return phone.UtteranceResult{}, false
 	}
+	text := transcript.Text
+	if transcript.Command != "" {
+		text = "〔指令〕" + text
+	}
 	return phone.UtteranceResult{
-		Text:      transcript.Text,
+		Text:      text,
 		RawText:   transcript.RawText,
 		Provider:  transcript.Provider,
 		Processed: transcript.Processed,

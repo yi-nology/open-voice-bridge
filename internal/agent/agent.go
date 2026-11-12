@@ -82,7 +82,8 @@ type Transcript struct {
 	SourceName string
 	Address    string
 	Processed  bool
-	Truncated  bool // the capture hit its time cap (DOM-09)
+	Truncated  bool   // the capture hit its time cap (DOM-09)
+	Command    string // non-empty: a voice command ran this combo (语音命令)
 	Latency    time.Duration
 	Duration   time.Duration // length of the spoken audio
 	At         time.Time
@@ -124,6 +125,7 @@ func (a *Agent) newPipeline() *SpeechPipeline {
 		},
 		pasteEnabled: func() bool { return a.cfg.PasteEnabled },
 		pasteText:    paste.Text,
+		sendKeys:     paste.Key,
 		sink:         a.recordTranscript,
 		asrTimeout:   180 * time.Second,
 	}
@@ -137,6 +139,12 @@ func (a *Agent) Speech() *SpeechPipeline { return a.pipeline }
 // recordTranscript updates the agent's last-result fields and forwards the
 // utterance to the subtitle stream.
 func (a *Agent) recordTranscript(transcript Transcript) {
+	if transcript.Command != "" {
+		// Voice commands are spoken acts, not dictation: they stay out of the
+		// "last text" strip even though the subtitle stream still sees them.
+		a.transcripts <- transcript
+		return
+	}
 	a.mu.Lock()
 	a.lastText = transcript.Text
 	a.lastAt = transcript.At

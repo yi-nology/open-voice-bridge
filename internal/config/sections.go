@@ -148,6 +148,18 @@ type Snippet struct {
 type TextConfig struct {
 	Dictionary []Replacement `json:"dictionary"`
 	Snippets   []Snippet     `json:"snippets"`
+	// Commands maps an exactly-matched utterance ("复制") to a key combo
+	// ("ctrl+c"). A match executes the combo instead of pasting text and
+	// never enters history (语音命令). Opt-in: without CommandsEnabled the
+	// same words stay literal dictation.
+	CommandsEnabled bool              `json:"commands_enabled"`
+	Commands        map[string]string `json:"commands,omitempty"`
+}
+
+// DefaultCommands is the suggested one-fill list for the 语音命令 panel.
+var DefaultCommands = map[string]string{
+	"复制": "ctrl+c", "粘贴": "ctrl+v", "撤销": "ctrl+z", "全选": "ctrl+a",
+	"保存": "ctrl+s", "回车": "enter", "退格": "backspace", "刷新": "f5",
 }
 
 // DefaultKeymap is the coding profile's starting point. The action vocabulary

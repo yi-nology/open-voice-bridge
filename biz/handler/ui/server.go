@@ -72,6 +72,8 @@ type Deps struct {
 	PhoneDevices        func(context.Context) map[string]any
 	PhoneRevoke         func(context.Context, string) map[string]any
 	SetPhoneEnabled     func(bool) error
+	TextCommands        func() (bool, map[string]string)
+	UpdateTextCommands  func(bool, map[string]string) error
 	HelperSocket        string
 }
 

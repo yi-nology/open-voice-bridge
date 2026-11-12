@@ -18,6 +18,9 @@ type Rules struct {
 	// phraseTexts keeps snippet texts in config order so the phrase actions
 	// (phrase1..phrase8) can address them by position.
 	phraseTexts []string
+	// commands maps exact command utterances to key combos; nil when the
+	// feature is off (语音命令).
+	commands map[string]string
 }
 
 func Validate(cfg config.TextConfig) error {
@@ -37,9 +40,38 @@ func Validate(cfg config.TextConfig) error {
 	return nil
 }
 
+// commandUtterance canonicalises a command word for exact matching: trim
+// surrounding space and one trailing punctuation run ("复制。" fires as "复制").
+func commandUtterance(in string) string {
+	return strings.TrimRight(strings.TrimSpace(in), "。！？!?.、，,~… ")
+}
+
+// Command reports the key combo bound to an exact command utterance.
+func (r *Rules) Command(utterance string) (string, bool) {
+	if r == nil || len(r.commands) == 0 {
+		return "", false
+	}
+	combo, ok := r.commands[commandUtterance(utterance)]
+	return combo, ok && combo != ""
+}
+
 func New(cfg config.TextConfig) (*Rules, error) {
 	if err := Validate(cfg); err != nil {
 		return nil, err
+	}
+	var commands map[string]string
+	if cfg.CommandsEnabled {
+		commands = make(map[string]string, len(cfg.Commands))
+		for spoken, combo := range cfg.Commands {
+			key := commandUtterance(spoken)
+			if key == "" || strings.TrimSpace(combo) == "" {
+				continue
+			}
+			commands[key] = strings.TrimSpace(combo)
+		}
+		if len(commands) == 0 {
+			commands = nil
+		}
 	}
 	seen := map[string]string{}
 	for _, item := range cfg.Dictionary {
@@ -69,7 +101,7 @@ func New(cfg config.TextConfig) (*Rules, error) {
 		snippets[normalizeTrigger(item.Trigger)] = item.Text
 		phraseTexts = append(phraseTexts, item.Text)
 	}
-	return &Rules{pattern: pattern, repls: repls, snippets: snippets, phraseTexts: phraseTexts}, nil
+	return &Rules{pattern: pattern, repls: repls, snippets: snippets, phraseTexts: phraseTexts, commands: commands}, nil
 }
 
 // SnippetAt returns the phrase bound to slot n (1-based), which is what the

@@ -45,6 +45,16 @@ func (e Events) Run(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case transcript := <-e.Transcripts:
+			if transcript.Command != "" {
+				e.Publish(map[string]any{
+					"event":  "command",
+					"text":   transcript.Text,
+					"combo":  transcript.Command,
+					"source": transcript.Source,
+					"at":     transcript.At.Format(time.RFC3339),
+				})
+				continue
+			}
 			e.TranscriptsTotal.Inc()
 			if transcript.Latency > 0 {
 				e.ASRLatency.Observe(transcript.Latency.Seconds())

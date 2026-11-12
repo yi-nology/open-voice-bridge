@@ -926,6 +926,14 @@ body.listening .subtitle-live i { background: var(--accent); }
       <h4 style="margin:14px 0 0;font-size:12px;">语音短语</h4>
       <div id="snippet-list" class="rule-list"></div>
       <button id="snippet-add" class="btn small">新增短语</button>
+      <h4 style="margin:18px 0 0;font-size:12px;">语音命令</h4>
+      <p class="sub">整句正好说中命令词时执行快捷键而不是上屏（如「复制」→ Ctrl+C）。默认关闭；开启后这些词不再作为听写文本。</p>
+      <label class="check-line"><input id="commands-enabled" type="checkbox"> 启用语音命令</label>
+      <div id="commands-list" class="rule-list"></div>
+      <div class="actions" style="margin-top:8px">
+        <button id="commands-add" class="btn small">新增命令</button>
+        <button id="commands-defaults" class="btn small">填入推荐列表</button>
+      </div>
       <div class="actions">
         <button id="text-save" class="btn primary">保存词典与短语</button>
       </div>
@@ -2875,6 +2883,10 @@ function connectEvents() {
       // A common phrase is user-authored text, not speech: it shows up live
       // with its own styling and never enters the history panel.
       addSubtitle("〔常用语 " + data.slot + "〕 " + data.text, data.at, {kind: "phrase"});
+    } else if (data.event === "command") {
+      // A voice command is a spoken act: it runs a key combo and, like a
+      // phrase, never enters history.
+      addSubtitle("〔指令〕" + data.text + " → " + data.combo, data.at, {kind: "phrase"});
     } else if (data.event === "capture_started") {
       setCaptureUi(true);
       setChip("chip-keyd", "捕获中 · 注入已暂停", "warn");
@@ -3289,6 +3301,16 @@ function renderTextConfig(cfg) {
   });
   if (!dictionary.children.length) dictionary.appendChild(dictionaryRow());
   if (!snippets.children.length) snippets.appendChild(snippetRow());
+  const commands = document.getElementById("commands-list");
+  const commandsToggle = document.getElementById("commands-enabled");
+  if (commands) {
+    commands.innerHTML = "";
+    for (const [spoken, combo] of Object.entries(cfg.commands || {})) {
+      commands.appendChild(commandRow(spoken, combo));
+    }
+    if (!commands.children.length) commands.appendChild(commandRow());
+  }
+  if (commandsToggle) commandsToggle.checked = !!cfg.commands_enabled;
 }
 
 async function loadTextConfig() {
@@ -3300,11 +3322,44 @@ async function loadTextConfig() {
       return;
     }
     textConfigData = data;
-    renderTextConfig(data.config || {});
+    const cfg = data.config || {};
+    try {
+      const commandsRes = await fetch("/api/text/commands");
+      const commandsData = await commandsRes.json();
+      if (commandsData.ok) {
+        cfg.commands_enabled = commandsData.enabled;
+        cfg.commands = commandsData.commands;
+      }
+    } catch (error) {}
+    renderTextConfig(cfg);
     textMessage("", "");
   } catch (error) {
     textMessage("加载词典失败：" + error, "err");
   }
+}
+
+const DEFAULT_COMMANDS = {
+  "复制": "ctrl+c", "粘贴": "ctrl+v", "撤销": "ctrl+z", "全选": "ctrl+a",
+  "保存": "ctrl+s", "回车": "enter", "退格": "backspace", "刷新": "f5",
+};
+
+function commandRow(from = "", to = "") {
+  const row = document.createElement("div");
+  row.className = "rule-row";
+  const source = document.createElement("input");
+  source.className = "rule-from";
+  source.placeholder = "命令词，如：复制";
+  source.value = from;
+  const target = document.createElement("input");
+  target.className = "rule-to";
+  target.placeholder = "快捷键，如：ctrl+c";
+  target.value = to;
+  const remove = document.createElement("button");
+  remove.className = "btn small";
+  remove.textContent = "删除";
+  remove.addEventListener("click", () => row.remove());
+  row.append(source, target, remove);
+  return row;
 }
 
 function collectTextConfig() {
@@ -3320,23 +3375,41 @@ function collectTextConfig() {
     const text = row.querySelector(".rule-to").value;
     if (trigger) snippets.push({trigger, text});
   }
-  return {dictionary, snippets};
+  const commands = {};
+  for (const row of document.querySelectorAll("#commands-list .rule-row")) {
+    const spoken = row.querySelector(".rule-from").value.trim();
+    const combo = row.querySelector(".rule-to").value.trim();
+    if (spoken && combo) commands[spoken] = combo;
+  }
+  const commandsEnabled = !!document.getElementById("commands-enabled")?.checked;
+  return {dictionary, snippets, commands_enabled: commandsEnabled, commands};
 }
 
 async function saveTextConfig() {
   textMessage("正在保存…", "");
+  const payload = collectTextConfig();
   try {
     const res = await fetch("/api/text/config", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(collectTextConfig()),
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
     if (!data.ok) {
       textMessage("保存失败：" + errorText(data), "err");
       return;
     }
-    textMessage("词典与短语已保存并生效", "ok");
+    const commandsRes = await fetch("/api/text/commands", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({enabled: payload.commands_enabled, commands: payload.commands}),
+    });
+    const commandsData = await commandsRes.json();
+    if (!commandsData.ok) {
+      textMessage("命令保存失败：" + errorText(commandsData), "err");
+      return;
+    }
+    textMessage("词典、短语与语音命令已保存并生效", "ok");
     await loadTextConfig();
   } catch (error) {
     textMessage("保存失败：" + error, "err");
@@ -3756,6 +3829,14 @@ document.getElementById("dictionary-add").addEventListener("click", () => {
 });
 document.getElementById("snippet-add").addEventListener("click", () => {
   document.getElementById("snippet-list").appendChild(snippetRow());
+});
+document.getElementById("commands-add").addEventListener("click", () => {
+  document.getElementById("commands-list").appendChild(commandRow());
+});
+document.getElementById("commands-defaults").addEventListener("click", () => {
+  const list = document.getElementById("commands-list");
+  list.innerHTML = "";
+  for (const [spoken, combo] of Object.entries(DEFAULT_COMMANDS)) list.appendChild(commandRow(spoken, combo));
 });
 document.getElementById("text-save").addEventListener("click", saveTextConfig);
 loadTextConfig();

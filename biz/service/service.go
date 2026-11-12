@@ -678,6 +678,40 @@ func (s *Service) UpdateTextConfig(ctx context.Context, next config.TextConfig) 
 	return nil
 }
 
+// TextCommands returns the voice-command toggle and map (语音命令). They ride
+// a free-form endpoint because the typed text-config model is generated.
+func (s *Service) TextCommands() (bool, map[string]string) {
+	s.cfgMu.RLock()
+	defer s.cfgMu.RUnlock()
+	out := make(map[string]string, len(s.cfg.Text.Commands))
+	for spoken, combo := range s.cfg.Text.Commands {
+		out[spoken] = combo
+	}
+	return s.cfg.Text.CommandsEnabled, out
+}
+
+// UpdateTextCommands saves the voice-command toggle and map and rebuilds the
+// live rules so the change applies to the next utterance.
+func (s *Service) UpdateTextCommands(enabled bool, commands map[string]string) error {
+	s.cfgMu.Lock()
+	previous := s.cfg.Text
+	s.cfg.Text.CommandsEnabled = enabled
+	s.cfg.Text.Commands = commands
+	rules, buildErr := text.New(s.cfg.Text)
+	if buildErr == nil {
+		buildErr = config.Save(s.path, s.cfg)
+	}
+	if buildErr != nil {
+		s.cfg.Text = previous
+	}
+	s.cfgMu.Unlock()
+	if buildErr != nil {
+		return buildErr
+	}
+	s.agent.SetTextRules(rules)
+	return nil
+}
+
 func (s *Service) LLMConfig(ctx context.Context) map[string]any {
 	s.cfgMu.RLock()
 	defer s.cfgMu.RUnlock()

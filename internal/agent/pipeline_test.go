@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"sync"
 	"testing"
@@ -411,5 +412,72 @@ func TestTranscriptStampsSourceIdentity(t *testing.T) {
 	}
 	if !transcript.Truncated {
 		t.Fatal("truncation must reach the transcript")
+	}
+}
+
+// 语音命令: an exact command utterance runs its key combo and never becomes
+// text — no paste — and the transcript carries the Command marker so the
+// history sink skips it (like phrases, a spoken act).
+func TestVoiceCommandRunsComboInsteadOfText(t *testing.T) {
+	rules, err := text.New(config.TextConfig{
+		CommandsEnabled: true,
+		Commands:        map[string]string{"复制": "ctrl+c"},
+	})
+	if err != nil {
+		t.Fatalf("rules: %v", err)
+	}
+	probe := &pipelineProbe{}
+	engine := &fakeEngine{result: asr.Result{Text: "复制", Provider: "fake"}}
+	pipeline := buildPipeline(engine, rules, probe, true)
+	var combos []string
+	pipeline.sendKeys = func(_ context.Context, combo string) error {
+		combos = append(combos, combo)
+		return nil
+	}
+	transcript, ok := pipeline.Transcribe(context.Background(), utterance(oneSecond(), SourceRef{Kind: "remote"}))
+	if !ok {
+		t.Fatal("command utterance was dropped")
+	}
+	if transcript.Command != "ctrl+c" || transcript.Text != "复制" {
+		t.Fatalf("transcript = %+v, want the command marker", transcript)
+	}
+	if len(combos) != 1 || combos[0] != "ctrl+c" {
+		t.Fatalf("combos = %v, want [ctrl+c]", combos)
+	}
+	transcripts, pasted := probe.snapshot()
+	if len(pasted) != 0 {
+		t.Fatalf("pasted %v, want nothing", pasted)
+	}
+	if len(transcripts) != 1 || transcripts[0].Command != "ctrl+c" {
+		t.Fatalf("sink saw %+v", transcripts)
+	}
+}
+
+// A command that fails to execute falls back to plain dictation so the words
+// are never lost.
+func TestVoiceCommandFallsBackToDictation(t *testing.T) {
+	rules, err := text.New(config.TextConfig{
+		CommandsEnabled: true,
+		Commands:        map[string]string{"复制": "ctrl+c"},
+	})
+	if err != nil {
+		t.Fatalf("rules: %v", err)
+	}
+	probe := &pipelineProbe{}
+	engine := &fakeEngine{result: asr.Result{Text: "复制", Provider: "fake"}}
+	pipeline := buildPipeline(engine, rules, probe, true)
+	pipeline.sendKeys = func(_ context.Context, combo string) error {
+		return errors.New("keyboard grab failed")
+	}
+	transcript, ok := pipeline.Transcribe(context.Background(), utterance(oneSecond(), SourceRef{Kind: "remote"}))
+	if !ok {
+		t.Fatal("fallback dictation was dropped")
+	}
+	if transcript.Command != "" {
+		t.Fatalf("command marker set despite failure: %+v", transcript)
+	}
+	_, pasted := probe.snapshot()
+	if len(pasted) != 1 || pasted[0] != "复制" {
+		t.Fatalf("pasted %v, want the words as fallback", pasted)
 	}
 }

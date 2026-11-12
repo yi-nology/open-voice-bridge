@@ -34,6 +34,10 @@ type Utterance struct {
 	// Truncated marks a capture that hit its time cap instead of ending on
 	// the user's release (DOM-09): both sources label it the same way.
 	Truncated bool
+	// Command is non-empty when the utterance was a voice command (语音命令):
+	// the value is the key combo that ran. Commands are spoken acts like
+	// phrases — never history, never the "last text" strip.
+	Command string
 }
 
 // Rate is the capture rate, defaulting to the negotiated remote rate when a
@@ -65,6 +69,7 @@ type SpeechPipeline struct {
 	processor    func() llm.Processor
 	pasteEnabled func() bool
 	pasteText    func(context.Context, string) error
+	sendKeys     func(context.Context, string) error
 	sink         func(Transcript)
 	asrTimeout   time.Duration
 }
@@ -117,6 +122,29 @@ func (p *SpeechPipeline) Transcribe(parent context.Context, u Utterance) (Transc
 	rawText := result.Text
 	if rawText == "" {
 		return Transcript{}, false
+	}
+	// 语音命令: an exact command utterance runs its key combo instead of
+	// becoming text — no rules, no rewrite, no paste, no history. The match
+	// is on the raw recognition so the dictionary cannot rewrite a command.
+	if combo, ok := p.rules().Command(rawText); ok {
+		if err := p.sendKeys(ctx, combo); err != nil {
+			log.Warn("voice command failed; treating as dictation", "combo", combo, "err", err)
+		} else {
+			log.Info("voice command", "combo", combo, "chars", len([]rune(rawText)))
+			command := Transcript{
+				Text:     strings.TrimSpace(rawText),
+				RawText:  rawText,
+				Provider: result.Provider,
+				Source:   u.Ref.Kind,
+				Latency:  result.Latency,
+				Command:  combo,
+				At:       time.Now(),
+			}
+			if p.sink != nil {
+				p.sink(command)
+			}
+			return command, true
+		}
 	}
 	processed := p.applyText(ctx, rawText)
 	log.Info("recognized",

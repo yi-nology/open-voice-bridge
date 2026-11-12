@@ -67,3 +67,52 @@ func TestDictionaryReplacementsAreLiteralAndDoNotStack(t *testing.T) {
 		}
 	}
 }
+
+// 语音命令: an exactly-matched command utterance names a key combo and is
+// never dictation text. Matching trims one trailing punctuation run so
+// "复制。" fires like "复制"; anything longer stays literal.
+func TestCommandMatchesExactUtterances(t *testing.T) {
+	rules, err := New(config.TextConfig{
+		CommandsEnabled: true,
+		Commands: map[string]string{
+			"复制":  "ctrl+c",
+			"粘贴。": "ctrl+v",
+			"回车":  "enter",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cases := []struct {
+		in    string
+		combo string
+		ok    bool
+	}{
+		{"复制", "ctrl+c", true},
+		{"  复制  ", "ctrl+c", true},
+		{"复制。", "ctrl+c", true},
+		{"粘贴", "ctrl+v", true},
+		{"回车!", "enter", true},
+		{"请复制", "", false},
+		{"复制一下", "", false},
+		{"", "", false},
+	}
+	for _, tc := range cases {
+		combo, ok := rules.Command(tc.in)
+		if ok != tc.ok || combo != tc.combo {
+			t.Fatalf("Command(%q) = %q,%v want %q,%v", tc.in, combo, ok, tc.combo, tc.ok)
+		}
+	}
+}
+
+func TestCommandDisabledKeepsDictationLiteral(t *testing.T) {
+	rules, err := New(config.TextConfig{
+		Commands: map[string]string{"复制": "ctrl+c"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if combo, ok := rules.Command("复制"); ok || combo != "" {
+		t.Fatalf("Command fired while disabled: %q,%v", combo, ok)
+	}
+}

@@ -32,6 +32,8 @@ func customizedRegister(r *server.Hertz, customUI *ui.Server) {
 	r.POST("/api/mcp/tokens/revoke", customUI.MCPRevokeToken)
 
 	// Management-plane phone/input endpoints (loopback + same-site only).
+	r.GET("/api/text/commands", customUI.TextCommands)
+	r.POST("/api/text/commands", customUI.TextCommandsSave)
 	r.GET("/api/inputs", customUI.Inputs)
 	r.POST("/api/phone/enabled", customUI.PhoneEnabled)
 	r.POST("/api/phone/pairing", customUI.PhonePairing)
