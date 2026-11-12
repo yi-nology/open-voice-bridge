@@ -638,6 +638,22 @@ body.listening .subtitle-live i { background: var(--accent); }
   text-align: center; padding: 20px;
 }
 
+
+/* devices page: scan list tamed, form its own block */
+#discovered-list { max-height: 360px; overflow-y: auto; margin-right: -6px; padding-right: 6px; }
+.device-form {
+  border-top: 1px solid var(--line-soft); margin-top: 18px; padding-top: 20px;
+}
+.device-form h3 { font-size: 17px; font-weight: 600; margin-bottom: 14px; }
+.device-form .model-grid { gap: 16px 18px; }
+.device-form .check-line { align-self: start; margin-top: 26px; }
+.device-form .actions { margin-top: 18px; }
+
+
+/* panel-head buttons never wrap or shrink under long descriptions */
+.panel-head .btn, .pair-head .btn { flex: 0 0 auto; white-space: nowrap; }
+.panel-head > div:first-child { min-width: 0; }
+
 </style>
 </head>
 <body>
