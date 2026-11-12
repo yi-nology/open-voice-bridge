@@ -116,6 +116,13 @@ Small correctness fixes (DOM-10/11/12/14):
   nowhere on disk.
 - A held remote key repeats again (kernel `value=2` events): key actions
   re-tap at the source's repeat rate and macros re-execute per repeat.
+- Fixed: holding the voice key dictated nothing. The repeat re-tap above also
+  applied to F24 and the phrase keys, which are private signals to the agent's
+  key watcher rather than keys for the focused app — the watcher only accepts
+  `value=1`, so it read every re-tap as a brand-new press. Holding the button
+  opened the microphone every 50 ms and cut the capture into fragments below
+  the 250 ms transcription floor, all of them silently discarded. Trigger keys
+  now fire exactly once per physical press; every other key keeps repeating.
 - History entry ids are unique even within one clock tick (Delete removes
   exactly one entry), and the rewrite path fsyncs before the rename so a
   crash cannot leave the history empty. `Agent.SetHub` is mutex-guarded.
@@ -322,6 +329,33 @@ One guard for both network boundaries (ARC-04):
 - Internal: the phone listener no longer embeds the web asset tree. The
   composition root injects it, so a LAN-facing transport does not depend on the
   presentation layer.
+
+One composition root, no package globals (ARC-06, internal):
+
+- Fixed: building a second HTTP engine in one process silently rewired the
+  first. The generated handlers read a package-level backend variable, so the
+  last engine constructed served every route. The backend now travels on the
+  request context (`WithBackend` middleware), and the custom routes take the UI
+  server as a parameter instead of reading a global. A route whose engine has
+  no backend still answers 503 rather than panicking.
+- The phone wiring (transcription adapter, pairing/revocation payloads, input
+  source listing) moved out of `main.go` into `app/runtime`, where it is tested
+  inside its own package. The 输入源 panel keeps distinguishing the running
+  listener from the saved `phone.enabled` intent across that move.
+
+Durable writes fail cleanly, and activity data stays private (R7):
+
+- Fixed: a failed atomic replace left its `.tmp` file behind. The next writer
+  inherited it, and anything listing the directory saw a state file that was
+  never committed. Every failure after the temp file exists — write, fsync,
+  close or rename — now removes it, and the original file is still untouched.
+- Fixed: `keycounts.json` was the one state file written world-readable (0644
+  in a 0755 directory). Key-press counts are activity data — which keys, how
+  often — and only the root remapper reads them, so they now land 0600 inside
+  0700 like every other state file.
+- Two repo-wide guard tests keep the single-definition rules from drifting
+  back: no production file outside `internal/core` may hardcode the sample
+  rate, and no package outside `internal/fsutil` may rename files itself.
 
 ## 0.1.1 — 2026-11-10
 
