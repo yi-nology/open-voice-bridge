@@ -70,8 +70,11 @@ type SpeechPipeline struct {
 	pasteEnabled func() bool
 	pasteText    func(context.Context, string) error
 	sendKeys     func(context.Context, string) error
-	sink         func(Transcript)
-	asrTimeout   time.Duration
+	// rewriteMode resolves the app-aware rewrite mode (S5): "" follows the
+	// global config, "off" keeps the words literal.
+	rewriteMode func() string
+	sink        func(Transcript)
+	asrTimeout  time.Duration
 }
 
 // budgetFor scales the ASR deadline with the captured audio: a one-second tap
@@ -183,9 +186,19 @@ func (p *SpeechPipeline) applyText(parent context.Context, input string) string 
 		return snippet
 	}
 	output := input
-	if processor := p.processor(); processor != nil {
+	mode := ""
+	if p.rewriteMode != nil {
+		mode = p.rewriteMode()
+	}
+	if processor := p.processor(); processor != nil && mode != "off" {
 		ctx, cancel := context.WithTimeout(parent, 25*time.Second)
-		processed, err := processor.Process(ctx, output)
+		var processed string
+		var err error
+		if mp, ok := processor.(llm.ModeProcessor); ok {
+			processed, err = mp.ProcessMode(ctx, output, mode)
+		} else {
+			processed, err = processor.Process(ctx, output)
+		}
 		cancel()
 		if err != nil {
 			log.Warn("LLM post-process failed", "err", redactText(err.Error(), output))

@@ -50,6 +50,7 @@ type Agent interface {
 	ASRName() string
 	InsertPhrase(slot int) (string, bool)
 	SetSeqActions(map[int]remap.AgentAction)
+	SetRewriteRules([]config.AppRewriteRule)
 }
 
 // Helper is the root remapper client.
@@ -784,6 +785,41 @@ func (s *Service) UpdateTextConfig(ctx context.Context, next config.TextConfig) 
 	return nil
 }
 
+// LLMAppRules returns the app-aware rewrite rules (S5).
+func (s *Service) LLMAppRules() []config.AppRewriteRule {
+	s.cfgMu.RLock()
+	defer s.cfgMu.RUnlock()
+	return append([]config.AppRewriteRule(nil), s.cfg.LLM.AppRules...)
+}
+
+// UpdateLLMAppRules saves the app-aware rewrite rules and pushes them to the
+// live pipeline so the next utterance sees them.
+func (s *Service) UpdateLLMAppRules(rules []config.AppRewriteRule) error {
+	for _, rule := range rules {
+		if strings.TrimSpace(rule.Class) == "" {
+			return oeerrors.New("app rewrite rule needs a class name")
+		}
+		switch rule.Mode {
+		case "", "off", "cleanup", "format", "translate":
+		default:
+			return oeerrors.Errorf("unknown rewrite mode %q", rule.Mode)
+		}
+	}
+	s.cfgMu.Lock()
+	snapshot := s.configSnapshotLocked()
+	snapshot.LLM.AppRules = rules
+	saveErr := s.persistConfig(snapshot)
+	if saveErr == nil {
+		s.cfg.LLM.AppRules = rules
+	}
+	s.cfgMu.Unlock()
+	if saveErr != nil {
+		return saveErr
+	}
+	s.agent.SetRewriteRules(rules)
+	return nil
+}
+
 // PastePhrase inserts the phrase bound to slot n into the focused window —
 // the picker path of the common-phrase feature (S2).
 func (s *Service) PastePhrase(slot int) (string, bool) {
@@ -869,6 +905,8 @@ func (s *Service) SaveLLMKey(ctx context.Context, key string) error {
 }
 
 func (s *Service) UpdateLLMConfig(ctx context.Context, next config.LLMConfig) error {
+	// The generated request model predates app_rules; keep them across saves.
+	next.AppRules = s.LLMAppRules()
 	processor, err := llm.Build(next)
 	if err != nil {
 		return err

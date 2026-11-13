@@ -121,6 +121,9 @@ func (a Admin) deps() ui.Deps {
 		PhoneRevoke:        a.Phone.Revoke,
 		TextCommands:       svc.TextCommands,
 		UpdateTextCommands: svc.UpdateTextCommands,
+		PastePhrase:        svc.PastePhrase,
+		LLMAppRules:        svc.LLMAppRules,
+		UpdateLLMAppRules:  svc.UpdateLLMAppRules,
 		SetPhoneEnabled:    svc.SetPhoneEnabled,
 		HelperSocket:       a.HelperSocket,
 	}

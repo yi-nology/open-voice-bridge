@@ -541,3 +541,62 @@ func TestSeqActionWatcherRunsDeferredSteps(t *testing.T) {
 		t.Fatalf("pasted=%v launched=%v", pasted, launched)
 	}
 }
+
+// S5: the app-aware mode rides into the processor; "off" keeps the words
+// literal without touching it at all.
+type modeProbe struct {
+	modes []string
+	texts []string
+}
+
+func (m *modeProbe) Process(_ context.Context, text string) (string, error) {
+	return m.ProcessMode(context.Background(), text, "")
+}
+
+func (m *modeProbe) ProcessMode(_ context.Context, text, mode string) (string, error) {
+	m.modes = append(m.modes, mode)
+	m.texts = append(m.texts, text)
+	return "【" + text + "】", nil
+}
+
+func (m *modeProbe) Name() string { return "mode-probe" }
+func (m *modeProbe) Ping(context.Context) (time.Duration, error) {
+	return 0, nil
+}
+func (m *modeProbe) Close(context.Context) error { return nil }
+
+func TestRewriteModeRoutesPerApp(t *testing.T) {
+	rules, err := text.New(config.TextConfig{})
+	if err != nil {
+		t.Fatalf("rules: %v", err)
+	}
+	probe := &pipelineProbe{}
+	processor := &modeProbe{}
+	pipeline := buildPipeline(&fakeEngine{result: asr.Result{Text: "喂你好呃那个帮我发个邮件", Provider: "fake"}}, rules, probe, false)
+	pipeline.processor = func() llm.Processor { return processor }
+	pipeline.rewriteMode = func() string { return "format" }
+	transcript, ok := pipeline.Transcribe(context.Background(), utterance(oneSecond(), SourceRef{Kind: "remote"}))
+	if !ok {
+		t.Fatal("transcript dropped")
+	}
+	if len(processor.modes) != 1 || processor.modes[0] != "format" {
+		t.Fatalf("modes = %v, want [format]", processor.modes)
+	}
+	if transcript.Text != "【喂你好呃那个帮我发个邮件】" {
+		t.Fatalf("text = %q", transcript.Text)
+	}
+
+	// "off": no processor call, words stay literal.
+	processor.modes = nil
+	pipeline.rewriteMode = func() string { return "off" }
+	transcript, ok = pipeline.Transcribe(context.Background(), utterance(oneSecond(), SourceRef{Kind: "remote"}))
+	if !ok {
+		t.Fatal("off-mode transcript dropped")
+	}
+	if len(processor.modes) != 0 {
+		t.Fatalf("processor ran in off mode: %v", processor.modes)
+	}
+	if transcript.Text != "喂你好呃那个帮我发个邮件" {
+		t.Fatalf("off text = %q", transcript.Text)
+	}
+}

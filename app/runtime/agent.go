@@ -124,6 +124,8 @@ func RunAgent(opts AgentOptions) int {
 		phraseWatcher.Start(ctx)
 		seqWatcher := agent.NewSeqActionWatcher(ag.Watcher(), ag.SeqAction)
 		seqWatcher.Start(ctx)
+		ag.SetActiveClassFunc(focus.ActiveClass)
+		ag.SetRewriteRules(cfg.LLM.AppRules)
 		app.AddResource("agent", func(closeCtx context.Context) error {
 			return ag.Close(closeCtx)
 		})

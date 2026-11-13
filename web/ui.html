@@ -987,6 +987,16 @@ body.listening .subtitle-live i { background: var(--accent); }
       </div>
       <div id="llm-config-msg" class="msg"></div>
     </div>
+    <div class="card" style="margin-top:16px;">
+      <h3>应用感知改写</h3>
+      <p class="sub">按前台窗口类名匹配（如 <code>mail</code>、<code>code</code>、<code>wechat</code>），给不同应用切换润色档：邮件用「润色」，代码类选「不改写」保持原话，聊天可用「整理段落」。第一条匹配生效；不匹配时跟随全局模式。</p>
+      <div id="app-rules-list" class="rule-list"></div>
+      <div class="actions" style="margin-top:8px">
+        <button id="app-rules-add" class="btn small">新增规则</button>
+        <button id="app-rules-save" class="btn small primary">保存应用规则</button>
+      </div>
+      <div id="app-rules-msg" class="msg"></div>
+    </div>
     </div>
     <div id="cfg-text" class="cfg-panel">
     <div class="card">
@@ -2682,6 +2692,7 @@ function openConfigPanel(name) {
   showConfigPanel(name);
   if (name === "asr") loadASRConfig();
   if (name === "llm") loadLLMConfig();
+loadLLMAppRules();
   if (name === "text") loadTextConfig();
 }
 
@@ -3634,6 +3645,80 @@ const DEFAULT_COMMANDS = {
   "保存": "ctrl+s", "回车": "enter", "退格": "backspace", "刷新": "f5",
 };
 
+const REWRITE_MODES = [
+  ["", "跟随全局模式"],
+  ["off", "不改写（保持原话）"],
+  ["cleanup", "润色（去口头语 + 标点）"],
+  ["format", "整理段落"],
+  ["translate", "翻译成英文"],
+];
+
+function appRuleRow(ruleClass = "", mode = "") {
+  const row = document.createElement("div");
+  row.className = "rule-row";
+  const source = document.createElement("input");
+  source.className = "rule-from";
+  source.placeholder = "应用类名，如：mail / code / wechat";
+  source.value = ruleClass;
+  const select = document.createElement("select");
+  select.className = "rule-to";
+  for (const [value, label] of REWRITE_MODES) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    if (value === mode) option.selected = true;
+    select.appendChild(option);
+  }
+  const remove = document.createElement("button");
+  remove.className = "btn small";
+  remove.textContent = "删除";
+  remove.addEventListener("click", () => row.remove());
+  row.append(source, select, remove);
+  return row;
+}
+
+function renderAppRules(rules) {
+  const list = document.getElementById("app-rules-list");
+  if (!list) return;
+  list.innerHTML = "";
+  for (const rule of rules || []) list.appendChild(appRuleRow(rule.class, rule.mode));
+  if (!list.children.length) list.appendChild(appRuleRow());
+}
+
+async function loadLLMAppRules() {
+  try {
+    const res = await fetch("/api/llm/app-rules");
+    const data = await res.json();
+    if (data.ok) renderAppRules(data.rules || []);
+  } catch (error) {}
+}
+
+async function saveLLMAppRules() {
+  const msg = document.getElementById("app-rules-msg");
+  const rules = [];
+  for (const row of document.querySelectorAll("#app-rules-list .rule-row")) {
+    const ruleClass = row.querySelector(".rule-from").value.trim();
+    const mode = row.querySelector("select").value;
+    if (ruleClass) rules.push({class: ruleClass, mode});
+  }
+  try {
+    const res = await fetch("/api/llm/app-rules", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({rules}),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      if (msg) msg.textContent = "保存失败：" + errorText(data);
+      return;
+    }
+    if (msg) msg.textContent = "应用规则已保存并生效";
+    loadLLMAppRules();
+  } catch (error) {
+    if (msg) msg.textContent = "保存失败：" + error;
+  }
+}
+
 function commandRow(from = "", to = "") {
   const row = document.createElement("div");
   row.className = "rule-row";
@@ -4129,6 +4214,11 @@ document.getElementById("dictionary-add").addEventListener("click", () => {
 document.getElementById("snippet-add").addEventListener("click", () => {
   document.getElementById("snippet-list").appendChild(snippetRow());
 });
+document.getElementById("app-rules-add")?.addEventListener("click", () => {
+  document.getElementById("app-rules-list").appendChild(appRuleRow());
+});
+document.getElementById("app-rules-save")?.addEventListener("click", saveLLMAppRules);
+
 document.getElementById("commands-add").addEventListener("click", () => {
   document.getElementById("commands-list").appendChild(commandRow());
 });

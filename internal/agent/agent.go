@@ -45,6 +45,10 @@ type Agent struct {
 	seqMu      sync.RWMutex
 	seqActions map[int]remap.AgentAction
 
+	llmMu2      sync.RWMutex
+	llmAppRules []config.AppRewriteRule
+	fgClass     func() (string, error)
+
 	hub *input.Hub
 
 	mu          sync.Mutex
@@ -130,6 +134,7 @@ func (a *Agent) newPipeline() *SpeechPipeline {
 		pasteEnabled: func() bool { return a.cfg.PasteEnabled },
 		pasteText:    paste.Text,
 		sendKeys:     paste.Key,
+		rewriteMode:  a.rewriteModeFor,
 		sink:         a.recordTranscript,
 		asrTimeout:   180 * time.Second,
 	}
@@ -139,6 +144,45 @@ func (a *Agent) newPipeline() *SpeechPipeline {
 // phone listener) can run an utterance through exactly the same path as the
 // BLE remote: same engine, same rules, same subtitle and history sink.
 func (a *Agent) Speech() *SpeechPipeline { return a.pipeline }
+
+// SetActiveClassFunc injects the foreground-window probe the app-aware
+// rewrite rules match against (S5).
+func (a *Agent) SetActiveClassFunc(f func() (string, error)) {
+	a.llmMu2.Lock()
+	defer a.llmMu2.Unlock()
+	a.fgClass = f
+}
+
+// SetRewriteRules installs the app-aware rewrite rules (S5).
+func (a *Agent) SetRewriteRules(rules []config.AppRewriteRule) {
+	a.llmMu2.Lock()
+	defer a.llmMu2.Unlock()
+	a.llmAppRules = rules
+}
+
+// rewriteModeFor resolves the mode for the current foreground app: the first
+// matching rule wins, "" means the global configured mode.
+func (a *Agent) rewriteModeFor() string {
+	a.llmMu2.RLock()
+	rules := a.llmAppRules
+	probe := a.fgClass
+	a.llmMu2.RUnlock()
+	if len(rules) == 0 {
+		return ""
+	}
+	class := ""
+	if probe != nil {
+		if value, err := probe(); err == nil {
+			class = value
+		}
+	}
+	for _, rule := range rules {
+		if remap.MatchClass(class, rule.Class) {
+			return rule.Mode
+		}
+	}
+	return ""
+}
 
 // InsertPhrase pastes the phrase bound to slot n via the shared pipeline —
 // the UI picker path beside the phrase1..phrase8 key actions.

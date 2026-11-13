@@ -51,6 +51,8 @@ type LLMConfig struct {
 	Mode           string `json:"mode"`
 	Prompt         string `json:"prompt"`
 	TimeoutSeconds int    `json:"timeout_seconds"`
+	// AppRules pick the rewrite mode by foreground app (S5).
+	AppRules []AppRewriteRule `json:"app_rules,omitempty"`
 }
 
 type LLMPreset struct {
@@ -143,6 +145,14 @@ type Replacement struct {
 type Snippet struct {
 	Trigger string `json:"trigger"`
 	Text    string `json:"text"`
+}
+
+// AppRewriteRule selects a rewrite mode by focused window class (S5):
+// "off" keeps dictation literal, "" follows the global mode, otherwise the
+// named LLM mode ("cleanup" / "format" / "translate").
+type AppRewriteRule struct {
+	Class string `json:"class"`
+	Mode  string `json:"mode"`
 }
 
 type TextConfig struct {

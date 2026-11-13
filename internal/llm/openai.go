@@ -54,6 +54,19 @@ func (o *OpenAI) Ping(ctx context.Context) (time.Duration, error) {
 	return time.Since(start), err
 }
 
+// ProcessMode rewrites with an explicit mode, overriding the configured one
+// for this call — the app-aware rewrite path (S5). Empty mode = default.
+func (o *OpenAI) ProcessMode(ctx context.Context, text, mode string) (string, error) {
+	mode = strings.TrimSpace(mode)
+	if mode == "" {
+		mode = o.cfg.Mode
+	}
+	saved := o.cfg.Mode
+	o.cfg.Mode = mode
+	defer func() { o.cfg.Mode = saved }()
+	return o.Process(ctx, text)
+}
+
 func (o *OpenAI) Process(ctx context.Context, text string) (string, error) {
 	text = strings.TrimSpace(text)
 	if text == "" {

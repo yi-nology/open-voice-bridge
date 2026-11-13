@@ -23,14 +23,15 @@ import (
 )
 
 type fakeAgent struct {
-	phraseText string
-	seqMu      sync.Mutex
-	seqActions map[int]remap.AgentAction
-	connected  bool
-	ready      bool
-	engine     asr.Engine
-	view       *core.AgentView
-	address    string
+	phraseText   string
+	seqMu        sync.Mutex
+	seqActions   map[int]remap.AgentAction
+	rewriteRules []config.AppRewriteRule
+	connected    bool
+	ready        bool
+	engine       asr.Engine
+	view         *core.AgentView
+	address      string
 }
 
 func (f *fakeAgent) Status() core.AgentView {
@@ -46,6 +47,12 @@ func (f *fakeAgent) Status() core.AgentView {
 }
 
 func (f *fakeAgent) Reconnect() error { return nil }
+func (f *fakeAgent) SetRewriteRules(rules []config.AppRewriteRule) {
+	f.seqMu.Lock()
+	defer f.seqMu.Unlock()
+	f.rewriteRules = rules
+}
+
 func (f *fakeAgent) SetSeqActions(actions map[int]remap.AgentAction) {
 	f.seqMu.Lock()
 	defer f.seqMu.Unlock()
@@ -503,5 +510,36 @@ func TestApplyRewritesDeferredSeqSteps(t *testing.T) {
 	defer agent.seqMu.Unlock()
 	if len(agent.seqActions) != 2 || agent.seqActions[0].Kind != "open" || agent.seqActions[1].Arg != "你好" {
 		t.Fatalf("registry = %+v", agent.seqActions)
+	}
+}
+
+// S5: app-aware rewrite rules validate modes, persist, and reach the live
+// pipeline; the typed LLM config save must not wipe them.
+func TestUpdateLLMAppRulesValidatesAndPersists(t *testing.T) {
+	svc, agent, _, path := newTestService(t)
+	if err := svc.UpdateLLMAppRules([]config.AppRewriteRule{
+		{Class: "mail", Mode: "cleanup"},
+		{Class: "code", Mode: "off"},
+	}); err != nil {
+		t.Fatalf("UpdateLLMAppRules: %v", err)
+	}
+	agent.seqMu.Lock()
+	got := agent.rewriteRules
+	agent.seqMu.Unlock()
+	if len(got) != 2 || got[1].Mode != "off" {
+		t.Fatalf("agent rules = %+v", got)
+	}
+	if err := svc.UpdateLLMAppRules([]config.AppRewriteRule{{Class: "mail", Mode: "nonsense"}}); err == nil {
+		t.Fatal("unknown mode accepted")
+	}
+	if err := svc.UpdateLLMAppRules([]config.AppRewriteRule{{Class: "", Mode: "off"}}); err == nil {
+		t.Fatal("empty class accepted")
+	}
+	loaded, err := config.Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(loaded.LLM.AppRules) != 2 {
+		t.Fatalf("persisted rules = %+v", loaded.LLM.AppRules)
 	}
 }

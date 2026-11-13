@@ -12,6 +12,12 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/config"
 )
 
+// ModeProcessor is implemented by processors that can switch rewrite mode
+// per call (S5 app-aware rewriting). mode "off" is handled by callers.
+type ModeProcessor interface {
+	ProcessMode(ctx context.Context, text, mode string) (string, error)
+}
+
 type Processor interface {
 	Name() string
 	Process(ctx context.Context, text string) (string, error)

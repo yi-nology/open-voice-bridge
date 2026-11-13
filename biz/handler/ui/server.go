@@ -75,6 +75,8 @@ type Deps struct {
 	TextCommands        func() (bool, map[string]string)
 	UpdateTextCommands  func(bool, map[string]string) error
 	PastePhrase         func(int) (string, bool)
+	LLMAppRules         func() []config.AppRewriteRule
+	UpdateLLMAppRules   func([]config.AppRewriteRule) error
 	HelperSocket        string
 }
 
