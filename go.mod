@@ -3,11 +3,11 @@ module github.com/yi-nology/open-voice-bridge
 go 1.27.3
 
 require (
-	github.com/apache/thrift v0.13.0
+	github.com/apache/thrift v0.25.0
 	github.com/bendahl/uinput v1.7.0
 	github.com/cloudwego/hertz v0.10.6
 	github.com/coder/websocket v1.8.15
-	github.com/godbus/dbus/v5 v5.1.0
+	github.com/godbus/dbus/v5 v5.2.4
 	github.com/jezek/xgb v1.3.1
 	github.com/oekit/bootstrap v0.6.15
 	github.com/oekit/concurrency v0.28.1
@@ -17,7 +17,7 @@ require (
 	github.com/oekit/middleware v0.13.13
 	github.com/oekit/pkg v0.37.1
 	github.com/prometheus/client_golang v1.25.0
-	golang.org/x/sys v0.49.0
+	golang.org/x/sys v0.50.0
 )
 
 require (

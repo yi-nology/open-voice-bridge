@@ -20,31 +20,31 @@ func (p *HealthReq) InitDefault() {
 
 var fieldIDToName_HealthReq = map[int16]string{}
 
-func (p *HealthReq) Read(iprot thrift.TProtocol) (err error) {
+func (p *HealthReq) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
 		if fieldTypeId == thrift.STOP {
 			break
 		}
-		if err = iprot.Skip(fieldTypeId); err != nil {
+		if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 			goto SkipFieldTypeError
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -62,16 +62,16 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *HealthReq) Write(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteStructBegin("HealthReq"); err != nil {
+func (p *HealthReq) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteStructBegin(ctx, "HealthReq"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -110,17 +110,17 @@ var fieldIDToName_HealthResp = map[int16]string{
 	1: "ok",
 }
 
-func (p *HealthResp) Read(iprot thrift.TProtocol) (err error) {
+func (p *HealthResp) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -131,22 +131,22 @@ func (p *HealthResp) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -166,10 +166,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *HealthResp) ReadField1(iprot thrift.TProtocol) error {
+func (p *HealthResp) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -178,21 +178,21 @@ func (p *HealthResp) ReadField1(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *HealthResp) Write(oprot thrift.TProtocol) (err error) {
+func (p *HealthResp) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("HealthResp"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "HealthResp"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -206,14 +206,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *HealthResp) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("ok", thrift.BOOL, 1); err != nil {
+func (p *HealthResp) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "ok", thrift.BOOL, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Ok); err != nil {
+	if err := oprot.WriteBool(ctx, p.Ok); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -243,31 +243,31 @@ func (p *ReadyReq) InitDefault() {
 
 var fieldIDToName_ReadyReq = map[int16]string{}
 
-func (p *ReadyReq) Read(iprot thrift.TProtocol) (err error) {
+func (p *ReadyReq) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
 		if fieldTypeId == thrift.STOP {
 			break
 		}
-		if err = iprot.Skip(fieldTypeId); err != nil {
+		if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 			goto SkipFieldTypeError
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -285,16 +285,16 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *ReadyReq) Write(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteStructBegin("ReadyReq"); err != nil {
+func (p *ReadyReq) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteStructBegin(ctx, "ReadyReq"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -399,17 +399,17 @@ func (p *ReadyResp) IsSetAsrError() bool {
 	return p.AsrError != nil
 }
 
-func (p *ReadyResp) Read(iprot thrift.TProtocol) (err error) {
+func (p *ReadyResp) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -420,86 +420,86 @@ func (p *ReadyResp) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 3:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField3(iprot); err != nil {
+				if err = p.ReadField3(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 4:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField4(iprot); err != nil {
+				if err = p.ReadField4(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 5:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField5(iprot); err != nil {
+				if err = p.ReadField5(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 6:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField6(iprot); err != nil {
+				if err = p.ReadField6(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 7:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField7(iprot); err != nil {
+				if err = p.ReadField7(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 8:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField8(iprot); err != nil {
+				if err = p.ReadField8(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 9:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField9(iprot); err != nil {
+				if err = p.ReadField9(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -519,10 +519,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *ReadyResp) ReadField1(iprot thrift.TProtocol) error {
+func (p *ReadyResp) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -530,10 +530,10 @@ func (p *ReadyResp) ReadField1(iprot thrift.TProtocol) error {
 	p.Ok = _field
 	return nil
 }
-func (p *ReadyResp) ReadField2(iprot thrift.TProtocol) error {
+func (p *ReadyResp) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -541,10 +541,10 @@ func (p *ReadyResp) ReadField2(iprot thrift.TProtocol) error {
 	p.KeydActive = _field
 	return nil
 }
-func (p *ReadyResp) ReadField3(iprot thrift.TProtocol) error {
+func (p *ReadyResp) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -552,10 +552,10 @@ func (p *ReadyResp) ReadField3(iprot thrift.TProtocol) error {
 	p.RemotePresent = _field
 	return nil
 }
-func (p *ReadyResp) ReadField4(iprot thrift.TProtocol) error {
+func (p *ReadyResp) ReadField4(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -563,10 +563,10 @@ func (p *ReadyResp) ReadField4(iprot thrift.TProtocol) error {
 	p.BleConnected = _field
 	return nil
 }
-func (p *ReadyResp) ReadField5(iprot thrift.TProtocol) error {
+func (p *ReadyResp) ReadField5(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -574,10 +574,10 @@ func (p *ReadyResp) ReadField5(iprot thrift.TProtocol) error {
 	p.AtvvReady = _field
 	return nil
 }
-func (p *ReadyResp) ReadField6(iprot thrift.TProtocol) error {
+func (p *ReadyResp) ReadField6(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -585,10 +585,10 @@ func (p *ReadyResp) ReadField6(iprot thrift.TProtocol) error {
 	p.AsrReady = _field
 	return nil
 }
-func (p *ReadyResp) ReadField7(iprot thrift.TProtocol) error {
+func (p *ReadyResp) ReadField7(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field *string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = &v
@@ -596,10 +596,10 @@ func (p *ReadyResp) ReadField7(iprot thrift.TProtocol) error {
 	p.HelperError = _field
 	return nil
 }
-func (p *ReadyResp) ReadField8(iprot thrift.TProtocol) error {
+func (p *ReadyResp) ReadField8(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field *string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = &v
@@ -607,10 +607,10 @@ func (p *ReadyResp) ReadField8(iprot thrift.TProtocol) error {
 	p.AsrError = _field
 	return nil
 }
-func (p *ReadyResp) ReadField9(iprot thrift.TProtocol) error {
+func (p *ReadyResp) ReadField9(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -619,53 +619,53 @@ func (p *ReadyResp) ReadField9(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *ReadyResp) Write(oprot thrift.TProtocol) (err error) {
+func (p *ReadyResp) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ReadyResp"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "ReadyResp"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
-		if err = p.writeField3(oprot); err != nil {
+		if err = p.writeField3(ctx, oprot); err != nil {
 			fieldId = 3
 			goto WriteFieldError
 		}
-		if err = p.writeField4(oprot); err != nil {
+		if err = p.writeField4(ctx, oprot); err != nil {
 			fieldId = 4
 			goto WriteFieldError
 		}
-		if err = p.writeField5(oprot); err != nil {
+		if err = p.writeField5(ctx, oprot); err != nil {
 			fieldId = 5
 			goto WriteFieldError
 		}
-		if err = p.writeField6(oprot); err != nil {
+		if err = p.writeField6(ctx, oprot); err != nil {
 			fieldId = 6
 			goto WriteFieldError
 		}
-		if err = p.writeField7(oprot); err != nil {
+		if err = p.writeField7(ctx, oprot); err != nil {
 			fieldId = 7
 			goto WriteFieldError
 		}
-		if err = p.writeField8(oprot); err != nil {
+		if err = p.writeField8(ctx, oprot); err != nil {
 			fieldId = 8
 			goto WriteFieldError
 		}
-		if err = p.writeField9(oprot); err != nil {
+		if err = p.writeField9(ctx, oprot); err != nil {
 			fieldId = 9
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -679,14 +679,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *ReadyResp) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("ok", thrift.BOOL, 1); err != nil {
+func (p *ReadyResp) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "ok", thrift.BOOL, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Ok); err != nil {
+	if err := oprot.WriteBool(ctx, p.Ok); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -696,14 +696,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *ReadyResp) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("keyd_active", thrift.BOOL, 2); err != nil {
+func (p *ReadyResp) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "keyd_active", thrift.BOOL, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.KeydActive); err != nil {
+	if err := oprot.WriteBool(ctx, p.KeydActive); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -713,14 +713,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *ReadyResp) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("remote_present", thrift.BOOL, 3); err != nil {
+func (p *ReadyResp) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "remote_present", thrift.BOOL, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.RemotePresent); err != nil {
+	if err := oprot.WriteBool(ctx, p.RemotePresent); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -730,14 +730,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *ReadyResp) writeField4(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("ble_connected", thrift.BOOL, 4); err != nil {
+func (p *ReadyResp) writeField4(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "ble_connected", thrift.BOOL, 4); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.BleConnected); err != nil {
+	if err := oprot.WriteBool(ctx, p.BleConnected); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -747,14 +747,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 4 end error: ", p), err)
 }
 
-func (p *ReadyResp) writeField5(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("atvv_ready", thrift.BOOL, 5); err != nil {
+func (p *ReadyResp) writeField5(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "atvv_ready", thrift.BOOL, 5); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.AtvvReady); err != nil {
+	if err := oprot.WriteBool(ctx, p.AtvvReady); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -764,14 +764,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 5 end error: ", p), err)
 }
 
-func (p *ReadyResp) writeField6(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("asr_ready", thrift.BOOL, 6); err != nil {
+func (p *ReadyResp) writeField6(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "asr_ready", thrift.BOOL, 6); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.AsrReady); err != nil {
+	if err := oprot.WriteBool(ctx, p.AsrReady); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -781,15 +781,15 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 6 end error: ", p), err)
 }
 
-func (p *ReadyResp) writeField7(oprot thrift.TProtocol) (err error) {
+func (p *ReadyResp) writeField7(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetHelperError() {
-		if err = oprot.WriteFieldBegin("helper_error", thrift.STRING, 7); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "helper_error", thrift.STRING, 7); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := oprot.WriteString(*p.HelperError); err != nil {
+		if err := oprot.WriteString(ctx, *p.HelperError); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -800,15 +800,15 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 7 end error: ", p), err)
 }
 
-func (p *ReadyResp) writeField8(oprot thrift.TProtocol) (err error) {
+func (p *ReadyResp) writeField8(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetAsrError() {
-		if err = oprot.WriteFieldBegin("asr_error", thrift.STRING, 8); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "asr_error", thrift.STRING, 8); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := oprot.WriteString(*p.AsrError); err != nil {
+		if err := oprot.WriteString(ctx, *p.AsrError); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -819,14 +819,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 8 end error: ", p), err)
 }
 
-func (p *ReadyResp) writeField9(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("mic_healthy", thrift.BOOL, 9); err != nil {
+func (p *ReadyResp) writeField9(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "mic_healthy", thrift.BOOL, 9); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.MicHealthy); err != nil {
+	if err := oprot.WriteBool(ctx, p.MicHealthy); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -856,31 +856,31 @@ func (p *StatusReq) InitDefault() {
 
 var fieldIDToName_StatusReq = map[int16]string{}
 
-func (p *StatusReq) Read(iprot thrift.TProtocol) (err error) {
+func (p *StatusReq) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
 		if fieldTypeId == thrift.STOP {
 			break
 		}
-		if err = iprot.Skip(fieldTypeId); err != nil {
+		if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 			goto SkipFieldTypeError
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -898,16 +898,16 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *StatusReq) Write(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteStructBegin("StatusReq"); err != nil {
+func (p *StatusReq) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteStructBegin(ctx, "StatusReq"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -1129,17 +1129,17 @@ func (p *StatusResp) IsSetLastAt() bool {
 	return p.LastAt != nil
 }
 
-func (p *StatusResp) Read(iprot thrift.TProtocol) (err error) {
+func (p *StatusResp) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -1150,230 +1150,230 @@ func (p *StatusResp) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 3:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField3(iprot); err != nil {
+				if err = p.ReadField3(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 4:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField4(iprot); err != nil {
+				if err = p.ReadField4(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 5:
 			if fieldTypeId == thrift.MAP {
-				if err = p.ReadField5(iprot); err != nil {
+				if err = p.ReadField5(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 6:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField6(iprot); err != nil {
+				if err = p.ReadField6(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 7:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField7(iprot); err != nil {
+				if err = p.ReadField7(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 8:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField8(iprot); err != nil {
+				if err = p.ReadField8(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 9:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField9(iprot); err != nil {
+				if err = p.ReadField9(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 10:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField10(iprot); err != nil {
+				if err = p.ReadField10(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 11:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField11(iprot); err != nil {
+				if err = p.ReadField11(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 12:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField12(iprot); err != nil {
+				if err = p.ReadField12(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 13:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField13(iprot); err != nil {
+				if err = p.ReadField13(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 14:
 			if fieldTypeId == thrift.LIST {
-				if err = p.ReadField14(iprot); err != nil {
+				if err = p.ReadField14(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 15:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField15(iprot); err != nil {
+				if err = p.ReadField15(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 16:
 			if fieldTypeId == thrift.LIST {
-				if err = p.ReadField16(iprot); err != nil {
+				if err = p.ReadField16(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 17:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField17(iprot); err != nil {
+				if err = p.ReadField17(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 18:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField18(iprot); err != nil {
+				if err = p.ReadField18(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 19:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField19(iprot); err != nil {
+				if err = p.ReadField19(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 20:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField20(iprot); err != nil {
+				if err = p.ReadField20(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 21:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField21(iprot); err != nil {
+				if err = p.ReadField21(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 22:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField22(iprot); err != nil {
+				if err = p.ReadField22(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 23:
 			if fieldTypeId == thrift.I64 {
-				if err = p.ReadField23(iprot); err != nil {
+				if err = p.ReadField23(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 24:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField24(iprot); err != nil {
+				if err = p.ReadField24(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 25:
 			if fieldTypeId == thrift.I64 {
-				if err = p.ReadField25(iprot); err != nil {
+				if err = p.ReadField25(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 26:
 			if fieldTypeId == thrift.MAP {
-				if err = p.ReadField26(iprot); err != nil {
+				if err = p.ReadField26(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 27:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField27(iprot); err != nil {
+				if err = p.ReadField27(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -1393,10 +1393,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *StatusResp) ReadField1(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1404,10 +1404,10 @@ func (p *StatusResp) ReadField1(iprot thrift.TProtocol) error {
 	p.Ok = _field
 	return nil
 }
-func (p *StatusResp) ReadField2(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1415,10 +1415,10 @@ func (p *StatusResp) ReadField2(iprot thrift.TProtocol) error {
 	p.Address = _field
 	return nil
 }
-func (p *StatusResp) ReadField3(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1426,10 +1426,10 @@ func (p *StatusResp) ReadField3(iprot thrift.TProtocol) error {
 	p.KeydActive = _field
 	return nil
 }
-func (p *StatusResp) ReadField4(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField4(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1437,22 +1437,22 @@ func (p *StatusResp) ReadField4(iprot thrift.TProtocol) error {
 	p.RemotePresent = _field
 	return nil
 }
-func (p *StatusResp) ReadField5(iprot thrift.TProtocol) error {
-	_, _, size, err := iprot.ReadMapBegin()
+func (p *StatusResp) ReadField5(ctx context.Context, iprot thrift.TProtocol) error {
+	_, _, size, err := iprot.ReadMapBegin(ctx)
 	if err != nil {
 		return err
 	}
 	_field := make(map[string]string, size)
 	for i := 0; i < size; i++ {
 		var _key string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_key = v
 		}
 
 		var _val string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_val = v
@@ -1460,16 +1460,16 @@ func (p *StatusResp) ReadField5(iprot thrift.TProtocol) error {
 
 		_field[_key] = _val
 	}
-	if err := iprot.ReadMapEnd(); err != nil {
+	if err := iprot.ReadMapEnd(ctx); err != nil {
 		return err
 	}
 	p.Mapping = _field
 	return nil
 }
-func (p *StatusResp) ReadField6(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField6(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1477,10 +1477,10 @@ func (p *StatusResp) ReadField6(iprot thrift.TProtocol) error {
 	p.Config = _field
 	return nil
 }
-func (p *StatusResp) ReadField7(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField7(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1488,10 +1488,10 @@ func (p *StatusResp) ReadField7(iprot thrift.TProtocol) error {
 	p.MicActive = _field
 	return nil
 }
-func (p *StatusResp) ReadField8(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField8(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1499,10 +1499,10 @@ func (p *StatusResp) ReadField8(iprot thrift.TProtocol) error {
 	p.BleConnected = _field
 	return nil
 }
-func (p *StatusResp) ReadField9(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField9(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1510,10 +1510,10 @@ func (p *StatusResp) ReadField9(iprot thrift.TProtocol) error {
 	p.AtvvReady = _field
 	return nil
 }
-func (p *StatusResp) ReadField10(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField10(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1521,10 +1521,10 @@ func (p *StatusResp) ReadField10(iprot thrift.TProtocol) error {
 	p.AsrBackend = _field
 	return nil
 }
-func (p *StatusResp) ReadField11(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField11(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1532,10 +1532,10 @@ func (p *StatusResp) ReadField11(iprot thrift.TProtocol) error {
 	p.AsrLocal = _field
 	return nil
 }
-func (p *StatusResp) ReadField12(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField12(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1543,10 +1543,10 @@ func (p *StatusResp) ReadField12(iprot thrift.TProtocol) error {
 	p.LastText = _field
 	return nil
 }
-func (p *StatusResp) ReadField13(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField13(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1554,8 +1554,8 @@ func (p *StatusResp) ReadField13(iprot thrift.TProtocol) error {
 	p.AsrProvider = _field
 	return nil
 }
-func (p *StatusResp) ReadField14(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
+func (p *StatusResp) ReadField14(ctx context.Context, iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -1563,7 +1563,7 @@ func (p *StatusResp) ReadField14(iprot thrift.TProtocol) error {
 	for i := 0; i < size; i++ {
 
 		var _elem string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_elem = v
@@ -1571,16 +1571,16 @@ func (p *StatusResp) ReadField14(iprot thrift.TProtocol) error {
 
 		_field = append(_field, _elem)
 	}
-	if err := iprot.ReadListEnd(); err != nil {
+	if err := iprot.ReadListEnd(ctx); err != nil {
 		return err
 	}
 	p.AsrProviders = _field
 	return nil
 }
-func (p *StatusResp) ReadField15(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField15(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1588,8 +1588,8 @@ func (p *StatusResp) ReadField15(iprot thrift.TProtocol) error {
 	p.KeymapProfile = _field
 	return nil
 }
-func (p *StatusResp) ReadField16(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
+func (p *StatusResp) ReadField16(ctx context.Context, iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -1597,7 +1597,7 @@ func (p *StatusResp) ReadField16(iprot thrift.TProtocol) error {
 	for i := 0; i < size; i++ {
 
 		var _elem string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_elem = v
@@ -1605,16 +1605,16 @@ func (p *StatusResp) ReadField16(iprot thrift.TProtocol) error {
 
 		_field = append(_field, _elem)
 	}
-	if err := iprot.ReadListEnd(); err != nil {
+	if err := iprot.ReadListEnd(ctx); err != nil {
 		return err
 	}
 	p.KeymapProfiles = _field
 	return nil
 }
-func (p *StatusResp) ReadField17(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField17(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1622,10 +1622,10 @@ func (p *StatusResp) ReadField17(iprot thrift.TProtocol) error {
 	p.AgentAutostart = _field
 	return nil
 }
-func (p *StatusResp) ReadField18(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField18(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1633,10 +1633,10 @@ func (p *StatusResp) ReadField18(iprot thrift.TProtocol) error {
 	p.RemapAutostart = _field
 	return nil
 }
-func (p *StatusResp) ReadField19(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField19(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1644,10 +1644,10 @@ func (p *StatusResp) ReadField19(iprot thrift.TProtocol) error {
 	p.Capturing = _field
 	return nil
 }
-func (p *StatusResp) ReadField20(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField20(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field *string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = &v
@@ -1655,10 +1655,10 @@ func (p *StatusResp) ReadField20(iprot thrift.TProtocol) error {
 	p.HelperError = _field
 	return nil
 }
-func (p *StatusResp) ReadField21(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField21(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field *string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = &v
@@ -1666,10 +1666,10 @@ func (p *StatusResp) ReadField21(iprot thrift.TProtocol) error {
 	p.AsrError = _field
 	return nil
 }
-func (p *StatusResp) ReadField22(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField22(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1677,10 +1677,10 @@ func (p *StatusResp) ReadField22(iprot thrift.TProtocol) error {
 	p.MicHealthy = _field
 	return nil
 }
-func (p *StatusResp) ReadField23(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField23(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field int64
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadI64(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1688,10 +1688,10 @@ func (p *StatusResp) ReadField23(iprot thrift.TProtocol) error {
 	p.LastLatencyMs = _field
 	return nil
 }
-func (p *StatusResp) ReadField24(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField24(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1699,10 +1699,10 @@ func (p *StatusResp) ReadField24(iprot thrift.TProtocol) error {
 	p.Platform = _field
 	return nil
 }
-func (p *StatusResp) ReadField25(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField25(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field int64
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadI64(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1710,22 +1710,22 @@ func (p *StatusResp) ReadField25(iprot thrift.TProtocol) error {
 	p.KeyTotal = _field
 	return nil
 }
-func (p *StatusResp) ReadField26(iprot thrift.TProtocol) error {
-	_, _, size, err := iprot.ReadMapBegin()
+func (p *StatusResp) ReadField26(ctx context.Context, iprot thrift.TProtocol) error {
+	_, _, size, err := iprot.ReadMapBegin(ctx)
 	if err != nil {
 		return err
 	}
 	_field := make(map[string]int64, size)
 	for i := 0; i < size; i++ {
 		var _key string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_key = v
 		}
 
 		var _val int64
-		if v, err := iprot.ReadI64(); err != nil {
+		if v, err := iprot.ReadI64(ctx); err != nil {
 			return err
 		} else {
 			_val = v
@@ -1733,16 +1733,16 @@ func (p *StatusResp) ReadField26(iprot thrift.TProtocol) error {
 
 		_field[_key] = _val
 	}
-	if err := iprot.ReadMapEnd(); err != nil {
+	if err := iprot.ReadMapEnd(ctx); err != nil {
 		return err
 	}
 	p.KeyCounts = _field
 	return nil
 }
-func (p *StatusResp) ReadField27(iprot thrift.TProtocol) error {
+func (p *StatusResp) ReadField27(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field *string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = &v
@@ -1751,125 +1751,125 @@ func (p *StatusResp) ReadField27(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *StatusResp) Write(oprot thrift.TProtocol) (err error) {
+func (p *StatusResp) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("StatusResp"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "StatusResp"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
-		if err = p.writeField3(oprot); err != nil {
+		if err = p.writeField3(ctx, oprot); err != nil {
 			fieldId = 3
 			goto WriteFieldError
 		}
-		if err = p.writeField4(oprot); err != nil {
+		if err = p.writeField4(ctx, oprot); err != nil {
 			fieldId = 4
 			goto WriteFieldError
 		}
-		if err = p.writeField5(oprot); err != nil {
+		if err = p.writeField5(ctx, oprot); err != nil {
 			fieldId = 5
 			goto WriteFieldError
 		}
-		if err = p.writeField6(oprot); err != nil {
+		if err = p.writeField6(ctx, oprot); err != nil {
 			fieldId = 6
 			goto WriteFieldError
 		}
-		if err = p.writeField7(oprot); err != nil {
+		if err = p.writeField7(ctx, oprot); err != nil {
 			fieldId = 7
 			goto WriteFieldError
 		}
-		if err = p.writeField8(oprot); err != nil {
+		if err = p.writeField8(ctx, oprot); err != nil {
 			fieldId = 8
 			goto WriteFieldError
 		}
-		if err = p.writeField9(oprot); err != nil {
+		if err = p.writeField9(ctx, oprot); err != nil {
 			fieldId = 9
 			goto WriteFieldError
 		}
-		if err = p.writeField10(oprot); err != nil {
+		if err = p.writeField10(ctx, oprot); err != nil {
 			fieldId = 10
 			goto WriteFieldError
 		}
-		if err = p.writeField11(oprot); err != nil {
+		if err = p.writeField11(ctx, oprot); err != nil {
 			fieldId = 11
 			goto WriteFieldError
 		}
-		if err = p.writeField12(oprot); err != nil {
+		if err = p.writeField12(ctx, oprot); err != nil {
 			fieldId = 12
 			goto WriteFieldError
 		}
-		if err = p.writeField13(oprot); err != nil {
+		if err = p.writeField13(ctx, oprot); err != nil {
 			fieldId = 13
 			goto WriteFieldError
 		}
-		if err = p.writeField14(oprot); err != nil {
+		if err = p.writeField14(ctx, oprot); err != nil {
 			fieldId = 14
 			goto WriteFieldError
 		}
-		if err = p.writeField15(oprot); err != nil {
+		if err = p.writeField15(ctx, oprot); err != nil {
 			fieldId = 15
 			goto WriteFieldError
 		}
-		if err = p.writeField16(oprot); err != nil {
+		if err = p.writeField16(ctx, oprot); err != nil {
 			fieldId = 16
 			goto WriteFieldError
 		}
-		if err = p.writeField17(oprot); err != nil {
+		if err = p.writeField17(ctx, oprot); err != nil {
 			fieldId = 17
 			goto WriteFieldError
 		}
-		if err = p.writeField18(oprot); err != nil {
+		if err = p.writeField18(ctx, oprot); err != nil {
 			fieldId = 18
 			goto WriteFieldError
 		}
-		if err = p.writeField19(oprot); err != nil {
+		if err = p.writeField19(ctx, oprot); err != nil {
 			fieldId = 19
 			goto WriteFieldError
 		}
-		if err = p.writeField20(oprot); err != nil {
+		if err = p.writeField20(ctx, oprot); err != nil {
 			fieldId = 20
 			goto WriteFieldError
 		}
-		if err = p.writeField21(oprot); err != nil {
+		if err = p.writeField21(ctx, oprot); err != nil {
 			fieldId = 21
 			goto WriteFieldError
 		}
-		if err = p.writeField22(oprot); err != nil {
+		if err = p.writeField22(ctx, oprot); err != nil {
 			fieldId = 22
 			goto WriteFieldError
 		}
-		if err = p.writeField23(oprot); err != nil {
+		if err = p.writeField23(ctx, oprot); err != nil {
 			fieldId = 23
 			goto WriteFieldError
 		}
-		if err = p.writeField24(oprot); err != nil {
+		if err = p.writeField24(ctx, oprot); err != nil {
 			fieldId = 24
 			goto WriteFieldError
 		}
-		if err = p.writeField25(oprot); err != nil {
+		if err = p.writeField25(ctx, oprot); err != nil {
 			fieldId = 25
 			goto WriteFieldError
 		}
-		if err = p.writeField26(oprot); err != nil {
+		if err = p.writeField26(ctx, oprot); err != nil {
 			fieldId = 26
 			goto WriteFieldError
 		}
-		if err = p.writeField27(oprot); err != nil {
+		if err = p.writeField27(ctx, oprot); err != nil {
 			fieldId = 27
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -1883,14 +1883,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *StatusResp) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("ok", thrift.BOOL, 1); err != nil {
+func (p *StatusResp) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "ok", thrift.BOOL, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Ok); err != nil {
+	if err := oprot.WriteBool(ctx, p.Ok); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -1900,14 +1900,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("address", thrift.STRING, 2); err != nil {
+func (p *StatusResp) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "address", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Address); err != nil {
+	if err := oprot.WriteString(ctx, p.Address); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -1917,14 +1917,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("keyd_active", thrift.BOOL, 3); err != nil {
+func (p *StatusResp) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "keyd_active", thrift.BOOL, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.KeydActive); err != nil {
+	if err := oprot.WriteBool(ctx, p.KeydActive); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -1934,14 +1934,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField4(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("remote_present", thrift.BOOL, 4); err != nil {
+func (p *StatusResp) writeField4(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "remote_present", thrift.BOOL, 4); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.RemotePresent); err != nil {
+	if err := oprot.WriteBool(ctx, p.RemotePresent); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -1951,25 +1951,25 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 4 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField5(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("mapping", thrift.MAP, 5); err != nil {
+func (p *StatusResp) writeField5(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "mapping", thrift.MAP, 5); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteMapBegin(thrift.STRING, thrift.STRING, len(p.Mapping)); err != nil {
+	if err := oprot.WriteMapBegin(ctx, thrift.STRING, thrift.STRING, len(p.Mapping)); err != nil {
 		return err
 	}
 	for k, v := range p.Mapping {
-		if err := oprot.WriteString(k); err != nil {
+		if err := oprot.WriteString(ctx, k); err != nil {
 			return err
 		}
-		if err := oprot.WriteString(v); err != nil {
+		if err := oprot.WriteString(ctx, v); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteMapEnd(); err != nil {
+	if err := oprot.WriteMapEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -1979,14 +1979,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 5 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField6(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("config", thrift.STRING, 6); err != nil {
+func (p *StatusResp) writeField6(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "config", thrift.STRING, 6); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Config); err != nil {
+	if err := oprot.WriteString(ctx, p.Config); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -1996,14 +1996,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 6 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField7(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("mic_active", thrift.BOOL, 7); err != nil {
+func (p *StatusResp) writeField7(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "mic_active", thrift.BOOL, 7); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.MicActive); err != nil {
+	if err := oprot.WriteBool(ctx, p.MicActive); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2013,14 +2013,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 7 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField8(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("ble_connected", thrift.BOOL, 8); err != nil {
+func (p *StatusResp) writeField8(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "ble_connected", thrift.BOOL, 8); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.BleConnected); err != nil {
+	if err := oprot.WriteBool(ctx, p.BleConnected); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2030,14 +2030,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 8 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField9(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("atvv_ready", thrift.BOOL, 9); err != nil {
+func (p *StatusResp) writeField9(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "atvv_ready", thrift.BOOL, 9); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.AtvvReady); err != nil {
+	if err := oprot.WriteBool(ctx, p.AtvvReady); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2047,14 +2047,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 9 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField10(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("asr_backend", thrift.STRING, 10); err != nil {
+func (p *StatusResp) writeField10(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "asr_backend", thrift.STRING, 10); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.AsrBackend); err != nil {
+	if err := oprot.WriteString(ctx, p.AsrBackend); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2064,14 +2064,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 10 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField11(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("asr_local", thrift.BOOL, 11); err != nil {
+func (p *StatusResp) writeField11(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "asr_local", thrift.BOOL, 11); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.AsrLocal); err != nil {
+	if err := oprot.WriteBool(ctx, p.AsrLocal); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2081,14 +2081,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 11 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField12(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("last_text", thrift.STRING, 12); err != nil {
+func (p *StatusResp) writeField12(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "last_text", thrift.STRING, 12); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.LastText); err != nil {
+	if err := oprot.WriteString(ctx, p.LastText); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2098,14 +2098,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 12 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField13(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("asr_provider", thrift.STRING, 13); err != nil {
+func (p *StatusResp) writeField13(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "asr_provider", thrift.STRING, 13); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.AsrProvider); err != nil {
+	if err := oprot.WriteString(ctx, p.AsrProvider); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2115,22 +2115,22 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 13 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField14(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("asr_providers", thrift.LIST, 14); err != nil {
+func (p *StatusResp) writeField14(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "asr_providers", thrift.LIST, 14); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRING, len(p.AsrProviders)); err != nil {
+	if err := oprot.WriteListBegin(ctx, thrift.STRING, len(p.AsrProviders)); err != nil {
 		return err
 	}
 	for _, v := range p.AsrProviders {
-		if err := oprot.WriteString(v); err != nil {
+		if err := oprot.WriteString(ctx, v); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteListEnd(); err != nil {
+	if err := oprot.WriteListEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2140,14 +2140,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 14 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField15(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("keymap_profile", thrift.STRING, 15); err != nil {
+func (p *StatusResp) writeField15(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "keymap_profile", thrift.STRING, 15); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.KeymapProfile); err != nil {
+	if err := oprot.WriteString(ctx, p.KeymapProfile); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2157,22 +2157,22 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 15 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField16(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("keymap_profiles", thrift.LIST, 16); err != nil {
+func (p *StatusResp) writeField16(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "keymap_profiles", thrift.LIST, 16); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRING, len(p.KeymapProfiles)); err != nil {
+	if err := oprot.WriteListBegin(ctx, thrift.STRING, len(p.KeymapProfiles)); err != nil {
 		return err
 	}
 	for _, v := range p.KeymapProfiles {
-		if err := oprot.WriteString(v); err != nil {
+		if err := oprot.WriteString(ctx, v); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteListEnd(); err != nil {
+	if err := oprot.WriteListEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2182,14 +2182,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 16 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField17(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("agent_autostart", thrift.BOOL, 17); err != nil {
+func (p *StatusResp) writeField17(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "agent_autostart", thrift.BOOL, 17); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.AgentAutostart); err != nil {
+	if err := oprot.WriteBool(ctx, p.AgentAutostart); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2199,14 +2199,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 17 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField18(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("remap_autostart", thrift.BOOL, 18); err != nil {
+func (p *StatusResp) writeField18(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "remap_autostart", thrift.BOOL, 18); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.RemapAutostart); err != nil {
+	if err := oprot.WriteBool(ctx, p.RemapAutostart); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2216,14 +2216,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 18 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField19(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("capturing", thrift.BOOL, 19); err != nil {
+func (p *StatusResp) writeField19(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "capturing", thrift.BOOL, 19); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Capturing); err != nil {
+	if err := oprot.WriteBool(ctx, p.Capturing); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2233,15 +2233,15 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 19 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField20(oprot thrift.TProtocol) (err error) {
+func (p *StatusResp) writeField20(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetHelperError() {
-		if err = oprot.WriteFieldBegin("helper_error", thrift.STRING, 20); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "helper_error", thrift.STRING, 20); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := oprot.WriteString(*p.HelperError); err != nil {
+		if err := oprot.WriteString(ctx, *p.HelperError); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -2252,15 +2252,15 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 20 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField21(oprot thrift.TProtocol) (err error) {
+func (p *StatusResp) writeField21(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetAsrError() {
-		if err = oprot.WriteFieldBegin("asr_error", thrift.STRING, 21); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "asr_error", thrift.STRING, 21); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := oprot.WriteString(*p.AsrError); err != nil {
+		if err := oprot.WriteString(ctx, *p.AsrError); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -2271,14 +2271,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 21 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField22(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("mic_healthy", thrift.BOOL, 22); err != nil {
+func (p *StatusResp) writeField22(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "mic_healthy", thrift.BOOL, 22); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.MicHealthy); err != nil {
+	if err := oprot.WriteBool(ctx, p.MicHealthy); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2288,14 +2288,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 22 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField23(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("last_latency_ms", thrift.I64, 23); err != nil {
+func (p *StatusResp) writeField23(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "last_latency_ms", thrift.I64, 23); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.LastLatencyMs); err != nil {
+	if err := oprot.WriteI64(ctx, p.LastLatencyMs); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2305,14 +2305,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 23 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField24(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("platform", thrift.STRING, 24); err != nil {
+func (p *StatusResp) writeField24(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "platform", thrift.STRING, 24); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Platform); err != nil {
+	if err := oprot.WriteString(ctx, p.Platform); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2322,14 +2322,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 24 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField25(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("key_total", thrift.I64, 25); err != nil {
+func (p *StatusResp) writeField25(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "key_total", thrift.I64, 25); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.KeyTotal); err != nil {
+	if err := oprot.WriteI64(ctx, p.KeyTotal); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2339,25 +2339,25 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 25 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField26(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("key_counts", thrift.MAP, 26); err != nil {
+func (p *StatusResp) writeField26(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "key_counts", thrift.MAP, 26); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteMapBegin(thrift.STRING, thrift.I64, len(p.KeyCounts)); err != nil {
+	if err := oprot.WriteMapBegin(ctx, thrift.STRING, thrift.I64, len(p.KeyCounts)); err != nil {
 		return err
 	}
 	for k, v := range p.KeyCounts {
-		if err := oprot.WriteString(k); err != nil {
+		if err := oprot.WriteString(ctx, k); err != nil {
 			return err
 		}
-		if err := oprot.WriteI64(v); err != nil {
+		if err := oprot.WriteI64(ctx, v); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteMapEnd(); err != nil {
+	if err := oprot.WriteMapEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2367,15 +2367,15 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 26 end error: ", p), err)
 }
 
-func (p *StatusResp) writeField27(oprot thrift.TProtocol) (err error) {
+func (p *StatusResp) writeField27(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetLastAt() {
-		if err = oprot.WriteFieldBegin("last_at", thrift.STRING, 27); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "last_at", thrift.STRING, 27); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := oprot.WriteString(*p.LastAt); err != nil {
+		if err := oprot.WriteString(ctx, *p.LastAt); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -2413,17 +2413,17 @@ var fieldIDToName_ApplyReq = map[int16]string{
 	1: "mapping",
 }
 
-func (p *ApplyReq) Read(iprot thrift.TProtocol) (err error) {
+func (p *ApplyReq) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -2434,22 +2434,22 @@ func (p *ApplyReq) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.MAP {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -2469,22 +2469,22 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *ApplyReq) ReadField1(iprot thrift.TProtocol) error {
-	_, _, size, err := iprot.ReadMapBegin()
+func (p *ApplyReq) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
+	_, _, size, err := iprot.ReadMapBegin(ctx)
 	if err != nil {
 		return err
 	}
 	_field := make(map[string]string, size)
 	for i := 0; i < size; i++ {
 		var _key string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_key = v
 		}
 
 		var _val string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_val = v
@@ -2492,28 +2492,28 @@ func (p *ApplyReq) ReadField1(iprot thrift.TProtocol) error {
 
 		_field[_key] = _val
 	}
-	if err := iprot.ReadMapEnd(); err != nil {
+	if err := iprot.ReadMapEnd(ctx); err != nil {
 		return err
 	}
 	p.Mapping = _field
 	return nil
 }
 
-func (p *ApplyReq) Write(oprot thrift.TProtocol) (err error) {
+func (p *ApplyReq) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ApplyReq"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "ApplyReq"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -2527,25 +2527,25 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *ApplyReq) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("mapping", thrift.MAP, 1); err != nil {
+func (p *ApplyReq) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "mapping", thrift.MAP, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteMapBegin(thrift.STRING, thrift.STRING, len(p.Mapping)); err != nil {
+	if err := oprot.WriteMapBegin(ctx, thrift.STRING, thrift.STRING, len(p.Mapping)); err != nil {
 		return err
 	}
 	for k, v := range p.Mapping {
-		if err := oprot.WriteString(k); err != nil {
+		if err := oprot.WriteString(ctx, k); err != nil {
 			return err
 		}
-		if err := oprot.WriteString(v); err != nil {
+		if err := oprot.WriteString(ctx, v); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteMapEnd(); err != nil {
+	if err := oprot.WriteMapEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2642,17 +2642,17 @@ func (p *OperationResp) IsSetOutput() bool {
 	return p.Output != nil
 }
 
-func (p *OperationResp) Read(iprot thrift.TProtocol) (err error) {
+func (p *OperationResp) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -2663,54 +2663,54 @@ func (p *OperationResp) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 3:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField3(iprot); err != nil {
+				if err = p.ReadField3(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 4:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField4(iprot); err != nil {
+				if err = p.ReadField4(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 5:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField5(iprot); err != nil {
+				if err = p.ReadField5(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -2730,10 +2730,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *OperationResp) ReadField1(iprot thrift.TProtocol) error {
+func (p *OperationResp) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -2741,10 +2741,10 @@ func (p *OperationResp) ReadField1(iprot thrift.TProtocol) error {
 	p.Ok = _field
 	return nil
 }
-func (p *OperationResp) ReadField2(iprot thrift.TProtocol) error {
+func (p *OperationResp) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field *string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = &v
@@ -2752,10 +2752,10 @@ func (p *OperationResp) ReadField2(iprot thrift.TProtocol) error {
 	p.Error = _field
 	return nil
 }
-func (p *OperationResp) ReadField3(iprot thrift.TProtocol) error {
+func (p *OperationResp) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field *string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = &v
@@ -2763,10 +2763,10 @@ func (p *OperationResp) ReadField3(iprot thrift.TProtocol) error {
 	p.Config = _field
 	return nil
 }
-func (p *OperationResp) ReadField4(iprot thrift.TProtocol) error {
+func (p *OperationResp) ReadField4(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field *string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = &v
@@ -2774,10 +2774,10 @@ func (p *OperationResp) ReadField4(iprot thrift.TProtocol) error {
 	p.Event = _field
 	return nil
 }
-func (p *OperationResp) ReadField5(iprot thrift.TProtocol) error {
+func (p *OperationResp) ReadField5(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field *string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = &v
@@ -2786,37 +2786,37 @@ func (p *OperationResp) ReadField5(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *OperationResp) Write(oprot thrift.TProtocol) (err error) {
+func (p *OperationResp) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("OperationResp"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "OperationResp"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
-		if err = p.writeField3(oprot); err != nil {
+		if err = p.writeField3(ctx, oprot); err != nil {
 			fieldId = 3
 			goto WriteFieldError
 		}
-		if err = p.writeField4(oprot); err != nil {
+		if err = p.writeField4(ctx, oprot); err != nil {
 			fieldId = 4
 			goto WriteFieldError
 		}
-		if err = p.writeField5(oprot); err != nil {
+		if err = p.writeField5(ctx, oprot); err != nil {
 			fieldId = 5
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -2830,14 +2830,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *OperationResp) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("ok", thrift.BOOL, 1); err != nil {
+func (p *OperationResp) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "ok", thrift.BOOL, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Ok); err != nil {
+	if err := oprot.WriteBool(ctx, p.Ok); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -2847,15 +2847,15 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *OperationResp) writeField2(oprot thrift.TProtocol) (err error) {
+func (p *OperationResp) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetError() {
-		if err = oprot.WriteFieldBegin("error", thrift.STRING, 2); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "error", thrift.STRING, 2); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := oprot.WriteString(*p.Error); err != nil {
+		if err := oprot.WriteString(ctx, *p.Error); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -2866,15 +2866,15 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *OperationResp) writeField3(oprot thrift.TProtocol) (err error) {
+func (p *OperationResp) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetConfig() {
-		if err = oprot.WriteFieldBegin("config", thrift.STRING, 3); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "config", thrift.STRING, 3); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := oprot.WriteString(*p.Config); err != nil {
+		if err := oprot.WriteString(ctx, *p.Config); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -2885,15 +2885,15 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *OperationResp) writeField4(oprot thrift.TProtocol) (err error) {
+func (p *OperationResp) writeField4(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetEvent() {
-		if err = oprot.WriteFieldBegin("event", thrift.STRING, 4); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "event", thrift.STRING, 4); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := oprot.WriteString(*p.Event); err != nil {
+		if err := oprot.WriteString(ctx, *p.Event); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -2904,15 +2904,15 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 4 end error: ", p), err)
 }
 
-func (p *OperationResp) writeField5(oprot thrift.TProtocol) (err error) {
+func (p *OperationResp) writeField5(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetOutput() {
-		if err = oprot.WriteFieldBegin("output", thrift.STRING, 5); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "output", thrift.STRING, 5); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := oprot.WriteString(*p.Output); err != nil {
+		if err := oprot.WriteString(ctx, *p.Output); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -2943,31 +2943,31 @@ func (p *EmptyReq) InitDefault() {
 
 var fieldIDToName_EmptyReq = map[int16]string{}
 
-func (p *EmptyReq) Read(iprot thrift.TProtocol) (err error) {
+func (p *EmptyReq) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
 		if fieldTypeId == thrift.STOP {
 			break
 		}
-		if err = iprot.Skip(fieldTypeId); err != nil {
+		if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 			goto SkipFieldTypeError
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -2985,16 +2985,16 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *EmptyReq) Write(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteStructBegin("EmptyReq"); err != nil {
+func (p *EmptyReq) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteStructBegin(ctx, "EmptyReq"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -3033,17 +3033,17 @@ var fieldIDToName_ProfileReq = map[int16]string{
 	1: "profile",
 }
 
-func (p *ProfileReq) Read(iprot thrift.TProtocol) (err error) {
+func (p *ProfileReq) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -3054,22 +3054,22 @@ func (p *ProfileReq) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -3089,10 +3089,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *ProfileReq) ReadField1(iprot thrift.TProtocol) error {
+func (p *ProfileReq) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -3101,21 +3101,21 @@ func (p *ProfileReq) ReadField1(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *ProfileReq) Write(oprot thrift.TProtocol) (err error) {
+func (p *ProfileReq) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ProfileReq"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "ProfileReq"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -3129,14 +3129,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *ProfileReq) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("profile", thrift.STRING, 1); err != nil {
+func (p *ProfileReq) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "profile", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Profile); err != nil {
+	if err := oprot.WriteString(ctx, p.Profile); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -3179,17 +3179,17 @@ var fieldIDToName_SaveProfileReq = map[int16]string{
 	2: "mapping",
 }
 
-func (p *SaveProfileReq) Read(iprot thrift.TProtocol) (err error) {
+func (p *SaveProfileReq) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -3200,30 +3200,30 @@ func (p *SaveProfileReq) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.MAP {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -3243,10 +3243,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *SaveProfileReq) ReadField1(iprot thrift.TProtocol) error {
+func (p *SaveProfileReq) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -3254,22 +3254,22 @@ func (p *SaveProfileReq) ReadField1(iprot thrift.TProtocol) error {
 	p.Name = _field
 	return nil
 }
-func (p *SaveProfileReq) ReadField2(iprot thrift.TProtocol) error {
-	_, _, size, err := iprot.ReadMapBegin()
+func (p *SaveProfileReq) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
+	_, _, size, err := iprot.ReadMapBegin(ctx)
 	if err != nil {
 		return err
 	}
 	_field := make(map[string]string, size)
 	for i := 0; i < size; i++ {
 		var _key string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_key = v
 		}
 
 		var _val string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_val = v
@@ -3277,32 +3277,32 @@ func (p *SaveProfileReq) ReadField2(iprot thrift.TProtocol) error {
 
 		_field[_key] = _val
 	}
-	if err := iprot.ReadMapEnd(); err != nil {
+	if err := iprot.ReadMapEnd(ctx); err != nil {
 		return err
 	}
 	p.Mapping = _field
 	return nil
 }
 
-func (p *SaveProfileReq) Write(oprot thrift.TProtocol) (err error) {
+func (p *SaveProfileReq) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("SaveProfileReq"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "SaveProfileReq"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -3316,14 +3316,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *SaveProfileReq) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("name", thrift.STRING, 1); err != nil {
+func (p *SaveProfileReq) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "name", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Name); err != nil {
+	if err := oprot.WriteString(ctx, p.Name); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -3333,25 +3333,25 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *SaveProfileReq) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("mapping", thrift.MAP, 2); err != nil {
+func (p *SaveProfileReq) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "mapping", thrift.MAP, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteMapBegin(thrift.STRING, thrift.STRING, len(p.Mapping)); err != nil {
+	if err := oprot.WriteMapBegin(ctx, thrift.STRING, thrift.STRING, len(p.Mapping)); err != nil {
 		return err
 	}
 	for k, v := range p.Mapping {
-		if err := oprot.WriteString(k); err != nil {
+		if err := oprot.WriteString(ctx, k); err != nil {
 			return err
 		}
-		if err := oprot.WriteString(v); err != nil {
+		if err := oprot.WriteString(ctx, v); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteMapEnd(); err != nil {
+	if err := oprot.WriteMapEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -3388,17 +3388,17 @@ var fieldIDToName_DeleteProfileReq = map[int16]string{
 	1: "name",
 }
 
-func (p *DeleteProfileReq) Read(iprot thrift.TProtocol) (err error) {
+func (p *DeleteProfileReq) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -3409,22 +3409,22 @@ func (p *DeleteProfileReq) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -3444,10 +3444,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *DeleteProfileReq) ReadField1(iprot thrift.TProtocol) error {
+func (p *DeleteProfileReq) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -3456,21 +3456,21 @@ func (p *DeleteProfileReq) ReadField1(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *DeleteProfileReq) Write(oprot thrift.TProtocol) (err error) {
+func (p *DeleteProfileReq) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("DeleteProfileReq"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "DeleteProfileReq"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -3484,14 +3484,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *DeleteProfileReq) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("name", thrift.STRING, 1); err != nil {
+func (p *DeleteProfileReq) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "name", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Name); err != nil {
+	if err := oprot.WriteString(ctx, p.Name); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -3528,17 +3528,17 @@ var fieldIDToName_ProviderReq = map[int16]string{
 	1: "provider",
 }
 
-func (p *ProviderReq) Read(iprot thrift.TProtocol) (err error) {
+func (p *ProviderReq) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -3549,22 +3549,22 @@ func (p *ProviderReq) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -3584,10 +3584,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *ProviderReq) ReadField1(iprot thrift.TProtocol) error {
+func (p *ProviderReq) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -3596,21 +3596,21 @@ func (p *ProviderReq) ReadField1(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *ProviderReq) Write(oprot thrift.TProtocol) (err error) {
+func (p *ProviderReq) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ProviderReq"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "ProviderReq"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -3624,14 +3624,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *ProviderReq) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("provider", thrift.STRING, 1); err != nil {
+func (p *ProviderReq) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "provider", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Provider); err != nil {
+	if err := oprot.WriteString(ctx, p.Provider); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -3680,17 +3680,17 @@ var fieldIDToName_Diagnostic = map[int16]string{
 	3: "detail",
 }
 
-func (p *Diagnostic) Read(iprot thrift.TProtocol) (err error) {
+func (p *Diagnostic) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -3701,38 +3701,38 @@ func (p *Diagnostic) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 3:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField3(iprot); err != nil {
+				if err = p.ReadField3(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -3752,10 +3752,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *Diagnostic) ReadField1(iprot thrift.TProtocol) error {
+func (p *Diagnostic) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -3763,10 +3763,10 @@ func (p *Diagnostic) ReadField1(iprot thrift.TProtocol) error {
 	p.Provider = _field
 	return nil
 }
-func (p *Diagnostic) ReadField2(iprot thrift.TProtocol) error {
+func (p *Diagnostic) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -3774,10 +3774,10 @@ func (p *Diagnostic) ReadField2(iprot thrift.TProtocol) error {
 	p.Ok = _field
 	return nil
 }
-func (p *Diagnostic) ReadField3(iprot thrift.TProtocol) error {
+func (p *Diagnostic) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -3786,29 +3786,29 @@ func (p *Diagnostic) ReadField3(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *Diagnostic) Write(oprot thrift.TProtocol) (err error) {
+func (p *Diagnostic) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("Diagnostic"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "Diagnostic"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
-		if err = p.writeField3(oprot); err != nil {
+		if err = p.writeField3(ctx, oprot); err != nil {
 			fieldId = 3
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -3822,14 +3822,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *Diagnostic) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("provider", thrift.STRING, 1); err != nil {
+func (p *Diagnostic) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "provider", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Provider); err != nil {
+	if err := oprot.WriteString(ctx, p.Provider); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -3839,14 +3839,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *Diagnostic) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("ok", thrift.BOOL, 2); err != nil {
+func (p *Diagnostic) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "ok", thrift.BOOL, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Ok); err != nil {
+	if err := oprot.WriteBool(ctx, p.Ok); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -3856,14 +3856,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *Diagnostic) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("detail", thrift.STRING, 3); err != nil {
+func (p *Diagnostic) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "detail", thrift.STRING, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Detail); err != nil {
+	if err := oprot.WriteString(ctx, p.Detail); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -3912,17 +3912,17 @@ var fieldIDToName_ASRTestResp = map[int16]string{
 	3: "diagnostics",
 }
 
-func (p *ASRTestResp) Read(iprot thrift.TProtocol) (err error) {
+func (p *ASRTestResp) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -3933,38 +3933,38 @@ func (p *ASRTestResp) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 3:
 			if fieldTypeId == thrift.LIST {
-				if err = p.ReadField3(iprot); err != nil {
+				if err = p.ReadField3(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -3984,10 +3984,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *ASRTestResp) ReadField1(iprot thrift.TProtocol) error {
+func (p *ASRTestResp) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -3995,10 +3995,10 @@ func (p *ASRTestResp) ReadField1(iprot thrift.TProtocol) error {
 	p.Ok = _field
 	return nil
 }
-func (p *ASRTestResp) ReadField2(iprot thrift.TProtocol) error {
+func (p *ASRTestResp) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -4006,8 +4006,8 @@ func (p *ASRTestResp) ReadField2(iprot thrift.TProtocol) error {
 	p.Provider = _field
 	return nil
 }
-func (p *ASRTestResp) ReadField3(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
+func (p *ASRTestResp) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -4017,42 +4017,42 @@ func (p *ASRTestResp) ReadField3(iprot thrift.TProtocol) error {
 		_elem := &values[i]
 		_elem.InitDefault()
 
-		if err := _elem.Read(iprot); err != nil {
+		if err := _elem.Read(ctx, iprot); err != nil {
 			return err
 		}
 
 		_field = append(_field, _elem)
 	}
-	if err := iprot.ReadListEnd(); err != nil {
+	if err := iprot.ReadListEnd(ctx); err != nil {
 		return err
 	}
 	p.Diagnostics = _field
 	return nil
 }
 
-func (p *ASRTestResp) Write(oprot thrift.TProtocol) (err error) {
+func (p *ASRTestResp) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ASRTestResp"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "ASRTestResp"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
-		if err = p.writeField3(oprot); err != nil {
+		if err = p.writeField3(ctx, oprot); err != nil {
 			fieldId = 3
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -4066,14 +4066,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *ASRTestResp) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("ok", thrift.BOOL, 1); err != nil {
+func (p *ASRTestResp) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "ok", thrift.BOOL, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Ok); err != nil {
+	if err := oprot.WriteBool(ctx, p.Ok); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -4083,14 +4083,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *ASRTestResp) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("provider", thrift.STRING, 2); err != nil {
+func (p *ASRTestResp) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "provider", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Provider); err != nil {
+	if err := oprot.WriteString(ctx, p.Provider); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -4100,22 +4100,22 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *ASRTestResp) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("diagnostics", thrift.LIST, 3); err != nil {
+func (p *ASRTestResp) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "diagnostics", thrift.LIST, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRUCT, len(p.Diagnostics)); err != nil {
+	if err := oprot.WriteListBegin(ctx, thrift.STRUCT, len(p.Diagnostics)); err != nil {
 		return err
 	}
 	for _, v := range p.Diagnostics {
-		if err := v.Write(oprot); err != nil {
+		if err := v.Write(ctx, oprot); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteListEnd(); err != nil {
+	if err := oprot.WriteListEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -4206,17 +4206,17 @@ var fieldIDToName_ProviderConfig = map[int16]string{
 	10: "timeout_seconds",
 }
 
-func (p *ProviderConfig) Read(iprot thrift.TProtocol) (err error) {
+func (p *ProviderConfig) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -4227,94 +4227,94 @@ func (p *ProviderConfig) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 3:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField3(iprot); err != nil {
+				if err = p.ReadField3(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 4:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField4(iprot); err != nil {
+				if err = p.ReadField4(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 5:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField5(iprot); err != nil {
+				if err = p.ReadField5(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 6:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField6(iprot); err != nil {
+				if err = p.ReadField6(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 7:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField7(iprot); err != nil {
+				if err = p.ReadField7(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 8:
 			if fieldTypeId == thrift.I32 {
-				if err = p.ReadField8(iprot); err != nil {
+				if err = p.ReadField8(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 9:
 			if fieldTypeId == thrift.LIST {
-				if err = p.ReadField9(iprot); err != nil {
+				if err = p.ReadField9(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 10:
 			if fieldTypeId == thrift.I32 {
-				if err = p.ReadField10(iprot); err != nil {
+				if err = p.ReadField10(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -4334,10 +4334,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *ProviderConfig) ReadField1(iprot thrift.TProtocol) error {
+func (p *ProviderConfig) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -4345,10 +4345,10 @@ func (p *ProviderConfig) ReadField1(iprot thrift.TProtocol) error {
 	p.Type = _field
 	return nil
 }
-func (p *ProviderConfig) ReadField2(iprot thrift.TProtocol) error {
+func (p *ProviderConfig) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -4356,10 +4356,10 @@ func (p *ProviderConfig) ReadField2(iprot thrift.TProtocol) error {
 	p.APIKeyFile = _field
 	return nil
 }
-func (p *ProviderConfig) ReadField3(iprot thrift.TProtocol) error {
+func (p *ProviderConfig) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -4367,10 +4367,10 @@ func (p *ProviderConfig) ReadField3(iprot thrift.TProtocol) error {
 	p.BaseURL = _field
 	return nil
 }
-func (p *ProviderConfig) ReadField4(iprot thrift.TProtocol) error {
+func (p *ProviderConfig) ReadField4(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -4378,10 +4378,10 @@ func (p *ProviderConfig) ReadField4(iprot thrift.TProtocol) error {
 	p.Model = _field
 	return nil
 }
-func (p *ProviderConfig) ReadField5(iprot thrift.TProtocol) error {
+func (p *ProviderConfig) ReadField5(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -4389,10 +4389,10 @@ func (p *ProviderConfig) ReadField5(iprot thrift.TProtocol) error {
 	p.Language = _field
 	return nil
 }
-func (p *ProviderConfig) ReadField6(iprot thrift.TProtocol) error {
+func (p *ProviderConfig) ReadField6(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -4400,10 +4400,10 @@ func (p *ProviderConfig) ReadField6(iprot thrift.TProtocol) error {
 	p.Binary = _field
 	return nil
 }
-func (p *ProviderConfig) ReadField7(iprot thrift.TProtocol) error {
+func (p *ProviderConfig) ReadField7(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -4411,10 +4411,10 @@ func (p *ProviderConfig) ReadField7(iprot thrift.TProtocol) error {
 	p.ModelPath = _field
 	return nil
 }
-func (p *ProviderConfig) ReadField8(iprot thrift.TProtocol) error {
+func (p *ProviderConfig) ReadField8(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field int32
-	if v, err := iprot.ReadI32(); err != nil {
+	if v, err := iprot.ReadI32(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -4422,8 +4422,8 @@ func (p *ProviderConfig) ReadField8(iprot thrift.TProtocol) error {
 	p.Threads = _field
 	return nil
 }
-func (p *ProviderConfig) ReadField9(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
+func (p *ProviderConfig) ReadField9(ctx context.Context, iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -4431,7 +4431,7 @@ func (p *ProviderConfig) ReadField9(iprot thrift.TProtocol) error {
 	for i := 0; i < size; i++ {
 
 		var _elem string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_elem = v
@@ -4439,16 +4439,16 @@ func (p *ProviderConfig) ReadField9(iprot thrift.TProtocol) error {
 
 		_field = append(_field, _elem)
 	}
-	if err := iprot.ReadListEnd(); err != nil {
+	if err := iprot.ReadListEnd(ctx); err != nil {
 		return err
 	}
 	p.Args = _field
 	return nil
 }
-func (p *ProviderConfig) ReadField10(iprot thrift.TProtocol) error {
+func (p *ProviderConfig) ReadField10(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field int32
-	if v, err := iprot.ReadI32(); err != nil {
+	if v, err := iprot.ReadI32(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -4457,57 +4457,57 @@ func (p *ProviderConfig) ReadField10(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *ProviderConfig) Write(oprot thrift.TProtocol) (err error) {
+func (p *ProviderConfig) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ProviderConfig"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "ProviderConfig"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
-		if err = p.writeField3(oprot); err != nil {
+		if err = p.writeField3(ctx, oprot); err != nil {
 			fieldId = 3
 			goto WriteFieldError
 		}
-		if err = p.writeField4(oprot); err != nil {
+		if err = p.writeField4(ctx, oprot); err != nil {
 			fieldId = 4
 			goto WriteFieldError
 		}
-		if err = p.writeField5(oprot); err != nil {
+		if err = p.writeField5(ctx, oprot); err != nil {
 			fieldId = 5
 			goto WriteFieldError
 		}
-		if err = p.writeField6(oprot); err != nil {
+		if err = p.writeField6(ctx, oprot); err != nil {
 			fieldId = 6
 			goto WriteFieldError
 		}
-		if err = p.writeField7(oprot); err != nil {
+		if err = p.writeField7(ctx, oprot); err != nil {
 			fieldId = 7
 			goto WriteFieldError
 		}
-		if err = p.writeField8(oprot); err != nil {
+		if err = p.writeField8(ctx, oprot); err != nil {
 			fieldId = 8
 			goto WriteFieldError
 		}
-		if err = p.writeField9(oprot); err != nil {
+		if err = p.writeField9(ctx, oprot); err != nil {
 			fieldId = 9
 			goto WriteFieldError
 		}
-		if err = p.writeField10(oprot); err != nil {
+		if err = p.writeField10(ctx, oprot); err != nil {
 			fieldId = 10
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -4521,14 +4521,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *ProviderConfig) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("type", thrift.STRING, 1); err != nil {
+func (p *ProviderConfig) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "type", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Type); err != nil {
+	if err := oprot.WriteString(ctx, p.Type); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -4538,14 +4538,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *ProviderConfig) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("api_key_file", thrift.STRING, 2); err != nil {
+func (p *ProviderConfig) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "api_key_file", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.APIKeyFile); err != nil {
+	if err := oprot.WriteString(ctx, p.APIKeyFile); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -4555,14 +4555,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *ProviderConfig) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("base_url", thrift.STRING, 3); err != nil {
+func (p *ProviderConfig) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "base_url", thrift.STRING, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.BaseURL); err != nil {
+	if err := oprot.WriteString(ctx, p.BaseURL); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -4572,14 +4572,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *ProviderConfig) writeField4(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("model", thrift.STRING, 4); err != nil {
+func (p *ProviderConfig) writeField4(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "model", thrift.STRING, 4); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Model); err != nil {
+	if err := oprot.WriteString(ctx, p.Model); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -4589,14 +4589,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 4 end error: ", p), err)
 }
 
-func (p *ProviderConfig) writeField5(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("language", thrift.STRING, 5); err != nil {
+func (p *ProviderConfig) writeField5(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "language", thrift.STRING, 5); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Language); err != nil {
+	if err := oprot.WriteString(ctx, p.Language); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -4606,14 +4606,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 5 end error: ", p), err)
 }
 
-func (p *ProviderConfig) writeField6(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("binary", thrift.STRING, 6); err != nil {
+func (p *ProviderConfig) writeField6(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "binary", thrift.STRING, 6); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Binary); err != nil {
+	if err := oprot.WriteString(ctx, p.Binary); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -4623,14 +4623,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 6 end error: ", p), err)
 }
 
-func (p *ProviderConfig) writeField7(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("model_path", thrift.STRING, 7); err != nil {
+func (p *ProviderConfig) writeField7(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "model_path", thrift.STRING, 7); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.ModelPath); err != nil {
+	if err := oprot.WriteString(ctx, p.ModelPath); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -4640,14 +4640,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 7 end error: ", p), err)
 }
 
-func (p *ProviderConfig) writeField8(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("threads", thrift.I32, 8); err != nil {
+func (p *ProviderConfig) writeField8(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "threads", thrift.I32, 8); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI32(p.Threads); err != nil {
+	if err := oprot.WriteI32(ctx, p.Threads); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -4657,22 +4657,22 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 8 end error: ", p), err)
 }
 
-func (p *ProviderConfig) writeField9(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("args", thrift.LIST, 9); err != nil {
+func (p *ProviderConfig) writeField9(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "args", thrift.LIST, 9); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRING, len(p.Args)); err != nil {
+	if err := oprot.WriteListBegin(ctx, thrift.STRING, len(p.Args)); err != nil {
 		return err
 	}
 	for _, v := range p.Args {
-		if err := oprot.WriteString(v); err != nil {
+		if err := oprot.WriteString(ctx, v); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteListEnd(); err != nil {
+	if err := oprot.WriteListEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -4682,14 +4682,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 9 end error: ", p), err)
 }
 
-func (p *ProviderConfig) writeField10(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("timeout_seconds", thrift.I32, 10); err != nil {
+func (p *ProviderConfig) writeField10(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "timeout_seconds", thrift.I32, 10); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI32(p.TimeoutSeconds); err != nil {
+	if err := oprot.WriteI32(ctx, p.TimeoutSeconds); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -4744,17 +4744,17 @@ var fieldIDToName_ASRConfig = map[int16]string{
 	4: "providers",
 }
 
-func (p *ASRConfig) Read(iprot thrift.TProtocol) (err error) {
+func (p *ASRConfig) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -4765,46 +4765,46 @@ func (p *ASRConfig) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.LIST {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 3:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField3(iprot); err != nil {
+				if err = p.ReadField3(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 4:
 			if fieldTypeId == thrift.MAP {
-				if err = p.ReadField4(iprot); err != nil {
+				if err = p.ReadField4(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -4824,10 +4824,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *ASRConfig) ReadField1(iprot thrift.TProtocol) error {
+func (p *ASRConfig) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -4835,8 +4835,8 @@ func (p *ASRConfig) ReadField1(iprot thrift.TProtocol) error {
 	p.Provider = _field
 	return nil
 }
-func (p *ASRConfig) ReadField2(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
+func (p *ASRConfig) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -4844,7 +4844,7 @@ func (p *ASRConfig) ReadField2(iprot thrift.TProtocol) error {
 	for i := 0; i < size; i++ {
 
 		var _elem string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_elem = v
@@ -4852,16 +4852,16 @@ func (p *ASRConfig) ReadField2(iprot thrift.TProtocol) error {
 
 		_field = append(_field, _elem)
 	}
-	if err := iprot.ReadListEnd(); err != nil {
+	if err := iprot.ReadListEnd(ctx); err != nil {
 		return err
 	}
 	p.Fallback = _field
 	return nil
 }
-func (p *ASRConfig) ReadField3(iprot thrift.TProtocol) error {
+func (p *ASRConfig) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -4869,8 +4869,8 @@ func (p *ASRConfig) ReadField3(iprot thrift.TProtocol) error {
 	p.Language = _field
 	return nil
 }
-func (p *ASRConfig) ReadField4(iprot thrift.TProtocol) error {
-	_, _, size, err := iprot.ReadMapBegin()
+func (p *ASRConfig) ReadField4(ctx context.Context, iprot thrift.TProtocol) error {
+	_, _, size, err := iprot.ReadMapBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -4878,7 +4878,7 @@ func (p *ASRConfig) ReadField4(iprot thrift.TProtocol) error {
 	values := make([]ProviderConfig, size)
 	for i := 0; i < size; i++ {
 		var _key string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_key = v
@@ -4886,46 +4886,46 @@ func (p *ASRConfig) ReadField4(iprot thrift.TProtocol) error {
 
 		_val := &values[i]
 		_val.InitDefault()
-		if err := _val.Read(iprot); err != nil {
+		if err := _val.Read(ctx, iprot); err != nil {
 			return err
 		}
 
 		_field[_key] = _val
 	}
-	if err := iprot.ReadMapEnd(); err != nil {
+	if err := iprot.ReadMapEnd(ctx); err != nil {
 		return err
 	}
 	p.Providers = _field
 	return nil
 }
 
-func (p *ASRConfig) Write(oprot thrift.TProtocol) (err error) {
+func (p *ASRConfig) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ASRConfig"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "ASRConfig"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
-		if err = p.writeField3(oprot); err != nil {
+		if err = p.writeField3(ctx, oprot); err != nil {
 			fieldId = 3
 			goto WriteFieldError
 		}
-		if err = p.writeField4(oprot); err != nil {
+		if err = p.writeField4(ctx, oprot); err != nil {
 			fieldId = 4
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -4939,14 +4939,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *ASRConfig) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("provider", thrift.STRING, 1); err != nil {
+func (p *ASRConfig) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "provider", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Provider); err != nil {
+	if err := oprot.WriteString(ctx, p.Provider); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -4956,22 +4956,22 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *ASRConfig) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("fallback", thrift.LIST, 2); err != nil {
+func (p *ASRConfig) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "fallback", thrift.LIST, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRING, len(p.Fallback)); err != nil {
+	if err := oprot.WriteListBegin(ctx, thrift.STRING, len(p.Fallback)); err != nil {
 		return err
 	}
 	for _, v := range p.Fallback {
-		if err := oprot.WriteString(v); err != nil {
+		if err := oprot.WriteString(ctx, v); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteListEnd(); err != nil {
+	if err := oprot.WriteListEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -4981,14 +4981,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *ASRConfig) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("language", thrift.STRING, 3); err != nil {
+func (p *ASRConfig) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "language", thrift.STRING, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Language); err != nil {
+	if err := oprot.WriteString(ctx, p.Language); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -4998,25 +4998,25 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *ASRConfig) writeField4(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("providers", thrift.MAP, 4); err != nil {
+func (p *ASRConfig) writeField4(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "providers", thrift.MAP, 4); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteMapBegin(thrift.STRING, thrift.STRUCT, len(p.Providers)); err != nil {
+	if err := oprot.WriteMapBegin(ctx, thrift.STRING, thrift.STRUCT, len(p.Providers)); err != nil {
 		return err
 	}
 	for k, v := range p.Providers {
-		if err := oprot.WriteString(k); err != nil {
+		if err := oprot.WriteString(ctx, k); err != nil {
 			return err
 		}
-		if err := v.Write(oprot); err != nil {
+		if err := v.Write(ctx, oprot); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteMapEnd(); err != nil {
+	if err := oprot.WriteMapEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -5092,17 +5092,17 @@ func (p *ASRConfigResp) IsSetAsrError() bool {
 	return p.AsrError != nil
 }
 
-func (p *ASRConfigResp) Read(iprot thrift.TProtocol) (err error) {
+func (p *ASRConfigResp) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -5113,62 +5113,62 @@ func (p *ASRConfigResp) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 3:
 			if fieldTypeId == thrift.LIST {
-				if err = p.ReadField3(iprot); err != nil {
+				if err = p.ReadField3(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 4:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField4(iprot); err != nil {
+				if err = p.ReadField4(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 5:
 			if fieldTypeId == thrift.MAP {
-				if err = p.ReadField5(iprot); err != nil {
+				if err = p.ReadField5(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 6:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField6(iprot); err != nil {
+				if err = p.ReadField6(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -5188,10 +5188,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *ASRConfigResp) ReadField1(iprot thrift.TProtocol) error {
+func (p *ASRConfigResp) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -5199,10 +5199,10 @@ func (p *ASRConfigResp) ReadField1(iprot thrift.TProtocol) error {
 	p.Ok = _field
 	return nil
 }
-func (p *ASRConfigResp) ReadField2(iprot thrift.TProtocol) error {
+func (p *ASRConfigResp) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -5210,8 +5210,8 @@ func (p *ASRConfigResp) ReadField2(iprot thrift.TProtocol) error {
 	p.Provider = _field
 	return nil
 }
-func (p *ASRConfigResp) ReadField3(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
+func (p *ASRConfigResp) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -5219,7 +5219,7 @@ func (p *ASRConfigResp) ReadField3(iprot thrift.TProtocol) error {
 	for i := 0; i < size; i++ {
 
 		var _elem string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_elem = v
@@ -5227,16 +5227,16 @@ func (p *ASRConfigResp) ReadField3(iprot thrift.TProtocol) error {
 
 		_field = append(_field, _elem)
 	}
-	if err := iprot.ReadListEnd(); err != nil {
+	if err := iprot.ReadListEnd(ctx); err != nil {
 		return err
 	}
 	p.Fallback = _field
 	return nil
 }
-func (p *ASRConfigResp) ReadField4(iprot thrift.TProtocol) error {
+func (p *ASRConfigResp) ReadField4(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -5244,8 +5244,8 @@ func (p *ASRConfigResp) ReadField4(iprot thrift.TProtocol) error {
 	p.Language = _field
 	return nil
 }
-func (p *ASRConfigResp) ReadField5(iprot thrift.TProtocol) error {
-	_, _, size, err := iprot.ReadMapBegin()
+func (p *ASRConfigResp) ReadField5(ctx context.Context, iprot thrift.TProtocol) error {
+	_, _, size, err := iprot.ReadMapBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -5253,7 +5253,7 @@ func (p *ASRConfigResp) ReadField5(iprot thrift.TProtocol) error {
 	values := make([]ProviderConfig, size)
 	for i := 0; i < size; i++ {
 		var _key string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_key = v
@@ -5261,22 +5261,22 @@ func (p *ASRConfigResp) ReadField5(iprot thrift.TProtocol) error {
 
 		_val := &values[i]
 		_val.InitDefault()
-		if err := _val.Read(iprot); err != nil {
+		if err := _val.Read(ctx, iprot); err != nil {
 			return err
 		}
 
 		_field[_key] = _val
 	}
-	if err := iprot.ReadMapEnd(); err != nil {
+	if err := iprot.ReadMapEnd(ctx); err != nil {
 		return err
 	}
 	p.Providers = _field
 	return nil
 }
-func (p *ASRConfigResp) ReadField6(iprot thrift.TProtocol) error {
+func (p *ASRConfigResp) ReadField6(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field *string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = &v
@@ -5285,41 +5285,41 @@ func (p *ASRConfigResp) ReadField6(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *ASRConfigResp) Write(oprot thrift.TProtocol) (err error) {
+func (p *ASRConfigResp) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ASRConfigResp"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "ASRConfigResp"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
-		if err = p.writeField3(oprot); err != nil {
+		if err = p.writeField3(ctx, oprot); err != nil {
 			fieldId = 3
 			goto WriteFieldError
 		}
-		if err = p.writeField4(oprot); err != nil {
+		if err = p.writeField4(ctx, oprot); err != nil {
 			fieldId = 4
 			goto WriteFieldError
 		}
-		if err = p.writeField5(oprot); err != nil {
+		if err = p.writeField5(ctx, oprot); err != nil {
 			fieldId = 5
 			goto WriteFieldError
 		}
-		if err = p.writeField6(oprot); err != nil {
+		if err = p.writeField6(ctx, oprot); err != nil {
 			fieldId = 6
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -5333,14 +5333,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *ASRConfigResp) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("ok", thrift.BOOL, 1); err != nil {
+func (p *ASRConfigResp) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "ok", thrift.BOOL, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Ok); err != nil {
+	if err := oprot.WriteBool(ctx, p.Ok); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -5350,14 +5350,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *ASRConfigResp) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("provider", thrift.STRING, 2); err != nil {
+func (p *ASRConfigResp) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "provider", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Provider); err != nil {
+	if err := oprot.WriteString(ctx, p.Provider); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -5367,22 +5367,22 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *ASRConfigResp) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("fallback", thrift.LIST, 3); err != nil {
+func (p *ASRConfigResp) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "fallback", thrift.LIST, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRING, len(p.Fallback)); err != nil {
+	if err := oprot.WriteListBegin(ctx, thrift.STRING, len(p.Fallback)); err != nil {
 		return err
 	}
 	for _, v := range p.Fallback {
-		if err := oprot.WriteString(v); err != nil {
+		if err := oprot.WriteString(ctx, v); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteListEnd(); err != nil {
+	if err := oprot.WriteListEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -5392,14 +5392,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *ASRConfigResp) writeField4(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("language", thrift.STRING, 4); err != nil {
+func (p *ASRConfigResp) writeField4(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "language", thrift.STRING, 4); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Language); err != nil {
+	if err := oprot.WriteString(ctx, p.Language); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -5409,25 +5409,25 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 4 end error: ", p), err)
 }
 
-func (p *ASRConfigResp) writeField5(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("providers", thrift.MAP, 5); err != nil {
+func (p *ASRConfigResp) writeField5(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "providers", thrift.MAP, 5); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteMapBegin(thrift.STRING, thrift.STRUCT, len(p.Providers)); err != nil {
+	if err := oprot.WriteMapBegin(ctx, thrift.STRING, thrift.STRUCT, len(p.Providers)); err != nil {
 		return err
 	}
 	for k, v := range p.Providers {
-		if err := oprot.WriteString(k); err != nil {
+		if err := oprot.WriteString(ctx, k); err != nil {
 			return err
 		}
-		if err := v.Write(oprot); err != nil {
+		if err := v.Write(ctx, oprot); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteMapEnd(); err != nil {
+	if err := oprot.WriteMapEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -5437,15 +5437,15 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 5 end error: ", p), err)
 }
 
-func (p *ASRConfigResp) writeField6(oprot thrift.TProtocol) (err error) {
+func (p *ASRConfigResp) writeField6(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetAsrError() {
-		if err = oprot.WriteFieldBegin("asr_error", thrift.STRING, 6); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "asr_error", thrift.STRING, 6); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := oprot.WriteString(*p.AsrError); err != nil {
+		if err := oprot.WriteString(ctx, *p.AsrError); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -5495,17 +5495,17 @@ var fieldIDToName_KeymapProfilesResp = map[int16]string{
 	3: "profiles",
 }
 
-func (p *KeymapProfilesResp) Read(iprot thrift.TProtocol) (err error) {
+func (p *KeymapProfilesResp) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -5516,38 +5516,38 @@ func (p *KeymapProfilesResp) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 3:
 			if fieldTypeId == thrift.MAP {
-				if err = p.ReadField3(iprot); err != nil {
+				if err = p.ReadField3(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -5567,10 +5567,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *KeymapProfilesResp) ReadField1(iprot thrift.TProtocol) error {
+func (p *KeymapProfilesResp) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -5578,10 +5578,10 @@ func (p *KeymapProfilesResp) ReadField1(iprot thrift.TProtocol) error {
 	p.Ok = _field
 	return nil
 }
-func (p *KeymapProfilesResp) ReadField2(iprot thrift.TProtocol) error {
+func (p *KeymapProfilesResp) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -5589,34 +5589,34 @@ func (p *KeymapProfilesResp) ReadField2(iprot thrift.TProtocol) error {
 	p.Profile = _field
 	return nil
 }
-func (p *KeymapProfilesResp) ReadField3(iprot thrift.TProtocol) error {
-	_, _, size, err := iprot.ReadMapBegin()
+func (p *KeymapProfilesResp) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
+	_, _, size, err := iprot.ReadMapBegin(ctx)
 	if err != nil {
 		return err
 	}
 	_field := make(map[string]map[string]string, size)
 	for i := 0; i < size; i++ {
 		var _key string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_key = v
 		}
-		_, _, size, err := iprot.ReadMapBegin()
+		_, _, size, err := iprot.ReadMapBegin(ctx)
 		if err != nil {
 			return err
 		}
 		_val := make(map[string]string, size)
 		for i := 0; i < size; i++ {
 			var _key1 string
-			if v, err := iprot.ReadString(); err != nil {
+			if v, err := iprot.ReadString(ctx); err != nil {
 				return err
 			} else {
 				_key1 = v
 			}
 
 			var _val1 string
-			if v, err := iprot.ReadString(); err != nil {
+			if v, err := iprot.ReadString(ctx); err != nil {
 				return err
 			} else {
 				_val1 = v
@@ -5624,42 +5624,42 @@ func (p *KeymapProfilesResp) ReadField3(iprot thrift.TProtocol) error {
 
 			_val[_key1] = _val1
 		}
-		if err := iprot.ReadMapEnd(); err != nil {
+		if err := iprot.ReadMapEnd(ctx); err != nil {
 			return err
 		}
 
 		_field[_key] = _val
 	}
-	if err := iprot.ReadMapEnd(); err != nil {
+	if err := iprot.ReadMapEnd(ctx); err != nil {
 		return err
 	}
 	p.Profiles = _field
 	return nil
 }
 
-func (p *KeymapProfilesResp) Write(oprot thrift.TProtocol) (err error) {
+func (p *KeymapProfilesResp) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("KeymapProfilesResp"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "KeymapProfilesResp"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
-		if err = p.writeField3(oprot); err != nil {
+		if err = p.writeField3(ctx, oprot); err != nil {
 			fieldId = 3
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -5673,14 +5673,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *KeymapProfilesResp) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("ok", thrift.BOOL, 1); err != nil {
+func (p *KeymapProfilesResp) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "ok", thrift.BOOL, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Ok); err != nil {
+	if err := oprot.WriteBool(ctx, p.Ok); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -5690,14 +5690,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *KeymapProfilesResp) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("profile", thrift.STRING, 2); err != nil {
+func (p *KeymapProfilesResp) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "profile", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Profile); err != nil {
+	if err := oprot.WriteString(ctx, p.Profile); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -5707,36 +5707,36 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *KeymapProfilesResp) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("profiles", thrift.MAP, 3); err != nil {
+func (p *KeymapProfilesResp) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "profiles", thrift.MAP, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteMapBegin(thrift.STRING, thrift.MAP, len(p.Profiles)); err != nil {
+	if err := oprot.WriteMapBegin(ctx, thrift.STRING, thrift.MAP, len(p.Profiles)); err != nil {
 		return err
 	}
 	for k, v := range p.Profiles {
-		if err := oprot.WriteString(k); err != nil {
+		if err := oprot.WriteString(ctx, k); err != nil {
 			return err
 		}
-		if err := oprot.WriteMapBegin(thrift.STRING, thrift.STRING, len(v)); err != nil {
+		if err := oprot.WriteMapBegin(ctx, thrift.STRING, thrift.STRING, len(v)); err != nil {
 			return err
 		}
 		for k, v := range v {
-			if err := oprot.WriteString(k); err != nil {
+			if err := oprot.WriteString(ctx, k); err != nil {
 				return err
 			}
-			if err := oprot.WriteString(v); err != nil {
+			if err := oprot.WriteString(ctx, v); err != nil {
 				return err
 			}
 		}
-		if err := oprot.WriteMapEnd(); err != nil {
+		if err := oprot.WriteMapEnd(ctx); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteMapEnd(); err != nil {
+	if err := oprot.WriteMapEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -5845,17 +5845,17 @@ var fieldIDToName_DeviceInfo = map[int16]string{
 	13: "battery",
 }
 
-func (p *DeviceInfo) Read(iprot thrift.TProtocol) (err error) {
+func (p *DeviceInfo) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -5866,118 +5866,118 @@ func (p *DeviceInfo) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 3:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField3(iprot); err != nil {
+				if err = p.ReadField3(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 4:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField4(iprot); err != nil {
+				if err = p.ReadField4(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 5:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField5(iprot); err != nil {
+				if err = p.ReadField5(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 6:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField6(iprot); err != nil {
+				if err = p.ReadField6(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 7:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField7(iprot); err != nil {
+				if err = p.ReadField7(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 8:
 			if fieldTypeId == thrift.LIST {
-				if err = p.ReadField8(iprot); err != nil {
+				if err = p.ReadField8(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 9:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField9(iprot); err != nil {
+				if err = p.ReadField9(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 10:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField10(iprot); err != nil {
+				if err = p.ReadField10(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 11:
 			if fieldTypeId == thrift.LIST {
-				if err = p.ReadField11(iprot); err != nil {
+				if err = p.ReadField11(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 12:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField12(iprot); err != nil {
+				if err = p.ReadField12(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 13:
 			if fieldTypeId == thrift.I32 {
-				if err = p.ReadField13(iprot); err != nil {
+				if err = p.ReadField13(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -5997,10 +5997,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *DeviceInfo) ReadField1(iprot thrift.TProtocol) error {
+func (p *DeviceInfo) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -6008,10 +6008,10 @@ func (p *DeviceInfo) ReadField1(iprot thrift.TProtocol) error {
 	p.ID = _field
 	return nil
 }
-func (p *DeviceInfo) ReadField2(iprot thrift.TProtocol) error {
+func (p *DeviceInfo) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -6019,10 +6019,10 @@ func (p *DeviceInfo) ReadField2(iprot thrift.TProtocol) error {
 	p.Name = _field
 	return nil
 }
-func (p *DeviceInfo) ReadField3(iprot thrift.TProtocol) error {
+func (p *DeviceInfo) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -6030,10 +6030,10 @@ func (p *DeviceInfo) ReadField3(iprot thrift.TProtocol) error {
 	p.Address = _field
 	return nil
 }
-func (p *DeviceInfo) ReadField4(iprot thrift.TProtocol) error {
+func (p *DeviceInfo) ReadField4(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -6041,10 +6041,10 @@ func (p *DeviceInfo) ReadField4(iprot thrift.TProtocol) error {
 	p.Profile = _field
 	return nil
 }
-func (p *DeviceInfo) ReadField5(iprot thrift.TProtocol) error {
+func (p *DeviceInfo) ReadField5(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -6052,10 +6052,10 @@ func (p *DeviceInfo) ReadField5(iprot thrift.TProtocol) error {
 	p.Enabled = _field
 	return nil
 }
-func (p *DeviceInfo) ReadField6(iprot thrift.TProtocol) error {
+func (p *DeviceInfo) ReadField6(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -6063,10 +6063,10 @@ func (p *DeviceInfo) ReadField6(iprot thrift.TProtocol) error {
 	p.Active = _field
 	return nil
 }
-func (p *DeviceInfo) ReadField7(iprot thrift.TProtocol) error {
+func (p *DeviceInfo) ReadField7(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -6074,8 +6074,8 @@ func (p *DeviceInfo) ReadField7(iprot thrift.TProtocol) error {
 	p.Connected = _field
 	return nil
 }
-func (p *DeviceInfo) ReadField8(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
+func (p *DeviceInfo) ReadField8(ctx context.Context, iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -6083,7 +6083,7 @@ func (p *DeviceInfo) ReadField8(iprot thrift.TProtocol) error {
 	for i := 0; i < size; i++ {
 
 		var _elem string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_elem = v
@@ -6091,16 +6091,16 @@ func (p *DeviceInfo) ReadField8(iprot thrift.TProtocol) error {
 
 		_field = append(_field, _elem)
 	}
-	if err := iprot.ReadListEnd(); err != nil {
+	if err := iprot.ReadListEnd(ctx); err != nil {
 		return err
 	}
 	p.Capabilities = _field
 	return nil
 }
-func (p *DeviceInfo) ReadField9(iprot thrift.TProtocol) error {
+func (p *DeviceInfo) ReadField9(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -6108,10 +6108,10 @@ func (p *DeviceInfo) ReadField9(iprot thrift.TProtocol) error {
 	p.Vendor = _field
 	return nil
 }
-func (p *DeviceInfo) ReadField10(iprot thrift.TProtocol) error {
+func (p *DeviceInfo) ReadField10(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -6119,8 +6119,8 @@ func (p *DeviceInfo) ReadField10(iprot thrift.TProtocol) error {
 	p.Product = _field
 	return nil
 }
-func (p *DeviceInfo) ReadField11(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
+func (p *DeviceInfo) ReadField11(ctx context.Context, iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -6128,7 +6128,7 @@ func (p *DeviceInfo) ReadField11(iprot thrift.TProtocol) error {
 	for i := 0; i < size; i++ {
 
 		var _elem string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_elem = v
@@ -6136,16 +6136,16 @@ func (p *DeviceInfo) ReadField11(iprot thrift.TProtocol) error {
 
 		_field = append(_field, _elem)
 	}
-	if err := iprot.ReadListEnd(); err != nil {
+	if err := iprot.ReadListEnd(ctx); err != nil {
 		return err
 	}
 	p.NameMatch = _field
 	return nil
 }
-func (p *DeviceInfo) ReadField12(iprot thrift.TProtocol) error {
+func (p *DeviceInfo) ReadField12(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -6153,10 +6153,10 @@ func (p *DeviceInfo) ReadField12(iprot thrift.TProtocol) error {
 	p.Paired = _field
 	return nil
 }
-func (p *DeviceInfo) ReadField13(iprot thrift.TProtocol) error {
+func (p *DeviceInfo) ReadField13(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field int32
-	if v, err := iprot.ReadI32(); err != nil {
+	if v, err := iprot.ReadI32(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -6165,69 +6165,69 @@ func (p *DeviceInfo) ReadField13(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *DeviceInfo) Write(oprot thrift.TProtocol) (err error) {
+func (p *DeviceInfo) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("DeviceInfo"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "DeviceInfo"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
-		if err = p.writeField3(oprot); err != nil {
+		if err = p.writeField3(ctx, oprot); err != nil {
 			fieldId = 3
 			goto WriteFieldError
 		}
-		if err = p.writeField4(oprot); err != nil {
+		if err = p.writeField4(ctx, oprot); err != nil {
 			fieldId = 4
 			goto WriteFieldError
 		}
-		if err = p.writeField5(oprot); err != nil {
+		if err = p.writeField5(ctx, oprot); err != nil {
 			fieldId = 5
 			goto WriteFieldError
 		}
-		if err = p.writeField6(oprot); err != nil {
+		if err = p.writeField6(ctx, oprot); err != nil {
 			fieldId = 6
 			goto WriteFieldError
 		}
-		if err = p.writeField7(oprot); err != nil {
+		if err = p.writeField7(ctx, oprot); err != nil {
 			fieldId = 7
 			goto WriteFieldError
 		}
-		if err = p.writeField8(oprot); err != nil {
+		if err = p.writeField8(ctx, oprot); err != nil {
 			fieldId = 8
 			goto WriteFieldError
 		}
-		if err = p.writeField9(oprot); err != nil {
+		if err = p.writeField9(ctx, oprot); err != nil {
 			fieldId = 9
 			goto WriteFieldError
 		}
-		if err = p.writeField10(oprot); err != nil {
+		if err = p.writeField10(ctx, oprot); err != nil {
 			fieldId = 10
 			goto WriteFieldError
 		}
-		if err = p.writeField11(oprot); err != nil {
+		if err = p.writeField11(ctx, oprot); err != nil {
 			fieldId = 11
 			goto WriteFieldError
 		}
-		if err = p.writeField12(oprot); err != nil {
+		if err = p.writeField12(ctx, oprot); err != nil {
 			fieldId = 12
 			goto WriteFieldError
 		}
-		if err = p.writeField13(oprot); err != nil {
+		if err = p.writeField13(ctx, oprot); err != nil {
 			fieldId = 13
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -6241,14 +6241,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *DeviceInfo) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("id", thrift.STRING, 1); err != nil {
+func (p *DeviceInfo) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "id", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.ID); err != nil {
+	if err := oprot.WriteString(ctx, p.ID); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -6258,14 +6258,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *DeviceInfo) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("name", thrift.STRING, 2); err != nil {
+func (p *DeviceInfo) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "name", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Name); err != nil {
+	if err := oprot.WriteString(ctx, p.Name); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -6275,14 +6275,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *DeviceInfo) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("address", thrift.STRING, 3); err != nil {
+func (p *DeviceInfo) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "address", thrift.STRING, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Address); err != nil {
+	if err := oprot.WriteString(ctx, p.Address); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -6292,14 +6292,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *DeviceInfo) writeField4(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("profile", thrift.STRING, 4); err != nil {
+func (p *DeviceInfo) writeField4(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "profile", thrift.STRING, 4); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Profile); err != nil {
+	if err := oprot.WriteString(ctx, p.Profile); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -6309,14 +6309,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 4 end error: ", p), err)
 }
 
-func (p *DeviceInfo) writeField5(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("enabled", thrift.BOOL, 5); err != nil {
+func (p *DeviceInfo) writeField5(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "enabled", thrift.BOOL, 5); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Enabled); err != nil {
+	if err := oprot.WriteBool(ctx, p.Enabled); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -6326,14 +6326,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 5 end error: ", p), err)
 }
 
-func (p *DeviceInfo) writeField6(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("active", thrift.BOOL, 6); err != nil {
+func (p *DeviceInfo) writeField6(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "active", thrift.BOOL, 6); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Active); err != nil {
+	if err := oprot.WriteBool(ctx, p.Active); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -6343,14 +6343,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 6 end error: ", p), err)
 }
 
-func (p *DeviceInfo) writeField7(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("connected", thrift.BOOL, 7); err != nil {
+func (p *DeviceInfo) writeField7(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "connected", thrift.BOOL, 7); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Connected); err != nil {
+	if err := oprot.WriteBool(ctx, p.Connected); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -6360,22 +6360,22 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 7 end error: ", p), err)
 }
 
-func (p *DeviceInfo) writeField8(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("capabilities", thrift.LIST, 8); err != nil {
+func (p *DeviceInfo) writeField8(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "capabilities", thrift.LIST, 8); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRING, len(p.Capabilities)); err != nil {
+	if err := oprot.WriteListBegin(ctx, thrift.STRING, len(p.Capabilities)); err != nil {
 		return err
 	}
 	for _, v := range p.Capabilities {
-		if err := oprot.WriteString(v); err != nil {
+		if err := oprot.WriteString(ctx, v); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteListEnd(); err != nil {
+	if err := oprot.WriteListEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -6385,14 +6385,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 8 end error: ", p), err)
 }
 
-func (p *DeviceInfo) writeField9(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("vendor", thrift.STRING, 9); err != nil {
+func (p *DeviceInfo) writeField9(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "vendor", thrift.STRING, 9); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Vendor); err != nil {
+	if err := oprot.WriteString(ctx, p.Vendor); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -6402,14 +6402,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 9 end error: ", p), err)
 }
 
-func (p *DeviceInfo) writeField10(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("product", thrift.STRING, 10); err != nil {
+func (p *DeviceInfo) writeField10(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "product", thrift.STRING, 10); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Product); err != nil {
+	if err := oprot.WriteString(ctx, p.Product); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -6419,22 +6419,22 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 10 end error: ", p), err)
 }
 
-func (p *DeviceInfo) writeField11(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("name_match", thrift.LIST, 11); err != nil {
+func (p *DeviceInfo) writeField11(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "name_match", thrift.LIST, 11); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRING, len(p.NameMatch)); err != nil {
+	if err := oprot.WriteListBegin(ctx, thrift.STRING, len(p.NameMatch)); err != nil {
 		return err
 	}
 	for _, v := range p.NameMatch {
-		if err := oprot.WriteString(v); err != nil {
+		if err := oprot.WriteString(ctx, v); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteListEnd(); err != nil {
+	if err := oprot.WriteListEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -6444,14 +6444,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 11 end error: ", p), err)
 }
 
-func (p *DeviceInfo) writeField12(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("paired", thrift.BOOL, 12); err != nil {
+func (p *DeviceInfo) writeField12(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "paired", thrift.BOOL, 12); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Paired); err != nil {
+	if err := oprot.WriteBool(ctx, p.Paired); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -6461,14 +6461,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 12 end error: ", p), err)
 }
 
-func (p *DeviceInfo) writeField13(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("battery", thrift.I32, 13); err != nil {
+func (p *DeviceInfo) writeField13(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "battery", thrift.I32, 13); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI32(p.Battery); err != nil {
+	if err := oprot.WriteI32(ctx, p.Battery); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -6523,17 +6523,17 @@ var fieldIDToName_ProfileInfo = map[int16]string{
 	4: "capabilities",
 }
 
-func (p *ProfileInfo) Read(iprot thrift.TProtocol) (err error) {
+func (p *ProfileInfo) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -6544,46 +6544,46 @@ func (p *ProfileInfo) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 3:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField3(iprot); err != nil {
+				if err = p.ReadField3(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 4:
 			if fieldTypeId == thrift.LIST {
-				if err = p.ReadField4(iprot); err != nil {
+				if err = p.ReadField4(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -6603,10 +6603,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *ProfileInfo) ReadField1(iprot thrift.TProtocol) error {
+func (p *ProfileInfo) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -6614,10 +6614,10 @@ func (p *ProfileInfo) ReadField1(iprot thrift.TProtocol) error {
 	p.ID = _field
 	return nil
 }
-func (p *ProfileInfo) ReadField2(iprot thrift.TProtocol) error {
+func (p *ProfileInfo) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -6625,10 +6625,10 @@ func (p *ProfileInfo) ReadField2(iprot thrift.TProtocol) error {
 	p.Name = _field
 	return nil
 }
-func (p *ProfileInfo) ReadField3(iprot thrift.TProtocol) error {
+func (p *ProfileInfo) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -6636,8 +6636,8 @@ func (p *ProfileInfo) ReadField3(iprot thrift.TProtocol) error {
 	p.Transport = _field
 	return nil
 }
-func (p *ProfileInfo) ReadField4(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
+func (p *ProfileInfo) ReadField4(ctx context.Context, iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -6645,7 +6645,7 @@ func (p *ProfileInfo) ReadField4(iprot thrift.TProtocol) error {
 	for i := 0; i < size; i++ {
 
 		var _elem string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_elem = v
@@ -6653,40 +6653,40 @@ func (p *ProfileInfo) ReadField4(iprot thrift.TProtocol) error {
 
 		_field = append(_field, _elem)
 	}
-	if err := iprot.ReadListEnd(); err != nil {
+	if err := iprot.ReadListEnd(ctx); err != nil {
 		return err
 	}
 	p.Capabilities = _field
 	return nil
 }
 
-func (p *ProfileInfo) Write(oprot thrift.TProtocol) (err error) {
+func (p *ProfileInfo) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ProfileInfo"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "ProfileInfo"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
-		if err = p.writeField3(oprot); err != nil {
+		if err = p.writeField3(ctx, oprot); err != nil {
 			fieldId = 3
 			goto WriteFieldError
 		}
-		if err = p.writeField4(oprot); err != nil {
+		if err = p.writeField4(ctx, oprot); err != nil {
 			fieldId = 4
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -6700,14 +6700,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *ProfileInfo) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("id", thrift.STRING, 1); err != nil {
+func (p *ProfileInfo) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "id", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.ID); err != nil {
+	if err := oprot.WriteString(ctx, p.ID); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -6717,14 +6717,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *ProfileInfo) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("name", thrift.STRING, 2); err != nil {
+func (p *ProfileInfo) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "name", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Name); err != nil {
+	if err := oprot.WriteString(ctx, p.Name); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -6734,14 +6734,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *ProfileInfo) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("transport", thrift.STRING, 3); err != nil {
+func (p *ProfileInfo) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "transport", thrift.STRING, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Transport); err != nil {
+	if err := oprot.WriteString(ctx, p.Transport); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -6751,22 +6751,22 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *ProfileInfo) writeField4(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("capabilities", thrift.LIST, 4); err != nil {
+func (p *ProfileInfo) writeField4(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "capabilities", thrift.LIST, 4); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRING, len(p.Capabilities)); err != nil {
+	if err := oprot.WriteListBegin(ctx, thrift.STRING, len(p.Capabilities)); err != nil {
 		return err
 	}
 	for _, v := range p.Capabilities {
-		if err := oprot.WriteString(v); err != nil {
+		if err := oprot.WriteString(ctx, v); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteListEnd(); err != nil {
+	if err := oprot.WriteListEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -6821,17 +6821,17 @@ var fieldIDToName_DevicesResp = map[int16]string{
 	4: "profiles",
 }
 
-func (p *DevicesResp) Read(iprot thrift.TProtocol) (err error) {
+func (p *DevicesResp) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -6842,46 +6842,46 @@ func (p *DevicesResp) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 3:
 			if fieldTypeId == thrift.LIST {
-				if err = p.ReadField3(iprot); err != nil {
+				if err = p.ReadField3(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 4:
 			if fieldTypeId == thrift.LIST {
-				if err = p.ReadField4(iprot); err != nil {
+				if err = p.ReadField4(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -6901,10 +6901,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *DevicesResp) ReadField1(iprot thrift.TProtocol) error {
+func (p *DevicesResp) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -6912,10 +6912,10 @@ func (p *DevicesResp) ReadField1(iprot thrift.TProtocol) error {
 	p.Ok = _field
 	return nil
 }
-func (p *DevicesResp) ReadField2(iprot thrift.TProtocol) error {
+func (p *DevicesResp) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -6923,8 +6923,8 @@ func (p *DevicesResp) ReadField2(iprot thrift.TProtocol) error {
 	p.Active = _field
 	return nil
 }
-func (p *DevicesResp) ReadField3(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
+func (p *DevicesResp) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -6934,20 +6934,20 @@ func (p *DevicesResp) ReadField3(iprot thrift.TProtocol) error {
 		_elem := &values[i]
 		_elem.InitDefault()
 
-		if err := _elem.Read(iprot); err != nil {
+		if err := _elem.Read(ctx, iprot); err != nil {
 			return err
 		}
 
 		_field = append(_field, _elem)
 	}
-	if err := iprot.ReadListEnd(); err != nil {
+	if err := iprot.ReadListEnd(ctx); err != nil {
 		return err
 	}
 	p.Devices = _field
 	return nil
 }
-func (p *DevicesResp) ReadField4(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
+func (p *DevicesResp) ReadField4(ctx context.Context, iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -6957,46 +6957,46 @@ func (p *DevicesResp) ReadField4(iprot thrift.TProtocol) error {
 		_elem := &values[i]
 		_elem.InitDefault()
 
-		if err := _elem.Read(iprot); err != nil {
+		if err := _elem.Read(ctx, iprot); err != nil {
 			return err
 		}
 
 		_field = append(_field, _elem)
 	}
-	if err := iprot.ReadListEnd(); err != nil {
+	if err := iprot.ReadListEnd(ctx); err != nil {
 		return err
 	}
 	p.Profiles = _field
 	return nil
 }
 
-func (p *DevicesResp) Write(oprot thrift.TProtocol) (err error) {
+func (p *DevicesResp) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("DevicesResp"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "DevicesResp"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
-		if err = p.writeField3(oprot); err != nil {
+		if err = p.writeField3(ctx, oprot); err != nil {
 			fieldId = 3
 			goto WriteFieldError
 		}
-		if err = p.writeField4(oprot); err != nil {
+		if err = p.writeField4(ctx, oprot); err != nil {
 			fieldId = 4
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -7010,14 +7010,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *DevicesResp) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("ok", thrift.BOOL, 1); err != nil {
+func (p *DevicesResp) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "ok", thrift.BOOL, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Ok); err != nil {
+	if err := oprot.WriteBool(ctx, p.Ok); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -7027,14 +7027,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *DevicesResp) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("active", thrift.STRING, 2); err != nil {
+func (p *DevicesResp) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "active", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Active); err != nil {
+	if err := oprot.WriteString(ctx, p.Active); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -7044,22 +7044,22 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *DevicesResp) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("devices", thrift.LIST, 3); err != nil {
+func (p *DevicesResp) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "devices", thrift.LIST, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRUCT, len(p.Devices)); err != nil {
+	if err := oprot.WriteListBegin(ctx, thrift.STRUCT, len(p.Devices)); err != nil {
 		return err
 	}
 	for _, v := range p.Devices {
-		if err := v.Write(oprot); err != nil {
+		if err := v.Write(ctx, oprot); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteListEnd(); err != nil {
+	if err := oprot.WriteListEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -7069,22 +7069,22 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *DevicesResp) writeField4(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("profiles", thrift.LIST, 4); err != nil {
+func (p *DevicesResp) writeField4(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "profiles", thrift.LIST, 4); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRUCT, len(p.Profiles)); err != nil {
+	if err := oprot.WriteListBegin(ctx, thrift.STRUCT, len(p.Profiles)); err != nil {
 		return err
 	}
 	for _, v := range p.Profiles {
-		if err := v.Write(oprot); err != nil {
+		if err := v.Write(ctx, oprot); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteListEnd(); err != nil {
+	if err := oprot.WriteListEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -7175,17 +7175,17 @@ var fieldIDToName_DiscoveredDevice = map[int16]string{
 	10: "battery",
 }
 
-func (p *DiscoveredDevice) Read(iprot thrift.TProtocol) (err error) {
+func (p *DiscoveredDevice) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -7196,94 +7196,94 @@ func (p *DiscoveredDevice) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 3:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField3(iprot); err != nil {
+				if err = p.ReadField3(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 4:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField4(iprot); err != nil {
+				if err = p.ReadField4(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 5:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField5(iprot); err != nil {
+				if err = p.ReadField5(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 6:
 			if fieldTypeId == thrift.LIST {
-				if err = p.ReadField6(iprot); err != nil {
+				if err = p.ReadField6(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 7:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField7(iprot); err != nil {
+				if err = p.ReadField7(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 8:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField8(iprot); err != nil {
+				if err = p.ReadField8(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 9:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField9(iprot); err != nil {
+				if err = p.ReadField9(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 10:
 			if fieldTypeId == thrift.I32 {
-				if err = p.ReadField10(iprot); err != nil {
+				if err = p.ReadField10(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -7303,10 +7303,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *DiscoveredDevice) ReadField1(iprot thrift.TProtocol) error {
+func (p *DiscoveredDevice) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -7314,10 +7314,10 @@ func (p *DiscoveredDevice) ReadField1(iprot thrift.TProtocol) error {
 	p.Address = _field
 	return nil
 }
-func (p *DiscoveredDevice) ReadField2(iprot thrift.TProtocol) error {
+func (p *DiscoveredDevice) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -7325,10 +7325,10 @@ func (p *DiscoveredDevice) ReadField2(iprot thrift.TProtocol) error {
 	p.Name = _field
 	return nil
 }
-func (p *DiscoveredDevice) ReadField3(iprot thrift.TProtocol) error {
+func (p *DiscoveredDevice) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -7336,10 +7336,10 @@ func (p *DiscoveredDevice) ReadField3(iprot thrift.TProtocol) error {
 	p.Vendor = _field
 	return nil
 }
-func (p *DiscoveredDevice) ReadField4(iprot thrift.TProtocol) error {
+func (p *DiscoveredDevice) ReadField4(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -7347,10 +7347,10 @@ func (p *DiscoveredDevice) ReadField4(iprot thrift.TProtocol) error {
 	p.Product = _field
 	return nil
 }
-func (p *DiscoveredDevice) ReadField5(iprot thrift.TProtocol) error {
+func (p *DiscoveredDevice) ReadField5(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -7358,8 +7358,8 @@ func (p *DiscoveredDevice) ReadField5(iprot thrift.TProtocol) error {
 	p.Profile = _field
 	return nil
 }
-func (p *DiscoveredDevice) ReadField6(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
+func (p *DiscoveredDevice) ReadField6(ctx context.Context, iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -7367,7 +7367,7 @@ func (p *DiscoveredDevice) ReadField6(iprot thrift.TProtocol) error {
 	for i := 0; i < size; i++ {
 
 		var _elem string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_elem = v
@@ -7375,16 +7375,16 @@ func (p *DiscoveredDevice) ReadField6(iprot thrift.TProtocol) error {
 
 		_field = append(_field, _elem)
 	}
-	if err := iprot.ReadListEnd(); err != nil {
+	if err := iprot.ReadListEnd(ctx); err != nil {
 		return err
 	}
 	p.Capabilities = _field
 	return nil
 }
-func (p *DiscoveredDevice) ReadField7(iprot thrift.TProtocol) error {
+func (p *DiscoveredDevice) ReadField7(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -7392,10 +7392,10 @@ func (p *DiscoveredDevice) ReadField7(iprot thrift.TProtocol) error {
 	p.Configured = _field
 	return nil
 }
-func (p *DiscoveredDevice) ReadField8(iprot thrift.TProtocol) error {
+func (p *DiscoveredDevice) ReadField8(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -7403,10 +7403,10 @@ func (p *DiscoveredDevice) ReadField8(iprot thrift.TProtocol) error {
 	p.Paired = _field
 	return nil
 }
-func (p *DiscoveredDevice) ReadField9(iprot thrift.TProtocol) error {
+func (p *DiscoveredDevice) ReadField9(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -7414,10 +7414,10 @@ func (p *DiscoveredDevice) ReadField9(iprot thrift.TProtocol) error {
 	p.Connected = _field
 	return nil
 }
-func (p *DiscoveredDevice) ReadField10(iprot thrift.TProtocol) error {
+func (p *DiscoveredDevice) ReadField10(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field int32
-	if v, err := iprot.ReadI32(); err != nil {
+	if v, err := iprot.ReadI32(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -7426,57 +7426,57 @@ func (p *DiscoveredDevice) ReadField10(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *DiscoveredDevice) Write(oprot thrift.TProtocol) (err error) {
+func (p *DiscoveredDevice) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("DiscoveredDevice"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "DiscoveredDevice"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
-		if err = p.writeField3(oprot); err != nil {
+		if err = p.writeField3(ctx, oprot); err != nil {
 			fieldId = 3
 			goto WriteFieldError
 		}
-		if err = p.writeField4(oprot); err != nil {
+		if err = p.writeField4(ctx, oprot); err != nil {
 			fieldId = 4
 			goto WriteFieldError
 		}
-		if err = p.writeField5(oprot); err != nil {
+		if err = p.writeField5(ctx, oprot); err != nil {
 			fieldId = 5
 			goto WriteFieldError
 		}
-		if err = p.writeField6(oprot); err != nil {
+		if err = p.writeField6(ctx, oprot); err != nil {
 			fieldId = 6
 			goto WriteFieldError
 		}
-		if err = p.writeField7(oprot); err != nil {
+		if err = p.writeField7(ctx, oprot); err != nil {
 			fieldId = 7
 			goto WriteFieldError
 		}
-		if err = p.writeField8(oprot); err != nil {
+		if err = p.writeField8(ctx, oprot); err != nil {
 			fieldId = 8
 			goto WriteFieldError
 		}
-		if err = p.writeField9(oprot); err != nil {
+		if err = p.writeField9(ctx, oprot); err != nil {
 			fieldId = 9
 			goto WriteFieldError
 		}
-		if err = p.writeField10(oprot); err != nil {
+		if err = p.writeField10(ctx, oprot); err != nil {
 			fieldId = 10
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -7490,14 +7490,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *DiscoveredDevice) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("address", thrift.STRING, 1); err != nil {
+func (p *DiscoveredDevice) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "address", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Address); err != nil {
+	if err := oprot.WriteString(ctx, p.Address); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -7507,14 +7507,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *DiscoveredDevice) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("name", thrift.STRING, 2); err != nil {
+func (p *DiscoveredDevice) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "name", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Name); err != nil {
+	if err := oprot.WriteString(ctx, p.Name); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -7524,14 +7524,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *DiscoveredDevice) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("vendor", thrift.STRING, 3); err != nil {
+func (p *DiscoveredDevice) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "vendor", thrift.STRING, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Vendor); err != nil {
+	if err := oprot.WriteString(ctx, p.Vendor); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -7541,14 +7541,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *DiscoveredDevice) writeField4(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("product", thrift.STRING, 4); err != nil {
+func (p *DiscoveredDevice) writeField4(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "product", thrift.STRING, 4); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Product); err != nil {
+	if err := oprot.WriteString(ctx, p.Product); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -7558,14 +7558,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 4 end error: ", p), err)
 }
 
-func (p *DiscoveredDevice) writeField5(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("profile", thrift.STRING, 5); err != nil {
+func (p *DiscoveredDevice) writeField5(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "profile", thrift.STRING, 5); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Profile); err != nil {
+	if err := oprot.WriteString(ctx, p.Profile); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -7575,22 +7575,22 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 5 end error: ", p), err)
 }
 
-func (p *DiscoveredDevice) writeField6(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("capabilities", thrift.LIST, 6); err != nil {
+func (p *DiscoveredDevice) writeField6(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "capabilities", thrift.LIST, 6); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRING, len(p.Capabilities)); err != nil {
+	if err := oprot.WriteListBegin(ctx, thrift.STRING, len(p.Capabilities)); err != nil {
 		return err
 	}
 	for _, v := range p.Capabilities {
-		if err := oprot.WriteString(v); err != nil {
+		if err := oprot.WriteString(ctx, v); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteListEnd(); err != nil {
+	if err := oprot.WriteListEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -7600,14 +7600,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 6 end error: ", p), err)
 }
 
-func (p *DiscoveredDevice) writeField7(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("configured", thrift.BOOL, 7); err != nil {
+func (p *DiscoveredDevice) writeField7(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "configured", thrift.BOOL, 7); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Configured); err != nil {
+	if err := oprot.WriteBool(ctx, p.Configured); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -7617,14 +7617,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 7 end error: ", p), err)
 }
 
-func (p *DiscoveredDevice) writeField8(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("paired", thrift.BOOL, 8); err != nil {
+func (p *DiscoveredDevice) writeField8(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "paired", thrift.BOOL, 8); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Paired); err != nil {
+	if err := oprot.WriteBool(ctx, p.Paired); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -7634,14 +7634,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 8 end error: ", p), err)
 }
 
-func (p *DiscoveredDevice) writeField9(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("connected", thrift.BOOL, 9); err != nil {
+func (p *DiscoveredDevice) writeField9(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "connected", thrift.BOOL, 9); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Connected); err != nil {
+	if err := oprot.WriteBool(ctx, p.Connected); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -7651,14 +7651,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 9 end error: ", p), err)
 }
 
-func (p *DiscoveredDevice) writeField10(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("battery", thrift.I32, 10); err != nil {
+func (p *DiscoveredDevice) writeField10(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "battery", thrift.I32, 10); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI32(p.Battery); err != nil {
+	if err := oprot.WriteI32(ctx, p.Battery); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -7701,17 +7701,17 @@ var fieldIDToName_DiscoveredResp = map[int16]string{
 	2: "devices",
 }
 
-func (p *DiscoveredResp) Read(iprot thrift.TProtocol) (err error) {
+func (p *DiscoveredResp) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -7722,30 +7722,30 @@ func (p *DiscoveredResp) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.LIST {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -7765,10 +7765,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *DiscoveredResp) ReadField1(iprot thrift.TProtocol) error {
+func (p *DiscoveredResp) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -7776,8 +7776,8 @@ func (p *DiscoveredResp) ReadField1(iprot thrift.TProtocol) error {
 	p.Ok = _field
 	return nil
 }
-func (p *DiscoveredResp) ReadField2(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
+func (p *DiscoveredResp) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -7787,38 +7787,38 @@ func (p *DiscoveredResp) ReadField2(iprot thrift.TProtocol) error {
 		_elem := &values[i]
 		_elem.InitDefault()
 
-		if err := _elem.Read(iprot); err != nil {
+		if err := _elem.Read(ctx, iprot); err != nil {
 			return err
 		}
 
 		_field = append(_field, _elem)
 	}
-	if err := iprot.ReadListEnd(); err != nil {
+	if err := iprot.ReadListEnd(ctx); err != nil {
 		return err
 	}
 	p.Devices = _field
 	return nil
 }
 
-func (p *DiscoveredResp) Write(oprot thrift.TProtocol) (err error) {
+func (p *DiscoveredResp) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("DiscoveredResp"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "DiscoveredResp"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -7832,14 +7832,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *DiscoveredResp) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("ok", thrift.BOOL, 1); err != nil {
+func (p *DiscoveredResp) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "ok", thrift.BOOL, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Ok); err != nil {
+	if err := oprot.WriteBool(ctx, p.Ok); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -7849,22 +7849,22 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *DiscoveredResp) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("devices", thrift.LIST, 2); err != nil {
+func (p *DiscoveredResp) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "devices", thrift.LIST, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRUCT, len(p.Devices)); err != nil {
+	if err := oprot.WriteListBegin(ctx, thrift.STRUCT, len(p.Devices)); err != nil {
 		return err
 	}
 	for _, v := range p.Devices {
-		if err := v.Write(oprot); err != nil {
+		if err := v.Write(ctx, oprot); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteListEnd(); err != nil {
+	if err := oprot.WriteListEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -7901,17 +7901,17 @@ var fieldIDToName_DeviceReq = map[int16]string{
 	1: "id",
 }
 
-func (p *DeviceReq) Read(iprot thrift.TProtocol) (err error) {
+func (p *DeviceReq) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -7922,22 +7922,22 @@ func (p *DeviceReq) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -7957,10 +7957,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *DeviceReq) ReadField1(iprot thrift.TProtocol) error {
+func (p *DeviceReq) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -7969,21 +7969,21 @@ func (p *DeviceReq) ReadField1(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *DeviceReq) Write(oprot thrift.TProtocol) (err error) {
+func (p *DeviceReq) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("DeviceReq"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "DeviceReq"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -7997,14 +7997,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *DeviceReq) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("id", thrift.STRING, 1); err != nil {
+func (p *DeviceReq) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "id", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.ID); err != nil {
+	if err := oprot.WriteString(ctx, p.ID); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -8047,17 +8047,17 @@ var fieldIDToName_DeviceToggleReq = map[int16]string{
 	2: "enabled",
 }
 
-func (p *DeviceToggleReq) Read(iprot thrift.TProtocol) (err error) {
+func (p *DeviceToggleReq) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -8068,30 +8068,30 @@ func (p *DeviceToggleReq) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -8111,10 +8111,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *DeviceToggleReq) ReadField1(iprot thrift.TProtocol) error {
+func (p *DeviceToggleReq) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -8122,10 +8122,10 @@ func (p *DeviceToggleReq) ReadField1(iprot thrift.TProtocol) error {
 	p.ID = _field
 	return nil
 }
-func (p *DeviceToggleReq) ReadField2(iprot thrift.TProtocol) error {
+func (p *DeviceToggleReq) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -8134,25 +8134,25 @@ func (p *DeviceToggleReq) ReadField2(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *DeviceToggleReq) Write(oprot thrift.TProtocol) (err error) {
+func (p *DeviceToggleReq) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("DeviceToggleReq"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "DeviceToggleReq"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -8166,14 +8166,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *DeviceToggleReq) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("id", thrift.STRING, 1); err != nil {
+func (p *DeviceToggleReq) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "id", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.ID); err != nil {
+	if err := oprot.WriteString(ctx, p.ID); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -8183,14 +8183,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *DeviceToggleReq) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("enabled", thrift.BOOL, 2); err != nil {
+func (p *DeviceToggleReq) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "enabled", thrift.BOOL, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Enabled); err != nil {
+	if err := oprot.WriteBool(ctx, p.Enabled); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -8233,17 +8233,17 @@ var fieldIDToName_DeviceConnectReq = map[int16]string{
 	2: "connect",
 }
 
-func (p *DeviceConnectReq) Read(iprot thrift.TProtocol) (err error) {
+func (p *DeviceConnectReq) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -8254,30 +8254,30 @@ func (p *DeviceConnectReq) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -8297,10 +8297,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *DeviceConnectReq) ReadField1(iprot thrift.TProtocol) error {
+func (p *DeviceConnectReq) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -8308,10 +8308,10 @@ func (p *DeviceConnectReq) ReadField1(iprot thrift.TProtocol) error {
 	p.ID = _field
 	return nil
 }
-func (p *DeviceConnectReq) ReadField2(iprot thrift.TProtocol) error {
+func (p *DeviceConnectReq) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -8320,25 +8320,25 @@ func (p *DeviceConnectReq) ReadField2(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *DeviceConnectReq) Write(oprot thrift.TProtocol) (err error) {
+func (p *DeviceConnectReq) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("DeviceConnectReq"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "DeviceConnectReq"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -8352,14 +8352,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *DeviceConnectReq) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("id", thrift.STRING, 1); err != nil {
+func (p *DeviceConnectReq) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "id", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.ID); err != nil {
+	if err := oprot.WriteString(ctx, p.ID); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -8369,14 +8369,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *DeviceConnectReq) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("connect", thrift.BOOL, 2); err != nil {
+func (p *DeviceConnectReq) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "connect", thrift.BOOL, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Connect); err != nil {
+	if err := oprot.WriteBool(ctx, p.Connect); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -8455,17 +8455,17 @@ var fieldIDToName_DeviceSaveReq = map[int16]string{
 	8: "name_match",
 }
 
-func (p *DeviceSaveReq) Read(iprot thrift.TProtocol) (err error) {
+func (p *DeviceSaveReq) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -8476,78 +8476,78 @@ func (p *DeviceSaveReq) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 3:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField3(iprot); err != nil {
+				if err = p.ReadField3(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 4:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField4(iprot); err != nil {
+				if err = p.ReadField4(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 5:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField5(iprot); err != nil {
+				if err = p.ReadField5(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 6:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField6(iprot); err != nil {
+				if err = p.ReadField6(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 7:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField7(iprot); err != nil {
+				if err = p.ReadField7(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 8:
 			if fieldTypeId == thrift.LIST {
-				if err = p.ReadField8(iprot); err != nil {
+				if err = p.ReadField8(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -8567,10 +8567,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *DeviceSaveReq) ReadField1(iprot thrift.TProtocol) error {
+func (p *DeviceSaveReq) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -8578,10 +8578,10 @@ func (p *DeviceSaveReq) ReadField1(iprot thrift.TProtocol) error {
 	p.ID = _field
 	return nil
 }
-func (p *DeviceSaveReq) ReadField2(iprot thrift.TProtocol) error {
+func (p *DeviceSaveReq) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -8589,10 +8589,10 @@ func (p *DeviceSaveReq) ReadField2(iprot thrift.TProtocol) error {
 	p.Name = _field
 	return nil
 }
-func (p *DeviceSaveReq) ReadField3(iprot thrift.TProtocol) error {
+func (p *DeviceSaveReq) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -8600,10 +8600,10 @@ func (p *DeviceSaveReq) ReadField3(iprot thrift.TProtocol) error {
 	p.Address = _field
 	return nil
 }
-func (p *DeviceSaveReq) ReadField4(iprot thrift.TProtocol) error {
+func (p *DeviceSaveReq) ReadField4(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -8611,10 +8611,10 @@ func (p *DeviceSaveReq) ReadField4(iprot thrift.TProtocol) error {
 	p.Profile = _field
 	return nil
 }
-func (p *DeviceSaveReq) ReadField5(iprot thrift.TProtocol) error {
+func (p *DeviceSaveReq) ReadField5(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -8622,10 +8622,10 @@ func (p *DeviceSaveReq) ReadField5(iprot thrift.TProtocol) error {
 	p.Enabled = _field
 	return nil
 }
-func (p *DeviceSaveReq) ReadField6(iprot thrift.TProtocol) error {
+func (p *DeviceSaveReq) ReadField6(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -8633,10 +8633,10 @@ func (p *DeviceSaveReq) ReadField6(iprot thrift.TProtocol) error {
 	p.Vendor = _field
 	return nil
 }
-func (p *DeviceSaveReq) ReadField7(iprot thrift.TProtocol) error {
+func (p *DeviceSaveReq) ReadField7(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -8644,8 +8644,8 @@ func (p *DeviceSaveReq) ReadField7(iprot thrift.TProtocol) error {
 	p.Product = _field
 	return nil
 }
-func (p *DeviceSaveReq) ReadField8(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
+func (p *DeviceSaveReq) ReadField8(ctx context.Context, iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -8653,7 +8653,7 @@ func (p *DeviceSaveReq) ReadField8(iprot thrift.TProtocol) error {
 	for i := 0; i < size; i++ {
 
 		var _elem string
-		if v, err := iprot.ReadString(); err != nil {
+		if v, err := iprot.ReadString(ctx); err != nil {
 			return err
 		} else {
 			_elem = v
@@ -8661,56 +8661,56 @@ func (p *DeviceSaveReq) ReadField8(iprot thrift.TProtocol) error {
 
 		_field = append(_field, _elem)
 	}
-	if err := iprot.ReadListEnd(); err != nil {
+	if err := iprot.ReadListEnd(ctx); err != nil {
 		return err
 	}
 	p.NameMatch = _field
 	return nil
 }
 
-func (p *DeviceSaveReq) Write(oprot thrift.TProtocol) (err error) {
+func (p *DeviceSaveReq) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("DeviceSaveReq"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "DeviceSaveReq"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
-		if err = p.writeField3(oprot); err != nil {
+		if err = p.writeField3(ctx, oprot); err != nil {
 			fieldId = 3
 			goto WriteFieldError
 		}
-		if err = p.writeField4(oprot); err != nil {
+		if err = p.writeField4(ctx, oprot); err != nil {
 			fieldId = 4
 			goto WriteFieldError
 		}
-		if err = p.writeField5(oprot); err != nil {
+		if err = p.writeField5(ctx, oprot); err != nil {
 			fieldId = 5
 			goto WriteFieldError
 		}
-		if err = p.writeField6(oprot); err != nil {
+		if err = p.writeField6(ctx, oprot); err != nil {
 			fieldId = 6
 			goto WriteFieldError
 		}
-		if err = p.writeField7(oprot); err != nil {
+		if err = p.writeField7(ctx, oprot); err != nil {
 			fieldId = 7
 			goto WriteFieldError
 		}
-		if err = p.writeField8(oprot); err != nil {
+		if err = p.writeField8(ctx, oprot); err != nil {
 			fieldId = 8
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -8724,14 +8724,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *DeviceSaveReq) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("id", thrift.STRING, 1); err != nil {
+func (p *DeviceSaveReq) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "id", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.ID); err != nil {
+	if err := oprot.WriteString(ctx, p.ID); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -8741,14 +8741,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *DeviceSaveReq) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("name", thrift.STRING, 2); err != nil {
+func (p *DeviceSaveReq) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "name", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Name); err != nil {
+	if err := oprot.WriteString(ctx, p.Name); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -8758,14 +8758,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *DeviceSaveReq) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("address", thrift.STRING, 3); err != nil {
+func (p *DeviceSaveReq) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "address", thrift.STRING, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Address); err != nil {
+	if err := oprot.WriteString(ctx, p.Address); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -8775,14 +8775,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *DeviceSaveReq) writeField4(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("profile", thrift.STRING, 4); err != nil {
+func (p *DeviceSaveReq) writeField4(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "profile", thrift.STRING, 4); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Profile); err != nil {
+	if err := oprot.WriteString(ctx, p.Profile); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -8792,14 +8792,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 4 end error: ", p), err)
 }
 
-func (p *DeviceSaveReq) writeField5(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("enabled", thrift.BOOL, 5); err != nil {
+func (p *DeviceSaveReq) writeField5(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "enabled", thrift.BOOL, 5); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Enabled); err != nil {
+	if err := oprot.WriteBool(ctx, p.Enabled); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -8809,14 +8809,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 5 end error: ", p), err)
 }
 
-func (p *DeviceSaveReq) writeField6(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("vendor", thrift.STRING, 6); err != nil {
+func (p *DeviceSaveReq) writeField6(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "vendor", thrift.STRING, 6); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Vendor); err != nil {
+	if err := oprot.WriteString(ctx, p.Vendor); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -8826,14 +8826,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 6 end error: ", p), err)
 }
 
-func (p *DeviceSaveReq) writeField7(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("product", thrift.STRING, 7); err != nil {
+func (p *DeviceSaveReq) writeField7(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "product", thrift.STRING, 7); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Product); err != nil {
+	if err := oprot.WriteString(ctx, p.Product); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -8843,22 +8843,22 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 7 end error: ", p), err)
 }
 
-func (p *DeviceSaveReq) writeField8(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("name_match", thrift.LIST, 8); err != nil {
+func (p *DeviceSaveReq) writeField8(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "name_match", thrift.LIST, 8); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRING, len(p.NameMatch)); err != nil {
+	if err := oprot.WriteListBegin(ctx, thrift.STRING, len(p.NameMatch)); err != nil {
 		return err
 	}
 	for _, v := range p.NameMatch {
-		if err := oprot.WriteString(v); err != nil {
+		if err := oprot.WriteString(ctx, v); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteListEnd(); err != nil {
+	if err := oprot.WriteListEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -8937,17 +8937,17 @@ var fieldIDToName_LLMConfig = map[int16]string{
 	8: "timeout_seconds",
 }
 
-func (p *LLMConfig) Read(iprot thrift.TProtocol) (err error) {
+func (p *LLMConfig) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -8958,78 +8958,78 @@ func (p *LLMConfig) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 3:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField3(iprot); err != nil {
+				if err = p.ReadField3(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 4:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField4(iprot); err != nil {
+				if err = p.ReadField4(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 5:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField5(iprot); err != nil {
+				if err = p.ReadField5(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 6:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField6(iprot); err != nil {
+				if err = p.ReadField6(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 7:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField7(iprot); err != nil {
+				if err = p.ReadField7(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 8:
 			if fieldTypeId == thrift.I32 {
-				if err = p.ReadField8(iprot); err != nil {
+				if err = p.ReadField8(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -9049,10 +9049,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *LLMConfig) ReadField1(iprot thrift.TProtocol) error {
+func (p *LLMConfig) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -9060,10 +9060,10 @@ func (p *LLMConfig) ReadField1(iprot thrift.TProtocol) error {
 	p.Enabled = _field
 	return nil
 }
-func (p *LLMConfig) ReadField2(iprot thrift.TProtocol) error {
+func (p *LLMConfig) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -9071,10 +9071,10 @@ func (p *LLMConfig) ReadField2(iprot thrift.TProtocol) error {
 	p.Provider = _field
 	return nil
 }
-func (p *LLMConfig) ReadField3(iprot thrift.TProtocol) error {
+func (p *LLMConfig) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -9082,10 +9082,10 @@ func (p *LLMConfig) ReadField3(iprot thrift.TProtocol) error {
 	p.BaseURL = _field
 	return nil
 }
-func (p *LLMConfig) ReadField4(iprot thrift.TProtocol) error {
+func (p *LLMConfig) ReadField4(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -9093,10 +9093,10 @@ func (p *LLMConfig) ReadField4(iprot thrift.TProtocol) error {
 	p.Model = _field
 	return nil
 }
-func (p *LLMConfig) ReadField5(iprot thrift.TProtocol) error {
+func (p *LLMConfig) ReadField5(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -9104,10 +9104,10 @@ func (p *LLMConfig) ReadField5(iprot thrift.TProtocol) error {
 	p.APIKeyFile = _field
 	return nil
 }
-func (p *LLMConfig) ReadField6(iprot thrift.TProtocol) error {
+func (p *LLMConfig) ReadField6(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -9115,10 +9115,10 @@ func (p *LLMConfig) ReadField6(iprot thrift.TProtocol) error {
 	p.Mode = _field
 	return nil
 }
-func (p *LLMConfig) ReadField7(iprot thrift.TProtocol) error {
+func (p *LLMConfig) ReadField7(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -9126,10 +9126,10 @@ func (p *LLMConfig) ReadField7(iprot thrift.TProtocol) error {
 	p.Prompt = _field
 	return nil
 }
-func (p *LLMConfig) ReadField8(iprot thrift.TProtocol) error {
+func (p *LLMConfig) ReadField8(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field int32
-	if v, err := iprot.ReadI32(); err != nil {
+	if v, err := iprot.ReadI32(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -9138,49 +9138,49 @@ func (p *LLMConfig) ReadField8(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *LLMConfig) Write(oprot thrift.TProtocol) (err error) {
+func (p *LLMConfig) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("LLMConfig"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "LLMConfig"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
-		if err = p.writeField3(oprot); err != nil {
+		if err = p.writeField3(ctx, oprot); err != nil {
 			fieldId = 3
 			goto WriteFieldError
 		}
-		if err = p.writeField4(oprot); err != nil {
+		if err = p.writeField4(ctx, oprot); err != nil {
 			fieldId = 4
 			goto WriteFieldError
 		}
-		if err = p.writeField5(oprot); err != nil {
+		if err = p.writeField5(ctx, oprot); err != nil {
 			fieldId = 5
 			goto WriteFieldError
 		}
-		if err = p.writeField6(oprot); err != nil {
+		if err = p.writeField6(ctx, oprot); err != nil {
 			fieldId = 6
 			goto WriteFieldError
 		}
-		if err = p.writeField7(oprot); err != nil {
+		if err = p.writeField7(ctx, oprot); err != nil {
 			fieldId = 7
 			goto WriteFieldError
 		}
-		if err = p.writeField8(oprot); err != nil {
+		if err = p.writeField8(ctx, oprot); err != nil {
 			fieldId = 8
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -9194,14 +9194,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *LLMConfig) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("enabled", thrift.BOOL, 1); err != nil {
+func (p *LLMConfig) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "enabled", thrift.BOOL, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Enabled); err != nil {
+	if err := oprot.WriteBool(ctx, p.Enabled); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -9211,14 +9211,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *LLMConfig) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("provider", thrift.STRING, 2); err != nil {
+func (p *LLMConfig) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "provider", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Provider); err != nil {
+	if err := oprot.WriteString(ctx, p.Provider); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -9228,14 +9228,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *LLMConfig) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("base_url", thrift.STRING, 3); err != nil {
+func (p *LLMConfig) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "base_url", thrift.STRING, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.BaseURL); err != nil {
+	if err := oprot.WriteString(ctx, p.BaseURL); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -9245,14 +9245,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *LLMConfig) writeField4(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("model", thrift.STRING, 4); err != nil {
+func (p *LLMConfig) writeField4(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "model", thrift.STRING, 4); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Model); err != nil {
+	if err := oprot.WriteString(ctx, p.Model); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -9262,14 +9262,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 4 end error: ", p), err)
 }
 
-func (p *LLMConfig) writeField5(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("api_key_file", thrift.STRING, 5); err != nil {
+func (p *LLMConfig) writeField5(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "api_key_file", thrift.STRING, 5); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.APIKeyFile); err != nil {
+	if err := oprot.WriteString(ctx, p.APIKeyFile); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -9279,14 +9279,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 5 end error: ", p), err)
 }
 
-func (p *LLMConfig) writeField6(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("mode", thrift.STRING, 6); err != nil {
+func (p *LLMConfig) writeField6(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "mode", thrift.STRING, 6); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Mode); err != nil {
+	if err := oprot.WriteString(ctx, p.Mode); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -9296,14 +9296,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 6 end error: ", p), err)
 }
 
-func (p *LLMConfig) writeField7(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("prompt", thrift.STRING, 7); err != nil {
+func (p *LLMConfig) writeField7(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "prompt", thrift.STRING, 7); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Prompt); err != nil {
+	if err := oprot.WriteString(ctx, p.Prompt); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -9313,14 +9313,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 7 end error: ", p), err)
 }
 
-func (p *LLMConfig) writeField8(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("timeout_seconds", thrift.I32, 8); err != nil {
+func (p *LLMConfig) writeField8(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "timeout_seconds", thrift.I32, 8); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI32(p.TimeoutSeconds); err != nil {
+	if err := oprot.WriteI32(ctx, p.TimeoutSeconds); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -9393,17 +9393,17 @@ var fieldIDToName_LLMPreset = map[int16]string{
 	7: "description",
 }
 
-func (p *LLMPreset) Read(iprot thrift.TProtocol) (err error) {
+func (p *LLMPreset) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -9414,70 +9414,70 @@ func (p *LLMPreset) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 3:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField3(iprot); err != nil {
+				if err = p.ReadField3(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 4:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField4(iprot); err != nil {
+				if err = p.ReadField4(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 5:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField5(iprot); err != nil {
+				if err = p.ReadField5(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 6:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField6(iprot); err != nil {
+				if err = p.ReadField6(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 7:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField7(iprot); err != nil {
+				if err = p.ReadField7(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -9497,10 +9497,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *LLMPreset) ReadField1(iprot thrift.TProtocol) error {
+func (p *LLMPreset) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -9508,10 +9508,10 @@ func (p *LLMPreset) ReadField1(iprot thrift.TProtocol) error {
 	p.ID = _field
 	return nil
 }
-func (p *LLMPreset) ReadField2(iprot thrift.TProtocol) error {
+func (p *LLMPreset) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -9519,10 +9519,10 @@ func (p *LLMPreset) ReadField2(iprot thrift.TProtocol) error {
 	p.Name = _field
 	return nil
 }
-func (p *LLMPreset) ReadField3(iprot thrift.TProtocol) error {
+func (p *LLMPreset) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -9530,10 +9530,10 @@ func (p *LLMPreset) ReadField3(iprot thrift.TProtocol) error {
 	p.BaseURL = _field
 	return nil
 }
-func (p *LLMPreset) ReadField4(iprot thrift.TProtocol) error {
+func (p *LLMPreset) ReadField4(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -9541,10 +9541,10 @@ func (p *LLMPreset) ReadField4(iprot thrift.TProtocol) error {
 	p.Model = _field
 	return nil
 }
-func (p *LLMPreset) ReadField5(iprot thrift.TProtocol) error {
+func (p *LLMPreset) ReadField5(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -9552,10 +9552,10 @@ func (p *LLMPreset) ReadField5(iprot thrift.TProtocol) error {
 	p.ModelHint = _field
 	return nil
 }
-func (p *LLMPreset) ReadField6(iprot thrift.TProtocol) error {
+func (p *LLMPreset) ReadField6(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -9563,10 +9563,10 @@ func (p *LLMPreset) ReadField6(iprot thrift.TProtocol) error {
 	p.KeyHint = _field
 	return nil
 }
-func (p *LLMPreset) ReadField7(iprot thrift.TProtocol) error {
+func (p *LLMPreset) ReadField7(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -9575,45 +9575,45 @@ func (p *LLMPreset) ReadField7(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *LLMPreset) Write(oprot thrift.TProtocol) (err error) {
+func (p *LLMPreset) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("LLMPreset"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "LLMPreset"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
-		if err = p.writeField3(oprot); err != nil {
+		if err = p.writeField3(ctx, oprot); err != nil {
 			fieldId = 3
 			goto WriteFieldError
 		}
-		if err = p.writeField4(oprot); err != nil {
+		if err = p.writeField4(ctx, oprot); err != nil {
 			fieldId = 4
 			goto WriteFieldError
 		}
-		if err = p.writeField5(oprot); err != nil {
+		if err = p.writeField5(ctx, oprot); err != nil {
 			fieldId = 5
 			goto WriteFieldError
 		}
-		if err = p.writeField6(oprot); err != nil {
+		if err = p.writeField6(ctx, oprot); err != nil {
 			fieldId = 6
 			goto WriteFieldError
 		}
-		if err = p.writeField7(oprot); err != nil {
+		if err = p.writeField7(ctx, oprot); err != nil {
 			fieldId = 7
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -9627,14 +9627,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *LLMPreset) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("id", thrift.STRING, 1); err != nil {
+func (p *LLMPreset) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "id", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.ID); err != nil {
+	if err := oprot.WriteString(ctx, p.ID); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -9644,14 +9644,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *LLMPreset) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("name", thrift.STRING, 2); err != nil {
+func (p *LLMPreset) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "name", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Name); err != nil {
+	if err := oprot.WriteString(ctx, p.Name); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -9661,14 +9661,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *LLMPreset) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("base_url", thrift.STRING, 3); err != nil {
+func (p *LLMPreset) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "base_url", thrift.STRING, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.BaseURL); err != nil {
+	if err := oprot.WriteString(ctx, p.BaseURL); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -9678,14 +9678,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *LLMPreset) writeField4(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("model", thrift.STRING, 4); err != nil {
+func (p *LLMPreset) writeField4(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "model", thrift.STRING, 4); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Model); err != nil {
+	if err := oprot.WriteString(ctx, p.Model); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -9695,14 +9695,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 4 end error: ", p), err)
 }
 
-func (p *LLMPreset) writeField5(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("model_hint", thrift.STRING, 5); err != nil {
+func (p *LLMPreset) writeField5(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "model_hint", thrift.STRING, 5); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.ModelHint); err != nil {
+	if err := oprot.WriteString(ctx, p.ModelHint); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -9712,14 +9712,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 5 end error: ", p), err)
 }
 
-func (p *LLMPreset) writeField6(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("key_hint", thrift.STRING, 6); err != nil {
+func (p *LLMPreset) writeField6(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "key_hint", thrift.STRING, 6); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.KeyHint); err != nil {
+	if err := oprot.WriteString(ctx, p.KeyHint); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -9729,14 +9729,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 6 end error: ", p), err)
 }
 
-func (p *LLMPreset) writeField7(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("description", thrift.STRING, 7); err != nil {
+func (p *LLMPreset) writeField7(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "description", thrift.STRING, 7); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Description); err != nil {
+	if err := oprot.WriteString(ctx, p.Description); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -9794,17 +9794,17 @@ func (p *LLMConfigResp) IsSetConfig() bool {
 	return p.Config != nil
 }
 
-func (p *LLMConfigResp) Read(iprot thrift.TProtocol) (err error) {
+func (p *LLMConfigResp) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -9815,38 +9815,38 @@ func (p *LLMConfigResp) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 3:
 			if fieldTypeId == thrift.LIST {
-				if err = p.ReadField3(iprot); err != nil {
+				if err = p.ReadField3(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -9866,10 +9866,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *LLMConfigResp) ReadField1(iprot thrift.TProtocol) error {
+func (p *LLMConfigResp) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -9877,16 +9877,16 @@ func (p *LLMConfigResp) ReadField1(iprot thrift.TProtocol) error {
 	p.Ok = _field
 	return nil
 }
-func (p *LLMConfigResp) ReadField2(iprot thrift.TProtocol) error {
+func (p *LLMConfigResp) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewLLMConfig()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Config = _field
 	return nil
 }
-func (p *LLMConfigResp) ReadField3(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
+func (p *LLMConfigResp) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -9896,42 +9896,42 @@ func (p *LLMConfigResp) ReadField3(iprot thrift.TProtocol) error {
 		_elem := &values[i]
 		_elem.InitDefault()
 
-		if err := _elem.Read(iprot); err != nil {
+		if err := _elem.Read(ctx, iprot); err != nil {
 			return err
 		}
 
 		_field = append(_field, _elem)
 	}
-	if err := iprot.ReadListEnd(); err != nil {
+	if err := iprot.ReadListEnd(ctx); err != nil {
 		return err
 	}
 	p.Presets = _field
 	return nil
 }
 
-func (p *LLMConfigResp) Write(oprot thrift.TProtocol) (err error) {
+func (p *LLMConfigResp) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("LLMConfigResp"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "LLMConfigResp"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
-		if err = p.writeField3(oprot); err != nil {
+		if err = p.writeField3(ctx, oprot); err != nil {
 			fieldId = 3
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -9945,14 +9945,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *LLMConfigResp) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("ok", thrift.BOOL, 1); err != nil {
+func (p *LLMConfigResp) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "ok", thrift.BOOL, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Ok); err != nil {
+	if err := oprot.WriteBool(ctx, p.Ok); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -9962,14 +9962,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *LLMConfigResp) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("config", thrift.STRUCT, 2); err != nil {
+func (p *LLMConfigResp) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "config", thrift.STRUCT, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Config.Write(oprot); err != nil {
+	if err := p.Config.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -9979,22 +9979,22 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *LLMConfigResp) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("presets", thrift.LIST, 3); err != nil {
+func (p *LLMConfigResp) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "presets", thrift.LIST, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRUCT, len(p.Presets)); err != nil {
+	if err := oprot.WriteListBegin(ctx, thrift.STRUCT, len(p.Presets)); err != nil {
 		return err
 	}
 	for _, v := range p.Presets {
-		if err := v.Write(oprot); err != nil {
+		if err := v.Write(ctx, oprot); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteListEnd(); err != nil {
+	if err := oprot.WriteListEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -10037,17 +10037,17 @@ var fieldIDToName_LLMDiagnostic = map[int16]string{
 	2: "detail",
 }
 
-func (p *LLMDiagnostic) Read(iprot thrift.TProtocol) (err error) {
+func (p *LLMDiagnostic) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -10058,30 +10058,30 @@ func (p *LLMDiagnostic) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -10101,10 +10101,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *LLMDiagnostic) ReadField1(iprot thrift.TProtocol) error {
+func (p *LLMDiagnostic) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -10112,10 +10112,10 @@ func (p *LLMDiagnostic) ReadField1(iprot thrift.TProtocol) error {
 	p.Ok = _field
 	return nil
 }
-func (p *LLMDiagnostic) ReadField2(iprot thrift.TProtocol) error {
+func (p *LLMDiagnostic) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -10124,25 +10124,25 @@ func (p *LLMDiagnostic) ReadField2(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *LLMDiagnostic) Write(oprot thrift.TProtocol) (err error) {
+func (p *LLMDiagnostic) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("LLMDiagnostic"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "LLMDiagnostic"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -10156,14 +10156,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *LLMDiagnostic) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("ok", thrift.BOOL, 1); err != nil {
+func (p *LLMDiagnostic) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "ok", thrift.BOOL, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Ok); err != nil {
+	if err := oprot.WriteBool(ctx, p.Ok); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -10173,14 +10173,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *LLMDiagnostic) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("detail", thrift.STRING, 2); err != nil {
+func (p *LLMDiagnostic) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "detail", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Detail); err != nil {
+	if err := oprot.WriteString(ctx, p.Detail); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -10223,17 +10223,17 @@ var fieldIDToName_LLMTestResp = map[int16]string{
 	2: "diagnostics",
 }
 
-func (p *LLMTestResp) Read(iprot thrift.TProtocol) (err error) {
+func (p *LLMTestResp) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -10244,30 +10244,30 @@ func (p *LLMTestResp) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.LIST {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -10287,10 +10287,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *LLMTestResp) ReadField1(iprot thrift.TProtocol) error {
+func (p *LLMTestResp) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -10298,8 +10298,8 @@ func (p *LLMTestResp) ReadField1(iprot thrift.TProtocol) error {
 	p.Ok = _field
 	return nil
 }
-func (p *LLMTestResp) ReadField2(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
+func (p *LLMTestResp) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -10309,38 +10309,38 @@ func (p *LLMTestResp) ReadField2(iprot thrift.TProtocol) error {
 		_elem := &values[i]
 		_elem.InitDefault()
 
-		if err := _elem.Read(iprot); err != nil {
+		if err := _elem.Read(ctx, iprot); err != nil {
 			return err
 		}
 
 		_field = append(_field, _elem)
 	}
-	if err := iprot.ReadListEnd(); err != nil {
+	if err := iprot.ReadListEnd(ctx); err != nil {
 		return err
 	}
 	p.Diagnostics = _field
 	return nil
 }
 
-func (p *LLMTestResp) Write(oprot thrift.TProtocol) (err error) {
+func (p *LLMTestResp) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("LLMTestResp"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "LLMTestResp"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -10354,14 +10354,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *LLMTestResp) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("ok", thrift.BOOL, 1); err != nil {
+func (p *LLMTestResp) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "ok", thrift.BOOL, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Ok); err != nil {
+	if err := oprot.WriteBool(ctx, p.Ok); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -10371,22 +10371,22 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *LLMTestResp) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("diagnostics", thrift.LIST, 2); err != nil {
+func (p *LLMTestResp) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "diagnostics", thrift.LIST, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRUCT, len(p.Diagnostics)); err != nil {
+	if err := oprot.WriteListBegin(ctx, thrift.STRUCT, len(p.Diagnostics)); err != nil {
 		return err
 	}
 	for _, v := range p.Diagnostics {
-		if err := v.Write(oprot); err != nil {
+		if err := v.Write(ctx, oprot); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteListEnd(); err != nil {
+	if err := oprot.WriteListEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -10429,17 +10429,17 @@ var fieldIDToName_LLMProviderReq = map[int16]string{
 	2: "live",
 }
 
-func (p *LLMProviderReq) Read(iprot thrift.TProtocol) (err error) {
+func (p *LLMProviderReq) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -10450,30 +10450,30 @@ func (p *LLMProviderReq) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -10493,10 +10493,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *LLMProviderReq) ReadField1(iprot thrift.TProtocol) error {
+func (p *LLMProviderReq) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -10504,10 +10504,10 @@ func (p *LLMProviderReq) ReadField1(iprot thrift.TProtocol) error {
 	p.Provider = _field
 	return nil
 }
-func (p *LLMProviderReq) ReadField2(iprot thrift.TProtocol) error {
+func (p *LLMProviderReq) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -10516,25 +10516,25 @@ func (p *LLMProviderReq) ReadField2(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *LLMProviderReq) Write(oprot thrift.TProtocol) (err error) {
+func (p *LLMProviderReq) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("LLMProviderReq"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "LLMProviderReq"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -10548,14 +10548,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *LLMProviderReq) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("provider", thrift.STRING, 1); err != nil {
+func (p *LLMProviderReq) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "provider", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Provider); err != nil {
+	if err := oprot.WriteString(ctx, p.Provider); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -10565,14 +10565,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *LLMProviderReq) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("live", thrift.BOOL, 2); err != nil {
+func (p *LLMProviderReq) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "live", thrift.BOOL, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Live); err != nil {
+	if err := oprot.WriteBool(ctx, p.Live); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -10609,17 +10609,17 @@ var fieldIDToName_LLMKeyReq = map[int16]string{
 	1: "key",
 }
 
-func (p *LLMKeyReq) Read(iprot thrift.TProtocol) (err error) {
+func (p *LLMKeyReq) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -10630,22 +10630,22 @@ func (p *LLMKeyReq) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -10665,10 +10665,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *LLMKeyReq) ReadField1(iprot thrift.TProtocol) error {
+func (p *LLMKeyReq) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -10677,21 +10677,21 @@ func (p *LLMKeyReq) ReadField1(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *LLMKeyReq) Write(oprot thrift.TProtocol) (err error) {
+func (p *LLMKeyReq) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("LLMKeyReq"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "LLMKeyReq"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -10705,14 +10705,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *LLMKeyReq) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("key", thrift.STRING, 1); err != nil {
+func (p *LLMKeyReq) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "key", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Key); err != nil {
+	if err := oprot.WriteString(ctx, p.Key); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -10815,17 +10815,17 @@ var fieldIDToName_HistoryEntry = map[int16]string{
 	12: "truncated",
 }
 
-func (p *HistoryEntry) Read(iprot thrift.TProtocol) (err error) {
+func (p *HistoryEntry) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -10836,110 +10836,110 @@ func (p *HistoryEntry) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 3:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField3(iprot); err != nil {
+				if err = p.ReadField3(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 4:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField4(iprot); err != nil {
+				if err = p.ReadField4(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 5:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField5(iprot); err != nil {
+				if err = p.ReadField5(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 6:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField6(iprot); err != nil {
+				if err = p.ReadField6(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 7:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField7(iprot); err != nil {
+				if err = p.ReadField7(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 8:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField8(iprot); err != nil {
+				if err = p.ReadField8(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 9:
 			if fieldTypeId == thrift.I64 {
-				if err = p.ReadField9(iprot); err != nil {
+				if err = p.ReadField9(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 10:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField10(iprot); err != nil {
+				if err = p.ReadField10(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 11:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField11(iprot); err != nil {
+				if err = p.ReadField11(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 12:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField12(iprot); err != nil {
+				if err = p.ReadField12(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -10959,10 +10959,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *HistoryEntry) ReadField1(iprot thrift.TProtocol) error {
+func (p *HistoryEntry) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -10970,10 +10970,10 @@ func (p *HistoryEntry) ReadField1(iprot thrift.TProtocol) error {
 	p.ID = _field
 	return nil
 }
-func (p *HistoryEntry) ReadField2(iprot thrift.TProtocol) error {
+func (p *HistoryEntry) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -10981,10 +10981,10 @@ func (p *HistoryEntry) ReadField2(iprot thrift.TProtocol) error {
 	p.Text = _field
 	return nil
 }
-func (p *HistoryEntry) ReadField3(iprot thrift.TProtocol) error {
+func (p *HistoryEntry) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -10992,10 +10992,10 @@ func (p *HistoryEntry) ReadField3(iprot thrift.TProtocol) error {
 	p.RawText = _field
 	return nil
 }
-func (p *HistoryEntry) ReadField4(iprot thrift.TProtocol) error {
+func (p *HistoryEntry) ReadField4(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -11003,10 +11003,10 @@ func (p *HistoryEntry) ReadField4(iprot thrift.TProtocol) error {
 	p.Provider = _field
 	return nil
 }
-func (p *HistoryEntry) ReadField5(iprot thrift.TProtocol) error {
+func (p *HistoryEntry) ReadField5(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -11014,10 +11014,10 @@ func (p *HistoryEntry) ReadField5(iprot thrift.TProtocol) error {
 	p.Language = _field
 	return nil
 }
-func (p *HistoryEntry) ReadField6(iprot thrift.TProtocol) error {
+func (p *HistoryEntry) ReadField6(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -11025,10 +11025,10 @@ func (p *HistoryEntry) ReadField6(iprot thrift.TProtocol) error {
 	p.Address = _field
 	return nil
 }
-func (p *HistoryEntry) ReadField7(iprot thrift.TProtocol) error {
+func (p *HistoryEntry) ReadField7(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -11036,10 +11036,10 @@ func (p *HistoryEntry) ReadField7(iprot thrift.TProtocol) error {
 	p.Processed = _field
 	return nil
 }
-func (p *HistoryEntry) ReadField8(iprot thrift.TProtocol) error {
+func (p *HistoryEntry) ReadField8(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -11047,10 +11047,10 @@ func (p *HistoryEntry) ReadField8(iprot thrift.TProtocol) error {
 	p.At = _field
 	return nil
 }
-func (p *HistoryEntry) ReadField9(iprot thrift.TProtocol) error {
+func (p *HistoryEntry) ReadField9(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field int64
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadI64(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -11058,10 +11058,10 @@ func (p *HistoryEntry) ReadField9(iprot thrift.TProtocol) error {
 	p.LatencyMs = _field
 	return nil
 }
-func (p *HistoryEntry) ReadField10(iprot thrift.TProtocol) error {
+func (p *HistoryEntry) ReadField10(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -11069,10 +11069,10 @@ func (p *HistoryEntry) ReadField10(iprot thrift.TProtocol) error {
 	p.Source = _field
 	return nil
 }
-func (p *HistoryEntry) ReadField11(iprot thrift.TProtocol) error {
+func (p *HistoryEntry) ReadField11(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -11080,10 +11080,10 @@ func (p *HistoryEntry) ReadField11(iprot thrift.TProtocol) error {
 	p.SourceName = _field
 	return nil
 }
-func (p *HistoryEntry) ReadField12(iprot thrift.TProtocol) error {
+func (p *HistoryEntry) ReadField12(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -11092,65 +11092,65 @@ func (p *HistoryEntry) ReadField12(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *HistoryEntry) Write(oprot thrift.TProtocol) (err error) {
+func (p *HistoryEntry) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("HistoryEntry"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "HistoryEntry"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
-		if err = p.writeField3(oprot); err != nil {
+		if err = p.writeField3(ctx, oprot); err != nil {
 			fieldId = 3
 			goto WriteFieldError
 		}
-		if err = p.writeField4(oprot); err != nil {
+		if err = p.writeField4(ctx, oprot); err != nil {
 			fieldId = 4
 			goto WriteFieldError
 		}
-		if err = p.writeField5(oprot); err != nil {
+		if err = p.writeField5(ctx, oprot); err != nil {
 			fieldId = 5
 			goto WriteFieldError
 		}
-		if err = p.writeField6(oprot); err != nil {
+		if err = p.writeField6(ctx, oprot); err != nil {
 			fieldId = 6
 			goto WriteFieldError
 		}
-		if err = p.writeField7(oprot); err != nil {
+		if err = p.writeField7(ctx, oprot); err != nil {
 			fieldId = 7
 			goto WriteFieldError
 		}
-		if err = p.writeField8(oprot); err != nil {
+		if err = p.writeField8(ctx, oprot); err != nil {
 			fieldId = 8
 			goto WriteFieldError
 		}
-		if err = p.writeField9(oprot); err != nil {
+		if err = p.writeField9(ctx, oprot); err != nil {
 			fieldId = 9
 			goto WriteFieldError
 		}
-		if err = p.writeField10(oprot); err != nil {
+		if err = p.writeField10(ctx, oprot); err != nil {
 			fieldId = 10
 			goto WriteFieldError
 		}
-		if err = p.writeField11(oprot); err != nil {
+		if err = p.writeField11(ctx, oprot); err != nil {
 			fieldId = 11
 			goto WriteFieldError
 		}
-		if err = p.writeField12(oprot); err != nil {
+		if err = p.writeField12(ctx, oprot); err != nil {
 			fieldId = 12
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -11164,14 +11164,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *HistoryEntry) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("id", thrift.STRING, 1); err != nil {
+func (p *HistoryEntry) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "id", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.ID); err != nil {
+	if err := oprot.WriteString(ctx, p.ID); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -11181,14 +11181,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *HistoryEntry) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("text", thrift.STRING, 2); err != nil {
+func (p *HistoryEntry) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "text", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Text); err != nil {
+	if err := oprot.WriteString(ctx, p.Text); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -11198,14 +11198,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *HistoryEntry) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("raw_text", thrift.STRING, 3); err != nil {
+func (p *HistoryEntry) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "raw_text", thrift.STRING, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.RawText); err != nil {
+	if err := oprot.WriteString(ctx, p.RawText); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -11215,14 +11215,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *HistoryEntry) writeField4(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("provider", thrift.STRING, 4); err != nil {
+func (p *HistoryEntry) writeField4(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "provider", thrift.STRING, 4); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Provider); err != nil {
+	if err := oprot.WriteString(ctx, p.Provider); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -11232,14 +11232,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 4 end error: ", p), err)
 }
 
-func (p *HistoryEntry) writeField5(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("language", thrift.STRING, 5); err != nil {
+func (p *HistoryEntry) writeField5(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "language", thrift.STRING, 5); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Language); err != nil {
+	if err := oprot.WriteString(ctx, p.Language); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -11249,14 +11249,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 5 end error: ", p), err)
 }
 
-func (p *HistoryEntry) writeField6(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("address", thrift.STRING, 6); err != nil {
+func (p *HistoryEntry) writeField6(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "address", thrift.STRING, 6); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Address); err != nil {
+	if err := oprot.WriteString(ctx, p.Address); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -11266,14 +11266,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 6 end error: ", p), err)
 }
 
-func (p *HistoryEntry) writeField7(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("processed", thrift.BOOL, 7); err != nil {
+func (p *HistoryEntry) writeField7(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "processed", thrift.BOOL, 7); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Processed); err != nil {
+	if err := oprot.WriteBool(ctx, p.Processed); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -11283,14 +11283,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 7 end error: ", p), err)
 }
 
-func (p *HistoryEntry) writeField8(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("at", thrift.STRING, 8); err != nil {
+func (p *HistoryEntry) writeField8(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "at", thrift.STRING, 8); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.At); err != nil {
+	if err := oprot.WriteString(ctx, p.At); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -11300,14 +11300,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 8 end error: ", p), err)
 }
 
-func (p *HistoryEntry) writeField9(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("latency_ms", thrift.I64, 9); err != nil {
+func (p *HistoryEntry) writeField9(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "latency_ms", thrift.I64, 9); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.LatencyMs); err != nil {
+	if err := oprot.WriteI64(ctx, p.LatencyMs); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -11317,14 +11317,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 9 end error: ", p), err)
 }
 
-func (p *HistoryEntry) writeField10(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("source", thrift.STRING, 10); err != nil {
+func (p *HistoryEntry) writeField10(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "source", thrift.STRING, 10); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Source); err != nil {
+	if err := oprot.WriteString(ctx, p.Source); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -11334,14 +11334,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 10 end error: ", p), err)
 }
 
-func (p *HistoryEntry) writeField11(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("source_name", thrift.STRING, 11); err != nil {
+func (p *HistoryEntry) writeField11(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "source_name", thrift.STRING, 11); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.SourceName); err != nil {
+	if err := oprot.WriteString(ctx, p.SourceName); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -11351,14 +11351,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 11 end error: ", p), err)
 }
 
-func (p *HistoryEntry) writeField12(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("truncated", thrift.BOOL, 12); err != nil {
+func (p *HistoryEntry) writeField12(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "truncated", thrift.BOOL, 12); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Truncated); err != nil {
+	if err := oprot.WriteBool(ctx, p.Truncated); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -11401,17 +11401,17 @@ var fieldIDToName_HistoryResp = map[int16]string{
 	2: "entries",
 }
 
-func (p *HistoryResp) Read(iprot thrift.TProtocol) (err error) {
+func (p *HistoryResp) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -11422,30 +11422,30 @@ func (p *HistoryResp) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.LIST {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -11465,10 +11465,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *HistoryResp) ReadField1(iprot thrift.TProtocol) error {
+func (p *HistoryResp) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -11476,8 +11476,8 @@ func (p *HistoryResp) ReadField1(iprot thrift.TProtocol) error {
 	p.Ok = _field
 	return nil
 }
-func (p *HistoryResp) ReadField2(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
+func (p *HistoryResp) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -11487,38 +11487,38 @@ func (p *HistoryResp) ReadField2(iprot thrift.TProtocol) error {
 		_elem := &values[i]
 		_elem.InitDefault()
 
-		if err := _elem.Read(iprot); err != nil {
+		if err := _elem.Read(ctx, iprot); err != nil {
 			return err
 		}
 
 		_field = append(_field, _elem)
 	}
-	if err := iprot.ReadListEnd(); err != nil {
+	if err := iprot.ReadListEnd(ctx); err != nil {
 		return err
 	}
 	p.Entries = _field
 	return nil
 }
 
-func (p *HistoryResp) Write(oprot thrift.TProtocol) (err error) {
+func (p *HistoryResp) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("HistoryResp"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "HistoryResp"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -11532,14 +11532,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *HistoryResp) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("ok", thrift.BOOL, 1); err != nil {
+func (p *HistoryResp) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "ok", thrift.BOOL, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Ok); err != nil {
+	if err := oprot.WriteBool(ctx, p.Ok); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -11549,22 +11549,22 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *HistoryResp) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("entries", thrift.LIST, 2); err != nil {
+func (p *HistoryResp) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "entries", thrift.LIST, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRUCT, len(p.Entries)); err != nil {
+	if err := oprot.WriteListBegin(ctx, thrift.STRUCT, len(p.Entries)); err != nil {
 		return err
 	}
 	for _, v := range p.Entries {
-		if err := v.Write(oprot); err != nil {
+		if err := v.Write(ctx, oprot); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteListEnd(); err != nil {
+	if err := oprot.WriteListEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -11601,17 +11601,17 @@ var fieldIDToName_HistoryDeleteReq = map[int16]string{
 	1: "id",
 }
 
-func (p *HistoryDeleteReq) Read(iprot thrift.TProtocol) (err error) {
+func (p *HistoryDeleteReq) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -11622,22 +11622,22 @@ func (p *HistoryDeleteReq) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -11657,10 +11657,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *HistoryDeleteReq) ReadField1(iprot thrift.TProtocol) error {
+func (p *HistoryDeleteReq) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -11669,21 +11669,21 @@ func (p *HistoryDeleteReq) ReadField1(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *HistoryDeleteReq) Write(oprot thrift.TProtocol) (err error) {
+func (p *HistoryDeleteReq) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("HistoryDeleteReq"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "HistoryDeleteReq"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -11697,14 +11697,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *HistoryDeleteReq) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("id", thrift.STRING, 1); err != nil {
+func (p *HistoryDeleteReq) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "id", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.ID); err != nil {
+	if err := oprot.WriteString(ctx, p.ID); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -11747,17 +11747,17 @@ var fieldIDToName_TextReplacement = map[int16]string{
 	2: "to",
 }
 
-func (p *TextReplacement) Read(iprot thrift.TProtocol) (err error) {
+func (p *TextReplacement) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -11768,30 +11768,30 @@ func (p *TextReplacement) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -11811,10 +11811,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *TextReplacement) ReadField1(iprot thrift.TProtocol) error {
+func (p *TextReplacement) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -11822,10 +11822,10 @@ func (p *TextReplacement) ReadField1(iprot thrift.TProtocol) error {
 	p.From = _field
 	return nil
 }
-func (p *TextReplacement) ReadField2(iprot thrift.TProtocol) error {
+func (p *TextReplacement) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -11834,25 +11834,25 @@ func (p *TextReplacement) ReadField2(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *TextReplacement) Write(oprot thrift.TProtocol) (err error) {
+func (p *TextReplacement) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("TextReplacement"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "TextReplacement"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -11866,14 +11866,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *TextReplacement) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("from", thrift.STRING, 1); err != nil {
+func (p *TextReplacement) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "from", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.From); err != nil {
+	if err := oprot.WriteString(ctx, p.From); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -11883,14 +11883,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *TextReplacement) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("to", thrift.STRING, 2); err != nil {
+func (p *TextReplacement) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "to", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.To); err != nil {
+	if err := oprot.WriteString(ctx, p.To); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -11933,17 +11933,17 @@ var fieldIDToName_TextSnippet = map[int16]string{
 	2: "text",
 }
 
-func (p *TextSnippet) Read(iprot thrift.TProtocol) (err error) {
+func (p *TextSnippet) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -11954,30 +11954,30 @@ func (p *TextSnippet) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -11997,10 +11997,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *TextSnippet) ReadField1(iprot thrift.TProtocol) error {
+func (p *TextSnippet) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -12008,10 +12008,10 @@ func (p *TextSnippet) ReadField1(iprot thrift.TProtocol) error {
 	p.Trigger = _field
 	return nil
 }
-func (p *TextSnippet) ReadField2(iprot thrift.TProtocol) error {
+func (p *TextSnippet) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -12020,25 +12020,25 @@ func (p *TextSnippet) ReadField2(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *TextSnippet) Write(oprot thrift.TProtocol) (err error) {
+func (p *TextSnippet) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("TextSnippet"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "TextSnippet"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -12052,14 +12052,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *TextSnippet) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("trigger", thrift.STRING, 1); err != nil {
+func (p *TextSnippet) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "trigger", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Trigger); err != nil {
+	if err := oprot.WriteString(ctx, p.Trigger); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -12069,14 +12069,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *TextSnippet) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("text", thrift.STRING, 2); err != nil {
+func (p *TextSnippet) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "text", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Text); err != nil {
+	if err := oprot.WriteString(ctx, p.Text); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -12119,17 +12119,17 @@ var fieldIDToName_TextConfig = map[int16]string{
 	2: "snippets",
 }
 
-func (p *TextConfig) Read(iprot thrift.TProtocol) (err error) {
+func (p *TextConfig) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -12140,30 +12140,30 @@ func (p *TextConfig) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.LIST {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.LIST {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -12183,8 +12183,8 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *TextConfig) ReadField1(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
+func (p *TextConfig) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -12194,20 +12194,20 @@ func (p *TextConfig) ReadField1(iprot thrift.TProtocol) error {
 		_elem := &values[i]
 		_elem.InitDefault()
 
-		if err := _elem.Read(iprot); err != nil {
+		if err := _elem.Read(ctx, iprot); err != nil {
 			return err
 		}
 
 		_field = append(_field, _elem)
 	}
-	if err := iprot.ReadListEnd(); err != nil {
+	if err := iprot.ReadListEnd(ctx); err != nil {
 		return err
 	}
 	p.Dictionary = _field
 	return nil
 }
-func (p *TextConfig) ReadField2(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
+func (p *TextConfig) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin(ctx)
 	if err != nil {
 		return err
 	}
@@ -12217,38 +12217,38 @@ func (p *TextConfig) ReadField2(iprot thrift.TProtocol) error {
 		_elem := &values[i]
 		_elem.InitDefault()
 
-		if err := _elem.Read(iprot); err != nil {
+		if err := _elem.Read(ctx, iprot); err != nil {
 			return err
 		}
 
 		_field = append(_field, _elem)
 	}
-	if err := iprot.ReadListEnd(); err != nil {
+	if err := iprot.ReadListEnd(ctx); err != nil {
 		return err
 	}
 	p.Snippets = _field
 	return nil
 }
 
-func (p *TextConfig) Write(oprot thrift.TProtocol) (err error) {
+func (p *TextConfig) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("TextConfig"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "TextConfig"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -12262,22 +12262,22 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *TextConfig) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("dictionary", thrift.LIST, 1); err != nil {
+func (p *TextConfig) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "dictionary", thrift.LIST, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRUCT, len(p.Dictionary)); err != nil {
+	if err := oprot.WriteListBegin(ctx, thrift.STRUCT, len(p.Dictionary)); err != nil {
 		return err
 	}
 	for _, v := range p.Dictionary {
-		if err := v.Write(oprot); err != nil {
+		if err := v.Write(ctx, oprot); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteListEnd(); err != nil {
+	if err := oprot.WriteListEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -12287,22 +12287,22 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *TextConfig) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("snippets", thrift.LIST, 2); err != nil {
+func (p *TextConfig) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "snippets", thrift.LIST, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRUCT, len(p.Snippets)); err != nil {
+	if err := oprot.WriteListBegin(ctx, thrift.STRUCT, len(p.Snippets)); err != nil {
 		return err
 	}
 	for _, v := range p.Snippets {
-		if err := v.Write(oprot); err != nil {
+		if err := v.Write(ctx, oprot); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteListEnd(); err != nil {
+	if err := oprot.WriteListEnd(ctx); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -12354,17 +12354,17 @@ func (p *TextConfigResp) IsSetConfig() bool {
 	return p.Config != nil
 }
 
-func (p *TextConfigResp) Read(iprot thrift.TProtocol) (err error) {
+func (p *TextConfigResp) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -12375,30 +12375,30 @@ func (p *TextConfigResp) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.BOOL {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		case 2:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField2(iprot); err != nil {
+				if err = p.ReadField2(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -12418,10 +12418,10 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *TextConfigResp) ReadField1(iprot thrift.TProtocol) error {
+func (p *TextConfigResp) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 
 	var _field bool
-	if v, err := iprot.ReadBool(); err != nil {
+	if v, err := iprot.ReadBool(ctx); err != nil {
 		return err
 	} else {
 		_field = v
@@ -12429,34 +12429,34 @@ func (p *TextConfigResp) ReadField1(iprot thrift.TProtocol) error {
 	p.Ok = _field
 	return nil
 }
-func (p *TextConfigResp) ReadField2(iprot thrift.TProtocol) error {
+func (p *TextConfigResp) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewTextConfig()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Config = _field
 	return nil
 }
 
-func (p *TextConfigResp) Write(oprot thrift.TProtocol) (err error) {
+func (p *TextConfigResp) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("TextConfigResp"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "TextConfigResp"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
-		if err = p.writeField2(oprot); err != nil {
+		if err = p.writeField2(ctx, oprot); err != nil {
 			fieldId = 2
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -12470,14 +12470,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *TextConfigResp) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("ok", thrift.BOOL, 1); err != nil {
+func (p *TextConfigResp) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "ok", thrift.BOOL, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBool(p.Ok); err != nil {
+	if err := oprot.WriteBool(ctx, p.Ok); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -12487,14 +12487,14 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *TextConfigResp) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("config", thrift.STRUCT, 2); err != nil {
+func (p *TextConfigResp) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "config", thrift.STRUCT, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Config.Write(oprot); err != nil {
+	if err := p.Config.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -12588,7 +12588,7 @@ func NewXiaomiRemoteApiClientFactory(t thrift.TTransport, f thrift.TProtocolFact
 	}
 }
 
-func NewXiaomiRemoteApiClientProtocol(t thrift.TTransport, iprot thrift.TProtocol, oprot thrift.TProtocol) *XiaomiRemoteApiClient {
+func NewXiaomiRemoteApiClientProtocol(ctx context.Context, t thrift.TTransport, iprot thrift.TProtocol, oprot thrift.TProtocol) *XiaomiRemoteApiClient {
 	return &XiaomiRemoteApiClient{
 		c: thrift.NewTStandardClient(iprot, oprot),
 	}
@@ -12608,7 +12608,7 @@ func (p *XiaomiRemoteApiClient) Health(ctx context.Context, req *HealthReq) (r *
 	var _args XiaomiRemoteApiHealthArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiHealthResult
-	if err = p.Client_().Call(ctx, "Health", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "Health", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12617,7 +12617,7 @@ func (p *XiaomiRemoteApiClient) Ready(ctx context.Context, req *ReadyReq) (r *Re
 	var _args XiaomiRemoteApiReadyArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiReadyResult
-	if err = p.Client_().Call(ctx, "Ready", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "Ready", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12626,7 +12626,7 @@ func (p *XiaomiRemoteApiClient) Status(ctx context.Context, req *StatusReq) (r *
 	var _args XiaomiRemoteApiStatusArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiStatusResult
-	if err = p.Client_().Call(ctx, "Status", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "Status", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12635,7 +12635,7 @@ func (p *XiaomiRemoteApiClient) Apply(ctx context.Context, req *ApplyReq) (r *Op
 	var _args XiaomiRemoteApiApplyArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiApplyResult
-	if err = p.Client_().Call(ctx, "Apply", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "Apply", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12644,7 +12644,7 @@ func (p *XiaomiRemoteApiClient) CaptureStart(ctx context.Context, req *EmptyReq)
 	var _args XiaomiRemoteApiCaptureStartArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiCaptureStartResult
-	if err = p.Client_().Call(ctx, "CaptureStart", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "CaptureStart", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12653,7 +12653,7 @@ func (p *XiaomiRemoteApiClient) CaptureStop(ctx context.Context, req *EmptyReq) 
 	var _args XiaomiRemoteApiCaptureStopArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiCaptureStopResult
-	if err = p.Client_().Call(ctx, "CaptureStop", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "CaptureStop", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12662,7 +12662,7 @@ func (p *XiaomiRemoteApiClient) Reconnect(ctx context.Context, req *EmptyReq) (r
 	var _args XiaomiRemoteApiReconnectArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiReconnectResult
-	if err = p.Client_().Call(ctx, "Reconnect", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "Reconnect", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12671,7 +12671,7 @@ func (p *XiaomiRemoteApiClient) RestartMic(ctx context.Context, req *EmptyReq) (
 	var _args XiaomiRemoteApiRestartMicArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiRestartMicResult
-	if err = p.Client_().Call(ctx, "RestartMic", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "RestartMic", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12680,7 +12680,7 @@ func (p *XiaomiRemoteApiClient) SwitchASR(ctx context.Context, req *ProviderReq)
 	var _args XiaomiRemoteApiSwitchASRArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiSwitchASRResult
-	if err = p.Client_().Call(ctx, "SwitchASR", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "SwitchASR", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12689,7 +12689,7 @@ func (p *XiaomiRemoteApiClient) GetASRConfig(ctx context.Context, req *EmptyReq)
 	var _args XiaomiRemoteApiGetASRConfigArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiGetASRConfigResult
-	if err = p.Client_().Call(ctx, "GetASRConfig", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "GetASRConfig", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12698,7 +12698,7 @@ func (p *XiaomiRemoteApiClient) UpdateASRConfig(ctx context.Context, req *ASRCon
 	var _args XiaomiRemoteApiUpdateASRConfigArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiUpdateASRConfigResult
-	if err = p.Client_().Call(ctx, "UpdateASRConfig", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "UpdateASRConfig", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12707,7 +12707,7 @@ func (p *XiaomiRemoteApiClient) TestASR(ctx context.Context, req *ProviderReq) (
 	var _args XiaomiRemoteApiTestASRArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiTestASRResult
-	if err = p.Client_().Call(ctx, "TestASR", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "TestASR", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12716,7 +12716,7 @@ func (p *XiaomiRemoteApiClient) KeymapProfiles(ctx context.Context, req *EmptyRe
 	var _args XiaomiRemoteApiKeymapProfilesArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiKeymapProfilesResult
-	if err = p.Client_().Call(ctx, "KeymapProfiles", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "KeymapProfiles", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12725,7 +12725,7 @@ func (p *XiaomiRemoteApiClient) ApplyKeymapProfile(ctx context.Context, req *Pro
 	var _args XiaomiRemoteApiApplyKeymapProfileArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiApplyKeymapProfileResult
-	if err = p.Client_().Call(ctx, "ApplyKeymapProfile", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "ApplyKeymapProfile", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12734,7 +12734,7 @@ func (p *XiaomiRemoteApiClient) SaveKeymapProfile(ctx context.Context, req *Save
 	var _args XiaomiRemoteApiSaveKeymapProfileArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiSaveKeymapProfileResult
-	if err = p.Client_().Call(ctx, "SaveKeymapProfile", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "SaveKeymapProfile", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12743,7 +12743,7 @@ func (p *XiaomiRemoteApiClient) DeleteKeymapProfile(ctx context.Context, req *De
 	var _args XiaomiRemoteApiDeleteKeymapProfileArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiDeleteKeymapProfileResult
-	if err = p.Client_().Call(ctx, "DeleteKeymapProfile", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "DeleteKeymapProfile", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12752,7 +12752,7 @@ func (p *XiaomiRemoteApiClient) GetDevices(ctx context.Context, req *EmptyReq) (
 	var _args XiaomiRemoteApiGetDevicesArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiGetDevicesResult
-	if err = p.Client_().Call(ctx, "GetDevices", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "GetDevices", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12761,7 +12761,7 @@ func (p *XiaomiRemoteApiClient) DiscoverDevices(ctx context.Context, req *EmptyR
 	var _args XiaomiRemoteApiDiscoverDevicesArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiDiscoverDevicesResult
-	if err = p.Client_().Call(ctx, "DiscoverDevices", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "DiscoverDevices", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12770,7 +12770,7 @@ func (p *XiaomiRemoteApiClient) SelectDevice(ctx context.Context, req *DeviceReq
 	var _args XiaomiRemoteApiSelectDeviceArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiSelectDeviceResult
-	if err = p.Client_().Call(ctx, "SelectDevice", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "SelectDevice", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12779,7 +12779,7 @@ func (p *XiaomiRemoteApiClient) ToggleDevice(ctx context.Context, req *DeviceTog
 	var _args XiaomiRemoteApiToggleDeviceArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiToggleDeviceResult
-	if err = p.Client_().Call(ctx, "ToggleDevice", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "ToggleDevice", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12788,7 +12788,7 @@ func (p *XiaomiRemoteApiClient) SaveDevice(ctx context.Context, req *DeviceSaveR
 	var _args XiaomiRemoteApiSaveDeviceArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiSaveDeviceResult
-	if err = p.Client_().Call(ctx, "SaveDevice", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "SaveDevice", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12797,7 +12797,7 @@ func (p *XiaomiRemoteApiClient) ConnectDevice(ctx context.Context, req *DeviceCo
 	var _args XiaomiRemoteApiConnectDeviceArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiConnectDeviceResult
-	if err = p.Client_().Call(ctx, "ConnectDevice", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "ConnectDevice", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12806,7 +12806,7 @@ func (p *XiaomiRemoteApiClient) DeleteDevice(ctx context.Context, req *DeviceReq
 	var _args XiaomiRemoteApiDeleteDeviceArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiDeleteDeviceResult
-	if err = p.Client_().Call(ctx, "DeleteDevice", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "DeleteDevice", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12815,7 +12815,7 @@ func (p *XiaomiRemoteApiClient) GetLLMConfig(ctx context.Context, req *EmptyReq)
 	var _args XiaomiRemoteApiGetLLMConfigArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiGetLLMConfigResult
-	if err = p.Client_().Call(ctx, "GetLLMConfig", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "GetLLMConfig", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12824,7 +12824,7 @@ func (p *XiaomiRemoteApiClient) UpdateLLMConfig(ctx context.Context, req *LLMCon
 	var _args XiaomiRemoteApiUpdateLLMConfigArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiUpdateLLMConfigResult
-	if err = p.Client_().Call(ctx, "UpdateLLMConfig", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "UpdateLLMConfig", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12833,7 +12833,7 @@ func (p *XiaomiRemoteApiClient) TestLLM(ctx context.Context, req *LLMProviderReq
 	var _args XiaomiRemoteApiTestLLMArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiTestLLMResult
-	if err = p.Client_().Call(ctx, "TestLLM", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "TestLLM", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12842,7 +12842,7 @@ func (p *XiaomiRemoteApiClient) SaveLLMKey(ctx context.Context, req *LLMKeyReq) 
 	var _args XiaomiRemoteApiSaveLLMKeyArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiSaveLLMKeyResult
-	if err = p.Client_().Call(ctx, "SaveLLMKey", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "SaveLLMKey", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12851,7 +12851,7 @@ func (p *XiaomiRemoteApiClient) GetHistory(ctx context.Context, req *EmptyReq) (
 	var _args XiaomiRemoteApiGetHistoryArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiGetHistoryResult
-	if err = p.Client_().Call(ctx, "GetHistory", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "GetHistory", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12860,7 +12860,7 @@ func (p *XiaomiRemoteApiClient) DeleteHistory(ctx context.Context, req *HistoryD
 	var _args XiaomiRemoteApiDeleteHistoryArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiDeleteHistoryResult
-	if err = p.Client_().Call(ctx, "DeleteHistory", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "DeleteHistory", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12869,7 +12869,7 @@ func (p *XiaomiRemoteApiClient) ClearHistory(ctx context.Context, req *EmptyReq)
 	var _args XiaomiRemoteApiClearHistoryArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiClearHistoryResult
-	if err = p.Client_().Call(ctx, "ClearHistory", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "ClearHistory", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12878,7 +12878,7 @@ func (p *XiaomiRemoteApiClient) GetTextConfig(ctx context.Context, req *EmptyReq
 	var _args XiaomiRemoteApiGetTextConfigArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiGetTextConfigResult
-	if err = p.Client_().Call(ctx, "GetTextConfig", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "GetTextConfig", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12887,7 +12887,7 @@ func (p *XiaomiRemoteApiClient) UpdateTextConfig(ctx context.Context, req *TextC
 	var _args XiaomiRemoteApiUpdateTextConfigArgs
 	_args.Req = req
 	var _result XiaomiRemoteApiUpdateTextConfigResult
-	if err = p.Client_().Call(ctx, "UpdateTextConfig", &_args, &_result); err != nil {
+	if _, err = p.Client_().Call(ctx, "UpdateTextConfig", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -12913,54 +12913,54 @@ func (p *XiaomiRemoteApiProcessor) ProcessorMap() map[string]thrift.TProcessorFu
 
 func NewXiaomiRemoteApiProcessor(handler XiaomiRemoteApi) *XiaomiRemoteApiProcessor {
 	self := &XiaomiRemoteApiProcessor{handler: handler, processorMap: make(map[string]thrift.TProcessorFunction)}
-	self.AddToProcessorMap("Health", &xiaomiRemoteApiProcessorHealth{handler: handler})
-	self.AddToProcessorMap("Ready", &xiaomiRemoteApiProcessorReady{handler: handler})
-	self.AddToProcessorMap("Status", &xiaomiRemoteApiProcessorStatus{handler: handler})
-	self.AddToProcessorMap("Apply", &xiaomiRemoteApiProcessorApply{handler: handler})
-	self.AddToProcessorMap("CaptureStart", &xiaomiRemoteApiProcessorCaptureStart{handler: handler})
-	self.AddToProcessorMap("CaptureStop", &xiaomiRemoteApiProcessorCaptureStop{handler: handler})
-	self.AddToProcessorMap("Reconnect", &xiaomiRemoteApiProcessorReconnect{handler: handler})
-	self.AddToProcessorMap("RestartMic", &xiaomiRemoteApiProcessorRestartMic{handler: handler})
-	self.AddToProcessorMap("SwitchASR", &xiaomiRemoteApiProcessorSwitchASR{handler: handler})
-	self.AddToProcessorMap("GetASRConfig", &xiaomiRemoteApiProcessorGetASRConfig{handler: handler})
-	self.AddToProcessorMap("UpdateASRConfig", &xiaomiRemoteApiProcessorUpdateASRConfig{handler: handler})
-	self.AddToProcessorMap("TestASR", &xiaomiRemoteApiProcessorTestASR{handler: handler})
-	self.AddToProcessorMap("KeymapProfiles", &xiaomiRemoteApiProcessorKeymapProfiles{handler: handler})
-	self.AddToProcessorMap("ApplyKeymapProfile", &xiaomiRemoteApiProcessorApplyKeymapProfile{handler: handler})
-	self.AddToProcessorMap("SaveKeymapProfile", &xiaomiRemoteApiProcessorSaveKeymapProfile{handler: handler})
-	self.AddToProcessorMap("DeleteKeymapProfile", &xiaomiRemoteApiProcessorDeleteKeymapProfile{handler: handler})
-	self.AddToProcessorMap("GetDevices", &xiaomiRemoteApiProcessorGetDevices{handler: handler})
-	self.AddToProcessorMap("DiscoverDevices", &xiaomiRemoteApiProcessorDiscoverDevices{handler: handler})
-	self.AddToProcessorMap("SelectDevice", &xiaomiRemoteApiProcessorSelectDevice{handler: handler})
-	self.AddToProcessorMap("ToggleDevice", &xiaomiRemoteApiProcessorToggleDevice{handler: handler})
-	self.AddToProcessorMap("SaveDevice", &xiaomiRemoteApiProcessorSaveDevice{handler: handler})
-	self.AddToProcessorMap("ConnectDevice", &xiaomiRemoteApiProcessorConnectDevice{handler: handler})
-	self.AddToProcessorMap("DeleteDevice", &xiaomiRemoteApiProcessorDeleteDevice{handler: handler})
-	self.AddToProcessorMap("GetLLMConfig", &xiaomiRemoteApiProcessorGetLLMConfig{handler: handler})
-	self.AddToProcessorMap("UpdateLLMConfig", &xiaomiRemoteApiProcessorUpdateLLMConfig{handler: handler})
-	self.AddToProcessorMap("TestLLM", &xiaomiRemoteApiProcessorTestLLM{handler: handler})
-	self.AddToProcessorMap("SaveLLMKey", &xiaomiRemoteApiProcessorSaveLLMKey{handler: handler})
-	self.AddToProcessorMap("GetHistory", &xiaomiRemoteApiProcessorGetHistory{handler: handler})
-	self.AddToProcessorMap("DeleteHistory", &xiaomiRemoteApiProcessorDeleteHistory{handler: handler})
-	self.AddToProcessorMap("ClearHistory", &xiaomiRemoteApiProcessorClearHistory{handler: handler})
-	self.AddToProcessorMap("GetTextConfig", &xiaomiRemoteApiProcessorGetTextConfig{handler: handler})
-	self.AddToProcessorMap("UpdateTextConfig", &xiaomiRemoteApiProcessorUpdateTextConfig{handler: handler})
+	self.AddToProcessorMap("Health", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorHealth{handler: handler}})
+	self.AddToProcessorMap("Ready", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorReady{handler: handler}})
+	self.AddToProcessorMap("Status", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorStatus{handler: handler}})
+	self.AddToProcessorMap("Apply", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorApply{handler: handler}})
+	self.AddToProcessorMap("CaptureStart", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorCaptureStart{handler: handler}})
+	self.AddToProcessorMap("CaptureStop", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorCaptureStop{handler: handler}})
+	self.AddToProcessorMap("Reconnect", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorReconnect{handler: handler}})
+	self.AddToProcessorMap("RestartMic", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorRestartMic{handler: handler}})
+	self.AddToProcessorMap("SwitchASR", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorSwitchASR{handler: handler}})
+	self.AddToProcessorMap("GetASRConfig", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorGetASRConfig{handler: handler}})
+	self.AddToProcessorMap("UpdateASRConfig", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorUpdateASRConfig{handler: handler}})
+	self.AddToProcessorMap("TestASR", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorTestASR{handler: handler}})
+	self.AddToProcessorMap("KeymapProfiles", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorKeymapProfiles{handler: handler}})
+	self.AddToProcessorMap("ApplyKeymapProfile", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorApplyKeymapProfile{handler: handler}})
+	self.AddToProcessorMap("SaveKeymapProfile", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorSaveKeymapProfile{handler: handler}})
+	self.AddToProcessorMap("DeleteKeymapProfile", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorDeleteKeymapProfile{handler: handler}})
+	self.AddToProcessorMap("GetDevices", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorGetDevices{handler: handler}})
+	self.AddToProcessorMap("DiscoverDevices", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorDiscoverDevices{handler: handler}})
+	self.AddToProcessorMap("SelectDevice", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorSelectDevice{handler: handler}})
+	self.AddToProcessorMap("ToggleDevice", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorToggleDevice{handler: handler}})
+	self.AddToProcessorMap("SaveDevice", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorSaveDevice{handler: handler}})
+	self.AddToProcessorMap("ConnectDevice", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorConnectDevice{handler: handler}})
+	self.AddToProcessorMap("DeleteDevice", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorDeleteDevice{handler: handler}})
+	self.AddToProcessorMap("GetLLMConfig", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorGetLLMConfig{handler: handler}})
+	self.AddToProcessorMap("UpdateLLMConfig", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorUpdateLLMConfig{handler: handler}})
+	self.AddToProcessorMap("TestLLM", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorTestLLM{handler: handler}})
+	self.AddToProcessorMap("SaveLLMKey", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorSaveLLMKey{handler: handler}})
+	self.AddToProcessorMap("GetHistory", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorGetHistory{handler: handler}})
+	self.AddToProcessorMap("DeleteHistory", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorDeleteHistory{handler: handler}})
+	self.AddToProcessorMap("ClearHistory", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorClearHistory{handler: handler}})
+	self.AddToProcessorMap("GetTextConfig", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorGetTextConfig{handler: handler}})
+	self.AddToProcessorMap("UpdateTextConfig", thriftCtxProcessorAdapter{inner: &xiaomiRemoteApiProcessorUpdateTextConfig{handler: handler}})
 	return self
 }
-func (p *XiaomiRemoteApiProcessor) Process(ctx context.Context, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	name, _, seqId, err := iprot.ReadMessageBegin()
+func (p *XiaomiRemoteApiProcessor) Process(ctx context.Context, iprot, oprot thrift.TProtocol) (success bool, err error) {
+	name, _, seqId, err := iprot.ReadMessageBegin(ctx)
 	if err != nil {
 		return false, err
 	}
 	if processor, ok := p.GetProcessorFunction(name); ok {
 		return processor.Process(ctx, seqId, iprot, oprot)
 	}
-	iprot.Skip(thrift.STRUCT)
-	iprot.ReadMessageEnd()
+	iprot.Skip(ctx, thrift.STRUCT)
+	iprot.ReadMessageEnd(ctx)
 	x := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function "+name)
-	oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)
-	x.Write(oprot)
-	oprot.WriteMessageEnd()
+	oprot.WriteMessageBegin(ctx, name, thrift.EXCEPTION, seqId)
+	x.Write(ctx, oprot)
+	oprot.WriteMessageEnd(ctx)
 	oprot.Flush(ctx)
 	return false, x
 }
@@ -12969,39 +12969,39 @@ type xiaomiRemoteApiProcessorHealth struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorHealth) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorHealth) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiHealthArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("Health", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "Health", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiHealthResult{}
 	var retval *HealthResp
 	if retval, err2 = p.handler.Health(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Health: "+err2.Error())
-		oprot.WriteMessageBegin("Health", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "Health", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("Health", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "Health", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13017,39 +13017,39 @@ type xiaomiRemoteApiProcessorReady struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorReady) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorReady) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiReadyArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("Ready", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "Ready", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiReadyResult{}
 	var retval *ReadyResp
 	if retval, err2 = p.handler.Ready(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Ready: "+err2.Error())
-		oprot.WriteMessageBegin("Ready", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "Ready", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("Ready", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "Ready", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13065,39 +13065,39 @@ type xiaomiRemoteApiProcessorStatus struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorStatus) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorStatus) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiStatusArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("Status", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "Status", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiStatusResult{}
 	var retval *StatusResp
 	if retval, err2 = p.handler.Status(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Status: "+err2.Error())
-		oprot.WriteMessageBegin("Status", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "Status", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("Status", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "Status", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13113,39 +13113,39 @@ type xiaomiRemoteApiProcessorApply struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorApply) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorApply) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiApplyArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("Apply", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "Apply", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiApplyResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.Apply(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Apply: "+err2.Error())
-		oprot.WriteMessageBegin("Apply", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "Apply", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("Apply", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "Apply", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13161,39 +13161,39 @@ type xiaomiRemoteApiProcessorCaptureStart struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorCaptureStart) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorCaptureStart) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiCaptureStartArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("CaptureStart", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "CaptureStart", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiCaptureStartResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.CaptureStart(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing CaptureStart: "+err2.Error())
-		oprot.WriteMessageBegin("CaptureStart", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "CaptureStart", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("CaptureStart", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "CaptureStart", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13209,39 +13209,39 @@ type xiaomiRemoteApiProcessorCaptureStop struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorCaptureStop) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorCaptureStop) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiCaptureStopArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("CaptureStop", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "CaptureStop", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiCaptureStopResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.CaptureStop(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing CaptureStop: "+err2.Error())
-		oprot.WriteMessageBegin("CaptureStop", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "CaptureStop", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("CaptureStop", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "CaptureStop", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13257,39 +13257,39 @@ type xiaomiRemoteApiProcessorReconnect struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorReconnect) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorReconnect) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiReconnectArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("Reconnect", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "Reconnect", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiReconnectResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.Reconnect(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Reconnect: "+err2.Error())
-		oprot.WriteMessageBegin("Reconnect", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "Reconnect", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("Reconnect", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "Reconnect", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13305,39 +13305,39 @@ type xiaomiRemoteApiProcessorRestartMic struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorRestartMic) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorRestartMic) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiRestartMicArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("RestartMic", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "RestartMic", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiRestartMicResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.RestartMic(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing RestartMic: "+err2.Error())
-		oprot.WriteMessageBegin("RestartMic", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "RestartMic", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("RestartMic", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "RestartMic", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13353,39 +13353,39 @@ type xiaomiRemoteApiProcessorSwitchASR struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorSwitchASR) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorSwitchASR) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiSwitchASRArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("SwitchASR", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "SwitchASR", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiSwitchASRResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.SwitchASR(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing SwitchASR: "+err2.Error())
-		oprot.WriteMessageBegin("SwitchASR", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "SwitchASR", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("SwitchASR", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "SwitchASR", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13401,39 +13401,39 @@ type xiaomiRemoteApiProcessorGetASRConfig struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorGetASRConfig) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorGetASRConfig) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiGetASRConfigArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("GetASRConfig", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "GetASRConfig", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiGetASRConfigResult{}
 	var retval *ASRConfigResp
 	if retval, err2 = p.handler.GetASRConfig(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing GetASRConfig: "+err2.Error())
-		oprot.WriteMessageBegin("GetASRConfig", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "GetASRConfig", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("GetASRConfig", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "GetASRConfig", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13449,39 +13449,39 @@ type xiaomiRemoteApiProcessorUpdateASRConfig struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorUpdateASRConfig) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorUpdateASRConfig) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiUpdateASRConfigArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("UpdateASRConfig", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "UpdateASRConfig", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiUpdateASRConfigResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.UpdateASRConfig(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing UpdateASRConfig: "+err2.Error())
-		oprot.WriteMessageBegin("UpdateASRConfig", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "UpdateASRConfig", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("UpdateASRConfig", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "UpdateASRConfig", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13497,39 +13497,39 @@ type xiaomiRemoteApiProcessorTestASR struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorTestASR) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorTestASR) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiTestASRArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("TestASR", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "TestASR", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiTestASRResult{}
 	var retval *ASRTestResp
 	if retval, err2 = p.handler.TestASR(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing TestASR: "+err2.Error())
-		oprot.WriteMessageBegin("TestASR", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "TestASR", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("TestASR", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "TestASR", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13545,39 +13545,39 @@ type xiaomiRemoteApiProcessorKeymapProfiles struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorKeymapProfiles) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorKeymapProfiles) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiKeymapProfilesArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("KeymapProfiles", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "KeymapProfiles", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiKeymapProfilesResult{}
 	var retval *KeymapProfilesResp
 	if retval, err2 = p.handler.KeymapProfiles(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing KeymapProfiles: "+err2.Error())
-		oprot.WriteMessageBegin("KeymapProfiles", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "KeymapProfiles", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("KeymapProfiles", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "KeymapProfiles", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13593,39 +13593,39 @@ type xiaomiRemoteApiProcessorApplyKeymapProfile struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorApplyKeymapProfile) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorApplyKeymapProfile) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiApplyKeymapProfileArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("ApplyKeymapProfile", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "ApplyKeymapProfile", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiApplyKeymapProfileResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.ApplyKeymapProfile(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing ApplyKeymapProfile: "+err2.Error())
-		oprot.WriteMessageBegin("ApplyKeymapProfile", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "ApplyKeymapProfile", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("ApplyKeymapProfile", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "ApplyKeymapProfile", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13641,39 +13641,39 @@ type xiaomiRemoteApiProcessorSaveKeymapProfile struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorSaveKeymapProfile) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorSaveKeymapProfile) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiSaveKeymapProfileArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("SaveKeymapProfile", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "SaveKeymapProfile", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiSaveKeymapProfileResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.SaveKeymapProfile(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing SaveKeymapProfile: "+err2.Error())
-		oprot.WriteMessageBegin("SaveKeymapProfile", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "SaveKeymapProfile", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("SaveKeymapProfile", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "SaveKeymapProfile", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13689,39 +13689,39 @@ type xiaomiRemoteApiProcessorDeleteKeymapProfile struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorDeleteKeymapProfile) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorDeleteKeymapProfile) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiDeleteKeymapProfileArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("DeleteKeymapProfile", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "DeleteKeymapProfile", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiDeleteKeymapProfileResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.DeleteKeymapProfile(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing DeleteKeymapProfile: "+err2.Error())
-		oprot.WriteMessageBegin("DeleteKeymapProfile", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "DeleteKeymapProfile", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("DeleteKeymapProfile", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "DeleteKeymapProfile", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13737,39 +13737,39 @@ type xiaomiRemoteApiProcessorGetDevices struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorGetDevices) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorGetDevices) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiGetDevicesArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("GetDevices", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "GetDevices", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiGetDevicesResult{}
 	var retval *DevicesResp
 	if retval, err2 = p.handler.GetDevices(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing GetDevices: "+err2.Error())
-		oprot.WriteMessageBegin("GetDevices", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "GetDevices", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("GetDevices", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "GetDevices", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13785,39 +13785,39 @@ type xiaomiRemoteApiProcessorDiscoverDevices struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorDiscoverDevices) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorDiscoverDevices) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiDiscoverDevicesArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("DiscoverDevices", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "DiscoverDevices", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiDiscoverDevicesResult{}
 	var retval *DiscoveredResp
 	if retval, err2 = p.handler.DiscoverDevices(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing DiscoverDevices: "+err2.Error())
-		oprot.WriteMessageBegin("DiscoverDevices", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "DiscoverDevices", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("DiscoverDevices", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "DiscoverDevices", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13833,39 +13833,39 @@ type xiaomiRemoteApiProcessorSelectDevice struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorSelectDevice) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorSelectDevice) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiSelectDeviceArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("SelectDevice", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "SelectDevice", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiSelectDeviceResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.SelectDevice(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing SelectDevice: "+err2.Error())
-		oprot.WriteMessageBegin("SelectDevice", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "SelectDevice", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("SelectDevice", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "SelectDevice", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13881,39 +13881,39 @@ type xiaomiRemoteApiProcessorToggleDevice struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorToggleDevice) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorToggleDevice) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiToggleDeviceArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("ToggleDevice", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "ToggleDevice", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiToggleDeviceResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.ToggleDevice(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing ToggleDevice: "+err2.Error())
-		oprot.WriteMessageBegin("ToggleDevice", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "ToggleDevice", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("ToggleDevice", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "ToggleDevice", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13929,39 +13929,39 @@ type xiaomiRemoteApiProcessorSaveDevice struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorSaveDevice) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorSaveDevice) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiSaveDeviceArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("SaveDevice", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "SaveDevice", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiSaveDeviceResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.SaveDevice(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing SaveDevice: "+err2.Error())
-		oprot.WriteMessageBegin("SaveDevice", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "SaveDevice", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("SaveDevice", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "SaveDevice", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -13977,39 +13977,39 @@ type xiaomiRemoteApiProcessorConnectDevice struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorConnectDevice) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorConnectDevice) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiConnectDeviceArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("ConnectDevice", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "ConnectDevice", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiConnectDeviceResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.ConnectDevice(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing ConnectDevice: "+err2.Error())
-		oprot.WriteMessageBegin("ConnectDevice", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "ConnectDevice", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("ConnectDevice", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "ConnectDevice", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -14025,39 +14025,39 @@ type xiaomiRemoteApiProcessorDeleteDevice struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorDeleteDevice) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorDeleteDevice) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiDeleteDeviceArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("DeleteDevice", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "DeleteDevice", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiDeleteDeviceResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.DeleteDevice(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing DeleteDevice: "+err2.Error())
-		oprot.WriteMessageBegin("DeleteDevice", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "DeleteDevice", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("DeleteDevice", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "DeleteDevice", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -14073,39 +14073,39 @@ type xiaomiRemoteApiProcessorGetLLMConfig struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorGetLLMConfig) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorGetLLMConfig) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiGetLLMConfigArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("GetLLMConfig", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "GetLLMConfig", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiGetLLMConfigResult{}
 	var retval *LLMConfigResp
 	if retval, err2 = p.handler.GetLLMConfig(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing GetLLMConfig: "+err2.Error())
-		oprot.WriteMessageBegin("GetLLMConfig", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "GetLLMConfig", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("GetLLMConfig", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "GetLLMConfig", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -14121,39 +14121,39 @@ type xiaomiRemoteApiProcessorUpdateLLMConfig struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorUpdateLLMConfig) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorUpdateLLMConfig) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiUpdateLLMConfigArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("UpdateLLMConfig", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "UpdateLLMConfig", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiUpdateLLMConfigResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.UpdateLLMConfig(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing UpdateLLMConfig: "+err2.Error())
-		oprot.WriteMessageBegin("UpdateLLMConfig", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "UpdateLLMConfig", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("UpdateLLMConfig", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "UpdateLLMConfig", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -14169,39 +14169,39 @@ type xiaomiRemoteApiProcessorTestLLM struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorTestLLM) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorTestLLM) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiTestLLMArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("TestLLM", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "TestLLM", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiTestLLMResult{}
 	var retval *LLMTestResp
 	if retval, err2 = p.handler.TestLLM(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing TestLLM: "+err2.Error())
-		oprot.WriteMessageBegin("TestLLM", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "TestLLM", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("TestLLM", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "TestLLM", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -14217,39 +14217,39 @@ type xiaomiRemoteApiProcessorSaveLLMKey struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorSaveLLMKey) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorSaveLLMKey) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiSaveLLMKeyArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("SaveLLMKey", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "SaveLLMKey", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiSaveLLMKeyResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.SaveLLMKey(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing SaveLLMKey: "+err2.Error())
-		oprot.WriteMessageBegin("SaveLLMKey", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "SaveLLMKey", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("SaveLLMKey", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "SaveLLMKey", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -14265,39 +14265,39 @@ type xiaomiRemoteApiProcessorGetHistory struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorGetHistory) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorGetHistory) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiGetHistoryArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("GetHistory", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "GetHistory", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiGetHistoryResult{}
 	var retval *HistoryResp
 	if retval, err2 = p.handler.GetHistory(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing GetHistory: "+err2.Error())
-		oprot.WriteMessageBegin("GetHistory", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "GetHistory", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("GetHistory", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "GetHistory", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -14313,39 +14313,39 @@ type xiaomiRemoteApiProcessorDeleteHistory struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorDeleteHistory) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorDeleteHistory) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiDeleteHistoryArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("DeleteHistory", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "DeleteHistory", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiDeleteHistoryResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.DeleteHistory(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing DeleteHistory: "+err2.Error())
-		oprot.WriteMessageBegin("DeleteHistory", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "DeleteHistory", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("DeleteHistory", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "DeleteHistory", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -14361,39 +14361,39 @@ type xiaomiRemoteApiProcessorClearHistory struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorClearHistory) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorClearHistory) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiClearHistoryArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("ClearHistory", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "ClearHistory", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiClearHistoryResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.ClearHistory(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing ClearHistory: "+err2.Error())
-		oprot.WriteMessageBegin("ClearHistory", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "ClearHistory", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("ClearHistory", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "ClearHistory", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -14409,39 +14409,39 @@ type xiaomiRemoteApiProcessorGetTextConfig struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorGetTextConfig) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorGetTextConfig) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiGetTextConfigArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("GetTextConfig", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "GetTextConfig", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiGetTextConfigResult{}
 	var retval *TextConfigResp
 	if retval, err2 = p.handler.GetTextConfig(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing GetTextConfig: "+err2.Error())
-		oprot.WriteMessageBegin("GetTextConfig", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "GetTextConfig", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("GetTextConfig", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "GetTextConfig", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -14457,39 +14457,39 @@ type xiaomiRemoteApiProcessorUpdateTextConfig struct {
 	handler XiaomiRemoteApi
 }
 
-func (p *xiaomiRemoteApiProcessorUpdateTextConfig) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *xiaomiRemoteApiProcessorUpdateTextConfig) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err error) {
 	args := XiaomiRemoteApiUpdateTextConfigArgs{}
-	if err = args.Read(iprot); err != nil {
-		iprot.ReadMessageEnd()
+	if err = args.Read(ctx, iprot); err != nil {
+		iprot.ReadMessageEnd(ctx)
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("UpdateTextConfig", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "UpdateTextConfig", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return false, err
 	}
 
-	iprot.ReadMessageEnd()
+	iprot.ReadMessageEnd(ctx)
 	var err2 error
 	result := XiaomiRemoteApiUpdateTextConfigResult{}
 	var retval *OperationResp
 	if retval, err2 = p.handler.UpdateTextConfig(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing UpdateTextConfig: "+err2.Error())
-		oprot.WriteMessageBegin("UpdateTextConfig", thrift.EXCEPTION, seqId)
-		x.Write(oprot)
-		oprot.WriteMessageEnd()
+		oprot.WriteMessageBegin(ctx, "UpdateTextConfig", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
 		oprot.Flush(ctx)
 		return true, err2
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("UpdateTextConfig", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin(ctx, "UpdateTextConfig", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
-	if err2 = result.Write(oprot); err == nil && err2 != nil {
+	if err2 = result.Write(ctx, oprot); err == nil && err2 != nil {
 		err = err2
 	}
-	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+	if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {
 		err = err2
 	}
 	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
@@ -14529,17 +14529,17 @@ func (p *XiaomiRemoteApiHealthArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiHealthArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiHealthArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -14550,22 +14550,22 @@ func (p *XiaomiRemoteApiHealthArgs) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -14585,30 +14585,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiHealthArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiHealthArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewHealthReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiHealthArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiHealthArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("Health_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "Health_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -14622,14 +14622,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiHealthArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiHealthArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -14675,17 +14675,17 @@ func (p *XiaomiRemoteApiHealthResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiHealthResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiHealthResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -14696,22 +14696,22 @@ func (p *XiaomiRemoteApiHealthResult) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -14731,30 +14731,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiHealthResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiHealthResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewHealthResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiHealthResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiHealthResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("Health_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "Health_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -14768,15 +14768,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiHealthResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiHealthResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -14823,17 +14823,17 @@ func (p *XiaomiRemoteApiReadyArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiReadyArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiReadyArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -14844,22 +14844,22 @@ func (p *XiaomiRemoteApiReadyArgs) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -14879,30 +14879,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiReadyArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiReadyArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewReadyReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiReadyArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiReadyArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("Ready_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "Ready_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -14916,14 +14916,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiReadyArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiReadyArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -14969,17 +14969,17 @@ func (p *XiaomiRemoteApiReadyResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiReadyResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiReadyResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -14990,22 +14990,22 @@ func (p *XiaomiRemoteApiReadyResult) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -15025,30 +15025,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiReadyResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiReadyResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewReadyResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiReadyResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiReadyResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("Ready_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "Ready_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -15062,15 +15062,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiReadyResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiReadyResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -15117,17 +15117,17 @@ func (p *XiaomiRemoteApiStatusArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiStatusArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiStatusArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -15138,22 +15138,22 @@ func (p *XiaomiRemoteApiStatusArgs) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -15173,30 +15173,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiStatusArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiStatusArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewStatusReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiStatusArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiStatusArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("Status_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "Status_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -15210,14 +15210,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiStatusArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiStatusArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -15263,17 +15263,17 @@ func (p *XiaomiRemoteApiStatusResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiStatusResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiStatusResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -15284,22 +15284,22 @@ func (p *XiaomiRemoteApiStatusResult) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -15319,30 +15319,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiStatusResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiStatusResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewStatusResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiStatusResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiStatusResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("Status_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "Status_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -15356,15 +15356,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiStatusResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiStatusResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -15411,17 +15411,17 @@ func (p *XiaomiRemoteApiApplyArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiApplyArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiApplyArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -15432,22 +15432,22 @@ func (p *XiaomiRemoteApiApplyArgs) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -15467,30 +15467,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiApplyArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiApplyArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewApplyReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiApplyArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiApplyArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("Apply_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "Apply_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -15504,14 +15504,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiApplyArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiApplyArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -15557,17 +15557,17 @@ func (p *XiaomiRemoteApiApplyResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiApplyResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiApplyResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -15578,22 +15578,22 @@ func (p *XiaomiRemoteApiApplyResult) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -15613,30 +15613,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiApplyResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiApplyResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiApplyResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiApplyResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("Apply_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "Apply_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -15650,15 +15650,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiApplyResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiApplyResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -15705,17 +15705,17 @@ func (p *XiaomiRemoteApiCaptureStartArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiCaptureStartArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiCaptureStartArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -15726,22 +15726,22 @@ func (p *XiaomiRemoteApiCaptureStartArgs) Read(iprot thrift.TProtocol) (err erro
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -15761,30 +15761,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiCaptureStartArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiCaptureStartArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewEmptyReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiCaptureStartArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiCaptureStartArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("CaptureStart_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "CaptureStart_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -15798,14 +15798,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiCaptureStartArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiCaptureStartArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -15851,17 +15851,17 @@ func (p *XiaomiRemoteApiCaptureStartResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiCaptureStartResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiCaptureStartResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -15872,22 +15872,22 @@ func (p *XiaomiRemoteApiCaptureStartResult) Read(iprot thrift.TProtocol) (err er
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -15907,30 +15907,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiCaptureStartResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiCaptureStartResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiCaptureStartResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiCaptureStartResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("CaptureStart_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "CaptureStart_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -15944,15 +15944,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiCaptureStartResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiCaptureStartResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -15999,17 +15999,17 @@ func (p *XiaomiRemoteApiCaptureStopArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiCaptureStopArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiCaptureStopArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -16020,22 +16020,22 @@ func (p *XiaomiRemoteApiCaptureStopArgs) Read(iprot thrift.TProtocol) (err error
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -16055,30 +16055,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiCaptureStopArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiCaptureStopArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewEmptyReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiCaptureStopArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiCaptureStopArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("CaptureStop_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "CaptureStop_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -16092,14 +16092,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiCaptureStopArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiCaptureStopArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -16145,17 +16145,17 @@ func (p *XiaomiRemoteApiCaptureStopResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiCaptureStopResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiCaptureStopResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -16166,22 +16166,22 @@ func (p *XiaomiRemoteApiCaptureStopResult) Read(iprot thrift.TProtocol) (err err
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -16201,30 +16201,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiCaptureStopResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiCaptureStopResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiCaptureStopResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiCaptureStopResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("CaptureStop_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "CaptureStop_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -16238,15 +16238,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiCaptureStopResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiCaptureStopResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -16293,17 +16293,17 @@ func (p *XiaomiRemoteApiReconnectArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiReconnectArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiReconnectArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -16314,22 +16314,22 @@ func (p *XiaomiRemoteApiReconnectArgs) Read(iprot thrift.TProtocol) (err error) 
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -16349,30 +16349,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiReconnectArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiReconnectArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewEmptyReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiReconnectArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiReconnectArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("Reconnect_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "Reconnect_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -16386,14 +16386,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiReconnectArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiReconnectArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -16439,17 +16439,17 @@ func (p *XiaomiRemoteApiReconnectResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiReconnectResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiReconnectResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -16460,22 +16460,22 @@ func (p *XiaomiRemoteApiReconnectResult) Read(iprot thrift.TProtocol) (err error
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -16495,30 +16495,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiReconnectResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiReconnectResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiReconnectResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiReconnectResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("Reconnect_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "Reconnect_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -16532,15 +16532,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiReconnectResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiReconnectResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -16587,17 +16587,17 @@ func (p *XiaomiRemoteApiRestartMicArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiRestartMicArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiRestartMicArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -16608,22 +16608,22 @@ func (p *XiaomiRemoteApiRestartMicArgs) Read(iprot thrift.TProtocol) (err error)
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -16643,30 +16643,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiRestartMicArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiRestartMicArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewEmptyReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiRestartMicArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiRestartMicArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("RestartMic_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "RestartMic_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -16680,14 +16680,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiRestartMicArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiRestartMicArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -16733,17 +16733,17 @@ func (p *XiaomiRemoteApiRestartMicResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiRestartMicResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiRestartMicResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -16754,22 +16754,22 @@ func (p *XiaomiRemoteApiRestartMicResult) Read(iprot thrift.TProtocol) (err erro
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -16789,30 +16789,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiRestartMicResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiRestartMicResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiRestartMicResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiRestartMicResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("RestartMic_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "RestartMic_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -16826,15 +16826,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiRestartMicResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiRestartMicResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -16881,17 +16881,17 @@ func (p *XiaomiRemoteApiSwitchASRArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiSwitchASRArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSwitchASRArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -16902,22 +16902,22 @@ func (p *XiaomiRemoteApiSwitchASRArgs) Read(iprot thrift.TProtocol) (err error) 
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -16937,30 +16937,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSwitchASRArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiSwitchASRArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewProviderReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiSwitchASRArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSwitchASRArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("SwitchASR_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "SwitchASR_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -16974,14 +16974,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSwitchASRArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiSwitchASRArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -17027,17 +17027,17 @@ func (p *XiaomiRemoteApiSwitchASRResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiSwitchASRResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSwitchASRResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -17048,22 +17048,22 @@ func (p *XiaomiRemoteApiSwitchASRResult) Read(iprot thrift.TProtocol) (err error
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -17083,30 +17083,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSwitchASRResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiSwitchASRResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiSwitchASRResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSwitchASRResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("SwitchASR_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "SwitchASR_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -17120,15 +17120,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSwitchASRResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSwitchASRResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -17175,17 +17175,17 @@ func (p *XiaomiRemoteApiGetASRConfigArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiGetASRConfigArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetASRConfigArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -17196,22 +17196,22 @@ func (p *XiaomiRemoteApiGetASRConfigArgs) Read(iprot thrift.TProtocol) (err erro
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -17231,30 +17231,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetASRConfigArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiGetASRConfigArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewEmptyReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiGetASRConfigArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetASRConfigArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("GetASRConfig_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "GetASRConfig_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -17268,14 +17268,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetASRConfigArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiGetASRConfigArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -17321,17 +17321,17 @@ func (p *XiaomiRemoteApiGetASRConfigResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiGetASRConfigResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetASRConfigResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -17342,22 +17342,22 @@ func (p *XiaomiRemoteApiGetASRConfigResult) Read(iprot thrift.TProtocol) (err er
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -17377,30 +17377,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetASRConfigResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiGetASRConfigResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewASRConfigResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiGetASRConfigResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetASRConfigResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("GetASRConfig_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "GetASRConfig_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -17414,15 +17414,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetASRConfigResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetASRConfigResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -17469,17 +17469,17 @@ func (p *XiaomiRemoteApiUpdateASRConfigArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiUpdateASRConfigArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiUpdateASRConfigArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -17490,22 +17490,22 @@ func (p *XiaomiRemoteApiUpdateASRConfigArgs) Read(iprot thrift.TProtocol) (err e
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -17525,30 +17525,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiUpdateASRConfigArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiUpdateASRConfigArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewASRConfig()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiUpdateASRConfigArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiUpdateASRConfigArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("UpdateASRConfig_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "UpdateASRConfig_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -17562,14 +17562,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiUpdateASRConfigArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiUpdateASRConfigArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -17615,17 +17615,17 @@ func (p *XiaomiRemoteApiUpdateASRConfigResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiUpdateASRConfigResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiUpdateASRConfigResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -17636,22 +17636,22 @@ func (p *XiaomiRemoteApiUpdateASRConfigResult) Read(iprot thrift.TProtocol) (err
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -17671,30 +17671,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiUpdateASRConfigResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiUpdateASRConfigResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiUpdateASRConfigResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiUpdateASRConfigResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("UpdateASRConfig_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "UpdateASRConfig_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -17708,15 +17708,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiUpdateASRConfigResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiUpdateASRConfigResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -17763,17 +17763,17 @@ func (p *XiaomiRemoteApiTestASRArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiTestASRArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiTestASRArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -17784,22 +17784,22 @@ func (p *XiaomiRemoteApiTestASRArgs) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -17819,30 +17819,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiTestASRArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiTestASRArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewProviderReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiTestASRArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiTestASRArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("TestASR_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "TestASR_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -17856,14 +17856,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiTestASRArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiTestASRArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -17909,17 +17909,17 @@ func (p *XiaomiRemoteApiTestASRResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiTestASRResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiTestASRResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -17930,22 +17930,22 @@ func (p *XiaomiRemoteApiTestASRResult) Read(iprot thrift.TProtocol) (err error) 
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -17965,30 +17965,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiTestASRResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiTestASRResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewASRTestResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiTestASRResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiTestASRResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("TestASR_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "TestASR_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -18002,15 +18002,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiTestASRResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiTestASRResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -18057,17 +18057,17 @@ func (p *XiaomiRemoteApiKeymapProfilesArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiKeymapProfilesArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiKeymapProfilesArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -18078,22 +18078,22 @@ func (p *XiaomiRemoteApiKeymapProfilesArgs) Read(iprot thrift.TProtocol) (err er
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -18113,30 +18113,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiKeymapProfilesArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiKeymapProfilesArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewEmptyReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiKeymapProfilesArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiKeymapProfilesArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("KeymapProfiles_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "KeymapProfiles_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -18150,14 +18150,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiKeymapProfilesArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiKeymapProfilesArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -18203,17 +18203,17 @@ func (p *XiaomiRemoteApiKeymapProfilesResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiKeymapProfilesResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiKeymapProfilesResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -18224,22 +18224,22 @@ func (p *XiaomiRemoteApiKeymapProfilesResult) Read(iprot thrift.TProtocol) (err 
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -18259,30 +18259,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiKeymapProfilesResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiKeymapProfilesResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewKeymapProfilesResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiKeymapProfilesResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiKeymapProfilesResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("KeymapProfiles_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "KeymapProfiles_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -18296,15 +18296,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiKeymapProfilesResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiKeymapProfilesResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -18351,17 +18351,17 @@ func (p *XiaomiRemoteApiApplyKeymapProfileArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiApplyKeymapProfileArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiApplyKeymapProfileArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -18372,22 +18372,22 @@ func (p *XiaomiRemoteApiApplyKeymapProfileArgs) Read(iprot thrift.TProtocol) (er
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -18407,30 +18407,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiApplyKeymapProfileArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiApplyKeymapProfileArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewProfileReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiApplyKeymapProfileArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiApplyKeymapProfileArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ApplyKeymapProfile_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "ApplyKeymapProfile_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -18444,14 +18444,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiApplyKeymapProfileArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiApplyKeymapProfileArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -18497,17 +18497,17 @@ func (p *XiaomiRemoteApiApplyKeymapProfileResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiApplyKeymapProfileResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiApplyKeymapProfileResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -18518,22 +18518,22 @@ func (p *XiaomiRemoteApiApplyKeymapProfileResult) Read(iprot thrift.TProtocol) (
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -18553,30 +18553,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiApplyKeymapProfileResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiApplyKeymapProfileResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiApplyKeymapProfileResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiApplyKeymapProfileResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ApplyKeymapProfile_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "ApplyKeymapProfile_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -18590,15 +18590,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiApplyKeymapProfileResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiApplyKeymapProfileResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -18645,17 +18645,17 @@ func (p *XiaomiRemoteApiSaveKeymapProfileArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiSaveKeymapProfileArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSaveKeymapProfileArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -18666,22 +18666,22 @@ func (p *XiaomiRemoteApiSaveKeymapProfileArgs) Read(iprot thrift.TProtocol) (err
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -18701,30 +18701,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSaveKeymapProfileArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiSaveKeymapProfileArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewSaveProfileReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiSaveKeymapProfileArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSaveKeymapProfileArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("SaveKeymapProfile_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "SaveKeymapProfile_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -18738,14 +18738,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSaveKeymapProfileArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiSaveKeymapProfileArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -18791,17 +18791,17 @@ func (p *XiaomiRemoteApiSaveKeymapProfileResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiSaveKeymapProfileResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSaveKeymapProfileResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -18812,22 +18812,22 @@ func (p *XiaomiRemoteApiSaveKeymapProfileResult) Read(iprot thrift.TProtocol) (e
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -18847,30 +18847,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSaveKeymapProfileResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiSaveKeymapProfileResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiSaveKeymapProfileResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSaveKeymapProfileResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("SaveKeymapProfile_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "SaveKeymapProfile_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -18884,15 +18884,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSaveKeymapProfileResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSaveKeymapProfileResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -18939,17 +18939,17 @@ func (p *XiaomiRemoteApiDeleteKeymapProfileArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiDeleteKeymapProfileArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDeleteKeymapProfileArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -18960,22 +18960,22 @@ func (p *XiaomiRemoteApiDeleteKeymapProfileArgs) Read(iprot thrift.TProtocol) (e
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -18995,30 +18995,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiDeleteKeymapProfileArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiDeleteKeymapProfileArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewDeleteProfileReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiDeleteKeymapProfileArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDeleteKeymapProfileArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("DeleteKeymapProfile_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "DeleteKeymapProfile_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -19032,14 +19032,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiDeleteKeymapProfileArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiDeleteKeymapProfileArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -19085,17 +19085,17 @@ func (p *XiaomiRemoteApiDeleteKeymapProfileResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiDeleteKeymapProfileResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDeleteKeymapProfileResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -19106,22 +19106,22 @@ func (p *XiaomiRemoteApiDeleteKeymapProfileResult) Read(iprot thrift.TProtocol) 
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -19141,30 +19141,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiDeleteKeymapProfileResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiDeleteKeymapProfileResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiDeleteKeymapProfileResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDeleteKeymapProfileResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("DeleteKeymapProfile_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "DeleteKeymapProfile_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -19178,15 +19178,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiDeleteKeymapProfileResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDeleteKeymapProfileResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -19233,17 +19233,17 @@ func (p *XiaomiRemoteApiGetDevicesArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiGetDevicesArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetDevicesArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -19254,22 +19254,22 @@ func (p *XiaomiRemoteApiGetDevicesArgs) Read(iprot thrift.TProtocol) (err error)
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -19289,30 +19289,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetDevicesArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiGetDevicesArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewEmptyReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiGetDevicesArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetDevicesArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("GetDevices_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "GetDevices_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -19326,14 +19326,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetDevicesArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiGetDevicesArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -19379,17 +19379,17 @@ func (p *XiaomiRemoteApiGetDevicesResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiGetDevicesResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetDevicesResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -19400,22 +19400,22 @@ func (p *XiaomiRemoteApiGetDevicesResult) Read(iprot thrift.TProtocol) (err erro
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -19435,30 +19435,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetDevicesResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiGetDevicesResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewDevicesResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiGetDevicesResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetDevicesResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("GetDevices_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "GetDevices_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -19472,15 +19472,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetDevicesResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetDevicesResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -19527,17 +19527,17 @@ func (p *XiaomiRemoteApiDiscoverDevicesArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiDiscoverDevicesArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDiscoverDevicesArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -19548,22 +19548,22 @@ func (p *XiaomiRemoteApiDiscoverDevicesArgs) Read(iprot thrift.TProtocol) (err e
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -19583,30 +19583,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiDiscoverDevicesArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiDiscoverDevicesArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewEmptyReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiDiscoverDevicesArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDiscoverDevicesArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("DiscoverDevices_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "DiscoverDevices_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -19620,14 +19620,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiDiscoverDevicesArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiDiscoverDevicesArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -19673,17 +19673,17 @@ func (p *XiaomiRemoteApiDiscoverDevicesResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiDiscoverDevicesResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDiscoverDevicesResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -19694,22 +19694,22 @@ func (p *XiaomiRemoteApiDiscoverDevicesResult) Read(iprot thrift.TProtocol) (err
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -19729,30 +19729,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiDiscoverDevicesResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiDiscoverDevicesResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewDiscoveredResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiDiscoverDevicesResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDiscoverDevicesResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("DiscoverDevices_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "DiscoverDevices_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -19766,15 +19766,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiDiscoverDevicesResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDiscoverDevicesResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -19821,17 +19821,17 @@ func (p *XiaomiRemoteApiSelectDeviceArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiSelectDeviceArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSelectDeviceArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -19842,22 +19842,22 @@ func (p *XiaomiRemoteApiSelectDeviceArgs) Read(iprot thrift.TProtocol) (err erro
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -19877,30 +19877,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSelectDeviceArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiSelectDeviceArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewDeviceReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiSelectDeviceArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSelectDeviceArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("SelectDevice_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "SelectDevice_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -19914,14 +19914,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSelectDeviceArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiSelectDeviceArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -19967,17 +19967,17 @@ func (p *XiaomiRemoteApiSelectDeviceResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiSelectDeviceResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSelectDeviceResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -19988,22 +19988,22 @@ func (p *XiaomiRemoteApiSelectDeviceResult) Read(iprot thrift.TProtocol) (err er
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -20023,30 +20023,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSelectDeviceResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiSelectDeviceResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiSelectDeviceResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSelectDeviceResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("SelectDevice_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "SelectDevice_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -20060,15 +20060,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSelectDeviceResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSelectDeviceResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -20115,17 +20115,17 @@ func (p *XiaomiRemoteApiToggleDeviceArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiToggleDeviceArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiToggleDeviceArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -20136,22 +20136,22 @@ func (p *XiaomiRemoteApiToggleDeviceArgs) Read(iprot thrift.TProtocol) (err erro
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -20171,30 +20171,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiToggleDeviceArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiToggleDeviceArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewDeviceToggleReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiToggleDeviceArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiToggleDeviceArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ToggleDevice_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "ToggleDevice_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -20208,14 +20208,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiToggleDeviceArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiToggleDeviceArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -20261,17 +20261,17 @@ func (p *XiaomiRemoteApiToggleDeviceResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiToggleDeviceResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiToggleDeviceResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -20282,22 +20282,22 @@ func (p *XiaomiRemoteApiToggleDeviceResult) Read(iprot thrift.TProtocol) (err er
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -20317,30 +20317,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiToggleDeviceResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiToggleDeviceResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiToggleDeviceResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiToggleDeviceResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ToggleDevice_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "ToggleDevice_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -20354,15 +20354,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiToggleDeviceResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiToggleDeviceResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -20409,17 +20409,17 @@ func (p *XiaomiRemoteApiSaveDeviceArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiSaveDeviceArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSaveDeviceArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -20430,22 +20430,22 @@ func (p *XiaomiRemoteApiSaveDeviceArgs) Read(iprot thrift.TProtocol) (err error)
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -20465,30 +20465,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSaveDeviceArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiSaveDeviceArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewDeviceSaveReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiSaveDeviceArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSaveDeviceArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("SaveDevice_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "SaveDevice_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -20502,14 +20502,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSaveDeviceArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiSaveDeviceArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -20555,17 +20555,17 @@ func (p *XiaomiRemoteApiSaveDeviceResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiSaveDeviceResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSaveDeviceResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -20576,22 +20576,22 @@ func (p *XiaomiRemoteApiSaveDeviceResult) Read(iprot thrift.TProtocol) (err erro
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -20611,30 +20611,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSaveDeviceResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiSaveDeviceResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiSaveDeviceResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSaveDeviceResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("SaveDevice_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "SaveDevice_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -20648,15 +20648,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSaveDeviceResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSaveDeviceResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -20703,17 +20703,17 @@ func (p *XiaomiRemoteApiConnectDeviceArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiConnectDeviceArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiConnectDeviceArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -20724,22 +20724,22 @@ func (p *XiaomiRemoteApiConnectDeviceArgs) Read(iprot thrift.TProtocol) (err err
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -20759,30 +20759,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiConnectDeviceArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiConnectDeviceArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewDeviceConnectReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiConnectDeviceArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiConnectDeviceArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ConnectDevice_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "ConnectDevice_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -20796,14 +20796,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiConnectDeviceArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiConnectDeviceArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -20849,17 +20849,17 @@ func (p *XiaomiRemoteApiConnectDeviceResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiConnectDeviceResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiConnectDeviceResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -20870,22 +20870,22 @@ func (p *XiaomiRemoteApiConnectDeviceResult) Read(iprot thrift.TProtocol) (err e
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -20905,30 +20905,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiConnectDeviceResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiConnectDeviceResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiConnectDeviceResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiConnectDeviceResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ConnectDevice_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "ConnectDevice_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -20942,15 +20942,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiConnectDeviceResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiConnectDeviceResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -20997,17 +20997,17 @@ func (p *XiaomiRemoteApiDeleteDeviceArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiDeleteDeviceArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDeleteDeviceArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -21018,22 +21018,22 @@ func (p *XiaomiRemoteApiDeleteDeviceArgs) Read(iprot thrift.TProtocol) (err erro
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -21053,30 +21053,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiDeleteDeviceArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiDeleteDeviceArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewDeviceReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiDeleteDeviceArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDeleteDeviceArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("DeleteDevice_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "DeleteDevice_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -21090,14 +21090,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiDeleteDeviceArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiDeleteDeviceArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -21143,17 +21143,17 @@ func (p *XiaomiRemoteApiDeleteDeviceResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiDeleteDeviceResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDeleteDeviceResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -21164,22 +21164,22 @@ func (p *XiaomiRemoteApiDeleteDeviceResult) Read(iprot thrift.TProtocol) (err er
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -21199,30 +21199,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiDeleteDeviceResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiDeleteDeviceResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiDeleteDeviceResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDeleteDeviceResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("DeleteDevice_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "DeleteDevice_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -21236,15 +21236,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiDeleteDeviceResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDeleteDeviceResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -21291,17 +21291,17 @@ func (p *XiaomiRemoteApiGetLLMConfigArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiGetLLMConfigArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetLLMConfigArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -21312,22 +21312,22 @@ func (p *XiaomiRemoteApiGetLLMConfigArgs) Read(iprot thrift.TProtocol) (err erro
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -21347,30 +21347,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetLLMConfigArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiGetLLMConfigArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewEmptyReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiGetLLMConfigArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetLLMConfigArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("GetLLMConfig_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "GetLLMConfig_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -21384,14 +21384,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetLLMConfigArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiGetLLMConfigArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -21437,17 +21437,17 @@ func (p *XiaomiRemoteApiGetLLMConfigResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiGetLLMConfigResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetLLMConfigResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -21458,22 +21458,22 @@ func (p *XiaomiRemoteApiGetLLMConfigResult) Read(iprot thrift.TProtocol) (err er
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -21493,30 +21493,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetLLMConfigResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiGetLLMConfigResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewLLMConfigResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiGetLLMConfigResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetLLMConfigResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("GetLLMConfig_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "GetLLMConfig_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -21530,15 +21530,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetLLMConfigResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetLLMConfigResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -21585,17 +21585,17 @@ func (p *XiaomiRemoteApiUpdateLLMConfigArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiUpdateLLMConfigArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiUpdateLLMConfigArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -21606,22 +21606,22 @@ func (p *XiaomiRemoteApiUpdateLLMConfigArgs) Read(iprot thrift.TProtocol) (err e
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -21641,30 +21641,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiUpdateLLMConfigArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiUpdateLLMConfigArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewLLMConfig()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiUpdateLLMConfigArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiUpdateLLMConfigArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("UpdateLLMConfig_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "UpdateLLMConfig_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -21678,14 +21678,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiUpdateLLMConfigArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiUpdateLLMConfigArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -21731,17 +21731,17 @@ func (p *XiaomiRemoteApiUpdateLLMConfigResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiUpdateLLMConfigResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiUpdateLLMConfigResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -21752,22 +21752,22 @@ func (p *XiaomiRemoteApiUpdateLLMConfigResult) Read(iprot thrift.TProtocol) (err
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -21787,30 +21787,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiUpdateLLMConfigResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiUpdateLLMConfigResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiUpdateLLMConfigResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiUpdateLLMConfigResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("UpdateLLMConfig_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "UpdateLLMConfig_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -21824,15 +21824,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiUpdateLLMConfigResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiUpdateLLMConfigResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -21879,17 +21879,17 @@ func (p *XiaomiRemoteApiTestLLMArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiTestLLMArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiTestLLMArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -21900,22 +21900,22 @@ func (p *XiaomiRemoteApiTestLLMArgs) Read(iprot thrift.TProtocol) (err error) {
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -21935,30 +21935,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiTestLLMArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiTestLLMArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewLLMProviderReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiTestLLMArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiTestLLMArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("TestLLM_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "TestLLM_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -21972,14 +21972,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiTestLLMArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiTestLLMArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -22025,17 +22025,17 @@ func (p *XiaomiRemoteApiTestLLMResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiTestLLMResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiTestLLMResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -22046,22 +22046,22 @@ func (p *XiaomiRemoteApiTestLLMResult) Read(iprot thrift.TProtocol) (err error) 
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -22081,30 +22081,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiTestLLMResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiTestLLMResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewLLMTestResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiTestLLMResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiTestLLMResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("TestLLM_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "TestLLM_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -22118,15 +22118,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiTestLLMResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiTestLLMResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -22173,17 +22173,17 @@ func (p *XiaomiRemoteApiSaveLLMKeyArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiSaveLLMKeyArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSaveLLMKeyArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -22194,22 +22194,22 @@ func (p *XiaomiRemoteApiSaveLLMKeyArgs) Read(iprot thrift.TProtocol) (err error)
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -22229,30 +22229,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSaveLLMKeyArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiSaveLLMKeyArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewLLMKeyReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiSaveLLMKeyArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSaveLLMKeyArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("SaveLLMKey_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "SaveLLMKey_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -22266,14 +22266,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSaveLLMKeyArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiSaveLLMKeyArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -22319,17 +22319,17 @@ func (p *XiaomiRemoteApiSaveLLMKeyResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiSaveLLMKeyResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSaveLLMKeyResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -22340,22 +22340,22 @@ func (p *XiaomiRemoteApiSaveLLMKeyResult) Read(iprot thrift.TProtocol) (err erro
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -22375,30 +22375,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSaveLLMKeyResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiSaveLLMKeyResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiSaveLLMKeyResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSaveLLMKeyResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("SaveLLMKey_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "SaveLLMKey_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -22412,15 +22412,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiSaveLLMKeyResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiSaveLLMKeyResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -22467,17 +22467,17 @@ func (p *XiaomiRemoteApiGetHistoryArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiGetHistoryArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetHistoryArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -22488,22 +22488,22 @@ func (p *XiaomiRemoteApiGetHistoryArgs) Read(iprot thrift.TProtocol) (err error)
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -22523,30 +22523,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetHistoryArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiGetHistoryArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewEmptyReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiGetHistoryArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetHistoryArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("GetHistory_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "GetHistory_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -22560,14 +22560,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetHistoryArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiGetHistoryArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -22613,17 +22613,17 @@ func (p *XiaomiRemoteApiGetHistoryResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiGetHistoryResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetHistoryResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -22634,22 +22634,22 @@ func (p *XiaomiRemoteApiGetHistoryResult) Read(iprot thrift.TProtocol) (err erro
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -22669,30 +22669,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetHistoryResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiGetHistoryResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewHistoryResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiGetHistoryResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetHistoryResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("GetHistory_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "GetHistory_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -22706,15 +22706,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetHistoryResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetHistoryResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -22761,17 +22761,17 @@ func (p *XiaomiRemoteApiDeleteHistoryArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiDeleteHistoryArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDeleteHistoryArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -22782,22 +22782,22 @@ func (p *XiaomiRemoteApiDeleteHistoryArgs) Read(iprot thrift.TProtocol) (err err
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -22817,30 +22817,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiDeleteHistoryArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiDeleteHistoryArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewHistoryDeleteReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiDeleteHistoryArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDeleteHistoryArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("DeleteHistory_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "DeleteHistory_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -22854,14 +22854,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiDeleteHistoryArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiDeleteHistoryArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -22907,17 +22907,17 @@ func (p *XiaomiRemoteApiDeleteHistoryResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiDeleteHistoryResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDeleteHistoryResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -22928,22 +22928,22 @@ func (p *XiaomiRemoteApiDeleteHistoryResult) Read(iprot thrift.TProtocol) (err e
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -22963,30 +22963,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiDeleteHistoryResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiDeleteHistoryResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiDeleteHistoryResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDeleteHistoryResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("DeleteHistory_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "DeleteHistory_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -23000,15 +23000,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiDeleteHistoryResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiDeleteHistoryResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -23055,17 +23055,17 @@ func (p *XiaomiRemoteApiClearHistoryArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiClearHistoryArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiClearHistoryArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -23076,22 +23076,22 @@ func (p *XiaomiRemoteApiClearHistoryArgs) Read(iprot thrift.TProtocol) (err erro
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -23111,30 +23111,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiClearHistoryArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiClearHistoryArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewEmptyReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiClearHistoryArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiClearHistoryArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ClearHistory_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "ClearHistory_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -23148,14 +23148,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiClearHistoryArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiClearHistoryArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -23201,17 +23201,17 @@ func (p *XiaomiRemoteApiClearHistoryResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiClearHistoryResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiClearHistoryResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -23222,22 +23222,22 @@ func (p *XiaomiRemoteApiClearHistoryResult) Read(iprot thrift.TProtocol) (err er
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -23257,30 +23257,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiClearHistoryResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiClearHistoryResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiClearHistoryResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiClearHistoryResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ClearHistory_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "ClearHistory_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -23294,15 +23294,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiClearHistoryResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiClearHistoryResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -23349,17 +23349,17 @@ func (p *XiaomiRemoteApiGetTextConfigArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiGetTextConfigArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetTextConfigArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -23370,22 +23370,22 @@ func (p *XiaomiRemoteApiGetTextConfigArgs) Read(iprot thrift.TProtocol) (err err
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -23405,30 +23405,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetTextConfigArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiGetTextConfigArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewEmptyReq()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiGetTextConfigArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetTextConfigArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("GetTextConfig_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "GetTextConfig_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -23442,14 +23442,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetTextConfigArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiGetTextConfigArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -23495,17 +23495,17 @@ func (p *XiaomiRemoteApiGetTextConfigResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiGetTextConfigResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetTextConfigResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -23516,22 +23516,22 @@ func (p *XiaomiRemoteApiGetTextConfigResult) Read(iprot thrift.TProtocol) (err e
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -23551,30 +23551,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetTextConfigResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiGetTextConfigResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewTextConfigResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiGetTextConfigResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetTextConfigResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("GetTextConfig_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "GetTextConfig_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -23588,15 +23588,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiGetTextConfigResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiGetTextConfigResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -23643,17 +23643,17 @@ func (p *XiaomiRemoteApiUpdateTextConfigArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *XiaomiRemoteApiUpdateTextConfigArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiUpdateTextConfigArgs) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -23664,22 +23664,22 @@ func (p *XiaomiRemoteApiUpdateTextConfigArgs) Read(iprot thrift.TProtocol) (err 
 		switch fieldId {
 		case 1:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField1(iprot); err != nil {
+				if err = p.ReadField1(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -23699,30 +23699,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiUpdateTextConfigArgs) ReadField1(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiUpdateTextConfigArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewTextConfig()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Req = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiUpdateTextConfigArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiUpdateTextConfigArgs) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("UpdateTextConfig_args"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "UpdateTextConfig_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField1(oprot); err != nil {
+		if err = p.writeField1(ctx, oprot); err != nil {
 			fieldId = 1
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -23736,14 +23736,14 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiUpdateTextConfigArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+func (p *XiaomiRemoteApiUpdateTextConfigArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin(ctx, "req", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Req.Write(oprot); err != nil {
+	if err := p.Req.Write(ctx, oprot); err != nil {
 		return err
 	}
-	if err = oprot.WriteFieldEnd(); err != nil {
+	if err = oprot.WriteFieldEnd(ctx); err != nil {
 		goto WriteFieldEndError
 	}
 	return nil
@@ -23789,17 +23789,17 @@ func (p *XiaomiRemoteApiUpdateTextConfigResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *XiaomiRemoteApiUpdateTextConfigResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiUpdateTextConfigResult) Read(ctx context.Context, iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 
-	if _, err = iprot.ReadStructBegin(); err != nil {
+	if _, err = iprot.ReadStructBegin(ctx); err != nil {
 		goto ReadStructBeginError
 	}
 
 	for {
-		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin(ctx)
 		if err != nil {
 			goto ReadFieldBeginError
 		}
@@ -23810,22 +23810,22 @@ func (p *XiaomiRemoteApiUpdateTextConfigResult) Read(iprot thrift.TProtocol) (er
 		switch fieldId {
 		case 0:
 			if fieldTypeId == thrift.STRUCT {
-				if err = p.ReadField0(iprot); err != nil {
+				if err = p.ReadField0(ctx, iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
+			} else if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		default:
-			if err = iprot.Skip(fieldTypeId); err != nil {
+			if err = iprot.Skip(ctx, fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
 		}
-		if err = iprot.ReadFieldEnd(); err != nil {
+		if err = iprot.ReadFieldEnd(ctx); err != nil {
 			goto ReadFieldEndError
 		}
 	}
-	if err = iprot.ReadStructEnd(); err != nil {
+	if err = iprot.ReadStructEnd(ctx); err != nil {
 		goto ReadStructEndError
 	}
 
@@ -23845,30 +23845,30 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiUpdateTextConfigResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *XiaomiRemoteApiUpdateTextConfigResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
 	_field := NewOperationResp()
-	if err := _field.Read(iprot); err != nil {
+	if err := _field.Read(ctx, iprot); err != nil {
 		return err
 	}
 	p.Success = _field
 	return nil
 }
 
-func (p *XiaomiRemoteApiUpdateTextConfigResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiUpdateTextConfigResult) Write(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("UpdateTextConfig_result"); err != nil {
+	if err = oprot.WriteStructBegin(ctx, "UpdateTextConfig_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
-		if err = p.writeField0(oprot); err != nil {
+		if err = p.writeField0(ctx, oprot); err != nil {
 			fieldId = 0
 			goto WriteFieldError
 		}
 	}
-	if err = oprot.WriteFieldStop(); err != nil {
+	if err = oprot.WriteFieldStop(ctx); err != nil {
 		goto WriteFieldStopError
 	}
-	if err = oprot.WriteStructEnd(); err != nil {
+	if err = oprot.WriteStructEnd(ctx); err != nil {
 		goto WriteStructEndError
 	}
 	return nil
@@ -23882,15 +23882,15 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *XiaomiRemoteApiUpdateTextConfigResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *XiaomiRemoteApiUpdateTextConfigResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+		if err = oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := p.Success.Write(oprot); err != nil {
+		if err := p.Success.Write(ctx, oprot); err != nil {
 			return err
 		}
-		if err = oprot.WriteFieldEnd(); err != nil {
+		if err = oprot.WriteFieldEnd(ctx); err != nil {
 			goto WriteFieldEndError
 		}
 	}
@@ -23907,4 +23907,19 @@ func (p *XiaomiRemoteApiUpdateTextConfigResult) String() string {
 	}
 	return fmt.Sprintf("XiaomiRemoteApiUpdateTextConfigResult(%+v)", *p)
 
+}
+
+// thriftCtxProcessorAdapter: generated by script/thriftctx — do not edit.
+type thriftCtxProcessorAdapter struct {
+	inner interface {
+		Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (bool, error)
+	}
+}
+
+func (a thriftCtxProcessorAdapter) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (bool, thrift.TException) {
+	ok, err := a.inner.Process(ctx, seqId, iprot, oprot)
+	if err != nil {
+		return ok, thrift.NewTApplicationException(thrift.INTERNAL_ERROR, err.Error())
+	}
+	return ok, nil
 }
