@@ -24,6 +24,8 @@ jobs:
         run: test -z "$(gofmt -l .)"
       - name: Vet
         run: go vet -tags stdjson ./...
+      - name: Dependency rules (ARC-11)
+        run: script/check-deps.sh
       - name: Test (race + coverage)
         run: go test -tags stdjson -race -coverprofile=coverage.out -covermode=atomic ./...
       - name: Coverage summary
