@@ -509,17 +509,29 @@ func TestSeqActionWatcherRunsDeferredSteps(t *testing.T) {
 		0: {Kind: "type", Arg: "你好"},
 		1: {Kind: "open", Arg: "firefox"},
 	}
-	var pasted []string
-	var launched []string
+	// pasteText/launch 在 watcher goroutine 里回调,主 goroutine 轮询读——
+	// 必须走锁内快照(与 pipelineProbe.snapshot 同范式),裸 slice 是 data race
+	// (race detector 实锤,Test (linux) -race 门禁红)。
+	var mu sync.Mutex
+	var pasted, launched []string
+	rec := func() (p, l []string) {
+		mu.Lock()
+		defer mu.Unlock()
+		return append([]string(nil), pasted...), append([]string(nil), launched...)
+	}
 	watcher := NewSeqActionWatcher(stub, func(slot int) (remap.AgentAction, bool) {
 		action, ok := registry[slot]
 		return action, ok
 	})
 	watcher.pasteText = func(_ context.Context, text string) error {
+		mu.Lock()
+		defer mu.Unlock()
 		pasted = append(pasted, text)
 		return nil
 	}
 	watcher.launch = func(_ context.Context, name string) error {
+		mu.Lock()
+		defer mu.Unlock()
 		launched = append(launched, name)
 		return nil
 	}
@@ -530,10 +542,15 @@ func TestSeqActionWatcherRunsDeferredSteps(t *testing.T) {
 	stub.actionCh <- 9 // no such slot: silent no-op
 	stub.actionCh <- 1
 	deadline := time.After(2 * time.Second)
-	for len(pasted) < 1 || len(launched) < 1 {
+	for {
+		p, l := rec()
+		if len(p) >= 1 && len(l) >= 1 {
+			pasted, launched = p, l
+			break
+		}
 		select {
 		case <-deadline:
-			t.Fatalf("pasted=%v launched=%v", pasted, launched)
+			t.Fatalf("pasted=%v launched=%v", p, l)
 		case <-time.After(10 * time.Millisecond):
 		}
 	}
