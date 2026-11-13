@@ -39,6 +39,8 @@ func customizedRegister(r *server.Hertz, customUI *ui.Server) {
 	r.POST("/api/llm/app-rules", customUI.LLMAppRulesSave)
 	r.GET("/api/streaming", customUI.StreamingSubtitles)
 	r.POST("/api/streaming", customUI.StreamingSubtitlesSave)
+	r.GET("/api/wake", customUI.WakeConfig)
+	r.POST("/api/wake", customUI.WakeConfigSave)
 	r.GET("/api/inputs", customUI.Inputs)
 	r.POST("/api/phone/enabled", customUI.PhoneEnabled)
 	r.POST("/api/phone/pairing", customUI.PhonePairing)

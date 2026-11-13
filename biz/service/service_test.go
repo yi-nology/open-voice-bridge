@@ -28,6 +28,8 @@ type fakeAgent struct {
 	seqActions   map[int]remap.AgentAction
 	rewriteRules []config.AppRewriteRule
 	streaming    bool
+	wake         bool
+	wakeWord     string
 	connected    bool
 	ready        bool
 	engine       asr.Engine
@@ -48,6 +50,19 @@ func (f *fakeAgent) Status() core.AgentView {
 }
 
 func (f *fakeAgent) Reconnect() error { return nil }
+func (f *fakeAgent) SetWake(enabled bool, word string) {
+	f.seqMu.Lock()
+	defer f.seqMu.Unlock()
+	f.wake = enabled
+	f.wakeWord = word
+}
+
+func (f *fakeAgent) WakeStatus() (bool, error) {
+	f.seqMu.Lock()
+	defer f.seqMu.Unlock()
+	return f.wake, nil
+}
+
 func (f *fakeAgent) SetStreamingSubtitles(on bool) {
 	f.seqMu.Lock()
 	defer f.seqMu.Unlock()

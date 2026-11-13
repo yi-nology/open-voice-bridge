@@ -92,3 +92,34 @@ func (s *Server) StreamingSubtitlesSave(ctx context.Context, c *app.RequestConte
 	}
 	c.JSON(consts.StatusOK, map[string]any{"ok": true})
 }
+
+// WakeConfig returns the wake-word toggle and word (S7).
+func (s *Server) WakeConfig(ctx context.Context, c *app.RequestContext) {
+	if s.deps.WakeConfig == nil {
+		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "wake unavailable"})
+		return
+	}
+	enabled, word := s.deps.WakeConfig()
+	c.JSON(consts.StatusOK, map[string]any{"ok": true, "enabled": enabled, "word": word})
+}
+
+// WakeConfigSave stores the wake-word settings and restarts the listener.
+func (s *Server) WakeConfigSave(ctx context.Context, c *app.RequestContext) {
+	if s.deps.SetWake == nil {
+		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "wake unavailable"})
+		return
+	}
+	var req struct {
+		Enabled bool   `json:"enabled"`
+		Word    string `json:"word"`
+	}
+	if err := json.Unmarshal(c.Request.Body(), &req); err != nil {
+		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if err := s.deps.SetWake(req.Enabled, req.Word); err != nil {
+		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	c.JSON(consts.StatusOK, map[string]any{"ok": true})
+}

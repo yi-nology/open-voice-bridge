@@ -127,6 +127,9 @@ func RunAgent(opts AgentOptions) int {
 		ag.SetActiveClassFunc(focus.ActiveClass)
 		ag.SetRewriteRules(cfg.LLM.AppRules)
 		ag.SetStreamingSubtitles(cfg.StreamingSubtitles)
+		if cfg.WakeEnabled {
+			ag.SetWake(true, cfg.WakeWord)
+		}
 		app.AddResource("agent", func(closeCtx context.Context) error {
 			return ag.Close(closeCtx)
 		})

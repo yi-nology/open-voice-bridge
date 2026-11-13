@@ -72,12 +72,16 @@ type Config struct {
 	PasteEnabled bool           `json:"paste_enabled"`
 	// StreamingSubtitles turns on live partial recognition while the voice
 	// key is held (S6 边说边滚字): throttled extra ASR calls, opt-in.
-	StreamingSubtitles bool         `json:"streaming_subtitles"`
-	ASR                ASRConfig    `json:"asr"`
-	LLM                LLMConfig    `json:"llm"`
-	Text               TextConfig   `json:"text"`
-	Keymap             KeymapConfig `json:"keymap"`
-	Phone              PhoneConfig  `json:"phone"`
+	StreamingSubtitles bool `json:"streaming_subtitles"`
+	// WakeEnabled turns on the hands-free wake word over the desktop mic (S7).
+	WakeEnabled bool `json:"wake_enabled"`
+	// WakeWord is what the listener hears before it captures (default 小遥小遥).
+	WakeWord string       `json:"wake_word"`
+	ASR      ASRConfig    `json:"asr"`
+	LLM      LLMConfig    `json:"llm"`
+	Text     TextConfig   `json:"text"`
+	Keymap   KeymapConfig `json:"keymap"`
+	Phone    PhoneConfig  `json:"phone"`
 }
 
 var macPattern = regexp.MustCompile(`^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$`)

@@ -52,6 +52,8 @@ type Agent interface {
 	SetSeqActions(map[int]remap.AgentAction)
 	SetRewriteRules([]config.AppRewriteRule)
 	SetStreamingSubtitles(bool)
+	SetWake(enabled bool, word string)
+	WakeStatus() (bool, error)
 }
 
 // Helper is the root remapper client.
@@ -807,6 +809,39 @@ func (s *Service) SetStreamingSubtitles(on bool) error {
 		return saveErr
 	}
 	s.agent.SetStreamingSubtitles(on)
+	return nil
+}
+
+// WakeConfig returns the wake-word toggle and word (S7).
+func (s *Service) WakeConfig() (bool, string) {
+	s.cfgMu.RLock()
+	defer s.cfgMu.RUnlock()
+	word := s.cfg.WakeWord
+	if word == "" {
+		word = "小遥小遥"
+	}
+	return s.cfg.WakeEnabled, word
+}
+
+// SetWake saves the wake-word settings and restarts the listener.
+func (s *Service) SetWake(enabled bool, word string) error {
+	if word == "" {
+		word = "小遥小遥"
+	}
+	s.cfgMu.Lock()
+	snapshot := s.configSnapshotLocked()
+	snapshot.WakeEnabled = enabled
+	snapshot.WakeWord = word
+	saveErr := s.persistConfig(snapshot)
+	if saveErr == nil {
+		s.cfg.WakeEnabled = enabled
+		s.cfg.WakeWord = word
+	}
+	s.cfgMu.Unlock()
+	if saveErr != nil {
+		return saveErr
+	}
+	s.agent.SetWake(enabled, word)
 	return nil
 }
 

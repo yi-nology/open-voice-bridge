@@ -126,6 +126,8 @@ func (a Admin) deps() ui.Deps {
 		UpdateLLMAppRules:     svc.UpdateLLMAppRules,
 		StreamingSubtitles:    svc.StreamingSubtitles,
 		SetStreamingSubtitles: svc.SetStreamingSubtitles,
+		WakeConfig:            svc.WakeConfig,
+		SetWake:               svc.SetWake,
 		SetPhoneEnabled:       svc.SetPhoneEnabled,
 		HelperSocket:          a.HelperSocket,
 	}

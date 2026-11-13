@@ -79,6 +79,8 @@ type Deps struct {
 	UpdateLLMAppRules     func([]config.AppRewriteRule) error
 	StreamingSubtitles    func() bool
 	SetStreamingSubtitles func(bool) error
+	WakeConfig            func() (bool, string)
+	SetWake               func(bool, string) error
 	HelperSocket          string
 }
 

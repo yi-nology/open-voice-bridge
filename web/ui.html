@@ -1113,7 +1113,12 @@ body.listening .subtitle-live i { background: var(--accent); }
         <button id="subtitle-copy" class="btn small">复制</button>
         <button id="subtitle-fullscreen" class="btn small primary">全屏</button>
       </div>
-      <label class="check-line" style="margin:0 0 10px"><input id="streaming-toggle" type="checkbox"> 边说边滚字（实验）：按住说话时把识别中的文字实时滚在字幕底部，松手后由完整结果落定</label>
+      <label class="check-line" style="margin:0 0 6px"><input id="streaming-toggle" type="checkbox"> 边说边滚字（实验）：按住说话时把识别中的文字实时滚在字幕底部，松手后由完整结果落定</label>
+      <div class="check-line" style="margin:0 0 10px">
+        <label class="check-line" style="margin:0"><input id="wake-toggle" type="checkbox"> 唤醒词（实验）：对麦克风说</label>
+        <input id="wake-word" style="width:120px" placeholder="小遥小遥">
+        <span class="sub">即可直接听写，不用按任何键。唤醒匹配走识别链路，用本地引擎才完全离线。</span>
+      </div>
       <div id="subtitle-scene" class="subtitle-scene">
         <span class="subtitle-orb a"></span>
         <span class="subtitle-orb b"></span>
@@ -2704,6 +2709,7 @@ function openConfigPanel(name) {
   if (name === "llm") loadLLMConfig();
 loadLLMAppRules();
 loadStreamingToggle();
+loadWakeToggle();
   if (name === "text") loadTextConfig();
 }
 
@@ -3531,6 +3537,31 @@ async function loadStreamingToggle() {
       });
     } catch (error) {}
   });
+}
+
+async function loadWakeToggle() {
+  const toggle = document.getElementById("wake-toggle");
+  const word = document.getElementById("wake-word");
+  if (!toggle) return;
+  try {
+    const res = await fetch("/api/wake");
+    const data = await res.json();
+    if (data.ok) {
+      toggle.checked = !!data.enabled;
+      if (word && data.word) word.value = data.word;
+    }
+  } catch (error) {}
+  const save = async () => {
+    try {
+      await fetch("/api/wake", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({enabled: toggle.checked, word: word ? word.value.trim() : ""}),
+      });
+    } catch (error) {}
+  };
+  toggle.addEventListener("change", save);
+  if (word) word.addEventListener("change", save);
 }
 
 // ---- phrase picker overlay (S2) ----

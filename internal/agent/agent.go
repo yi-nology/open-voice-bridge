@@ -22,6 +22,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/input"
 	"github.com/yi-nology/open-voice-bridge/internal/keys"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
+	"github.com/yi-nology/open-voice-bridge/internal/miccap"
 	"github.com/yi-nology/open-voice-bridge/internal/paste"
 	"github.com/yi-nology/open-voice-bridge/internal/redact"
 	"github.com/yi-nology/open-voice-bridge/internal/remap"
@@ -52,6 +53,12 @@ type Agent struct {
 	streaming   atomic.Bool
 	partialMu   sync.Mutex
 	partialStop context.CancelFunc
+
+	wakeMu     sync.Mutex
+	wakeStop   context.CancelFunc
+	wakeSource miccap.FrameSource
+	wakeWord   string
+	wakeErr    error
 
 	hub *input.Hub
 
