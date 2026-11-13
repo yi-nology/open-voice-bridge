@@ -695,6 +695,37 @@ body.listening .subtitle-live i { background: var(--accent); }
 .phrase-foot { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
 .phrase-foot .msg { flex: 1; margin: 0; }
 
+
+/* first-run onboarding (S4) */
+#welcome {
+  position: fixed; inset: 0; z-index: 80;
+  background: rgba(26,26,26,.28);
+  display: none; align-items: center; justify-content: center;
+}
+#welcome.open { display: flex; }
+.welcome-card {
+  width: min(520px, 92vw); background: var(--panel);
+  border: 1px solid var(--line); border-radius: var(--radius-card);
+  padding: 28px 30px;
+}
+.welcome-card h2 { font-size: 22px; font-weight: 650; margin-bottom: 6px; }
+.welcome-card > .sub { margin-bottom: 16px; }
+.welcome-step {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 0; border-bottom: 1px solid var(--line-soft);
+}
+.welcome-step .num {
+  width: 26px; height: 26px; border-radius: 50%; flex: 0 0 auto;
+  background: var(--panel2); color: var(--muted); font-size: 12.5px;
+  display: grid; place-items: center;
+}
+.welcome-step.done .num { background: var(--green-soft); color: var(--green); }
+.welcome-step .body { flex: 1; min-width: 0; }
+.welcome-step .title { font-size: 15px; font-weight: 500; }
+.welcome-step .hint { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+.welcome-foot { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
+.welcome-foot .note { flex: 1; margin: 0; font-size: 12.5px; }
+
 </style>
 </head>
 <body>
@@ -1018,6 +1049,7 @@ body.listening .subtitle-live i { background: var(--accent); }
       <button id="btn-refresh" class="btn primary">刷新状态</button>
       <button id="btn-reconnect" class="btn">重新连接遥控器</button>
       <button id="btn-restart-mic" class="btn">重启麦克风桥接</button>
+      <button id="btn-onboarding" class="btn">重新打开新手引导</button>
     </div>
     <div id="conn-msg" class="msg"></div>
     <p class="note">语音链路与按键映射互相独立：捕获按键时，按住语音键仍然可以说话输入。</p>
@@ -1210,6 +1242,19 @@ body.listening .subtitle-live i { background: var(--accent); }
   </section>
   </div>
 </main>
+</div>
+
+<div id="welcome" role="dialog" aria-label="新手引导">
+  <div class="welcome-card">
+    <h2>欢迎使用小遥</h2>
+    <p class="sub">把小米蓝牙遥控器变成电脑语音输入：按住语音键说话，文字直接进当前窗口。下面四步按需完成即可。</p>
+    <div id="welcome-steps"></div>
+    <div class="welcome-foot">
+      <p class="note">更完整的体检在终端运行 <code>xiaomi-remote doctor</code>，每项都会给出可执行的修复命令。</p>
+      <button id="welcome-skip" class="btn small">跳过</button>
+      <button id="welcome-start" class="btn primary">开始使用</button>
+    </div>
+  </div>
 </div>
 
 <button id="phrase-fab" class="phrase-fab" title="常用语选单">词句</button>
@@ -3108,6 +3153,8 @@ document.getElementById("btn-reconnect").addEventListener("click", async () => {
   loadStatus(false);
 });
 
+document.getElementById("btn-onboarding")?.addEventListener("click", openWelcome);
+
 document.getElementById("btn-restart-mic").addEventListener("click", async () => {
   const msg = document.getElementById("conn-msg");
   msg.textContent = "正在重启麦克风桥接…";
@@ -3290,6 +3337,7 @@ function renderAttention(status) {
       phone.className = "value";
     }
   }
+  if (document.getElementById("welcome")?.classList.contains("open")) renderWelcome();
   const asrState = document.getElementById("attn-asr-state");
   if (asrState) {
     const asrOK = status && !status.asr_error;
@@ -3491,6 +3539,94 @@ document.addEventListener("keydown", (event) => {
   } else if (event.key >= "1" && event.key <= "8") {
     pickPhrase(Number(event.key));
   }
+});
+
+// ---- first-run onboarding (S4) ----
+function welcomeSteps(status) {
+  status = status || {};
+  const phoneLive = !!lastInputs?.enabled && (lastInputs.sources || []).some(item => item.kind === "phone");
+  return [
+    {
+      title: "连接遥控器",
+      hint: "系统蓝牙配对后，到「设备」页点扫描已连接设备",
+      done: !!(status.ble_connected || status.remote_present),
+      go: () => goTab("devices"),
+    },
+    {
+      title: "配置语音识别",
+      hint: "MiMo、OpenAI 兼容或本地 whisper.cpp，填好密钥或路径后保存并启用",
+      done: !status.asr_error && !!status.asr_provider,
+      go: () => openConfigPanel("asr"),
+    },
+    {
+      title: "配对手机（可选）",
+      hint: "手机浏览器当无线遥控与外置麦克风，同一局域网即可",
+      done: phoneLive,
+      go: () => goTab("devices"),
+    },
+    {
+      title: "开始听写",
+      hint: "把光标放进任意输入框，按住语音键说话；字幕页可看实时歌词",
+      done: false,
+      go: () => goTab("subtitle"),
+    },
+  ];
+}
+
+function renderWelcome() {
+  const host = document.getElementById("welcome-steps");
+  if (!host) return;
+  host.innerHTML = "";
+  welcomeSteps(lastStatus).forEach((step, index) => {
+    const row = document.createElement("div");
+    row.className = "welcome-step" + (step.done ? " done" : "");
+    const num = document.createElement("span");
+    num.className = "num";
+    num.textContent = step.done ? "✓" : String(index + 1);
+    const body = document.createElement("div");
+    body.className = "body";
+    const title = document.createElement("div");
+    title.className = "title";
+    title.textContent = step.title;
+    const hint = document.createElement("div");
+    hint.className = "hint";
+    hint.textContent = step.hint;
+    body.append(title, hint);
+    const go = document.createElement("button");
+    go.className = "btn small";
+    go.textContent = step.done ? "查看" : "去配置";
+    go.addEventListener("click", () => {
+      closeWelcome();
+      step.go();
+    });
+    row.append(num, body, go);
+    host.appendChild(row);
+  });
+}
+
+function openWelcome() {
+  renderWelcome();
+  document.getElementById("welcome")?.classList.add("open");
+}
+
+function closeWelcome(saveFlag) {
+  document.getElementById("welcome")?.classList.remove("open");
+  if (saveFlag) {
+    try { localStorage.setItem("xiaomiOnboarded", "1"); } catch (error) {}
+  }
+}
+
+function maybeOpenWelcome() {
+  const force = new URLSearchParams(location.search).get("onboarding") === "1";
+  let seen = false;
+  try { seen = localStorage.getItem("xiaomiOnboarded") === "1"; } catch (error) {}
+  if (force || !seen) openWelcome();
+}
+
+document.getElementById("welcome-start")?.addEventListener("click", () => closeWelcome(true));
+document.getElementById("welcome-skip")?.addEventListener("click", () => closeWelcome(true));
+document.getElementById("welcome")?.addEventListener("click", (event) => {
+  if (event.target.id === "welcome") closeWelcome(true);
 });
 
 const DEFAULT_COMMANDS = {
@@ -4021,6 +4157,7 @@ loadStats();
 syncNav();
 loadStatus(true);
 connectEvents();
+maybeOpenWelcome();
 setInterval(() => { if (!document.hidden) loadStatus(false); }, 15000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) loadStatus(false); });
 </script>
