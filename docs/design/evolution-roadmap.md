@@ -77,7 +77,7 @@
 - **S3 · 组合动作 open()/type()**（已做 2026-11-14）：`seq(open(firefox), 200, type(你好))`——apply 时把 type/open 改写成 `agent(n)` 合成键（相同负载共享槽位），root daemon 只按键；agent 侧 SeqActionWatcher 执行 paste.Text / 启动程序（用户态，同 asr.command 信任级）。解析器括号感知，hold-repeat 原样回放。
 - **S4 · Onboarding 首次运行引导**（已做 2026-11-14）：首访欢迎卡四步引导（实时完成态 + 一键跳转）、footer 指向 `xiaomi-remote doctor`；`xiaomiOnboarded` 落标后不再打扰，`?onboarding=1` 与权限页入口可重开。
 - **S5 · 应用感知改写**（已做 2026-11-14）：`llm.app_rules` 按前台窗口类名切改写模式（mail→润色 / code→不改写 / chat→整理段落，首条命中生效）；`ModeProcessor` 按调用换 system prompt，off 直接跳过处理器。词典档（按应用切词典）留待后续。顺手补上 S2 静默失联的 phrase-paste 依赖接线。
-- **S6 · 流式字幕**：识别部分结果实时滚字。
+- **S6 · 流式字幕**（已做 2026-11-14）：按住期间每 1.2s 对缓冲副本做节流增量识别（≥500ms 才起、单在途），字幕底部斜体实时行；松手后完整结果落定。`streaming_subtitles` 开关在字幕页，热生效；partial 事件旁路历史/用量/指标。手机源的流式留待 phone 侧。
 - **S7 · 唤醒词**：免按键本地唤醒 + 说话即听写。
 - **S8 · 回眸可选录音**（隐私敏感，先出设计稿再动手）。
 - **S9 · 稳定/预发布双通道**（挂 R9 CI 门禁后）。
