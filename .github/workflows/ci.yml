@@ -26,11 +26,16 @@ jobs:
         run: go vet -tags stdjson ./...
       - name: Dependency rules (ARC-11)
         run: script/check-deps.sh
+      # Lint 用 go install 本地构建,不用预编译 action:
+      # action 下载的 golangci-lint 二进制构建于旧版 Go(实测 latest 构建于 go1.24),
+      # 而 go.mod 的 go 指令是 1.27.4 ⇒ 「Go language version (go1.24) used to build
+      # golangci-lint is lower than the targeted Go version (1.27.4)」exit 3,
+      # main 三连红。go install 用 setup-go 的工具链(go-version-file 跟随 go.mod)
+      # 构建 lint 二进制 ⇒ 版本检查恒过,工具链升级零维护。
       - name: Lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
-          args: --timeout 5m --max-issues-per-linter 0 --max-same-issues 0
+        run: |
+          go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+          "$(go env GOPATH)/bin/golangci-lint" run --timeout 5m --max-issues-per-linter 0 --max-same-issues 0
       - name: Vuln check (govulncheck)
         run: go run golang.org/x/vuln/cmd/govulncheck@latest -tags stdjson ./...
       - name: Secret scan
