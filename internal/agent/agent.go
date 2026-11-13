@@ -24,6 +24,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
 	"github.com/yi-nology/open-voice-bridge/internal/paste"
 	"github.com/yi-nology/open-voice-bridge/internal/redact"
+	"github.com/yi-nology/open-voice-bridge/internal/remap"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
 
@@ -40,6 +41,9 @@ type Agent struct {
 	audio   audio.Sink
 	audioMu sync.Mutex
 	watcher keys.F24Watcher
+
+	seqMu      sync.RWMutex
+	seqActions map[int]remap.AgentAction
 
 	hub *input.Hub
 

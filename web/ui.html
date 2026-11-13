@@ -811,7 +811,7 @@ body.listening .subtitle-live i { background: var(--accent); }
           <button id="profile-save" class="btn small">保存为预设</button>
           <button id="profile-delete" class="btn small">删除预设</button>
         </div>
-        <p class="note">提示：修改按键会保存为「自定义」预设，不会改动内置预设；可用「保存为预设」另存命名方案。电源键设为「原生」会触发系统关机，建议保持 Escape 或无动作。</p>
+        <p class="note">提示：修改按键会保存为「自定义」预设，不会改动内置预设；可用「保存为预设」另存命名方案。电源键设为「原生」会触发系统关机，建议保持 Escape 或无动作。<br>组合动作支持 <code>seq(步骤, …)</code>：单键、<code>macro(左ctrl+c)</code>、毫秒延时，以及 <code>open(应用名)</code>（启动程序）与 <code>type(文本)</code>（输入一段文字），例如 <code>seq(open(firefox), 200, type(你好))</code>。</p>
         <pre id="config-preview" class="config" style="display:none"></pre>
       </div>
     </div>

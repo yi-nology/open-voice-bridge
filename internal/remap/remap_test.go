@@ -124,3 +124,50 @@ func TestGenericKeyMappingValid(t *testing.T) {
 		}
 	}
 }
+
+// S3: type()/open() steps defer to the agent; the rewrite hands the daemon
+// only synthetic agent(n) keys and reports what each slot means.
+func TestParseSeqAgentSteps(t *testing.T) {
+	steps, err := ParseSeq(`seq(open(firefox), 200, type(你好，世界), agent(3), enter)`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(steps) != 5 {
+		t.Fatalf("steps = %d, want 5", len(steps))
+	}
+	if steps[0].Agent != "open" || steps[0].Arg != "firefox" {
+		t.Fatalf("step0 = %+v", steps[0])
+	}
+	if steps[1].Delay != 200*time.Millisecond {
+		t.Fatalf("step1 = %+v", steps[1])
+	}
+	if steps[2].Agent != "type" || steps[2].Arg != "你好，世界" {
+		t.Fatalf("step2 = %+v", steps[2])
+	}
+	if len(steps[3].Codes) != 1 || steps[3].Codes[0] != AgentActionBase+3 {
+		t.Fatalf("step3 = %+v", steps[3])
+	}
+	if len(steps[4].Codes) != 1 {
+		t.Fatalf("step4 = %+v", steps[4])
+	}
+}
+
+func TestRewriteAgentActionsSharesSlots(t *testing.T) {
+	rewritten, actions := RewriteAgentActions(map[string]string{
+		"f5":       `seq(open(firefox), 120, type(你好))`,
+		"f6":       `seq(type(你好), enter)`,
+		"volumeup": "native",
+	})
+	if rewritten["volumeup"] != "native" {
+		t.Fatalf("plain action rewritten: %q", rewritten["volumeup"])
+	}
+	if rewritten["f5"] != "seq(agent(0), 120, agent(1))" {
+		t.Fatalf("f5 = %q", rewritten["f5"])
+	}
+	if rewritten["f6"] != "seq(agent(1), enter)" {
+		t.Fatalf("f6 = %q (type(你好) must share slot 1)", rewritten["f6"])
+	}
+	if len(actions) != 2 || actions[0].Kind != "open" || actions[1].Arg != "你好" {
+		t.Fatalf("actions = %+v", actions)
+	}
+}

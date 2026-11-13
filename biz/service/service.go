@@ -49,6 +49,7 @@ type Agent interface {
 	SetTextRules(*text.Rules)
 	ASRName() string
 	InsertPhrase(slot int) (string, bool)
+	SetSeqActions(map[int]remap.AgentAction)
 }
 
 // Helper is the root remapper client.
@@ -186,7 +187,16 @@ func (s *Service) Apply(ctx context.Context, mapping map[string]string) (map[str
 	// DOM-11: the helper only hears about a mapping that is already on disk;
 	// a failed save must not leave the daemon running a config that exists
 	// nowhere.
-	return s.helper.Call(ctx, map[string]any{"cmd": "apply", "mapping": mapping})
+	return s.applyMapping(ctx, mapping)
+}
+
+// applyMapping hands a mapping to the remapper after swapping every
+// type()/open() seq step for an agent(n) key the user-level agent watches —
+// the root daemon only ever presses keys (S3).
+func (s *Service) applyMapping(ctx context.Context, mapping map[string]string) (map[string]any, error) {
+	rewritten, actions := remap.RewriteAgentActions(mapping)
+	s.agent.SetSeqActions(actions)
+	return s.helper.Call(ctx, map[string]any{"cmd": "apply", "mapping": rewritten})
 }
 
 func (s *Service) Reconnect(ctx context.Context) error { return s.agent.Reconnect() }
@@ -254,7 +264,7 @@ func (s *Service) ApplyKeymapProfile(ctx context.Context, name string) (map[stri
 	s.cfgMu.Lock()
 	s.cfg.Keymap.Profile = name
 	s.cfgMu.Unlock()
-	return s.helper.Call(ctx, map[string]any{"cmd": "apply", "mapping": mapping})
+	return s.applyMapping(ctx, mapping)
 }
 
 func (s *Service) SaveKeymapProfile(ctx context.Context, name string, mapping map[string]string) (map[string]any, error) {
@@ -287,7 +297,7 @@ func (s *Service) SaveKeymapProfile(ctx context.Context, name string, mapping ma
 	s.cfg.Keymap.Profiles[name] = cleaned
 	s.cfg.Keymap.Profile = name
 	s.cfgMu.Unlock()
-	return s.helper.Call(ctx, map[string]any{"cmd": "apply", "mapping": cleaned})
+	return s.applyMapping(ctx, cleaned)
 }
 
 func (s *Service) DeleteKeymapProfile(ctx context.Context, name string) error {
@@ -977,7 +987,7 @@ func (s *Service) SyncKeymap(ctx context.Context) {
 			s.logger.Warn("keymap profile missing", "profile", profile)
 			return
 		}
-		if _, err := s.helper.Call(ctx, map[string]any{"cmd": "apply", "mapping": mapping}); err == nil {
+		if _, err := s.applyMapping(ctx, mapping); err == nil {
 			s.logger.Info("keymap profile applied", "profile", profile)
 			return
 		} else {

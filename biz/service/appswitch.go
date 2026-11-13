@@ -26,7 +26,7 @@ func (s *Service) applyAppRule(ctx context.Context, class string) {
 	if !ok {
 		return
 	}
-	if _, err := s.helper.Call(ctx, map[string]any{"cmd": "apply", "mapping": remap.Copy(mapping)}); err != nil {
+	if _, err := s.applyMapping(ctx, remap.Copy(mapping)); err != nil {
 		s.logger.Warn("apply app-rule keymap", "class", class, "profile", target, "err", err)
 	}
 }

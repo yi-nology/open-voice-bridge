@@ -122,6 +122,8 @@ func RunAgent(opts AgentOptions) int {
 		// the watcher pastes into the focused window and announces to the UI.
 		phraseWatcher := agent.NewPhraseWatcher(ag.Watcher(), ag.Speech())
 		phraseWatcher.Start(ctx)
+		seqWatcher := agent.NewSeqActionWatcher(ag.Watcher(), ag.SeqAction)
+		seqWatcher.Start(ctx)
 		app.AddResource("agent", func(closeCtx context.Context) error {
 			return ag.Close(closeCtx)
 		})

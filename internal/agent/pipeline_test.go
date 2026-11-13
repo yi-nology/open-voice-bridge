@@ -12,6 +12,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
+	"github.com/yi-nology/open-voice-bridge/internal/remap"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
 
@@ -339,12 +340,20 @@ func TestInsertPhrasePastesTheNthSnippet(t *testing.T) {
 type phraseStub struct {
 	ch       chan int
 	pickerCh chan struct{}
+	actionCh chan int
 }
 
 func (p *phraseStub) Start(context.Context) error { return nil }
 func (p *phraseStub) Close(context.Context) error { return nil }
 func (p *phraseStub) C() <-chan struct{}          { return nil }
 func (p *phraseStub) Phrases() <-chan int         { return p.ch }
+func (p *phraseStub) Actions() <-chan int {
+	if p.actionCh == nil {
+		p.actionCh = make(chan int)
+	}
+	return p.actionCh
+}
+
 func (p *phraseStub) Picker() <-chan struct{} {
 	if p.pickerCh == nil {
 		p.pickerCh = make(chan struct{})
@@ -488,5 +497,47 @@ func TestVoiceCommandFallsBackToDictation(t *testing.T) {
 	_, pasted := probe.snapshot()
 	if len(pasted) != 1 || pasted[0] != "复制" {
 		t.Fatalf("pasted %v, want the words as fallback", pasted)
+	}
+}
+
+// S3: deferred type()/open() steps run on the agent side — the daemon only
+// presses the synthetic key. Empty slots stay silent.
+func TestSeqActionWatcherRunsDeferredSteps(t *testing.T) {
+	stub := &phraseStub{ch: make(chan int)}
+	stub.actionCh = make(chan int, 4)
+	registry := map[int]remap.AgentAction{
+		0: {Kind: "type", Arg: "你好"},
+		1: {Kind: "open", Arg: "firefox"},
+	}
+	var pasted []string
+	var launched []string
+	watcher := NewSeqActionWatcher(stub, func(slot int) (remap.AgentAction, bool) {
+		action, ok := registry[slot]
+		return action, ok
+	})
+	watcher.pasteText = func(_ context.Context, text string) error {
+		pasted = append(pasted, text)
+		return nil
+	}
+	watcher.launch = func(_ context.Context, name string) error {
+		launched = append(launched, name)
+		return nil
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	watcher.Start(ctx)
+	stub.actionCh <- 0
+	stub.actionCh <- 9 // no such slot: silent no-op
+	stub.actionCh <- 1
+	deadline := time.After(2 * time.Second)
+	for len(pasted) < 1 || len(launched) < 1 {
+		select {
+		case <-deadline:
+			t.Fatalf("pasted=%v launched=%v", pasted, launched)
+		case <-time.After(10 * time.Millisecond):
+		}
+	}
+	if pasted[0] != "你好" || launched[0] != "firefox" {
+		t.Fatalf("pasted=%v launched=%v", pasted, launched)
 	}
 }

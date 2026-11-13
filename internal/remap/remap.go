@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	oeerrors "github.com/oekit/pkg/errors"
+
+	"github.com/yi-nology/open-voice-bridge/internal/keys"
 	"os"
 	"path/filepath"
 	"sort"
@@ -260,25 +262,90 @@ func ConfigText(mapping map[string]string) string {
 }
 
 // SeqStep is one stage of a seq(...) combo action (SayAll 组合动作): either a
-// pause or a set of key codes tapped together.
+// pause, a set of key codes tapped together, or an agent step the root
+// daemon must never run itself (type/open — the applier rewrites those into
+// synthetic keys the user-level agent watches, S3).
 type SeqStep struct {
 	Delay time.Duration
 	Codes []int
+	// Agent is "" for plain steps, else "type" or "open" with Arg payload.
+	Agent string
+	Arg   string
+}
+
+// AgentAction is a deferred step the agent executes on the user side.
+type AgentAction struct {
+	Kind string // "type" | "open"
+	Arg  string
+}
+
+// AgentActionBase/AgentActionSlots live in internal/keys: the remapper
+// presses these synthetic keys and the agent watches the same range.
+const (
+	AgentActionBase  = keys.AgentActionBase
+	AgentActionSlots = keys.AgentActionSlots
+)
+
+// splitSeqTokens splits a seq body on top-level commas so payloads like
+// type(你好，世界) keep their punctuation.
+func splitSeqTokens(body string) []string {
+	var parts []string
+	depth := 0
+	start := 0
+	for index, r := range body {
+		switch r {
+		case '(':
+			depth++
+		case ')':
+			depth--
+		case ',':
+			if depth == 0 {
+				parts = append(parts, body[start:index])
+				start = index + 1
+			}
+		}
+	}
+	return append(parts, body[start:])
+}
+
+// seqCall matches "name(payload)" and reports the payload.
+func seqCall(token, name string) (string, bool) {
+	if !strings.HasPrefix(token, name+"(") || !strings.HasSuffix(token, ")") {
+		return "", false
+	}
+	return strings.TrimSuffix(strings.TrimPrefix(token, name+"("), ")"), true
 }
 
 // ParseSeq interprets "seq(up, 40, macro(leftctrl+c), enter)" into ordered
 // steps. Tokens use the same action vocabulary as single mappings; bare
-// integers are pauses in milliseconds (0..2000).
+// integers are pauses in milliseconds (0..2000). "type(text)" and "open(app)"
+// defer to the agent (S3); "agent(n)" is what the applier rewrites them into.
 func ParseSeq(action string) ([]SeqStep, error) {
 	if !strings.HasPrefix(action, "seq(") || !strings.HasSuffix(action, ")") {
 		return nil, oeerrors.New("not a seq action")
 	}
 	body := strings.TrimSuffix(strings.TrimPrefix(action, "seq("), ")")
-	parts := strings.Split(body, ",")
+	parts := splitSeqTokens(body)
 	steps := make([]SeqStep, 0, len(parts))
 	for _, part := range parts {
 		token := strings.TrimSpace(part)
 		if token == "" {
+			continue
+		}
+		if inner, ok := seqCall(token, "type"); ok {
+			steps = append(steps, SeqStep{Agent: "type", Arg: inner})
+			continue
+		}
+		if inner, ok := seqCall(token, "open"); ok {
+			steps = append(steps, SeqStep{Agent: "open", Arg: inner})
+			continue
+		}
+		if inner, ok := seqCall(token, "agent"); ok {
+			slot, err := strconv.Atoi(inner)
+			if err != nil || slot < 0 || slot >= AgentActionSlots {
+				return nil, oeerrors.Errorf("seq step %q: bad agent slot", token)
+			}
+			steps = append(steps, SeqStep{Codes: []int{AgentActionBase + slot}})
 			continue
 		}
 		if ms, err := strconv.Atoi(token); err == nil {
@@ -309,6 +376,65 @@ func ParseSeq(action string) ([]SeqStep, error) {
 		return nil, oeerrors.New("empty seq")
 	}
 	return steps, nil
+}
+
+// RewriteAgentActions swaps every type()/open() step in the mapping's seq
+// actions for agent(n) keys the daemon can press, and reports what each slot
+// means. Identical payloads share a slot. The caller keeps the original
+// mapping for config and hands the rewritten one to the remapper, so the
+// root daemon never launches apps or types text itself (S3).
+func RewriteAgentActions(mapping map[string]string) (map[string]string, map[int]AgentAction) {
+	rewritten := make(map[string]string, len(mapping))
+	actions := map[int]AgentAction{}
+	slots := map[AgentAction]int{}
+	used := 0
+	for key, action := range mapping {
+		if !strings.HasPrefix(action, "seq(") {
+			rewritten[key] = action
+			continue
+		}
+		body := strings.TrimSuffix(strings.TrimPrefix(action, "seq("), ")")
+		parts := splitSeqTokens(body)
+		changed := false
+		for index, part := range parts {
+			token := strings.TrimSpace(part)
+			kind := ""
+			if strings.HasPrefix(token, "type(") {
+				kind = "type"
+			} else if strings.HasPrefix(token, "open(") {
+				kind = "open"
+			}
+			if kind == "" {
+				continue
+			}
+			arg, ok := seqCall(token, kind)
+			if !ok || strings.TrimSpace(arg) == "" {
+				continue
+			}
+			step := AgentAction{Kind: kind, Arg: arg}
+			slot, seen := slots[step]
+			if !seen {
+				if used >= AgentActionSlots {
+					continue
+				}
+				slot = used
+				used++
+				slots[step] = slot
+				actions[slot] = step
+			}
+			parts[index] = "agent(" + strconv.Itoa(slot) + ")"
+			changed = true
+		}
+		if changed {
+			for index := range parts {
+				parts[index] = strings.TrimSpace(parts[index])
+			}
+			rewritten[key] = "seq(" + strings.Join(parts, ", ") + ")"
+		} else {
+			rewritten[key] = action
+		}
+	}
+	return rewritten, actions
 }
 
 // MatchClass reports whether a focused window class matches a per-app rule

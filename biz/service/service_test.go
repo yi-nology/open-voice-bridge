@@ -18,11 +18,14 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/device"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
+	"github.com/yi-nology/open-voice-bridge/internal/remap"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
 
 type fakeAgent struct {
 	phraseText string
+	seqMu      sync.Mutex
+	seqActions map[int]remap.AgentAction
 	connected  bool
 	ready      bool
 	engine     asr.Engine
@@ -43,6 +46,12 @@ func (f *fakeAgent) Status() core.AgentView {
 }
 
 func (f *fakeAgent) Reconnect() error { return nil }
+func (f *fakeAgent) SetSeqActions(actions map[int]remap.AgentAction) {
+	f.seqMu.Lock()
+	defer f.seqMu.Unlock()
+	f.seqActions = actions
+}
+
 func (f *fakeAgent) InsertPhrase(slot int) (string, bool) {
 	if f.phraseText == "" {
 		return "", false
@@ -473,5 +482,26 @@ func TestPastePhraseForwardsToAgent(t *testing.T) {
 	agent.phraseText = ""
 	if _, ok := svc.PastePhrase(1); ok {
 		t.Fatal("empty slot reported as pasted")
+	}
+}
+
+// S3: applying a mapping rewrites type()/open() seq steps into agent(n) keys
+// for the daemon and registers what each slot means with the agent.
+func TestApplyRewritesDeferredSeqSteps(t *testing.T) {
+	svc, agent, helper, _ := newTestService(t)
+	_, err := svc.Apply(context.Background(), map[string]string{
+		"f5": `seq(open(firefox), 120, type(你好))`,
+	})
+	if err != nil {
+		t.Fatalf("Apply: %v", err)
+	}
+	applied := helper.appliedSnapshot()
+	if applied["f5"] != "seq(agent(0), 120, agent(1))" {
+		t.Fatalf("helper got %q", applied["f5"])
+	}
+	agent.seqMu.Lock()
+	defer agent.seqMu.Unlock()
+	if len(agent.seqActions) != 2 || agent.seqActions[0].Kind != "open" || agent.seqActions[1].Arg != "你好" {
+		t.Fatalf("registry = %+v", agent.seqActions)
 	}
 }
