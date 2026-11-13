@@ -49,7 +49,7 @@ openapi:
 soak:
 	DURATION=$${DURATION:-300} script/soak.sh
 
-install-user:
+install-user: build
 	mkdir -p $(dir $(USER_UNIT))
 	sed -e 's|@ROOT@|$(ROOT)|g' -e 's|@USER@|$(RUN_USER)|g' \
 		-e 's|@LOG_DIR@|$(LOG_DIR)|g' -e 's|@LOG_FILE@|$(LOG_FILE)|g' \

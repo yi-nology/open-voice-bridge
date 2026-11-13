@@ -144,6 +144,19 @@ sudo make install-logrotate       # 可选：日志轮转
 `install-*` 会把 `deploy/` 模板里的 `@ROOT@` / `@USER@` 替换为当前检出路径与用户，
 因此仓库可以放在任意目录。
 
+从 [Release](../../releases) 包安装则免源码、免 make：解压后自带二进制、unit 模板与
+`install.sh`。
+
+```bash
+tar -xzf open-voice-bridge_<版本>_linux_<架构>.tar.gz
+cd open-voice-bridge_<版本>_linux_<架构>
+./install.sh                  # 用户级 agent（bin/ + deploy/ 同目录，任意路径可放）
+sudo ./install.sh --root      # 可选：remap helper + 日志轮转
+```
+
+脚本只替换 `deploy/` 模板并启动服务，不会替你写配置；之后回到上面第 2 步准备
+`config.json` 即可。
+
 ### 5. 打开界面
 
 ```bash

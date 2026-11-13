@@ -40,12 +40,15 @@ jobs:
         run: |
           version="${TAG#v}"
           name="open-voice-bridge_${version}_linux_${{ matrix.goarch }}"
-          mkdir -p "dist/$name"
+          mkdir -p "dist/$name/bin"
           go build -tags stdjson -trimpath \
             -ldflags "-s -w -X main.version=$version" \
-            -o "dist/$name/xiaomi-remote" .
+            -o "dist/$name/bin/xiaomi-remote" .
           cp README.md LICENSE CHANGELOG.md "dist/$name/"
           cp conf/config.example.json "dist/$name/"
+          cp -r deploy "dist/$name/deploy"
+          cp script/install-tarball.sh "dist/$name/install.sh"
+          chmod +x "dist/$name/install.sh"
           tar -czf "dist/${name}.tar.gz" -C dist "$name"
           (cd dist && sha256sum "${name}.tar.gz" > "${name}.tar.gz.sha256")
       - uses: actions/upload-artifact@v4
