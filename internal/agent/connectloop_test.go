@@ -55,6 +55,14 @@ func (t *fakeTransport) Disconnected() <-chan struct{} {
 	return t.lost
 }
 
+// callCount 走锁内读取——waitFor 在测试 goroutine 轮询,裸读 t.calls 与
+// Connect(mu 内自增)构成 data race(race detector 实锤)。
+func (t *fakeTransport) callCount() int {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.calls
+}
+
 func (t *fakeTransport) closeCount() int {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -119,7 +127,7 @@ func TestConnectLoopClosesTransportOnSubscribeFailure(t *testing.T) {
 
 	go a.connectLoop()
 	// Each subscribe failure must close the link and start another attempt.
-	waitFor(t, func() bool { return tr.calls >= 3 && tr.closeCount() >= 2 })
+	waitFor(t, func() bool { return tr.callCount() >= 3 && tr.closeCount() >= 2 })
 	a.cancel()
 }
 
