@@ -90,30 +90,30 @@ func (c *Client) StartCapture(ctx context.Context) (*Capture, error) {
 	// cleared before the event stream starts, which is meant to be long-lived
 	// (CON-02).
 	if err := conn.SetDeadline(time.Now().Add(c.Timeout)); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return nil, err
 	}
 	reader := bufio.NewReader(conn)
 	if err := json.NewEncoder(conn).Encode(map[string]string{"cmd": "capture_start"}); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return nil, err
 	}
 	line, err := reader.ReadBytes('\n')
 	if err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return nil, err
 	}
 	var first map[string]any
 	if err := json.Unmarshal(line, &first); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return nil, err
 	}
 	if ok, _ := first["ok"].(bool); !ok {
-		conn.Close()
+		_ = conn.Close()
 		return nil, oeerrors.Errorf("capture start failed: %v", first["error"])
 	}
 	if err := conn.SetDeadline(time.Time{}); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return nil, err
 	}
 	capture := &Capture{

@@ -101,7 +101,7 @@ func TestPairRateLimitsPerIP(t *testing.T) {
 	store := newTestStore(t, Config{PairCodeTTL: time.Hour, TicketTTL: time.Minute, MaxAttemptsPerCode: 100, MaxAttemptsPerIP: 2, MaxDevices: 16})
 	for i := 0; i < 2; i++ {
 		code, _ := store.GeneratePairCode()
-		store.Pair(code, "x", "1.2.3.4")
+		_, _, _ = store.Pair(code, "x", "1.2.3.4")
 	}
 	code, _ := store.GeneratePairCode()
 	if _, _, err := store.Pair(code, "x", "1.2.3.4"); err == nil {
@@ -340,7 +340,7 @@ visible:
 	if err != nil {
 		t.Fatalf("open fifo: %v", err)
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 	select {
 	case err := <-done:
 		// The writer is parked on a FIFO, and fsync on a pipe is EINVAL. What

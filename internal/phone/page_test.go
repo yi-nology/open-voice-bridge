@@ -20,7 +20,7 @@ func TestPhonePageAndAssetsAreServed(t *testing.T) {
 			t.Fatalf("GET %s: %v", route.path, err)
 		}
 		body, _ := io.ReadAll(resp.Body)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if resp.StatusCode != http.StatusOK {
 			t.Fatalf("GET %s = %d, want 200", route.path, resp.StatusCode)
 		}
@@ -39,7 +39,7 @@ func TestPhonePageAllowsMicrophone(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GET /phone: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	csp := resp.Header.Get("Content-Security-Policy")
 	policy := resp.Header.Get("Permissions-Policy")
 	if csp == "" || policy == "" {
@@ -64,7 +64,7 @@ func TestPhonePageCarriesNoSecrets(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GET /phone: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	body, _ := io.ReadAll(resp.Body)
 	text := string(body)
 	for _, marker := range []string{"token", "ticket", "code"} {

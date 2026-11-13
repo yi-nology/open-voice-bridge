@@ -125,7 +125,7 @@ func TestConfigSaveDoesNotHoldLockDuringDiskWrite(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open fifo: %v", err)
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 	select {
 	case err := <-done:
 		if err != nil && !errors.Is(err, syscall.EINVAL) {

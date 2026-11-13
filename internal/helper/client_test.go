@@ -19,19 +19,19 @@ func serveUnix(t *testing.T, handle func(net.Conn)) string {
 	if err != nil {
 		t.Fatalf("temp dir: %v", err)
 	}
-	t.Cleanup(func() { os.RemoveAll(dir) })
+	t.Cleanup(func() { _ = os.RemoveAll(dir) })
 	path := filepath.Join(dir, "helper.sock")
 	listener, err := net.Listen("unix", path)
 	if err != nil {
 		t.Fatalf("listen unix: %v", err)
 	}
-	t.Cleanup(func() { listener.Close() })
+	t.Cleanup(func() { _ = listener.Close() })
 	go func() {
 		conn, err := listener.Accept()
 		if err != nil {
 			return
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 		handle(conn)
 	}()
 	return path
@@ -170,7 +170,7 @@ func TestStartCaptureStreamsEvents(t *testing.T) {
 	if err != nil {
 		t.Fatalf("StartCapture: %v", err)
 	}
-	defer capture.Close(context.Background())
+	defer func() { _ = capture.Close(context.Background()) }()
 	for _, want := range []string{"up", "enter"} {
 		select {
 		case event := <-capture.Events():

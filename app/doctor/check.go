@@ -55,7 +55,7 @@ func report(stdout io.Writer, checks []check) int {
 		if item.fix != "" && item.state != statusOK {
 			line += "; fix: " + item.fix
 		}
-		fmt.Fprintln(stdout, line)
+		_, _ = fmt.Fprintln(stdout, line)
 	}
 	return failures
 }

@@ -27,7 +27,7 @@ func TestListenAndServeRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get the phone page: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("status = %d, want 200", resp.StatusCode)
 	}
@@ -51,7 +51,7 @@ func TestListenReportsAnOccupiedAddress(t *testing.T) {
 	if err != nil {
 		t.Fatalf("listen: %v", err)
 	}
-	defer first.Close()
+	defer func() { _ = first.Close() }()
 	other := newTestEnv(t, ServerConfig{Addr: first.Addr().String(), TLSMode: "off"})
 	if listener, err := other.server.Listen(); err == nil {
 		_ = listener.Close()

@@ -31,12 +31,12 @@ func serveInject(t *testing.T, d *Daemon) net.Conn {
 	if err != nil {
 		t.Fatalf("temp dir: %v", err)
 	}
-	t.Cleanup(func() { os.RemoveAll(dir) })
+	t.Cleanup(func() { _ = os.RemoveAll(dir) })
 	listener, err := net.Listen("unix", filepath.Join(dir, "helper.sock"))
 	if err != nil {
 		t.Fatalf("listen: %v", err)
 	}
-	t.Cleanup(func() { listener.Close() })
+	t.Cleanup(func() { _ = listener.Close() })
 	go func() {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -48,7 +48,7 @@ func serveInject(t *testing.T, d *Daemon) net.Conn {
 	if err != nil {
 		t.Fatalf("dial: %v", err)
 	}
-	t.Cleanup(func() { conn.Close() })
+	t.Cleanup(func() { _ = conn.Close() })
 	return conn
 }
 
@@ -140,8 +140,8 @@ func TestDaemonInjectsPowerOnlyWhileThePolicySaysSo(t *testing.T) {
 // uids on a real socket are covered by TestHelperSocketPeerAuth.
 func TestDaemonDeniesUnauthenticatedPeer(t *testing.T) {
 	server, client := net.Pipe()
-	defer server.Close()
-	defer client.Close()
+	defer func() { _ = server.Close() }()
+	defer func() { _ = client.Close() }()
 	d := newInjectDaemon()
 	go d.handleConn(server)
 	w := bufio.NewWriter(client)

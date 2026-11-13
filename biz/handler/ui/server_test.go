@@ -88,18 +88,18 @@ func slowCaptureHelper(t *testing.T, delay time.Duration) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { os.RemoveAll(dir) })
+	t.Cleanup(func() { _ = os.RemoveAll(dir) })
 	listener, err := net.Listen("unix", filepath.Join(dir, "helper.sock"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { listener.Close() })
+	t.Cleanup(func() { _ = listener.Close() })
 	go func() {
 		conn, err := listener.Accept()
 		if err != nil {
 			return
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 		reader := bufio.NewReader(conn)
 		if _, err := reader.ReadBytes('\n'); err != nil {
 			return

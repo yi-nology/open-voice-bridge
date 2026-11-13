@@ -59,7 +59,7 @@ func dialPhone(t *testing.T, e *testEnv, name string) (*websocket.Conn, context.
 	if err != nil {
 		t.Fatalf("dial: %v", err)
 	}
-	t.Cleanup(func() { conn.CloseNow() })
+	t.Cleanup(func() { _ = conn.CloseNow() })
 	if frame := readMessage(t, ctx, conn); frame["type"] != "ready" {
 		t.Fatalf("first frame = %v, want ready", frame)
 	}
@@ -176,7 +176,7 @@ func TestPhoneReadyAdvertisesMicrophone(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial: %v", err)
 	}
-	defer conn.CloseNow()
+	defer func() { _ = conn.CloseNow() }()
 	frame := readMessage(t, ctx, conn)
 	if frame["mic_available"] != true {
 		t.Fatalf("ready = %v, want mic_available true", frame)
@@ -193,7 +193,7 @@ func TestPhoneReadyAdvertisesMicrophone(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial quiet: %v", err)
 	}
-	defer quietConn.CloseNow()
+	defer func() { _ = quietConn.CloseNow() }()
 	if frame := readMessage(t, ctx, quietConn); frame["mic_available"] != false {
 		t.Fatalf("ready without a transcriber = %v, want mic_available false", frame)
 	}
@@ -271,7 +271,7 @@ func TestPhoneMicrophoneTruncatesAtMaxDuration(t *testing.T) {
 
 	seen := map[string]bool{}
 	deadline := time.Now().Add(3 * time.Second)
-	for time.Now().Before(deadline) && !(seen["too_long"] && seen["transcript"] && seen["idle"]) {
+	for time.Now().Before(deadline) && (!seen["too_long"] || !seen["transcript"] || !seen["idle"]) {
 		frame := readMessage(t, ctx, conn)
 		switch frame["type"] {
 		case "error":
@@ -379,7 +379,7 @@ func TestRemotePreemptionStopsPhoneCapture(t *testing.T) {
 	e.hub.AcquireAudioForce(input.RemoteID)
 
 	sawListening, sawPreempted := false, false
-	for deadline := time.Now().Add(3 * time.Second); time.Now().Before(deadline) && !(sawListening && sawPreempted); {
+	for deadline := time.Now().Add(3 * time.Second); time.Now().Before(deadline) && (!sawListening || !sawPreempted); {
 		frame := readMessage(t, ctx, conn)
 		if frame["type"] == "listening" && frame["active"] == false {
 			sawListening = true

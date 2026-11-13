@@ -40,7 +40,7 @@ func TestListenPhoneDoesNotAnnounceAnOccupiedPort(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer occupied.Close()
+	defer func() { _ = occupied.Close() }()
 	var buf bytes.Buffer
 	listener, ok := listenPhone(bufferLogger(&buf), phoneServerOn(t, occupied.Addr().String()), "off")
 	if ok || listener != nil {
@@ -63,7 +63,7 @@ func TestListenPhoneAnnouncesTheBoundAddress(t *testing.T) {
 	if !ok {
 		t.Fatalf("bind failed:\n%s", buf.String())
 	}
-	defer listener.Close()
+	defer func() { _ = listener.Close() }()
 	resolved := listener.Addr().String()
 	if strings.HasSuffix(resolved, ":0") {
 		t.Fatalf("address was not resolved: %s", resolved)

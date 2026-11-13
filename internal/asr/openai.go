@@ -108,7 +108,7 @@ func (o *OpenAI) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 	if err != nil {
 		return Result{}, oeerrors.Errorf("transcription request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	data, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
 		return Result{}, err

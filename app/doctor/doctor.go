@@ -27,16 +27,16 @@ func Run(configPath string, logger logx.Logger, stdout io.Writer) int {
 	if err != nil {
 		logger.Error("load config", "err", err)
 		if os.IsNotExist(err) {
-			fmt.Fprintf(stdout, "FAIL: config %s not found; fix: copy conf/config.example.json there, or run the agent once to write the defaults\n", configPath)
+			_, _ = fmt.Fprintf(stdout, "FAIL: config %s not found; fix: copy conf/config.example.json there, or run the agent once to write the defaults\n", configPath)
 		} else {
-			fmt.Fprintf(stdout, "FAIL: config %s: %v\n", configPath, err)
+			_, _ = fmt.Fprintf(stdout, "FAIL: config %s: %v\n", configPath, err)
 		}
 		return 1
 	}
-	fmt.Fprintln(stdout, "config:", configPath)
-	fmt.Fprintln(stdout, "address:", cfg.Address)
-	fmt.Fprintln(stdout, "ui_addr:", cfg.UIAddr)
-	fmt.Fprintln(stdout, "helper_socket:", cfg.HelperSocket)
+	_, _ = fmt.Fprintln(stdout, "config:", configPath)
+	_, _ = fmt.Fprintln(stdout, "address:", cfg.Address)
+	_, _ = fmt.Fprintln(stdout, "ui_addr:", cfg.UIAddr)
+	_, _ = fmt.Fprintln(stdout, "helper_socket:", cfg.HelperSocket)
 
 	checks := addressCheck(cfg)
 	checks = append(checks, asrChecks(cfg, configPath)...)

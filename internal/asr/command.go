@@ -60,7 +60,7 @@ func (c *Command) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	defer os.RemoveAll(dir)
+	defer func() { _ = os.RemoveAll(dir) }()
 	wavPath := filepath.Join(dir, "audio.wav")
 	if err := os.WriteFile(wavPath, WAV(audio.Samples, rate), 0o600); err != nil {
 		return Result{}, err

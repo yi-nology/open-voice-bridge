@@ -37,11 +37,17 @@ type rpcMessage struct {
 
 // Serve runs the newline-delimited JSON-RPC loop until the input ends or the
 // context is cancelled.
-func (s *Server) Serve(ctx context.Context, r io.Reader, w io.Writer) error {
+func (s *Server) Serve(ctx context.Context, r io.Reader, w io.Writer) (err error) {
 	scanner := bufio.NewScanner(r)
 	scanner.Buffer(make([]byte, 0, 64*1024), 1<<20)
 	writer := bufio.NewWriter(w)
-	defer writer.Flush()
+	// A flush failure means a response died on the way out; surface it instead
+	// of dropping it (the stdio channel is the client's only reply path).
+	defer func() {
+		if ferr := writer.Flush(); ferr != nil && err == nil {
+			err = ferr
+		}
+	}()
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" {
@@ -204,7 +210,7 @@ func (s *Server) fetch(ctx context.Context, path string, query url.Values) (map[
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
 	if err != nil {
 		return nil, err

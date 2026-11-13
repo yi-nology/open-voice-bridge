@@ -117,7 +117,7 @@ func TestSameDeviceReconnectTranscribesBufferedUtterance(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial 1: %v", err)
 	}
-	defer conn1.CloseNow()
+	defer func() { _ = conn1.CloseNow() }()
 	if frame := readMessage(t, ctx, conn1); frame["type"] != "ready" {
 		t.Fatalf("first frame = %v", frame)
 	}
@@ -135,7 +135,7 @@ func TestSameDeviceReconnectTranscribesBufferedUtterance(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial 2: %v", err)
 	}
-	defer conn2.CloseNow()
+	defer func() { _ = conn2.CloseNow() }()
 	if frame := readMessage(t, ctx, conn2); frame["type"] != "ready" {
 		t.Fatalf("second session first frame = %v", frame)
 	}
@@ -166,7 +166,7 @@ func TestKeyFrameAfterSessionDropAnswersNotPanics(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial: %v", err)
 	}
-	defer conn.CloseNow()
+	defer func() { _ = conn.CloseNow() }()
 	if frame := readMessage(t, ctx, conn); frame["type"] != "ready" {
 		t.Fatalf("first frame = %v", frame)
 	}
@@ -206,7 +206,7 @@ func TestKeyQueueSurvivesTeardownRace(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial: %v", err)
 	}
-	defer conn.CloseNow()
+	defer func() { _ = conn.CloseNow() }()
 	if frame := readMessage(t, ctx, conn); frame["type"] != "ready" {
 		t.Fatalf("first frame = %v", frame)
 	}

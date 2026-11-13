@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"sync"
 
 	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
 )
@@ -17,14 +16,6 @@ import (
 // value==1 counts once per press; repeats and releases do not.
 
 const keyCountsFile = "keycounts.json"
-
-type keyTally struct {
-	mu    sync.Mutex
-	total int64
-	per   map[string]int64
-	dirty bool
-	since int
-}
 
 func (d *Daemon) loadKeyCounts() {
 	d.keyMu.Lock()

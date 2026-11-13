@@ -169,7 +169,7 @@ func (d *Daemon) listen() (net.Listener, error) {
 		return nil, oeerrors.Errorf("listen %s: %w", d.cfg.SocketPath, err)
 	}
 	if err := os.Chmod(d.cfg.SocketPath, 0o660); err != nil {
-		listener.Close()
+		_ = listener.Close()
 		return nil, err
 	}
 	if err := os.Chown(d.cfg.SocketPath, 0, d.cfg.SocketGroup); err != nil {
@@ -286,7 +286,6 @@ func (d *Daemon) handleConn(conn net.Conn) {
 		case "capture_stop":
 			if client != nil {
 				d.removeClient(client)
-				client = nil
 			}
 			d.writeConn(conn, map[string]any{"ok": true, "event": "capture_stopped"})
 			return

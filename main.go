@@ -105,18 +105,18 @@ func runMCP(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return code
 	}
 	if strings.TrimSpace(*token) == "" {
-		fmt.Fprintln(stderr, "mcp: a token is required — create one in the admin UI under 本地 Agent 访问")
+		_, _ = fmt.Fprintln(stderr, "mcp: a token is required — create one in the admin UI under 本地 Agent 访问")
 		return 1
 	}
 	server := mcp.NewServer(*base, *token, nil)
 	label, err := server.Verify(ctx)
 	if err != nil {
-		fmt.Fprintln(stderr, "mcp: token rejected:", err)
+		_, _ = fmt.Fprintln(stderr, "mcp: token rejected:", err)
 		return 1
 	}
-	fmt.Fprintln(stderr, "mcp: serving", label, "(read-only)")
+	_, _ = fmt.Fprintln(stderr, "mcp: serving", label, "(read-only)")
 	if err := server.Serve(ctx, os.Stdin, stdout); err != nil {
-		fmt.Fprintln(stderr, "mcp:", err)
+		_, _ = fmt.Fprintln(stderr, "mcp:", err)
 		return 1
 	}
 	return 0

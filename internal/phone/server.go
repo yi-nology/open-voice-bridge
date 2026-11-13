@@ -303,7 +303,7 @@ func (s *Server) servePhoneAsset(name, contentType string) http.HandlerFunc {
 		}
 		phoneSecurityHeaders(w)
 		w.Header().Set("Content-Type", contentType)
-		w.Write(data)
+		_, _ = w.Write(data)
 	}
 }
 
@@ -315,7 +315,7 @@ func (s *Server) handlePhonePage(w http.ResponseWriter, r *http.Request) {
 	}
 	phoneSecurityHeaders(w)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write(data)
+	_, _ = w.Write(data)
 }
 
 // --- WebSocket key channel -------------------------------------------------
@@ -336,13 +336,13 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 	name := s.store.DeviceName(deviceID)
 	active := s.register(deviceID, conn, name, clientIP(r.RemoteAddr))
 	if active == nil {
-		conn.Close(websocket.StatusPolicyViolation, "too many clients")
+		_ = conn.Close(websocket.StatusPolicyViolation, "too many clients")
 		return
 	}
 	// DOM-13: whatever ended the session, the socket closes with it.
 	defer func() {
 		s.unregister(active)
-		conn.CloseNow()
+		_ = conn.CloseNow()
 	}()
 
 	ctx := r.Context()
@@ -403,7 +403,7 @@ func (s *Server) pingLoop(ctx context.Context, conn *websocket.Conn, done <-chan
 			err := conn.Ping(pingCtx)
 			cancel()
 			if err != nil {
-				conn.CloseNow()
+				_ = conn.CloseNow()
 				return
 			}
 		}
@@ -659,7 +659,7 @@ func (s *Server) register(deviceID string, ws *websocket.Conn, name, ip string) 
 	var replaced *activeConn
 	var samples []int16
 	if existing, ok := s.conns[deviceID]; ok {
-		existing.ws.CloseNow()
+		_ = existing.ws.CloseNow()
 		replaced = existing
 		// I5: a reconnecting phone did speak — take the replaced session's
 		// buffered samples before the registry forgets it. Only a copy happens
@@ -761,7 +761,7 @@ func (s *Server) Disconnect(deviceID string) bool {
 	if !ok {
 		return false
 	}
-	active.ws.CloseNow()
+	_ = active.ws.CloseNow()
 	return true
 }
 

@@ -25,7 +25,7 @@ func TestDroppedConnectionStillTranscribes(t *testing.T) {
 	}
 
 	// No "end": the browser dies with the button still held.
-	conn.CloseNow()
+	_ = conn.CloseNow()
 
 	waitFor(t, func() bool { return len(transcriber.snapshot()) == 1 }, "a dropped capture must still reach ASR")
 	call := transcriber.snapshot()[0]
@@ -53,7 +53,7 @@ func TestIdleDropTranscribesNothing(t *testing.T) {
 	sendJSON(t, ctx, conn, map[string]any{"type": "end"})
 	waitFor(t, func() bool { return len(transcriber.snapshot()) == 1 }, "the clean end must transcribe")
 
-	conn.CloseNow()
+	_ = conn.CloseNow()
 	waitFor(t, func() bool { return len(e.server.ConnectedDevices()) == 0 }, "the session should be dropped")
 	if calls := transcriber.snapshot(); len(calls) != 1 {
 		t.Fatalf("transcriptions = %d, want only the one from the clean end", len(calls))
@@ -73,7 +73,7 @@ func TestDisconnectDropsALiveSession(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial: %v", err)
 	}
-	defer conn.CloseNow()
+	defer func() { _ = conn.CloseNow() }()
 	if frame := readMessage(t, ctx, conn); frame["type"] != "ready" {
 		t.Fatalf("first frame = %v", frame)
 	}

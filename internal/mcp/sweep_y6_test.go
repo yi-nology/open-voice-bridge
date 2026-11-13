@@ -101,7 +101,7 @@ func TestValidateDoesNotHoldLockDuringPersist(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open fifo: %v", err)
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 	select {
 	case <-done:
 	case <-time.After(3 * time.Second):

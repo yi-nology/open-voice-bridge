@@ -63,7 +63,7 @@ func postJSON(t *testing.T, url string, body any, header map[string]string) (int
 	if err != nil {
 		t.Fatalf("post %s: %v", url, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	var out map[string]any
 	_ = json.NewDecoder(resp.Body).Decode(&out)
 	return resp.StatusCode, out
@@ -119,7 +119,7 @@ func TestPhonePairTicketAndKeyRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial: %v", err)
 	}
-	defer conn.CloseNow()
+	defer func() { _ = conn.CloseNow() }()
 
 	ready := readMessage(t, ctx, conn)
 	if ready["type"] != "ready" || ready["device_id"] != deviceID || ready["name"] != "Pixel" {
@@ -154,7 +154,7 @@ func TestPhoneKeyRejectedNotWhitelisted(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial: %v", err)
 	}
-	defer conn.CloseNow()
+	defer func() { _ = conn.CloseNow() }()
 	readMessage(t, ctx, conn) // ready
 
 	body, _ := json.Marshal(controlMessage{Type: "key", Key: "playpause", Value: intPtr(1)})
@@ -182,7 +182,7 @@ func TestPhoneReadyAdvertisesThePowerKeyPolicy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial: %v", err)
 	}
-	defer conn.CloseNow()
+	defer func() { _ = conn.CloseNow() }()
 	if ready := readMessage(t, ctx, conn); ready["allow_power"] != false {
 		t.Fatalf("ready = %v, want allow_power false by default", ready)
 	}
@@ -205,7 +205,7 @@ func TestPhoneReadyAdvertisesThePowerKeyPolicy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial opted-in: %v", err)
 	}
-	defer optedConn.CloseNow()
+	defer func() { _ = optedConn.CloseNow() }()
 	if ready := readMessage(t, ctx, optedConn); ready["allow_power"] != true {
 		t.Fatalf("ready with the opt-in = %v, want allow_power true", ready)
 	}
@@ -229,7 +229,7 @@ func TestPhonePingRequiresBearer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ping: %v", err)
 	}
-	badResp.Body.Close()
+	_ = badResp.Body.Close()
 	if badResp.StatusCode != http.StatusUnauthorized {
 		t.Fatalf("no-auth ping = %d, want 401", badResp.StatusCode)
 	}
@@ -239,7 +239,7 @@ func TestPhonePingRequiresBearer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ping auth: %v", err)
 	}
-	okResp.Body.Close()
+	_ = okResp.Body.Close()
 	if okResp.StatusCode != http.StatusOK {
 		t.Fatalf("authed ping = %d, want 200", okResp.StatusCode)
 	}
@@ -255,7 +255,7 @@ func TestTicketReuseRejected(t *testing.T) {
 	if err != nil {
 		t.Fatalf("first dial: %v", err)
 	}
-	conn.CloseNow()
+	_ = conn.CloseNow()
 
 	// Same ticket is single-use; a second handshake must be refused with 401.
 	if _, _, err := websocket.Dial(ctx, e.wsURL(ticket), nil); err == nil {
@@ -306,7 +306,7 @@ func TestMaxClientsEnforced(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial A: %v", err)
 	}
-	defer connA.CloseNow()
+	defer func() { _ = connA.CloseNow() }()
 	readMessage(t, ctx, connA) // ready A accepted
 
 	_, ticketB, _ := pairAndTicket(t, e, "PhoneB")
@@ -316,7 +316,7 @@ func TestMaxClientsEnforced(t *testing.T) {
 		// way the second client cannot stay connected past the limit.
 		return
 	}
-	defer connB.CloseNow()
+	defer func() { _ = connB.CloseNow() }()
 	if _, _, err := connB.Read(ctx); err == nil {
 		t.Fatal("second client should be closed at the client limit")
 	}
@@ -343,7 +343,7 @@ func TestWSRejectsForeignOrigin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("handshake request: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode == http.StatusSwitchingProtocols {
 		t.Fatal("foreign origin should not upgrade to websocket")
 	}

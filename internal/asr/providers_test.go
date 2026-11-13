@@ -130,7 +130,7 @@ func TestBuildFallsBackWhenPrimaryUnavailable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
-	defer engine.Close(context.Background())
+	defer func() { _ = engine.Close(context.Background()) }()
 	if !strings.Contains(engine.Name(), "echo") {
 		t.Fatalf("engine name = %q, want fallback command", engine.Name())
 	}
