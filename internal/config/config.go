@@ -70,6 +70,9 @@ type Config struct {
 	KeydConfig   string         `json:"keyd_config"`
 	MaxUtterance int            `json:"max_utterance_seconds"`
 	PasteEnabled bool           `json:"paste_enabled"`
+	// StreamingSubtitles turns on live partial recognition while the voice
+	// key is held (S6 边说边滚字): throttled extra ASR calls, opt-in.
+	StreamingSubtitles bool `json:"streaming_subtitles"`
 	ASR          ASRConfig      `json:"asr"`
 	LLM          LLMConfig      `json:"llm"`
 	Text         TextConfig     `json:"text"`

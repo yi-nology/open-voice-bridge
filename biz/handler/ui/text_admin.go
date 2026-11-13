@@ -63,3 +63,32 @@ func (s *Server) PhrasePaste(ctx context.Context, c *app.RequestContext) {
 	}
 	c.JSON(consts.StatusOK, map[string]any{"ok": true, "slot": req.Slot, "text": text})
 }
+
+// StreamingSubtitles returns the live-partial-recognition toggle (S6).
+func (s *Server) StreamingSubtitles(ctx context.Context, c *app.RequestContext) {
+	if s.deps.StreamingSubtitles == nil {
+		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "streaming unavailable"})
+		return
+	}
+	c.JSON(consts.StatusOK, map[string]any{"ok": true, "enabled": s.deps.StreamingSubtitles()})
+}
+
+// StreamingSubtitlesSave stores the streaming toggle and applies it live.
+func (s *Server) StreamingSubtitlesSave(ctx context.Context, c *app.RequestContext) {
+	if s.deps.SetStreamingSubtitles == nil {
+		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "streaming unavailable"})
+		return
+	}
+	var req struct {
+		Enabled bool `json:"enabled"`
+	}
+	if err := json.Unmarshal(c.Request.Body(), &req); err != nil {
+		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if err := s.deps.SetStreamingSubtitles(req.Enabled); err != nil {
+		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	c.JSON(consts.StatusOK, map[string]any{"ok": true})
+}

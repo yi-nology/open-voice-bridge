@@ -46,6 +46,15 @@ func (e Events) Run(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case transcript := <-e.Transcripts:
+			if transcript.Partial {
+				e.Publish(map[string]any{
+					"event":   "transcript",
+					"partial": true,
+					"text":    transcript.Text,
+					"at":      transcript.At.Format(time.RFC3339),
+				})
+				continue
+			}
 			if transcript.Command != "" {
 				e.Publish(map[string]any{
 					"event":  "command",

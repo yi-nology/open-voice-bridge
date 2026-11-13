@@ -51,6 +51,7 @@ type Agent interface {
 	InsertPhrase(slot int) (string, bool)
 	SetSeqActions(map[int]remap.AgentAction)
 	SetRewriteRules([]config.AppRewriteRule)
+	SetStreamingSubtitles(bool)
 }
 
 // Helper is the root remapper client.
@@ -782,6 +783,30 @@ func (s *Service) UpdateTextConfig(ctx context.Context, next config.TextConfig) 
 	s.cfg.Text = next
 	s.cfgMu.Unlock()
 	s.agent.SetTextRules(rules)
+	return nil
+}
+
+// StreamingSubtitles reports whether live partial recognition is on (S6).
+func (s *Service) StreamingSubtitles() bool {
+	s.cfgMu.RLock()
+	defer s.cfgMu.RUnlock()
+	return s.cfg.StreamingSubtitles
+}
+
+// SetStreamingSubtitles saves the streaming toggle and applies it live.
+func (s *Service) SetStreamingSubtitles(on bool) error {
+	s.cfgMu.Lock()
+	snapshot := s.configSnapshotLocked()
+	snapshot.StreamingSubtitles = on
+	saveErr := s.persistConfig(snapshot)
+	if saveErr == nil {
+		s.cfg.StreamingSubtitles = on
+	}
+	s.cfgMu.Unlock()
+	if saveErr != nil {
+		return saveErr
+	}
+	s.agent.SetStreamingSubtitles(on)
 	return nil
 }
 

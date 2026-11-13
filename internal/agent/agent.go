@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	oeerrors "github.com/oekit/pkg/errors"
@@ -16,7 +17,6 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/atvv"
 	"github.com/yi-nology/open-voice-bridge/internal/audio"
-	"github.com/yi-nology/open-voice-bridge/internal/bluez"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
@@ -49,18 +49,26 @@ type Agent struct {
 	llmAppRules []config.AppRewriteRule
 	fgClass     func() (string, error)
 
+	streaming   atomic.Bool
+	partialMu   sync.Mutex
+	partialStop context.CancelFunc
+
 	hub *input.Hub
 
 	mu          sync.Mutex
 	addrMu      sync.RWMutex
 	address     string
-	transport   *bluez.Transport
-	session     *atvv.Session
+	transport   Transport
+	session     Session
 	connected   bool
 	ready       bool
 	lastText    string
 	lastAt      time.Time
 	lastLatency time.Duration
+
+	linkFactory TransportFactory
+	linkStart   time.Duration
+	linkCeiling time.Duration
 
 	dictMu        sync.Mutex
 	dictation     []int16
@@ -92,6 +100,7 @@ type Transcript struct {
 	Processed  bool
 	Truncated  bool   // the capture hit its time cap (DOM-09)
 	Command    string // non-empty: a voice command ran this combo (语音命令)
+	Partial    bool   // live in-flight recognition for the subtitle line (S6)
 	Latency    time.Duration
 	Duration   time.Duration // length of the spoken audio
 	At         time.Time
@@ -107,9 +116,18 @@ func New(cfg config.Config, engine asr.Engine, sink audio.Sink) *Agent {
 		reconnectCh: make(chan struct{}, 1),
 		transcripts: make(chan Transcript, 16),
 		maxSample:   core.Cap(cfg.MaxUtterance),
+		linkFactory: DefaultTransportFactory,
+		linkStart:   time.Second,
+		linkCeiling: 30 * time.Second,
 	}
 	a.pipeline = a.newPipeline()
 	return a
+}
+
+// SetTransportFactory swaps the link factory; call it before Start to run
+// connectLoop against fakes instead of a radio (ARC-08).
+func (a *Agent) SetTransportFactory(f TransportFactory) {
+	a.linkFactory = f
 }
 
 // newPipeline wires the shared transcription chain to the agent's live
@@ -184,6 +202,78 @@ func (a *Agent) rewriteModeFor() string {
 	return ""
 }
 
+// SetStreamingSubtitles toggles live partial recognition (S6).
+func (a *Agent) SetStreamingSubtitles(on bool) { a.streaming.Store(on) }
+
+// startPartialLoop begins throttled partial recognition of the capture in
+// flight (S6). Each tick copies the buffer so the capture path is never
+// disturbed (DOM-02), and at most one partial ASR call runs at a time.
+func (a *Agent) startPartialLoop() {
+	a.stopPartialLoop()
+	if !a.streaming.Load() {
+		return
+	}
+	a.mu.Lock()
+	parent := a.ctx
+	a.mu.Unlock()
+	if parent == nil {
+		return
+	}
+	ctx, cancel := context.WithCancel(parent)
+	a.partialMu.Lock()
+	a.partialStop = cancel
+	a.partialMu.Unlock()
+	async.GoSafe(func() { a.partialLoop(ctx) })
+}
+
+func (a *Agent) stopPartialLoop() {
+	a.partialMu.Lock()
+	if a.partialStop != nil {
+		a.partialStop()
+		a.partialStop = nil
+	}
+	a.partialMu.Unlock()
+}
+
+func (a *Agent) partialLoop(ctx context.Context) {
+	ticker := time.NewTicker(1200 * time.Millisecond)
+	defer ticker.Stop()
+	var inflight atomic.Bool
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if !a.streaming.Load() {
+				continue
+			}
+			rate := a.currentSampleRate()
+			a.dictMu.Lock()
+			snapshot := append([]int16(nil), a.dictation...)
+			a.dictMu.Unlock()
+			// Wait for half a second of speech so short taps stay single-call.
+			if len(snapshot) < 2*core.MinUtterance(rate) {
+				continue
+			}
+			if !inflight.CompareAndSwap(false, true) {
+				continue
+			}
+			utterance := Utterance{Samples: snapshot, SampleRate: rate, Ref: SourceRef{Kind: "remote"}}
+			async.GoSafe(func() {
+				defer inflight.Store(false)
+				if ctx.Err() != nil {
+					return
+				}
+				text, err := a.pipeline.TranscribePartial(ctx, utterance)
+				if err != nil || text == "" {
+					return
+				}
+				a.recordTranscript(Transcript{Text: text, Source: "remote", Partial: true, At: time.Now()})
+			})
+		}
+	}
+}
+
 // InsertPhrase pastes the phrase bound to slot n via the shared pipeline —
 // the UI picker path beside the phrase1..phrase8 key actions.
 func (a *Agent) InsertPhrase(slot int) (string, bool) {
@@ -193,8 +283,8 @@ func (a *Agent) InsertPhrase(slot int) (string, bool) {
 // recordTranscript updates the agent's last-result fields and forwards the
 // utterance to the subtitle stream.
 func (a *Agent) recordTranscript(transcript Transcript) {
-	if transcript.Command != "" {
-		// Voice commands are spoken acts, not dictation: they stay out of the
+	if transcript.Command != "" || transcript.Partial {
+		// Voice commands and partials are not dictation: they stay out of the
 		// "last text" strip even though the subtitle stream still sees them.
 		a.transcripts <- transcript
 		return
@@ -283,6 +373,7 @@ func (a *Agent) Start(parent context.Context) error {
 }
 
 func (a *Agent) Close(ctx context.Context) error {
+	a.stopPartialLoop()
 	a.closeOnce.Do(func() {
 		if a.cancel != nil {
 			a.cancel()
@@ -397,23 +488,27 @@ func (a *Agent) micOpen() {
 }
 
 func (a *Agent) connectLoop() {
-	backoff := time.Second
+	backoff := linkBackoff{start: a.linkStart, ceiling: a.linkCeiling}
+	backoff.reset()
 	for {
 		if a.ctx.Err() != nil {
 			return
 		}
-		transport := bluez.New(a.currentAddress())
-		if err := transport.Connect(a.ctx); err != nil {
-			log.Warn("BLE connect failed", "err", err, "retry_in", backoff)
-			if !sleepCtx(a.ctx, backoff) {
+		transport, session, err := a.linkFactory(a.currentAddress())
+		if err != nil {
+			log.Warn("BLE link open failed", "err", err, "retry_in", backoff.current())
+			if !backoff.wait(a.ctx) {
 				return
-			}
-			if backoff < 30*time.Second {
-				backoff *= 2
 			}
 			continue
 		}
-		session := atvv.NewSession()
+		if err := transport.Connect(a.ctx); err != nil {
+			log.Warn("BLE connect failed", "err", err, "retry_in", backoff.current())
+			if !backoff.wait(a.ctx) {
+				return
+			}
+			continue
+		}
 		a.mu.Lock()
 		a.transport = transport
 		a.session = session
@@ -421,55 +516,46 @@ func (a *Agent) connectLoop() {
 		a.ready = false
 		a.mu.Unlock()
 		if err := transport.Subscribe(a.handleAudio, a.handleControl); err != nil {
-			log.Warn("ATVV subscribe failed", "err", err, "retry_in", backoff)
-			if err := transport.Close(a.ctx); err != nil {
-				log.Warn("close transport", "err", err)
-			}
-			a.markDisconnected()
-			if !sleepCtx(a.ctx, backoff) {
+			log.Warn("ATVV subscribe failed", "err", err, "retry_in", backoff.current())
+			a.dropLink(transport)
+			if !backoff.wait(a.ctx) {
 				return
-			}
-			if backoff < 30*time.Second {
-				backoff *= 2
 			}
 			continue
 		}
 		if err := transport.WriteTX(atvv.GetCapabilities); err != nil {
-			log.Warn("GET_CAPABILITIES failed", "err", err, "retry_in", backoff)
-			if err := transport.Close(a.ctx); err != nil {
-				log.Warn("close transport", "err", err)
-			}
-			a.markDisconnected()
-			if !sleepCtx(a.ctx, backoff) {
+			log.Warn("GET_CAPABILITIES failed", "err", err, "retry_in", backoff.current())
+			a.dropLink(transport)
+			if !backoff.wait(a.ctx) {
 				return
-			}
-			if backoff < 30*time.Second {
-				backoff *= 2
 			}
 			continue
 		}
 		log.Info("ATVV bridge ready", "address", redact.MAC(a.cfg.Address))
-		backoff = time.Second
+		backoff.reset()
 		select {
 		case <-a.ctx.Done():
-			if err := transport.Close(a.ctx); err != nil {
-				log.Warn("close transport", "err", err)
-			}
-			a.markDisconnected()
+			a.dropLink(transport)
 			return
 		case <-transport.Disconnected():
 			log.Warn("BLE disconnected")
 		case <-a.reconnectCh:
 			log.Info("BLE reconnect requested")
 		}
-		if err := transport.Close(a.ctx); err != nil {
-			log.Warn("close transport", "err", err)
-		}
-		a.markDisconnected()
+		a.dropLink(transport)
 		if !sleepCtx(a.ctx, 2*time.Second) {
 			return
 		}
 	}
+}
+
+// dropLink closes the transport and clears the connected state. The close
+// failure is logged, never fatal — the next loop iteration reconnects.
+func (a *Agent) dropLink(transport Transport) {
+	if err := transport.Close(a.ctx); err != nil {
+		log.Warn("close transport", "err", err)
+	}
+	a.markDisconnected()
 }
 
 func (a *Agent) currentAddress() string {
@@ -492,6 +578,7 @@ func (a *Agent) SetAddress(address string) error {
 }
 
 func (a *Agent) markDisconnected() {
+	a.stopPartialLoop()
 	// A capture cut short by a disconnect never reaches the audio-stop path, but
 	// the samples in hand are words the user already spoke, so they are
 	// transcribed before the claim drops (I5). During shutdown the request would
@@ -551,6 +638,7 @@ func (a *Agent) handleControl(data []byte) {
 		log.Info("audio stream started")
 		a.acquireMic()
 		a.resetDictation()
+		a.startPartialLoop()
 	case atvv.EventAudioStartDup:
 		// The device started a new capture without our seeing an audio-stop, so
 		// the buffered samples belong to the previous sentence. Drain them here
@@ -625,6 +713,7 @@ func (a *Agent) takeDictation() ([]int16, bool) {
 // dispatch goroutine, before any later audio-start can touch the buffer, and
 // only the request runs in the background (I2).
 func (a *Agent) closeCapture() {
+	a.stopPartialLoop()
 	samples, truncated := a.takeDictation()
 	if len(samples) == 0 {
 		return

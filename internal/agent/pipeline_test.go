@@ -600,3 +600,30 @@ func TestRewriteModeRoutesPerApp(t *testing.T) {
 		t.Fatalf("off text = %q", transcript.Text)
 	}
 }
+
+// S6: partial recognition returns the raw text and touches neither paste,
+// rules nor the transcript sink — the final pass owns all of that.
+func TestTranscribePartialStaysOutOfTheWay(t *testing.T) {
+	rules, err := text.New(config.TextConfig{Snippets: []config.Snippet{{Trigger: "地址", Text: "北京市海淀区"}}})
+	if err != nil {
+		t.Fatalf("rules: %v", err)
+	}
+	probe := &pipelineProbe{}
+	engine := &fakeEngine{result: asr.Result{Text: "地址", Provider: "fake"}}
+	pipeline := buildPipeline(engine, rules, probe, true)
+	pipeline.rewriteMode = func() string { return "cleanup" }
+	text, err := pipeline.TranscribePartial(context.Background(), utterance(oneSecond(), SourceRef{Kind: "remote"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if text != "地址" {
+		t.Fatalf("partial = %q, want the raw recognition (no snippet/rewrite)", text)
+	}
+	if _, pasted := probe.snapshot(); len(pasted) != 0 {
+		t.Fatalf("pasted %v during partial", pasted)
+	}
+	transcripts, _ := probe.snapshot()
+	if len(transcripts) != 0 {
+		t.Fatalf("sink saw %+v during partial", transcripts)
+	}
+}

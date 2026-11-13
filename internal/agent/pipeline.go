@@ -178,6 +178,29 @@ func (p *SpeechPipeline) Transcribe(parent context.Context, u Utterance) (Transc
 	return transcript, true
 }
 
+// TranscribePartial recognises the capture so far for the live subtitle line
+// (S6). It never rewrites, pastes or publishes history — the final
+// Transcribe after release owns all of that.
+func (p *SpeechPipeline) TranscribePartial(parent context.Context, u Utterance) (string, error) {
+	if parent == nil {
+		parent = context.Background()
+	}
+	if len(u.Samples) < u.MinSamples() {
+		return "", asr.ErrNoSpeech
+	}
+	engine := p.engine()
+	if engine == nil {
+		return "", asr.ErrNoSpeech
+	}
+	ctx, cancel := context.WithTimeout(parent, 8*time.Second)
+	defer cancel()
+	result, err := engine.Transcribe(ctx, asr.Audio{Samples: u.Samples, SampleRate: u.Rate()})
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(result.Text), nil
+}
+
 // applyText runs voice snippets, then LLM rewrite, then the user dictionary.
 func (p *SpeechPipeline) applyText(parent context.Context, input string) string {
 	rules := p.rules()

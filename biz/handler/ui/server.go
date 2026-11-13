@@ -28,56 +28,58 @@ import (
 var log = logx.Delegating("ui")
 
 type Deps struct {
-	Status              func(context.Context) core.StatusView
-	Apply               func(context.Context, map[string]string) (map[string]any, error)
-	Reconnect           func(context.Context) error
-	RestartMic          func(context.Context) error
-	SwitchASR           func(context.Context, string) error
-	KeymapProfiles      func(context.Context) (string, map[string]map[string]string)
-	ApplyKeymapProfile  func(context.Context, string) (map[string]any, error)
-	SaveKeymapProfile   func(context.Context, string, map[string]string) (map[string]any, error)
-	DeleteKeymapProfile func(context.Context, string) error
-	ASRConfig           func(context.Context) map[string]any
-	UpdateASRConfig     func(context.Context, config.ASRConfig) error
-	TestASR             func(context.Context, string) []asr.Diagnostic
-	LLMConfig           func(context.Context) map[string]any
-	UpdateLLMConfig     func(context.Context, config.LLMConfig) error
-	TestLLM             func(context.Context, string, bool) []llm.Diagnostic
-	SaveLLMKey          func(context.Context, string) error
-	History             func(context.Context) []history.Entry
-	DeleteHistory       func(context.Context, string) error
-	ClearHistory        func(context.Context) error
-	Stats               func() history.UsageStats
-	TextConfig          func(context.Context) map[string]any
-	UpdateTextConfig    func(context.Context, config.TextConfig) error
-	Devices             func(context.Context) core.DevicesView
-	DiscoverDevices     func(context.Context) map[string]any
-	SelectDevice        func(context.Context, string) error
-	SetDeviceEnabled    func(context.Context, string, bool) error
-	SaveDevice          func(context.Context, config.DeviceConfig) error
-	DeleteDevice        func(context.Context, string) error
-	ConnectDevice       func(context.Context, string, bool) error
-	Ready               func(context.Context) core.ReadyView
-	Inputs              func(context.Context) map[string]any
-	SnapshotState       func() map[string]any
-	ExportConfig        func() ([]byte, error)
-	ImportConfig        func([]byte) error
-	Diagnostics         func(context.Context) map[string]any
-	MCPVerify           func(string) (mcp.TokenInfo, bool)
-	MCPAudit            func(mcp.TokenInfo, string, int)
-	MCPCreateToken      func(label string) (map[string]any, error)
-	MCPListTokens       func() map[string]any
-	MCPRevokeToken      func(id string) map[string]any
-	PhonePairing        func(context.Context) map[string]any
-	PhoneDevices        func(context.Context) map[string]any
-	PhoneRevoke         func(context.Context, string) map[string]any
-	SetPhoneEnabled     func(bool) error
-	TextCommands        func() (bool, map[string]string)
-	UpdateTextCommands  func(bool, map[string]string) error
-	PastePhrase         func(int) (string, bool)
-	LLMAppRules         func() []config.AppRewriteRule
-	UpdateLLMAppRules   func([]config.AppRewriteRule) error
-	HelperSocket        string
+	Status                func(context.Context) core.StatusView
+	Apply                 func(context.Context, map[string]string) (map[string]any, error)
+	Reconnect             func(context.Context) error
+	RestartMic            func(context.Context) error
+	SwitchASR             func(context.Context, string) error
+	KeymapProfiles        func(context.Context) (string, map[string]map[string]string)
+	ApplyKeymapProfile    func(context.Context, string) (map[string]any, error)
+	SaveKeymapProfile     func(context.Context, string, map[string]string) (map[string]any, error)
+	DeleteKeymapProfile   func(context.Context, string) error
+	ASRConfig             func(context.Context) map[string]any
+	UpdateASRConfig       func(context.Context, config.ASRConfig) error
+	TestASR               func(context.Context, string) []asr.Diagnostic
+	LLMConfig             func(context.Context) map[string]any
+	UpdateLLMConfig       func(context.Context, config.LLMConfig) error
+	TestLLM               func(context.Context, string, bool) []llm.Diagnostic
+	SaveLLMKey            func(context.Context, string) error
+	History               func(context.Context) []history.Entry
+	DeleteHistory         func(context.Context, string) error
+	ClearHistory          func(context.Context) error
+	Stats                 func() history.UsageStats
+	TextConfig            func(context.Context) map[string]any
+	UpdateTextConfig      func(context.Context, config.TextConfig) error
+	Devices               func(context.Context) core.DevicesView
+	DiscoverDevices       func(context.Context) map[string]any
+	SelectDevice          func(context.Context, string) error
+	SetDeviceEnabled      func(context.Context, string, bool) error
+	SaveDevice            func(context.Context, config.DeviceConfig) error
+	DeleteDevice          func(context.Context, string) error
+	ConnectDevice         func(context.Context, string, bool) error
+	Ready                 func(context.Context) core.ReadyView
+	Inputs                func(context.Context) map[string]any
+	SnapshotState         func() map[string]any
+	ExportConfig          func() ([]byte, error)
+	ImportConfig          func([]byte) error
+	Diagnostics           func(context.Context) map[string]any
+	MCPVerify             func(string) (mcp.TokenInfo, bool)
+	MCPAudit              func(mcp.TokenInfo, string, int)
+	MCPCreateToken        func(label string) (map[string]any, error)
+	MCPListTokens         func() map[string]any
+	MCPRevokeToken        func(id string) map[string]any
+	PhonePairing          func(context.Context) map[string]any
+	PhoneDevices          func(context.Context) map[string]any
+	PhoneRevoke           func(context.Context, string) map[string]any
+	SetPhoneEnabled       func(bool) error
+	TextCommands          func() (bool, map[string]string)
+	UpdateTextCommands    func(bool, map[string]string) error
+	PastePhrase           func(int) (string, bool)
+	LLMAppRules           func() []config.AppRewriteRule
+	UpdateLLMAppRules     func([]config.AppRewriteRule) error
+	StreamingSubtitles    func() bool
+	SetStreamingSubtitles func(bool) error
+	HelperSocket          string
 }
 
 type sseClient struct {

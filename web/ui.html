@@ -726,6 +726,14 @@ body.listening .subtitle-live i { background: var(--accent); }
 .welcome-foot { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
 .welcome-foot .note { flex: 1; margin: 0; font-size: 12.5px; }
 
+
+.subtitle-line.partial {
+  color: rgba(255,255,255,.42); font-style: italic;
+}
+.subtitle-line.partial::after {
+  content: "▍"; margin-left: 2px; opacity: .8;
+}
+
 </style>
 </head>
 <body>
@@ -1105,6 +1113,7 @@ body.listening .subtitle-live i { background: var(--accent); }
         <button id="subtitle-copy" class="btn small">复制</button>
         <button id="subtitle-fullscreen" class="btn small primary">全屏</button>
       </div>
+      <label class="check-line" style="margin:0 0 10px"><input id="streaming-toggle" type="checkbox"> 边说边滚字（实验）：按住说话时把识别中的文字实时滚在字幕底部，松手后由完整结果落定</label>
       <div id="subtitle-scene" class="subtitle-scene">
         <span class="subtitle-orb a"></span>
         <span class="subtitle-orb b"></span>
@@ -1887,6 +1896,7 @@ function loadSubtitles() {
 }
 
 function clearSubtitles() {
+  clearPartialLine();
   if (!subtitleLinesEl) return;
   subtitleLinesEl.innerHTML = "";
   subtitleKeys.clear();
@@ -2693,6 +2703,7 @@ function openConfigPanel(name) {
   if (name === "asr") loadASRConfig();
   if (name === "llm") loadLLMConfig();
 loadLLMAppRules();
+loadStreamingToggle();
   if (name === "text") loadTextConfig();
 }
 
@@ -3011,9 +3022,14 @@ function connectEvents() {
       // Events were dropped to keep the stream live; resync (I4).
       loadStatus(false);
     } else if (data.event === "transcript") {
-      addSubtitle(data.text, data.at);
-      setTimeout(loadOverviewRecent, 500);
-      setTimeout(loadStats, 500);
+      if (data.partial) {
+        upsertPartialLine(data.text);
+      } else {
+        clearPartialLine();
+        addSubtitle(data.text, data.at);
+        setTimeout(loadOverviewRecent, 500);
+        setTimeout(loadStats, 500);
+      }
     } else if (data.event === "phrase") {
       // A common phrase is user-authored text, not speech: it shows up live
       // with its own styling and never enters the history panel.
@@ -3476,6 +3492,45 @@ async function loadTextConfig() {
   } catch (error) {
     textMessage("加载词典失败：" + error, "err");
   }
+}
+
+// ---- live partial line (S6 边说边滚字) ----
+function upsertPartialLine(text) {
+  if (!subtitleLinesEl || !text) return;
+  let line = document.getElementById("subtitle-partial");
+  if (!line) {
+    line = document.createElement("div");
+    line.id = "subtitle-partial";
+    line.className = "subtitle-line partial";
+    subtitleLinesEl.appendChild(line);
+    if (subtitleEmpty) subtitleEmpty.style.display = "none";
+    syncSubtitleActions();
+  }
+  line.textContent = text;
+  line.scrollIntoView({block: "nearest"});
+}
+
+function clearPartialLine() {
+  document.getElementById("subtitle-partial")?.remove();
+}
+
+async function loadStreamingToggle() {
+  const toggle = document.getElementById("streaming-toggle");
+  if (!toggle) return;
+  try {
+    const res = await fetch("/api/streaming");
+    const data = await res.json();
+    if (data.ok) toggle.checked = !!data.enabled;
+  } catch (error) {}
+  toggle.addEventListener("change", async () => {
+    try {
+      await fetch("/api/streaming", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({enabled: toggle.checked}),
+      });
+    } catch (error) {}
+  });
 }
 
 // ---- phrase picker overlay (S2) ----

@@ -27,6 +27,7 @@ type fakeAgent struct {
 	seqMu        sync.Mutex
 	seqActions   map[int]remap.AgentAction
 	rewriteRules []config.AppRewriteRule
+	streaming    bool
 	connected    bool
 	ready        bool
 	engine       asr.Engine
@@ -47,6 +48,12 @@ func (f *fakeAgent) Status() core.AgentView {
 }
 
 func (f *fakeAgent) Reconnect() error { return nil }
+func (f *fakeAgent) SetStreamingSubtitles(on bool) {
+	f.seqMu.Lock()
+	defer f.seqMu.Unlock()
+	f.streaming = on
+}
+
 func (f *fakeAgent) SetRewriteRules(rules []config.AppRewriteRule) {
 	f.seqMu.Lock()
 	defer f.seqMu.Unlock()
@@ -541,5 +548,29 @@ func TestUpdateLLMAppRulesValidatesAndPersists(t *testing.T) {
 	}
 	if len(loaded.LLM.AppRules) != 2 {
 		t.Fatalf("persisted rules = %+v", loaded.LLM.AppRules)
+	}
+}
+
+// S6: the streaming toggle persists and reaches the live agent.
+func TestSetStreamingSubtitlesPersistsAndApplies(t *testing.T) {
+	svc, agent, _, path := newTestService(t)
+	if err := svc.SetStreamingSubtitles(true); err != nil {
+		t.Fatalf("SetStreamingSubtitles: %v", err)
+	}
+	agent.seqMu.Lock()
+	on := agent.streaming
+	agent.seqMu.Unlock()
+	if !on {
+		t.Fatal("agent did not receive the toggle")
+	}
+	loaded, err := config.Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !loaded.StreamingSubtitles {
+		t.Fatal("toggle not persisted")
+	}
+	if !svc.StreamingSubtitles() {
+		t.Fatal("getter disagrees")
 	}
 }

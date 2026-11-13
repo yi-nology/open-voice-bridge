@@ -126,6 +126,7 @@ func RunAgent(opts AgentOptions) int {
 		seqWatcher.Start(ctx)
 		ag.SetActiveClassFunc(focus.ActiveClass)
 		ag.SetRewriteRules(cfg.LLM.AppRules)
+		ag.SetStreamingSubtitles(cfg.StreamingSubtitles)
 		app.AddResource("agent", func(closeCtx context.Context) error {
 			return ag.Close(closeCtx)
 		})
