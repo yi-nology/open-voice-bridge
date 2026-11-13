@@ -26,6 +26,15 @@ jobs:
         run: go vet -tags stdjson ./...
       - name: Dependency rules (ARC-11)
         run: script/check-deps.sh
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout 5m --max-issues-per-linter 0 --max-same-issues 0
+      - name: Vuln check (govulncheck)
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest -tags stdjson ./...
+      - name: Secret scan
+        run: script/check-secrets.sh
       - name: Test (race + coverage)
         run: go test -tags stdjson -race -coverprofile=coverage.out -covermode=atomic ./...
       - name: Coverage summary

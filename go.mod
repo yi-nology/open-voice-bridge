@@ -1,6 +1,6 @@
 module github.com/yi-nology/open-voice-bridge
 
-go 1.27.3
+go 1.27.4
 
 require (
 	github.com/apache/thrift v0.25.0

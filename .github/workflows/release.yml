@@ -17,8 +17,27 @@ env:
   TAG: ${{ github.event.inputs.tag || github.ref_name }}
 
 jobs:
+  test:
+    name: Test gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Download modules
+        run: go mod download
+      - name: Vet
+        run: go vet -tags stdjson ./...
+      - name: Test
+        run: go test -tags stdjson -count=1 ./...
+
   build:
     name: Build (${{ matrix.goarch }})
+    needs: test
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
