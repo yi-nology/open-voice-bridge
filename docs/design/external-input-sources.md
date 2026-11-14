@@ -1,9 +1,9 @@
 # 外部输入源设计：手机 / 虚拟设备作为麦克风与遥控器
 
-- 日期：2026-11-08
-- 状态：待评审
-- 范围：设计，不含实现
-- 关联代码：`internal/agent`、`internal/audio`、`internal/remap`、`biz/handler/ui`、`main.go`
+- 日期：2026-11-08；状态更新 2026-11-14
+- 状态：已实施（阶段 1 虚拟遥控 + 阶段 2 麦克风；阶段 3 增强项随 S 批次演进）
+- 范围：设计与实现；实现见 `internal/phone`、`app/runtime`（PhoneSpeech 适配器）、`web/phone_*`
+- 关联代码：`internal/agent`、`internal/audio`、`internal/remap`、`biz/handler/ui`、`app/runtime`
 
 ## 1. 背景与目标
 
@@ -274,7 +274,7 @@ BLE 链路把 `agent.finalize` 改为调用 `SpeechPipeline.Transcribe`；手机
 
 ## 10. 可观测性
 
-新增指标：
+规划中的手机面指标（**尚未实现**，归 R10；当前 6 个 `xiaomi_remote_*` 指标不含手机）：
 
 - `xiaomi_remote_phone_clients{state="connected|paired"}`
 - `xiaomi_remote_phone_audio_seconds_total`

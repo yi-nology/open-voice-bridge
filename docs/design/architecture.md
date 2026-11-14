@@ -24,7 +24,7 @@ main.go ──┬──> internal/agent ──┬──> internal/bluez ──> 
           │                     ├──> internal/asr / llm / text / audio
           │                     └──> internal/input (Hub)
           ├──> internal/phone ──┬──> internal/atvv (常量) / input / web (embed!)
-          │                     └──> (转写靠 main.go 里的 phoneSpeech 适配器)
+          │                     └──> (转写经 app/runtime 的 PhoneSpeech 适配器)
           ├──> biz/{service,handler/ui,handler/api,model} ──> internal/*（全部）
           ├──> internal/remap ──> internal/helper ──> (Unix socket) root 助手进程
           └──> internal/config ──> internal/{device,llm,asr,remap}   ← 反向
