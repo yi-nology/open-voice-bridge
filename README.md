@@ -314,8 +314,9 @@ sudo mv /etc/xiaomi-remote /etc/xiaoyao   # 若存在
 - 修改 IDL 后：
 
 ```bash
-make idl       # 需要 hz + thriftgo
-make openapi   # 需要 thrift2openapi
+make idl         # 需要 hz + thriftgo（go install github.com/cloudwego/hertz/cmd/hz@latest 等）
+make idl-check   # 生成物零漂移 + 手写路由白名单双向一致
+make openapi     # 需要 thrift2openapi
 ```
 
 指标端点：`http://127.0.0.1:8787/metrics`，包含 Go 运行时指标与

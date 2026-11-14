@@ -26,6 +26,16 @@ jobs:
         run: go vet -tags stdjson ./...
       - name: Dependency rules (ARC-11)
         run: script/check-deps.sh
+      # IDL 真相门(OPS-07):生成物必须零漂移,手写路由必须在白名单里且双向一致。
+      # hz 自 cloudwego/hz 仓库消失后迁入 hertz 主仓(cmd/hz);thrift2openapi 仍无
+      # 公开 module,openapi 的手写段落人工维护(见 idl/handwritten-routes.txt)。
+      - name: IDL truth (OPS-07)
+        run: |
+          go install github.com/cloudwego/thriftgo@latest
+          go install github.com/cloudwego/hertz/cmd/hz@latest
+          PATH="$PATH:$(go env GOPATH)/bin" make idl
+          git diff --exit-code -- biz/model/api biz/router router.go router_gen.go biz/handler/api
+          PATH="$PATH:$(go env GOPATH)/bin" make idl-check
       # Lint 用 go install 本地构建,不用预编译 action:
       # action 下载的 golangci-lint 二进制构建于旧版 Go(实测 latest 构建于 go1.24),
       # 而 go.mod 的 go 指令是 1.27.4 ⇒ 「Go language version (go1.24) used to build

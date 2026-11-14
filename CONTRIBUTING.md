@@ -35,16 +35,27 @@ skip gracefully so that CI does not require a physical remote.
 
 ## IDL and generated code
 
-Do not hand-edit `biz/model/api`, `biz/router` or `docs/openapi.yaml` unless you
-are fixing a generator bug. Change `idl/xiaomi_remote.thrift` instead, then run:
+Do not hand-edit `biz/model/api` or `biz/router` — they are generated. Change
+`idl/xiaomi_remote.thrift` instead, then run:
 
 ```bash
 make idl
+make idl-check   # 生成物零漂移 + 手写路由白名单双向一致
 make openapi
 ```
 
 `make idl` requires `hz` and `thriftgo`; `make openapi` requires
-`thrift2openapi`. Install them with `go install` if needed.
+`thrift2openapi`. Install them with `go install` if needed:
+
+```bash
+go install github.com/cloudwego/thriftgo@latest
+go install github.com/cloudwego/hertz/cmd/hz@latest   # hz 已迁入 hertz 主仓
+```
+
+Hand-registered routes (see `idl/handwritten-routes.txt`) live outside the
+Thrift service; their OpenAPI section in `docs/openapi.yaml` is maintained by
+hand until `thrift2openapi` gains a public module path. CI runs `make idl` +
+`make idl-check` and fails on any drift or unlisted route.
 
 ## Frontend
 
