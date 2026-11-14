@@ -74,3 +74,33 @@ func (s *Server) PhoneRevoke(ctx context.Context, c *app.RequestContext) {
 	}
 	c.JSON(consts.StatusOK, s.deps.PhoneRevoke(ctx, req.DeviceID))
 }
+
+// PhonePowerKey reports the dangerous-key opt-in (OPS-15).
+func (s *Server) PhonePowerKey(ctx context.Context, c *app.RequestContext) {
+	if s.deps.PhonePowerKey == nil {
+		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "power toggle unavailable"})
+		return
+	}
+	c.JSON(consts.StatusOK, map[string]any{"ok": true, "allow": s.deps.PhonePowerKey()})
+}
+
+// PhonePowerKeySave stores the dangerous-key opt-in and asks for a restart
+// like every other phone.* setting (ARC-12).
+func (s *Server) PhonePowerKeySave(ctx context.Context, c *app.RequestContext) {
+	if s.deps.SetPhonePowerKey == nil {
+		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "power toggle unavailable"})
+		return
+	}
+	var req struct {
+		Allow bool `json:"allow"`
+	}
+	if err := json.Unmarshal(c.Request.Body(), &req); err != nil {
+		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if err := s.deps.SetPhonePowerKey(req.Allow); err != nil {
+		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	c.JSON(consts.StatusOK, map[string]any{"ok": true, "restart_required": true})
+}

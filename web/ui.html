@@ -1157,6 +1157,7 @@ body.listening .subtitle-live i { background: var(--accent); }
           <div class="spacer"></div>
           <button id="phone-pair-btn" class="btn small primary">生成配对码</button>
         </div>
+        <label class="check-line" style="margin:6px 0 0"><input id="phone-power-toggle" type="checkbox"> 允许手机按下<span class="warn">电源键</span>（危险：可能触发关机）</label>
         <div id="phone-pair-hint" class="note" style="margin-top:6px;"></div>
         <div id="pair-code-card" class="pair-code-card" hidden>
           <div class="pair-code" id="pair-code">——————</div>
@@ -2726,6 +2727,7 @@ function openConfigPanel(name) {
     loadStreamingToggle();
     loadWakeToggle();
     loadLookbackToggle();
+loadPhonePowerToggle();
   }
   if (name === "text") loadTextConfig();
 }
@@ -3587,6 +3589,29 @@ async function loadWakeToggle() {
   };
   toggle.addEventListener("change", save);
   if (word) word.addEventListener("change", save);
+}
+
+async function loadPhonePowerToggle() {
+  const toggle = document.getElementById("phone-power-toggle");
+  if (!toggle) return;
+  try {
+    const res = await fetch("/api/phone/power");
+    const data = await res.json();
+    if (data.ok) toggle.checked = !!data.allow;
+  } catch (error) {}
+  toggle.addEventListener("change", async () => {
+    try {
+      const res = await fetch("/api/phone/power", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({allow: toggle.checked}),
+      });
+      const data = await res.json();
+      inputsMessage(data.ok ? "已保存，重启服务后生效。" : ("保存失败：" + errorText(data)), data.ok ? "ok" : "err");
+    } catch (error) {
+      inputsMessage("保存失败：" + error, "err");
+    }
+  });
 }
 
 async function loadLookbackToggle() {

@@ -129,6 +129,8 @@ func (a Admin) deps() ui.Deps {
 		WakeConfig:            svc.WakeConfig,
 		SetWake:               svc.SetWake,
 		SetPhoneEnabled:       svc.SetPhoneEnabled,
+		PhonePowerKey:         svc.PhonePowerKey,
+		SetPhonePowerKey:      svc.SetPhonePowerKey,
 		HelperSocket:          a.HelperSocket,
 	}
 }

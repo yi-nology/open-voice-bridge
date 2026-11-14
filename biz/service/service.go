@@ -847,6 +847,27 @@ func (s *Service) SetWake(enabled bool, word string) error {
 	return nil
 }
 
+// PhonePowerKey reports whether phones may press the power key (OPS-15).
+func (s *Service) PhonePowerKey() bool {
+	s.cfgMu.RLock()
+	defer s.cfgMu.RUnlock()
+	return s.cfg.Phone.AllowPowerKey
+}
+
+// SetPhonePowerKey saves the dangerous-key opt-in. Like the rest of
+// phone.* it takes effect on restart (ARC-12).
+func (s *Service) SetPhonePowerKey(allow bool) error {
+	s.cfgMu.Lock()
+	snapshot := s.configSnapshotLocked()
+	snapshot.Phone.AllowPowerKey = allow
+	saveErr := s.persistConfig(snapshot)
+	if saveErr == nil {
+		s.cfg.Phone.AllowPowerKey = allow
+	}
+	s.cfgMu.Unlock()
+	return saveErr
+}
+
 // LookbackConfig returns the 回眸 toggle and window (S8).
 func (s *Service) LookbackConfig() (bool, int) {
 	s.cfgMu.RLock()

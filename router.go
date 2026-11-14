@@ -46,6 +46,8 @@ func customizedRegister(r *server.Hertz, customUI *ui.Server) {
 	r.POST("/api/lookback/recover", customUI.LookbackRecover)
 	r.GET("/api/inputs", customUI.Inputs)
 	r.POST("/api/phone/enabled", customUI.PhoneEnabled)
+	r.GET("/api/phone/power", customUI.PhonePowerKey)
+	r.POST("/api/phone/power", customUI.PhonePowerKeySave)
 	r.POST("/api/phone/pairing", customUI.PhonePairing)
 	r.GET("/api/phone/devices", customUI.PhoneDevices)
 	r.POST("/api/phone/revoke", customUI.PhoneRevoke)
