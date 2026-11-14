@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/yi-nology/open-voice-bridge/internal/config"
@@ -18,6 +19,12 @@ import (
 // TLS material it needs. All platform-neutral.
 func configChecks(cfg config.Config, configPath string) []check {
 	var checks []check
+	if data, err := os.ReadFile(configPath); err == nil {
+		if unknown := config.LintUnknown(data); len(unknown) > 0 {
+			checks = append(checks, warn("unknown config keys (ignored): "+strings.Join(unknown, ", "),
+				"remove or rename them in "+configPath))
+		}
+	}
 	checks = append(checks, portCheck("ui", cfg.UIAddr)...)
 	checks = append(checks, portCheck("phone", cfg.Phone.Addr)...)
 	if !cfg.Phone.Enabled {

@@ -21,6 +21,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/appconfig"
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/audio"
+	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/focus"
 	"github.com/yi-nology/open-voice-bridge/internal/helper"
 	"github.com/yi-nology/open-voice-bridge/internal/history"
@@ -42,6 +43,18 @@ type AgentOptions struct {
 
 // RunAgent starts every subsystem and blocks until the process is asked to
 // stop. A subsystem that cannot start is logged and degraded, not fatal: the
+// warnUnknownKeys surfaces config keys the loader would silently drop —
+// a typo'd option looks saved but does nothing (OPS-10).
+func warnUnknownKeys(logger logx.Logger, path string) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return
+	}
+	if unknown := config.LintUnknown(data); len(unknown) > 0 {
+		logger.Warn("unknown config keys are ignored", "keys", strings.Join(unknown, ", "), "path", path)
+	}
+}
+
 // remapper and the admin UI stay online so the user can fix the cause.
 func RunAgent(opts AgentOptions) int {
 	logger := opts.Logger
@@ -54,6 +67,7 @@ func RunAgent(opts AgentOptions) int {
 		return 1
 	}
 	warnKeyPerms(logger, cfg.APIKeyFile)
+	warnUnknownKeys(logger, opts.ConfigPath)
 
 	engine, buildErr := asr.Build(cfg.ASR)
 	var asrErr error

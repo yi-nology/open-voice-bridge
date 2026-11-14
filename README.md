@@ -188,7 +188,22 @@ xdg-open http://127.0.0.1:8787
 | `llm` | 是否启用改写、provider、模型、Base URL、Key 文件、模式与超时 |
 | `text.dictionary` / `text.snippets` | 本地词典纠错与语音短语；`snippets` 按序兼任「常用语 1–8」，可绑定 `phrase1`–`phrase8` 按键动作 |
 | `phone.enabled` / `phone.addr` / `phone.tls` | 手机输入开关、监听地址与 TLS 模式（`off` 仅接受回环地址） |
+| `phone.max_clients` / `phone.max_utterance_seconds` / `phone.pair_code_ttl_seconds` | 手机并发数（1–16）、手机单次录音上限、配对码有效期 |
 | `phone.allow_power_key` | 允许已配对手机注入电源键，默认 `false`；改后重启服务生效 |
+| `streaming_subtitles` | 边说边滚字：按住期间增量识别刷字幕（S6），默认 `false` |
+| `wake_enabled` / `wake_word` | 唤醒词监听（S7）与词面，默认「小遥小遥」 |
+| `lookback_enabled` / `lookback_seconds` | 回眸内存环（S8）与窗口秒数（5–60，默认 30） |
+| `text.commands_enabled` / `text.commands` | 语音命令（S1）：整句命令词 → 快捷键，默认关 |
+| `llm.app_rules` | 应用感知改写（S5）：按前台类名切 `off`/`cleanup`/`format`/`translate` |
+| `keymap.app_rules` | 按 App 切键位方案：`class` 匹配前台窗口类名 → `profile` |
+| `sink_name` / `source_name` | 虚拟麦克风的 PipeWire 节点名，默认 `xiaomi_mic_sink` / `xiaomi_mic` |
+
+遗留键（仅当 `asr.providers` 为空时补进 `mimo` 配置，新配置请直接写 providers）：
+`api_key_file`、`asr_model`、`asr_language`、`asr_base_url`。
+`keyd_config` 已废弃（keyd 被 root remapper 取代），保留仅为兼容。
+
+**未知键不会静默吞掉**：启动日志与 `xiaomi-remote doctor` 都会点名被忽略的键，
+避免"写了却没生效"的配置陷阱。
 
 密钥永远只以**文件路径**保存；服务端不会把 Key 内容写入日志或 API 响应。
 
