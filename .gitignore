@@ -38,3 +38,4 @@ design-opt*-ref.png
 
 # playwright-cli working dir (screenshots, snapshots, console logs)
 .playwright-cli/
+.playwright-mcp/
