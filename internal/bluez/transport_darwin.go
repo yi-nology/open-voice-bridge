@@ -360,7 +360,7 @@ func bleIDMapPath() string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, ".local", "state", "xiaomi-remote", "ble-id-map.json")
+	return filepath.Join(home, ".local", "state", "xiaoyao", "ble-id-map.json")
 }
 
 func loadBLEID(address string) string {

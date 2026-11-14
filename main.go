@@ -23,7 +23,7 @@ var version = "dev"
 
 func main() {
 	app := &cli.App{
-		Name:    "xiaomi-remote",
+		Name:    "xiaoyao",
 		Version: version,
 		Commands: []cli.Command{
 			{
@@ -38,7 +38,7 @@ func main() {
 					return runtime.RunAgent(runtime.AgentOptions{
 						ConfigPath: *path,
 						Version:    version,
-						Logger:     newLogger("xiaomi-remote"),
+						Logger:     newLogger("xiaoyao"),
 						Register:   register,
 					})
 				},
@@ -48,8 +48,8 @@ func main() {
 				Summary: "run the root evdev/uinput key remapper",
 				Run: func(_ context.Context, args []string, _, stderr io.Writer) int {
 					fs := cli.NewFlagSet("remap", stderr)
-					mapping := fs.String("mapping", "/etc/xiaomi-remote/mapping.json", "mapping file")
-					socket := fs.String("socket", "/run/xiaomi-remote-helper.sock", "Unix socket")
+					mapping := fs.String("mapping", "/etc/xiaoyao/mapping.json", "mapping file")
+					socket := fs.String("socket", "/run/xiaoyao-helper.sock", "Unix socket")
 					group := fs.Int("group", 1000, "socket group id")
 					agentUID := fs.Int("agent-uid", 0, "uid allowed to run privileged commands besides root (0 = root only)")
 					if _, code := cli.ParseFlags(fs, args); code != cli.ExitOK {
@@ -60,7 +60,7 @@ func main() {
 						SocketPath:  *socket,
 						SocketGroup: *group,
 						AgentUID:    *agentUID,
-						Logger:      newLogger("xiaomi-remote-remap"),
+						Logger:      newLogger("xiaoyao-remap"),
 					})
 				},
 			},
@@ -73,7 +73,7 @@ func main() {
 						return code
 					}
 					applyLogLevel(fs)
-					return doctor.Run(*path, newLogger("xiaomi-remote"), stdout)
+					return doctor.Run(*path, newLogger("xiaoyao"), stdout)
 				},
 			},
 			{
@@ -162,7 +162,7 @@ func newLogger(service string) logx.Logger {
 // behind a per-client token ("本地 Agent 访问").
 func runMCP(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	fs := cli.NewFlagSet("mcp", stderr)
-	token := fs.String("token", os.Getenv("XIAOMI_REMOTE_TOKEN"), "client token (or XIAOMI_REMOTE_TOKEN)")
+	token := fs.String("token", os.Getenv("XIAOYAO_TOKEN"), "client token (or XIAOYAO_TOKEN)")
 	base := fs.String("base", "http://127.0.0.1:8787", "admin API base URL")
 	if _, code := cli.ParseFlags(fs, args); code != cli.ExitOK {
 		return code

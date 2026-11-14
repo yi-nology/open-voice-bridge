@@ -42,13 +42,13 @@
   （重复 `Subscribe` 拒绝、`Close` 幂等、断线只关一次 `disconnected`）。
 - `transport_darwin_nocgo.go`（`//go:build darwin && !cgo`）：`ErrUnsupported` 桩，保住 CI 的
   `GOOS=darwin` 交叉编译（Linux runner 上 `CGO_ENABLED=0`，桥不会被编译）。
-- `make build` 在 macOS 上默认 `CGO_ENABLED=1`，产出的仍是单个 `bin/xiaomi-remote`。
+- `make build` 在 macOS 上默认 `CGO_ENABLED=1`，产出的仍是单个 `bin/xiaoyao`。
 
 ### 地址解析（MAC → CBPeripheral）
 
 CoreBluetooth 不暴露 BLE MAC。v1 解析顺序：
 
-1. 状态目录里持久化的 `address → CBPeripheral.identifier` 映射（`~/.local/state/xiaomi-remote/ble-id-map.json`）；
+1. 状态目录里持久化的 `address → CBPeripheral.identifier` 映射（`~/.local/state/xiaoyao/ble-id-map.json`）；
 2. 未命中则扫描广播，按「名字命中 profile 的 `match.names`」或「唯一一个暴露 ATVV 服务
    `ab5e0001-5a21-4f05-bc7d-af01f617b664` 的外设」选定，写回映射；
 3. 配置里的 `address` 也允许直接写 CoreBluetooth UUID。
@@ -79,7 +79,7 @@ CoreBluetooth 不暴露 BLE MAC。v1 解析顺序：
   `doctorHost_other.go`：macOS 检查遥控器是否可见/已连接、提示辅助功能权限；
   不再拿 systemd、PipeWire、xsel、uinput 的缺席误报失败。
 - 配置文件位置跟 `os.UserConfigDir()` 走：macOS 上是
-  `~/Library/Application Support/xiaomi-remote/config.json`。
+  `~/Library/Application Support/xiaoyao/config.json`。
 
 ## 权限清单（用户侧）
 
@@ -116,7 +116,7 @@ CoreBluetooth 不暴露 BLE MAC。v1 解析顺序：
   自启卡「手动启动（launchd）」、权限页切换为蓝牙/辅助功能清单、快速开始里映射与麦克风两项
   在 macOS 上按设计视为就绪；顶部徽标「映射不可用」改为「原生 HID」。`mic_healthy=false` 在
   macOS 是预期状态，界面不再标红。
-- **MCP 本地 Agent 访问**：`xiaomi-remote mcp --token …` 在 macOS 上完成 stdio 握手、
+- **MCP 本地 Agent 访问**：`xiaoyao mcp --token …` 在 macOS 上完成 stdio 握手、
   `tools/list`（`history_list`/`history_search`/`usage_stats`）、真实工具调用与错误令牌 401 拒绝；
   客户端配置里的二进制路径经 `EvalSymlinks` 解析为 `/private/tmp/…` 真实路径。
 

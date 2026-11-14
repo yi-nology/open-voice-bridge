@@ -32,7 +32,7 @@ func (s *Service) MCPCreateToken(label, binary string) (map[string]any, error) {
 		"id":      id,
 		"label":   label,
 		"token":   raw,
-		"snippet": mcp.ClientConfig("xiaomi-remote", binary, raw),
+		"snippet": mcp.ClientConfig("xiaoyao", binary, raw),
 	}, nil
 }
 

@@ -18,11 +18,11 @@ import (
 // the first agent's state for both.
 func RegisterAgentMetrics(ag *agent.Agent, registry prometheus.Registerer) (prometheus.Counter, prometheus.Histogram) {
 	transcriptsTotal := prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "xiaomi_remote_transcripts_total",
+		Name: "xiaoyao_transcripts_total",
 		Help: "Total number of recognized transcripts.",
 	})
 	asrLatency := prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name:    "xiaomi_remote_asr_duration_seconds",
+		Name:    "xiaoyao_asr_duration_seconds",
 		Help:    "ASR latency per transcript.",
 		Buckets: []float64{0.1, 0.25, 0.5, 1, 2, 5, 10, 30},
 	})
@@ -30,19 +30,19 @@ func RegisterAgentMetrics(ag *agent.Agent, registry prometheus.Registerer) (prom
 		transcriptsTotal,
 		asrLatency,
 		prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-			Name: "xiaomi_remote_ble_connected",
+			Name: "xiaoyao_ble_connected",
 			Help: "Whether the remote is connected over BLE (1/0).",
 		}, func() float64 { return boolGauge(ag, func(v core.AgentView) bool { return v.Connected }) }),
 		prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-			Name: "xiaomi_remote_atvv_ready",
+			Name: "xiaoyao_atvv_ready",
 			Help: "Whether the ATVV voice bridge is ready (1/0).",
 		}, func() float64 { return boolGauge(ag, func(v core.AgentView) bool { return v.Ready }) }),
 		prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-			Name: "xiaomi_remote_mic_healthy",
+			Name: "xiaoyao_mic_healthy",
 			Help: "Whether the virtual microphone node is present (1/0).",
 		}, func() float64 { return boolGauge(ag, func(v core.AgentView) bool { return v.MicHealthy }) }),
 		prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-			Name: "xiaomi_remote_last_asr_latency_seconds",
+			Name: "xiaoyao_last_asr_latency_seconds",
 			Help: "Latency of the most recent transcription in seconds.",
 		}, func() float64 {
 			return ag.Status().LastLatency.Seconds()
@@ -73,19 +73,19 @@ type PhoneMetrics struct {
 func NewPhoneMetrics() *PhoneMetrics {
 	return &PhoneMetrics{
 		AudioSeconds: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: "xiaomi_remote_phone_audio_seconds_total",
+			Name: "xiaoyao_phone_audio_seconds_total",
 			Help: "Seconds of phone microphone audio accepted for transcription.",
 		}),
 		Utterances: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "xiaomi_remote_phone_utterances_total",
+			Name: "xiaoyao_phone_utterances_total",
 			Help: "Phone utterances by result (ok: transcribed, miss: no usable text).",
 		}, []string{"result"}),
 		Keys: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: "xiaomi_remote_phone_keys_total",
+			Name: "xiaoyao_phone_keys_total",
 			Help: "Key presses injected on behalf of paired phones.",
 		}),
 		InjectErrors: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: "xiaomi_remote_phone_inject_errors_total",
+			Name: "xiaoyao_phone_inject_errors_total",
 			Help: "Failed key injections from paired phones.",
 		}),
 	}
@@ -99,7 +99,7 @@ func RegisterPhoneMetrics(registry prometheus.Registerer, metrics *PhoneMetrics,
 		metrics.Keys,
 		metrics.InjectErrors,
 		prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-			Name: "xiaomi_remote_phone_clients",
+			Name: "xiaoyao_phone_clients",
 			Help: "Paired phones with a live session (1/0 per connected device).",
 		}, func() float64 { return float64(connected()) }),
 	)

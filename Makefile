@@ -18,11 +18,11 @@ RUN_HOME := $(HOME)
 endif
 RUN_UID := $(shell id -u $(RUN_USER) 2>/dev/null)
 RUN_GID := $(shell id -g $(RUN_USER) 2>/dev/null)
-LOG_DIR := $(RUN_HOME)/.local/state/xiaomi-remote
+LOG_DIR := $(RUN_HOME)/.local/state/xiaoyao
 LOG_FILE := $(LOG_DIR)/agent.log
-BIN := bin/xiaomi-remote
-USER_UNIT := $(HOME)/.config/systemd/user/xiaomi-remote-go.service
-SYSTEM_UNIT := /etc/systemd/system/xiaomi-remote-remap.service
+BIN := bin/xiaoyao
+USER_UNIT := $(HOME)/.config/systemd/user/xiaoyao.service
+SYSTEM_UNIT := /etc/systemd/system/xiaoyao-remap.service
 
 .PHONY: build test vet fmt check idl openapi soak install-user install-remap install-logrotate
 
@@ -59,22 +59,22 @@ install-user: build
 	mkdir -p $(dir $(USER_UNIT))
 	sed -e 's|@ROOT@|$(ROOT)|g' -e 's|@USER@|$(RUN_USER)|g' \
 		-e 's|@LOG_DIR@|$(LOG_DIR)|g' -e 's|@LOG_FILE@|$(LOG_FILE)|g' \
-		deploy/xiaomi-remote-go.service > $(USER_UNIT)
+		deploy/xiaoyao.service > $(USER_UNIT)
 	chmod 644 $(USER_UNIT)
 	systemctl --user daemon-reload
-	systemctl --user enable --now xiaomi-remote-go.service
+	systemctl --user enable --now xiaoyao.service
 
 install-remap:
 	mkdir -p $(dir $(SYSTEM_UNIT))
 	sed -e 's|@ROOT@|$(ROOT)|g' -e 's|@USER@|$(RUN_USER)|g' \
 		-e 's|@UID@|$(RUN_UID)|g' -e 's|@GID@|$(RUN_GID)|g' \
-		deploy/xiaomi-remote-remap.service > $(SYSTEM_UNIT)
+		deploy/xiaoyao-remap.service > $(SYSTEM_UNIT)
 	chmod 644 $(SYSTEM_UNIT)
 	systemctl daemon-reload
-	systemctl enable --now xiaomi-remote-remap.service
+	systemctl enable --now xiaoyao-remap.service
 
 install-logrotate:
 	sed -e 's|@ROOT@|$(ROOT)|g' -e 's|@USER@|$(RUN_USER)|g' \
 		-e 's|@LOG_FILE@|$(LOG_FILE)|g' \
-		deploy/logrotate-xiaomi-remote-go > /etc/logrotate.d/xiaomi-remote-go
-	chmod 644 /etc/logrotate.d/xiaomi-remote-go
+		deploy/logrotate-xiaoyao > /etc/logrotate.d/xiaoyao
+	chmod 644 /etc/logrotate.d/xiaoyao

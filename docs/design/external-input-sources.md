@@ -46,7 +46,7 @@
 
 ### 2.4 按键注入必须经过 root helper
 
-手机按键不能直接操作 X11/uinput。现有 `xiaomi-remote-remap`（root）持有 uinput 并执行映射；需要给它增加一个**白名单注入命令**，由 agent 在通过配对鉴权后转发。
+手机按键不能直接操作 X11/uinput。现有 `xiaoyao-remap`（root）持有 uinput 并执行映射；需要给它增加一个**白名单注入命令**，由 agent 在通过配对鉴权后转发。
 
 ## 3. 方案对比
 
@@ -276,11 +276,11 @@ BLE 链路把 `agent.finalize` 改为调用 `SpeechPipeline.Transcribe`；手机
 
 手机面指标（**已实现** 2026-11-14，口径按实现收窄）：
 
-- `xiaomi_remote_phone_clients`（在线会话数）
-- `xiaomi_remote_phone_audio_seconds_total`
-- `xiaomi_remote_phone_utterances_total{result="ok|miss"}`（ok=出字，miss=无可识别文本；busy 属队列层未单列）
-- `xiaomi_remote_phone_keys_total`（按下载荷）
-- `xiaomi_remote_phone_inject_errors_total`
+- `xiaoyao_phone_clients`（在线会话数）
+- `xiaoyao_phone_audio_seconds_total`
+- `xiaoyao_phone_utterances_total{result="ok|miss"}`（ok=出字，miss=无可识别文本；busy 属队列层未单列）
+- `xiaoyao_phone_keys_total`（按下载荷）
+- `xiaoyao_phone_inject_errors_total`
 
 状态接口增加输入源列表；日志只记录设备名/IP/事件，不记录音频与令牌。
 

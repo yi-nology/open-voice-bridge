@@ -60,7 +60,7 @@ func testAdmin(t *testing.T) (runtime.Admin, *history.Store, *history.Stats) {
 		Addr:          "127.0.0.1:8787",
 		HelperSocket:  socket,
 		Version:       "test",
-		MCPBinaryPath: func() string { return "/usr/local/bin/xiaomi-remote" },
+		MCPBinaryPath: func() string { return "/usr/local/bin/xiaoyao" },
 		Logger:        adminLogger(),
 		Register: func(h *server.Hertz, u *ui.Server) {
 			router.GeneratedRegister(h)

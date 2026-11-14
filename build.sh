@@ -17,4 +17,4 @@ if [ -z "$GO_BIN" ]; then
 fi
 mkdir -p bin
 VERSION="${VERSION:-dev}"
-"$GO_BIN" build -tags stdjson -trimpath -ldflags "-X main.version=$VERSION" -o bin/xiaomi-remote .
+"$GO_BIN" build -tags stdjson -trimpath -ldflags "-X main.version=$VERSION" -o bin/xiaoyao .

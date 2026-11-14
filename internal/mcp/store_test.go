@@ -147,10 +147,10 @@ func TestAuditRecordsCountsNotContent(t *testing.T) {
 }
 
 func TestClientConfigSnippet(t *testing.T) {
-	snippet := ClientConfig("xiaomi-remote", "/usr/local/bin/xiaomi-remote", "tok-123")
+	snippet := ClientConfig("xiaoyao", "/usr/local/bin/xiaoyao", "tok-123")
 	servers, _ := snippet["mcpServers"].(map[string]any)
-	entry, _ := servers["xiaomi-remote"].(map[string]any)
-	if entry["command"] != "/usr/local/bin/xiaomi-remote" {
+	entry, _ := servers["xiaoyao"].(map[string]any)
+	if entry["command"] != "/usr/local/bin/xiaoyao" {
 		t.Fatalf("command = %v", entry["command"])
 	}
 	args, _ := entry["args"].([]string)

@@ -23,7 +23,7 @@ type Client struct {
 
 func New(path string) *Client {
 	if path == "" {
-		path = "/run/xiaomi-remote-helper.sock"
+		path = "/run/xiaoyao-helper.sock"
 	}
 	return &Client{Path: path, Timeout: 10 * time.Second}
 }

@@ -207,6 +207,7 @@ func findEventNode() string {
 	}
 	blocks := strings.Split(string(data), "\n\n")
 	priorities := []string{
+		`Name="xiaoyao virtual keyboard"`,
 		`Name="xiaomi-remote virtual keyboard"`,
 		`Name="keyd virtual keyboard"`,
 		`Name="小米蓝牙语音遥控器"`,

@@ -8,7 +8,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BIN="$ROOT/bin/xiaomi-remote"
+BIN="$ROOT/bin/xiaoyao"
 DEPLOY="$ROOT/deploy"
 
 if [ ! -x "$BIN" ]; then
@@ -31,9 +31,9 @@ fi
 if [ -z "$RUN_HOME" ]; then
   RUN_HOME="$HOME"
 fi
-LOG_DIR="$RUN_HOME/.local/state/xiaomi-remote"
+LOG_DIR="$RUN_HOME/.local/state/xiaoyao"
 LOG_FILE="$LOG_DIR/agent.log"
-CONFIG="$RUN_HOME/.config/xiaomi-remote/config.json"
+CONFIG="$RUN_HOME/.config/xiaoyao/config.json"
 
 # render substitutes the same placeholders the Makefile does, so one template
 # serves both the checkout install and the release install.
@@ -47,21 +47,21 @@ render() {
 install_user() {
   unit_dir="$RUN_HOME/.config/systemd/user"
   mkdir -p "$unit_dir"
-  render "$DEPLOY/xiaomi-remote-go.service" "$unit_dir/xiaomi-remote-go.service"
-  chmod 644 "$unit_dir/xiaomi-remote-go.service"
+  render "$DEPLOY/xiaoyao.service" "$unit_dir/xiaoyao.service"
+  chmod 644 "$unit_dir/xiaoyao.service"
   systemctl --user daemon-reload
-  systemctl --user enable --now xiaomi-remote-go.service
-  echo "installed and started: $unit_dir/xiaomi-remote-go.service"
+  systemctl --user enable --now xiaoyao.service
+  echo "installed and started: $unit_dir/xiaoyao.service"
 }
 
 install_root() {
-  render "$DEPLOY/xiaomi-remote-remap.service" /etc/systemd/system/xiaomi-remote-remap.service
-  chmod 644 /etc/systemd/system/xiaomi-remote-remap.service
+  render "$DEPLOY/xiaoyao-remap.service" /etc/systemd/system/xiaoyao-remap.service
+  chmod 644 /etc/systemd/system/xiaoyao-remap.service
   systemctl daemon-reload
-  systemctl enable --now xiaomi-remote-remap.service
-  render "$DEPLOY/logrotate-xiaomi-remote-go" /etc/logrotate.d/xiaomi-remote-go
-  chmod 644 /etc/logrotate.d/xiaomi-remote-go
-  echo "installed and started: xiaomi-remote-remap.service (+ logrotate)"
+  systemctl enable --now xiaoyao-remap.service
+  render "$DEPLOY/logrotate-xiaoyao" /etc/logrotate.d/xiaoyao
+  chmod 644 /etc/logrotate.d/xiaoyao
+  echo "installed and started: xiaoyao-remap.service (+ logrotate)"
 }
 
 case "${1:-}" in

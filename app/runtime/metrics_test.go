@@ -67,10 +67,10 @@ func TestAgentMetricsGaugesFollowTheirOwnAgent(t *testing.T) {
 	RegisterAgentMetrics(testAgent(t, true), healthy)
 	RegisterAgentMetrics(testAgent(t, false), broken)
 
-	if got := gaugeValue(t, healthy, "xiaomi_remote_mic_healthy"); got != 1 {
+	if got := gaugeValue(t, healthy, "xiaoyao_mic_healthy"); got != 1 {
 		t.Errorf("healthy runtime mic gauge = %v, want 1", got)
 	}
-	if got := gaugeValue(t, broken, "xiaomi_remote_mic_healthy"); got != 0 {
+	if got := gaugeValue(t, broken, "xiaoyao_mic_healthy"); got != 0 {
 		t.Errorf("broken runtime mic gauge = %v, want 0", got)
 	}
 }
@@ -92,11 +92,11 @@ func TestAgentMetricsCollectorsAreScrapeable(t *testing.T) {
 		seen[family.GetName()] = true
 	}
 	for _, name := range []string{
-		"xiaomi_remote_transcripts_total",
-		"xiaomi_remote_asr_duration_seconds",
-		"xiaomi_remote_ble_connected",
-		"xiaomi_remote_atvv_ready",
-		"xiaomi_remote_last_asr_latency_seconds",
+		"xiaoyao_transcripts_total",
+		"xiaoyao_asr_duration_seconds",
+		"xiaoyao_ble_connected",
+		"xiaoyao_atvv_ready",
+		"xiaoyao_last_asr_latency_seconds",
 	} {
 		if !seen[name] {
 			t.Errorf("%s missing from the registry", name)

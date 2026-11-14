@@ -94,7 +94,7 @@ func TestBLEIDMapRoundTrip(t *testing.T) {
 		t.Fatalf("unknown address load = %q, want empty", got)
 	}
 
-	path := filepath.Join(home, ".local", "state", "xiaomi-remote", "ble-id-map.json")
+	path := filepath.Join(home, ".local", "state", "xiaoyao", "ble-id-map.json")
 	info, err := os.Stat(path)
 	if err != nil {
 		t.Fatalf("stat map: %v", err)

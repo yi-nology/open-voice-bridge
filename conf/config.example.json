@@ -1,8 +1,7 @@
 {
   "address": "AA:BB:CC:DD:EE:FF",
   "ui_addr": "127.0.0.1:8787",
-  "helper_socket": "/run/xiaomi-remote-helper.sock",
-  "keyd_config": "/etc/keyd/xiaomi.conf",
+  "helper_socket": "/run/xiaoyao-helper.sock",
   "max_utterance_seconds": 30,
   "paste_enabled": true,
   "asr": {
@@ -20,7 +19,7 @@
       "openai": {
         "type": "openai",
         "base_url": "https://api.openai.com/v1",
-        "api_key_file": "~/.config/xiaomi-remote/openai.key",
+        "api_key_file": "~/.config/xiaoyao/openai.key",
         "model": "whisper-1",
         "language": "auto",
         "timeout_seconds": 60

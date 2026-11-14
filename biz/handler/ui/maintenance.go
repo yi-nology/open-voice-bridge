@@ -19,7 +19,7 @@ func (s *Server) ConfigExport(ctx context.Context, c *app.RequestContext) {
 		c.JSON(consts.StatusInternalServerError, map[string]any{"ok": false, "error": err.Error()})
 		return
 	}
-	c.Header("Content-Disposition", `attachment; filename="xiaomi-remote-config.json"`)
+	c.Header("Content-Disposition", `attachment; filename="xiaoyao-config.json"`)
 	c.Data(consts.StatusOK, "application/json; charset=utf-8", data)
 }
 

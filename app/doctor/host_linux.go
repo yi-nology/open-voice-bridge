@@ -37,7 +37,7 @@ func helperCheck(cfg config.Config) []check {
 	status, err := helper.New(cfg.HelperSocket).Call(ctx, map[string]string{"cmd": "status"})
 	if err != nil {
 		return []check{gap(core.DepHelper, "remap helper: "+err.Error(),
-			"sudo systemctl start xiaomi-remote-remap.service")}
+			"sudo systemctl start xiaoyao-remap.service")}
 	}
 	return []check{ok(fmt.Sprintf("remap helper (active=%v, remote_present=%v)",
 		status["keyd_active"], status["remote_present"]))}
@@ -108,10 +108,10 @@ func unitChecks() []check {
 		args  []string
 		fix   string
 	}{
-		{"agent active", []string{"--user", "is-active", "xiaomi-remote-go"}, "systemctl --user start xiaomi-remote-go.service"},
-		{"agent autostart", []string{"--user", "is-enabled", "xiaomi-remote-go"}, "systemctl --user enable xiaomi-remote-go.service"},
-		{"remap active", []string{"is-active", "xiaomi-remote-remap"}, "sudo systemctl start xiaomi-remote-remap.service"},
-		{"remap autostart", []string{"is-enabled", "xiaomi-remote-remap"}, "sudo systemctl enable xiaomi-remote-remap.service"},
+		{"agent active", []string{"--user", "is-active", "xiaoyao"}, "systemctl --user start xiaoyao.service"},
+		{"agent autostart", []string{"--user", "is-enabled", "xiaoyao"}, "systemctl --user enable xiaoyao.service"},
+		{"remap active", []string{"is-active", "xiaoyao-remap"}, "sudo systemctl start xiaoyao-remap.service"},
+		{"remap autostart", []string{"is-enabled", "xiaoyao-remap"}, "sudo systemctl enable xiaoyao-remap.service"},
 	}
 	var checks []check
 	for _, unit := range units {

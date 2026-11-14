@@ -27,10 +27,10 @@ type Sink interface {
 
 func New(cfg Config) (Sink, error) {
 	if cfg.SinkName == "" {
-		cfg.SinkName = "xiaomi_mic_sink"
+		cfg.SinkName = "xiaoyao_mic_sink"
 	}
 	if cfg.SourceName == "" {
-		cfg.SourceName = "xiaomi_mic"
+		cfg.SourceName = "xiaoyao_mic"
 	}
 	if cfg.Rate == 0 {
 		cfg.Rate = core.SampleRate

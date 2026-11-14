@@ -261,7 +261,7 @@ func (s *Service) SaveLLMKey(ctx context.Context, key string) error {
 			s.cfgMu.Unlock()
 			return err
 		}
-		path = filepath.Join(home, ".config", "xiaomi-remote", "llm.key")
+		path = filepath.Join(home, ".config", "xiaoyao", "llm.key")
 		snapshot = s.configSnapshotLocked()
 		snapshot.LLM.APIKeyFile = path
 	}

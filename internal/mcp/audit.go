@@ -40,7 +40,7 @@ var auditMu sync.Mutex
 // and lives only in their client config.
 func ClientConfig(label, binary, token string) map[string]any {
 	if label == "" {
-		label = "xiaomi-remote"
+		label = "xiaoyao"
 	}
 	return map[string]any{
 		"mcpServers": map[string]any{

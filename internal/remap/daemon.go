@@ -77,10 +77,10 @@ type inputEvent struct {
 
 func New(cfg Config) *Daemon {
 	if cfg.MappingPath == "" {
-		cfg.MappingPath = "/etc/xiaomi-remote/mapping.json"
+		cfg.MappingPath = "/etc/xiaoyao/mapping.json"
 	}
 	if cfg.SocketPath == "" {
-		cfg.SocketPath = "/run/xiaomi-remote-helper.sock"
+		cfg.SocketPath = "/run/xiaoyao-helper.sock"
 	}
 	if cfg.SocketGroup == 0 {
 		cfg.SocketGroup = 1000
@@ -105,7 +105,7 @@ func (d *Daemon) Run(ctx context.Context) error {
 		}
 	}
 
-	keyboard, err := uinput.CreateKeyboard("/dev/uinput", []byte("xiaomi-remote virtual keyboard"))
+	keyboard, err := uinput.CreateKeyboard("/dev/uinput", []byte("xiaoyao virtual keyboard"))
 	if err != nil {
 		return oeerrors.Errorf("create uinput keyboard: %w", err)
 	}

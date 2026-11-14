@@ -2,4 +2,4 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 "$ROOT/build.sh"
-exec "$ROOT/bin/xiaomi-remote" agent "$@"
+exec "$ROOT/bin/xiaoyao" agent "$@"

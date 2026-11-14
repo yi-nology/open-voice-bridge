@@ -37,7 +37,7 @@ func RunRemap(opts RemapOptions) int {
 		AgentUID:    opts.AgentUID,
 	})
 	app, err := bootstrap.New(
-		bootstrap.WithServiceName("xiaomi-remote-remap"),
+		bootstrap.WithServiceName("xiaoyao-remap"),
 		bootstrap.WithShutdownTimeout(5*time.Second),
 	)
 	if err != nil {

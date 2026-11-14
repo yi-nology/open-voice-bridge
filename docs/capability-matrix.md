@@ -45,7 +45,7 @@
 | 手机「聆听」一直亮但不出字 | 手机被抢占未收到通知（异常） | 断开重连手机；看服务日志 |
 | 长按方向键只走一格 | 映射到宏/动作而非原生键 | 「按键映射」把该键设为原生/方向键 |
 | 字幕显示的是地址不是名字 | 旧版本历史数据 | 新数据带 `source_name`；历史行优先显示名字 |
-| 按键次数不涨 | remap 服务未运行 | `sudo make install-remap`；看 `systemctl status xiaomi-remote-remap` |
+| 按键次数不涨 | remap 服务未运行 | `sudo make install-remap`；看 `systemctl status xiaoyao-remap` |
 
 ## 4. 与 SayAll（Mac/Windows）口径的差异
 

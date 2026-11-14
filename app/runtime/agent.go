@@ -81,7 +81,7 @@ func RunAgent(opts AgentOptions) int {
 	logger.Info("ASR chain", "providers", engine.Name(), "local", engine.Local())
 
 	app, err := bootstrap.New(
-		bootstrap.WithServiceName("xiaomi-remote"),
+		bootstrap.WithServiceName("xiaoyao"),
 		bootstrap.WithShutdownTimeout(10*time.Second),
 	)
 	if err != nil {
@@ -257,7 +257,7 @@ func RunAgent(opts AgentOptions) int {
 		ekithertz.RunServer(app, "ui", hertzServer, ekithertz.WithOnReady(func(context.Context) {
 			app.Ready()
 		}))
-		logger.Info("xiaomi-remote agent running", "ui", "http://"+cfg.UIAddr, "config", opts.ConfigPath)
+		logger.Info("xiaoyao agent running", "ui", "http://"+cfg.UIAddr, "config", opts.ConfigPath)
 		<-ctx.Done()
 		return nil
 	})
@@ -272,7 +272,7 @@ func RunAgent(opts AgentOptions) int {
 func mcpBinaryPath() string {
 	exe, err := os.Executable()
 	if err != nil {
-		return "xiaomi-remote"
+		return "xiaoyao"
 	}
 	if resolved, err := filepath.EvalSymlinks(exe); err == nil {
 		return resolved

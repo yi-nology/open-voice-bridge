@@ -346,7 +346,7 @@ function updateConnection(status) {
   } else {
     mic.textContent = status.mic_active ? (micHealthy ? "运行中" : "节点恢复中") : "未运行";
     mic.className = "value " + (status.mic_active && micHealthy ? "good" : (status.mic_active ? "warn" : "bad"));
-    if (micSub) micSub.textContent = "XiaomiRemoteMic → PipeWire";
+    if (micSub) micSub.textContent = "xiaoyao_mic → PipeWire";
   }
   const asr = document.getElementById("conn-asr");
   asr.textContent = status.asr_backend || "未知";
@@ -1510,7 +1510,7 @@ if (configExportBtn) configExportBtn.addEventListener("click", async () => {
   try {
     const res = await fetch("/api/config/export");
     if (!res.ok) return maintenanceMsg("导出失败（" + res.status + "）", "err");
-    await downloadJSON(res, "xiaomi-remote-config.json");
+    await downloadJSON(res, "xiaoyao-config.json");
     maintenanceMsg("配置已导出。", "ok");
   } catch (error) {
     maintenanceMsg("导出失败：" + error, "err");
@@ -1539,7 +1539,7 @@ if (diagnosticsBtn) diagnosticsBtn.addEventListener("click", async () => {
   try {
     const res = await fetch("/api/diagnostics");
     if (!res.ok) return maintenanceMsg("生成失败（" + res.status + "）", "err");
-    await downloadJSON(res, "xiaomi-remote-diagnostics.json");
+    await downloadJSON(res, "xiaoyao-diagnostics.json");
     maintenanceMsg("诊断摘要已下载，可随问题反馈一起提交。", "ok");
   } catch (error) {
     maintenanceMsg("生成失败：" + error, "err");

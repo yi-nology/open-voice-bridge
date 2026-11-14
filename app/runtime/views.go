@@ -78,8 +78,8 @@ func BuildStatus(ctx context.Context, in service.ViewInputs) core.StatusView {
 		view.LastAt = agentStatus.LastAt.Format(time.RFC3339)
 	}
 	home, _ := os.UserHomeDir()
-	_, agentErr := os.Stat(filepath.Join(home, ".config", "systemd", "user", "default.target.wants", "xiaomi-remote-go.service"))
-	_, remapErr := os.Stat("/etc/systemd/system/multi-user.target.wants/xiaomi-remote-remap.service")
+	_, agentErr := os.Stat(filepath.Join(home, ".config", "systemd", "user", "default.target.wants", "xiaoyao.service"))
+	_, remapErr := os.Stat("/etc/systemd/system/multi-user.target.wants/xiaoyao-remap.service")
 	view.AgentAutostart = agentErr == nil
 	view.RemapAutostart = remapErr == nil
 	return view

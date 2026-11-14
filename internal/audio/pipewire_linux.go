@@ -142,11 +142,11 @@ func (p *pipeWireSink) ensureLoopLocked(ctx context.Context) error {
 	}
 	cmd := exec.CommandContext(
 		ctx,
-		"pw-loopback", "-n", "xiaomi-remote-mic", "-c", "1", "-m", "[ MONO ]",
+		"pw-loopback", "-n", "xiaoyao-mic", "-c", "1", "-m", "[ MONO ]",
 		"--capture-props",
-		fmt.Sprintf("media.class=Audio/Sink node.name=%s node.description=XiaomiRemoteMicSink", p.cfg.SinkName),
+		fmt.Sprintf("media.class=Audio/Sink node.name=%s node.description=XiaoyaoMicSink", p.cfg.SinkName),
 		"--playback-props",
-		fmt.Sprintf("media.class=Audio/Source node.name=%s node.description=XiaomiRemoteMic", p.cfg.SourceName),
+		fmt.Sprintf("media.class=Audio/Source node.name=%s node.description=XiaoyaoMic", p.cfg.SourceName),
 	)
 	if err := cmd.Start(); err != nil {
 		return oeerrors.Errorf("start pw-loopback: %w", err)

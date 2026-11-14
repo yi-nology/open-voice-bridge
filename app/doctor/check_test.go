@@ -14,7 +14,7 @@ func TestReportPrintsTheFixOnlyForGaps(t *testing.T) {
 	var out bytes.Buffer
 	failures := report(&out, []check{
 		ok("pw-cat"),
-		warn("remap helper: dial unix: no such file", "sudo systemctl start xiaomi-remote-remap.service"),
+		warn("remap helper: dial unix: no such file", "sudo systemctl start xiaoyao-remap.service"),
 	})
 	reported := out.String()
 	if failures != 0 {
@@ -22,7 +22,7 @@ func TestReportPrintsTheFixOnlyForGaps(t *testing.T) {
 	}
 	for _, want := range []string{
 		"ok: pw-cat\n",
-		"WARN: remap helper: dial unix: no such file; fix: sudo systemctl start xiaomi-remote-remap.service\n",
+		"WARN: remap helper: dial unix: no such file; fix: sudo systemctl start xiaoyao-remap.service\n",
 	} {
 		if !strings.Contains(reported, want) {
 			t.Errorf("report missing %q\n%s", want, reported)
@@ -39,7 +39,7 @@ func TestGapSeverityFollowsTheSharedYardstick(t *testing.T) {
 	var out bytes.Buffer
 	failures := report(&out, []check{
 		gap(core.DepASR, "asr/mimo: key missing", "install -m 600 /dev/null key"),
-		gap(core.DepHelper, "remap helper: down", "sudo systemctl start xiaomi-remote-remap.service"),
+		gap(core.DepHelper, "remap helper: down", "sudo systemctl start xiaoyao-remap.service"),
 		gap(core.DepMic, "missing pw-cat", "sudo apt install pipewire-bin"),
 	})
 	if failures != 1 {

@@ -17,7 +17,7 @@ Open Voice Bridge is a local-first agent:
 - POST requests are checked against the request origin.
 - API keys and provider tokens are stored in files with mode `0600`; token
   contents are never written to logs or returned by the API.
-- The root helper (`xiaomi-remote remap`) exposes a Unix socket for key
+- The root helper (`xiaoyao remap`) exposes a Unix socket for key
   injection. It does not listen on the network.
 
 Areas to keep in mind when contributing:

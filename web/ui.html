@@ -256,7 +256,7 @@
         <details class="adv wide">
           <summary>高级选项（Key 文件路径、超时、System Prompt）</summary>
           <div class="adv-body">
-            <label class="wide">API Key File<input id="llm-api-key-file" placeholder="~/.config/xiaomi-remote/llm.key"></label>
+            <label class="wide">API Key File<input id="llm-api-key-file" placeholder="~/.config/xiaoyao/llm.key"></label>
             <label>Timeout (s)<input id="llm-timeout" type="number" min="1" value="20"></label>
             <label class="wide">自定义 System Prompt（留空使用预设）<textarea id="llm-prompt" rows="2" placeholder="只输出处理后的文本"></textarea></label>
           </div>
@@ -310,11 +310,11 @@
   <section id="tab-permissions" class="tab">
     <div class="panel">
       <div class="panel-head"><div><h3>系统权限与服务</h3>
-        <p>网页本身以普通用户运行；需要额外权限的只有一个：<b>xiaomi-remote-remap.service</b>（按键映射助手）。</p></div></div>
+        <p>网页本身以普通用户运行；需要额外权限的只有一个：<b>xiaoyao-remap.service</b>（按键映射助手）。</p></div></div>
       <ul class="perm-list" id="perm-linux">
-        <li><b>按键映射助手</b> — 你要做的：<code>sudo make install-remap</code>。装好后它以 root 接管遥控器按键并注入映射结果；没有它语音听写照常，只是自定义键位不生效。<br><span class="sub">服务名 xiaomi-remote-remap.service（root）。</span></li>
-        <li><b>听写服务</b> — 你要做的：<code>sudo make install-user</code>（或登录前自启）。它负责遥控器连接、识别、虚拟麦克风和本页，监听 127.0.0.1:8787。<br><span class="sub">服务名 xiaomi-remote-go.service（普通用户）。</span></li>
-        <li><b>开机自启检查</b> — 运行 <code>xiaomi-remote doctor</code>，每条缺口都会给出可执行的修复命令。</li>
+        <li><b>按键映射助手</b> — 你要做的：<code>sudo make install-remap</code>。装好后它以 root 接管遥控器按键并注入映射结果；没有它语音听写照常，只是自定义键位不生效。<br><span class="sub">服务名 xiaoyao-remap.service（root）。</span></li>
+        <li><b>听写服务</b> — 你要做的：<code>sudo make install-user</code>（或登录前自启）。它负责遥控器连接、识别、虚拟麦克风和本页，监听 127.0.0.1:8787。<br><span class="sub">服务名 xiaoyao.service（普通用户）。</span></li>
+        <li><b>开机自启检查</b> — 运行 <code>xiaoyao doctor</code>，每条缺口都会给出可执行的修复命令。</li>
         <li><span class="sub">旧实现（keyd.service、xiaomi-mic.service 等）已停用，仅保留回退记录。</span></li>
       </ul>
       <ul class="perm-list" id="perm-mac" hidden>
@@ -322,11 +322,11 @@
         <li><b>辅助功能</b> — 你要做的：同一处「辅助功能」里授权，识别结果才能自动上屏；不授权也能用——字幕与历史照常，只是不自动粘贴。</li>
         <li><b>按键映射不适用</b> — macOS 上按键走遥控器原生 HID，不注入，无需任何设置。</li>
         <li><b>虚拟麦克风不适用</b> — 识别直接消费遥控器音频，其它应用听不到虚拟麦，无需任何设置。</li>
-        <li><b>开机自启</b> — 你要做的：用 <code>launchd</code> 或终端运行 <code>xiaomi-remote agent</code>；<code>xiaomi-remote doctor</code> 会检查遥控器与权限。</li>
+        <li><b>开机自启</b> — 你要做的：用 <code>launchd</code> 或终端运行 <code>xiaoyao agent</code>；<code>xiaoyao doctor</code> 会检查遥控器与权限。</li>
       </ul>
       <p class="note" style="margin-top:12px;">
         ASR provider 可在侧边栏「语音识别」中编辑并热切换，也可直接修改
-        <code>~/.config/xiaomi-remote/config.json</code> 的 <code>asr</code> 段；
+        <code>~/.config/xiaoyao/config.json</code> 的 <code>asr</code> 段；
         支持 MiMo、OpenAI 兼容接口、本地 whisper.cpp 和任意本地命令，并可配置 fallback 链。
       </p>
       <p class="note" style="margin-top:12px;">
@@ -565,7 +565,7 @@
     <p class="sub">把小米蓝牙遥控器变成电脑语音输入：按住语音键说话，文字直接进当前窗口。下面四步按需完成即可。</p>
     <div id="welcome-steps"></div>
     <div class="welcome-foot">
-      <p class="note">更完整的体检在终端运行 <code>xiaomi-remote doctor</code>，每项都会给出可执行的修复命令。</p>
+      <p class="note">更完整的体检在终端运行 <code>xiaoyao doctor</code>，每项都会给出可执行的修复命令。</p>
       <button id="welcome-skip" class="btn small">跳过</button>
       <button id="welcome-start" class="btn primary">开始使用</button>
     </div>

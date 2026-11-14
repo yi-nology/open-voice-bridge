@@ -29,7 +29,7 @@
 - **状态与可观测性**：概览、快速检查、最近识别、ASR 耗时、麦克风节点健康；`/metrics` 暴露 BLE、ATVV、麦克风、转写数与时延直方图。
 - **多设备**：同时接入多个已启用设备，按 profile 匹配；BlueZ 电量与连接状态。
 - **手机作为外置输入设备**：配对后的手机浏览器既是虚拟遥控器（方向 / 确认 / 返回 / 音量），也能按住说话当外置麦克风，音频与遥控器走同一条识别链路，桌面字幕与历史会标出当前说话的是哪台设备。默认关闭，需要在配置里打开 `phone` 段；详见 [设计稿](docs/design/external-input-sources.md)。
-- **本地 Agent 访问（只读 MCP）**：在「本地 Agent 访问」面板为每个 AI 客户端创建独立、可撤销的 256-bit 授权，`xiaomi-remote mcp --token …` 以 stdio MCP 提供 `history_list` / `history_search` / `usage_stats` 三个只读工具。撤销即失效；审计只记次数不记内容；响应中的设备地址脱敏。客户端可能把读到的内容发到它的云端，请只授权给信任的客户端。
+- **本地 Agent 访问（只读 MCP）**：在「本地 Agent 访问」面板为每个 AI 客户端创建独立、可撤销的 256-bit 授权，`xiaoyao mcp --token …` 以 stdio MCP 提供 `history_list` / `history_search` / `usage_stats` 三个只读工具。撤销即失效；审计只记次数不记内容；响应中的设备地址脱敏。客户端可能把读到的内容发到它的云端，请只授权给信任的客户端。
 
 ## 界面
 
@@ -45,7 +45,7 @@
 物理遥控器
   │ BLE / ATVV (16 kHz ADPCM)
   ▼
-BlueZ ──► agent ──► PipeWire 虚拟麦克风 (XiaomiRemoteMic)
+BlueZ ──► agent ──► PipeWire 虚拟麦克风 (xiaoyao_mic)
               │
               ├──► ASR（MiMo / OpenAI 兼容 / whisper.cpp / 本地命令）
               │        │
@@ -93,18 +93,19 @@ BlueZ ──► agent ──► PipeWire 虚拟麦克风 (XiaomiRemoteMic)
 git clone https://github.com/yi-nology/open-voice-bridge.git
 cd open-voice-bridge
 make build
-./bin/xiaomi-remote doctor
+./bin/xiaoyao doctor
 ```
 
-`make build` 产出 `bin/xiaomi-remote`（已被 `.gitignore` 忽略）。二进制名沿用
-`xiaomi-remote`，以兼容已有 systemd 服务与脚本；项目对外名称是 Open Voice Bridge。
+`make build` 产出 `bin/xiaoyao`（已被 `.gitignore` 忽略）。产品名「小遥」，
+二进制名 `xiaoyao`；项目对外名称是 Open Voice Bridge。自 0.3.0 起从
+`xiaomi-remote` 全面更名，老装机请看下面的「从旧名迁移」。
 
 ### 2. 配置
 
 ```bash
-mkdir -p ~/.config/xiaomi-remote
-cp conf/config.example.json ~/.config/xiaomi-remote/config.json
-chmod 600 ~/.config/xiaomi-remote/config.json
+mkdir -p ~/.config/xiaoyao
+cp conf/config.example.json ~/.config/xiaoyao/config.json
+chmod 600 ~/.config/xiaoyao/config.json
 ```
 
 把 `address` 改成你的遥控器蓝牙地址（示例里是占位地址 `AA:BB:CC:DD:EE:FF`），
@@ -160,8 +161,8 @@ sudo ./install.sh --root      # 可选：remap helper + 日志轮转
 ### 5. 打开界面
 
 ```bash
-systemctl --user status xiaomi-remote-go
-./bin/xiaomi-remote doctor
+systemctl --user status xiaoyao
+./bin/xiaoyao doctor
 xdg-open http://127.0.0.1:8787
 ```
 
@@ -169,15 +170,47 @@ xdg-open http://127.0.0.1:8787
 语音识别都就绪，然后按住遥控器语音键说一句话。识别结果会粘贴到当前焦点窗口，
 并出现在「字幕」页与「历史」页。
 
+### 从旧名迁移（`xiaomi-*` → `xiaoyao`）
+
+0.3.0 起二进制、目录、socket、systemd 单元与指标全部更名为 `xiaoyao`，
+配置文件**结构不变**，搬目录即可。对照表：
+
+| 旧 | 新 |
+| --- | --- |
+| `xiaomi-remote`（二进制） | `xiaoyao` |
+| `~/.config/xiaomi-remote/` | `~/.config/xiaoyao/` |
+| `~/.local/state/xiaomi-remote/` | `~/.local/state/xiaoyao/` |
+| `/etc/xiaomi-remote/`（root 配置） | `/etc/xiaoyao/` |
+| `/run/xiaomi-remote-helper.sock` | `/run/xiaoyao-helper.sock` |
+| `xiaomi-remote-go.service`（用户单元） | `xiaoyao.service` |
+| `xiaomi-remote-remap.service`（root 单元） | `xiaoyao-remap.service` |
+| `XIAOMI_REMOTE_TOKEN`（环境变量） | `XIAOYAO_TOKEN` |
+| `xiaomi_remote_*`（指标） | `xiaoyao_*` |
+| `xiaomi_mic_sink` / `xiaomi_mic`（节点名） | `xiaoyao_mic_sink` / `xiaoyao_mic` |
+
+```bash
+# 1. 停旧服务
+systemctl --user disable --now xiaomi-remote-go.service
+sudo systemctl disable --now xiaomi-remote-remap.service
+# 2. 搬状态（配置里显式写过 sink_name/source_name 的，把旧节点名一并改掉）
+mv ~/.config/xiaomi-remote ~/.config/xiaoyao
+mv ~/.local/state/xiaomi-remote ~/.local/state/xiaoyao
+sudo mv /etc/xiaomi-remote /etc/xiaoyao   # 若存在
+# 3. 按上面的安装步骤装新单元，然后 doctor 验收
+./bin/xiaoyao doctor
+```
+
+指标更名是**破坏性**的：监控面板里的 `xiaomi_remote_*` 查询要换成 `xiaoyao_*`。
+
 ## 配置说明
 
-配置文件默认位于 `~/.config/xiaomi-remote/config.json`，JSON 格式。
+配置文件默认位于 `~/.config/xiaoyao/config.json`，JSON 格式。
 
 | 字段 | 说明 |
 | --- | --- |
 | `address` | 默认/回退蓝牙地址；多设备时以 `devices` 为准 |
 | `ui_addr` | 管理界面监听地址，**必须**是 `127.0.0.1` / `localhost` / `::1` |
-| `helper_socket` | root remap 的 Unix socket，默认 `/run/xiaomi-remote-helper.sock` |
+| `helper_socket` | root remap 的 Unix socket，默认 `/run/xiaoyao-helper.sock` |
 | `max_utterance_seconds` | 单次录音上限，5–60 秒 |
 | `paste_enabled` | 识别完成后是否自动粘贴 |
 | `devices[]` | `id`、`name`、`address`、`profile`、`enabled`、匹配规则 |
@@ -196,13 +229,13 @@ xdg-open http://127.0.0.1:8787
 | `text.commands_enabled` / `text.commands` | 语音命令（S1）：整句命令词 → 快捷键，默认关 |
 | `llm.app_rules` | 应用感知改写（S5）：按前台类名切 `off`/`cleanup`/`format`/`translate` |
 | `keymap.app_rules` | 按 App 切键位方案：`class` 匹配前台窗口类名 → `profile` |
-| `sink_name` / `source_name` | 虚拟麦克风的 PipeWire 节点名，默认 `xiaomi_mic_sink` / `xiaomi_mic` |
+| `sink_name` / `source_name` | 虚拟麦克风的 PipeWire 节点名，默认 `xiaoyao_mic_sink` / `xiaoyao_mic` |
 
 遗留键（仅当 `asr.providers` 为空时补进 `mimo` 配置，新配置请直接写 providers）：
 `api_key_file`、`asr_model`、`asr_language`、`asr_base_url`。
 `keyd_config` 已废弃（keyd 被 root remapper 取代），保留仅为兼容。
 
-**未知键不会静默吞掉**：启动日志与 `xiaomi-remote doctor` 都会点名被忽略的键，
+**未知键不会静默吞掉**：启动日志与 `xiaoyao doctor` 都会点名被忽略的键，
 避免"写了却没生效"的配置陷阱。
 
 密钥永远只以**文件路径**保存；服务端不会把 Key 内容写入日志或 API 响应。
@@ -265,8 +298,8 @@ xdg-open http://127.0.0.1:8787
 ```json
 {
   "mcpServers": {
-    "xiaomi-remote": {
-      "command": "/path/to/xiaomi-remote",
+    "xiaoyao": {
+      "command": "/path/to/xiaoyao",
       "args": ["mcp", "--token", "<你的授权>"]
     }
   }
@@ -286,11 +319,11 @@ make openapi   # 需要 thrift2openapi
 ```
 
 指标端点：`http://127.0.0.1:8787/metrics`，包含 Go 运行时指标与
-`xiaomi_remote_ble_connected`、`xiaomi_remote_mic_healthy`、
-`xiaomi_remote_transcripts_total`、`xiaomi_remote_asr_duration_seconds` 等；
-手机面有 `xiaomi_remote_phone_clients`、`xiaomi_remote_phone_audio_seconds_total`、
-`xiaomi_remote_phone_utterances_total`、`xiaomi_remote_phone_keys_total`、
-`xiaomi_remote_phone_inject_errors_total`。
+`xiaoyao_ble_connected`、`xiaoyao_mic_healthy`、
+`xiaoyao_transcripts_total`、`xiaoyao_asr_duration_seconds` 等；
+手机面有 `xiaoyao_phone_clients`、`xiaoyao_phone_audio_seconds_total`、
+`xiaoyao_phone_utterances_total`、`xiaoyao_phone_keys_total`、
+`xiaoyao_phone_inject_errors_total`。
 
 ## 目录结构
 
@@ -322,8 +355,8 @@ make openapi   # 需要 thrift2openapi
 
 ## 日志与重置（OPS-12）
 
-- **日志级别**：`xiaomi-remote agent --log-level DEBUG`（`DEBUG | INFO | WARN | ERROR`，默认 `INFO`；也可用环境变量 `LOG_LEVEL`）。
-- **重置本地状态**：`xiaomi-remote reset` 清空历史、使用统计与全部令牌（手机配对、Agent 授权）；会先要你确认，`--yes` 跳过。配置文件保留，要删自己删。
+- **日志级别**：`xiaoyao agent --log-level DEBUG`（`DEBUG | INFO | WARN | ERROR`，默认 `INFO`；也可用环境变量 `LOG_LEVEL`）。
+- **重置本地状态**：`xiaoyao reset` 清空历史、使用统计与全部令牌（手机配对、Agent 授权）；会先要你确认，`--yes` 跳过。配置文件保留，要删自己删。
 
 ## 发布通道（S9）
 
@@ -349,18 +382,18 @@ CI 在 Linux 上执行测试与构建，并对 macOS / Windows 做交叉编译�
 | 现象 | 排查 |
 | --- | --- |
 | `doctor` 报遥控器未找到 | 确认 `bluetoothctl` 已 `pair` / `trust` / `connect`；确认 VID/PID `2717:32b8` 或名称匹配 |
-| 界面显示已连接但没有声音 | `pw-dump \| grep xiaomi` 查看 `xiaomi_mic_sink` / `xiaomi_mic`；日志出现 `virtual mic node missing` 会自动重建 |
+| 界面显示已连接但没有声音 | `pw-dump \| grep xiaoyao` 查看 `xiaoyao_mic_sink` / `xiaoyao_mic`；日志出现 `virtual mic node missing` 会自动重建 |
 | 识别成功但没有文字 | 确认目标输入框有焦点；X11 需要 `xsel`；Wayland 原生需 `wtype`；检查 `paste_enabled` |
 | `readyz` 为 503 | 查看返回里的 `mic_healthy` / `asr_ready` / `helper_error`；先跑 `doctor` |
 | 云端识别 401 | 检查 API Key 文件存在且权限 `0600`；确认 provider / Base URL / 模型名 |
-| 按键无反应 | `systemctl status xiaomi-remote-remap`；确认 `/dev/uinput` 权限与 remap 服务 |
-| 日志 | `~/.local/state/xiaomi-remote/agent.log`、`journalctl --user -u xiaomi-remote-go`、`journalctl -u xiaomi-remote-remap` |
+| 按键无反应 | `systemctl status xiaoyao-remap`；确认 `/dev/uinput` 权限与 remap 服务 |
+| 日志 | `~/.local/state/xiaoyao/agent.log`、`journalctl --user -u xiaoyao`、`journalctl -u xiaoyao-remap` |
 
 ## 隐私与安全
 
 - 管理 UI / API 只监听回环地址，并校验请求 Host 与 Origin。
 - API Key、令牌只保存在本地文件，权限建议 `0600`，不会出现在日志与网页回显中。
-- 日志只记字符数、语言、提供商与耗时，不记转写正文；蓝牙地址只记厂商段与末段（`AA:BB:CC:**:**:FF`）。日志文件默认在 `~/.local/state/xiaomi-remote/agent.log`，不落在代码仓库里。
+- 日志只记字符数、语言、提供商与耗时，不记转写正文；蓝牙地址只记厂商段与末段（`AA:BB:CC:**:**:FF`）。日志文件默认在 `~/.local/state/xiaoyao/agent.log`，不落在代码仓库里。
 - 语音与文本只会发往你配置的 ASR / LLM 服务；项目本身没有遥测。
 - root remap 只监听本地 Unix socket，作用域限于按键注入。
 - 安全问题请按 [SECURITY.md](SECURITY.md) 私下报告。

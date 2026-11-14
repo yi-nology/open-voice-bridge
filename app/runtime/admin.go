@@ -53,8 +53,8 @@ func (a Admin) HTTP(uiServer *ui.Server) *server.Hertz {
 		DisableResponseWrap: true,
 		SkipPaths:           []string{"/", "/assets/*", "/healthz", "/readyz", "/metrics", "/events", "/api/status"},
 		Prometheus: &mw.PrometheusConfig{
-			Namespace:   "xiaomi_remote",
-			ServiceName: "xiaomi-remote",
+			Namespace:   "xiaoyao",
+			ServiceName: "xiaoyao",
 		},
 		AccessLogOptions: []mw.AccessLogOption{mw.WithAccessLogLogger(a.Logger)},
 	}) {
@@ -63,7 +63,7 @@ func (a Admin) HTTP(uiServer *ui.Server) *server.Hertz {
 	hertzServer.Use(uiServer.Security)
 	hertzServer.Use(apihandler.WithBackend(uiServer))
 	a.Register(hertzServer, uiServer)
-	hertzmetrics.InitAndRegister("xiaomi-remote", hertzServer)
+	hertzmetrics.InitAndRegister("xiaoyao", hertzServer)
 	return hertzServer
 }
 

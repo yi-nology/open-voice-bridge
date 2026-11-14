@@ -45,7 +45,7 @@ func writeLine(t *testing.T, conn net.Conn, value any) {
 }
 
 func TestNewDefaults(t *testing.T) {
-	if c := New(""); c.Path != "/run/xiaomi-remote-helper.sock" || c.Timeout != 10*time.Second {
+	if c := New(""); c.Path != "/run/xiaoyao-helper.sock" || c.Timeout != 10*time.Second {
 		t.Fatalf("default client = %+v", c)
 	}
 	if c := New("/custom.sock"); c.Path != "/custom.sock" {

@@ -147,10 +147,10 @@ func Default() Config {
 		APIKeyFile:   filepath.Join(home, ".config", "xiaomi-mimo", "api_key"),
 		ASRModel:     DefaultASRModel,
 		ASRLanguage:  "auto",
-		SinkName:     "xiaomi_mic_sink",
-		SourceName:   "xiaomi_mic",
+		SinkName:     "xiaoyao_mic_sink",
+		SourceName:   "xiaoyao_mic",
 		UIAddr:       "127.0.0.1:8787",
-		HelperSocket: "/run/xiaomi-remote-helper.sock",
+		HelperSocket: "/run/xiaoyao-helper.sock",
 		KeydConfig:   "/etc/keyd/xiaomi.conf",
 		MaxUtterance: core.DefaultUtteranceSeconds,
 		PasteEnabled: true,
@@ -256,7 +256,7 @@ func DefaultPath() string {
 	if err != nil {
 		dir = "."
 	}
-	return filepath.Join(dir, "xiaomi-remote", "config.json")
+	return filepath.Join(dir, "xiaoyao", "config.json")
 }
 
 // Load reads the document, creating defaults when the file is absent and

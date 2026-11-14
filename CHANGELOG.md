@@ -2,6 +2,13 @@
 
 ## 0.3.0 — 2026-11-13
 
+- Changed: the product ships as `xiaoyao` (小遥). Binary, config/state
+  dirs, helper socket, systemd units, logrotate, `XIAOYAO_TOKEN` and every
+  metric (`xiaomi_remote_*` → `xiaoyao_*`) were renamed from `xiaomi-*`;
+  breaking for existing installs — see README 「从旧名迁移」 for the
+  one-shot migration. The example config no longer carries the dead
+  `keyd_config` key.
+
 - Fixed: sweep audit defects (#8-#13) — Revoke 落盘失败回滚分裂态（被撤销手机
   活会话切断、重启无复活）；诊断摘要不再带出最后一次转写正文（no speech 承诺）；
   同设备重连把缓冲半句话转写而非丢弃（I5 断开不丢音频）；ASRConfig 深拷贝交付 +

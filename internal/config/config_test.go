@@ -151,7 +151,7 @@ func TestLegacyConfigMigratesDevices(t *testing.T) {
   "ui_addr": "127.0.0.1:8787",
   "max_utterance_seconds": 30,
   "api_key_file": "/tmp/key",
-  "helper_socket": "/run/xiaomi-remote-helper.sock",
+  "helper_socket": "/run/xiaoyao-helper.sock",
   "asr": {"provider":"local","providers":{"local":{"type":"command","binary":"/bin/echo"}}},
   "keymap": {"profile":"coding","profiles":{"coding":{}}}
 }`

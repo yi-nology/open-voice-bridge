@@ -224,7 +224,7 @@ func TestRunWarnsWithAFixWhenTheHelperIsAbsent(t *testing.T) {
 	if !strings.HasPrefix(line, "WARN:") {
 		t.Fatalf("helper line = %q, want a WARN", line)
 	}
-	if !strings.Contains(line, "systemctl") || !strings.Contains(line, "xiaomi-remote-remap") {
+	if !strings.Contains(line, "systemctl") || !strings.Contains(line, "xiaoyao-remap") {
 		t.Fatalf("helper line must name a command to run: %q", line)
 	}
 }

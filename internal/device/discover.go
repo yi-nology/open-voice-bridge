@@ -19,7 +19,7 @@ func parseInputDevices(data string) []Discovered {
 			continue
 		}
 		name := blockValue(block, `N: Name="`, `"`)
-		if name == "" || name == "xiaomi-remote virtual keyboard" || name == "keyd virtual keyboard" {
+		if name == "" || name == "xiaoyao virtual keyboard" || name == "xiaomi-remote virtual keyboard" || name == "keyd virtual keyboard" {
 			continue
 		}
 		address := blockValue(block, "U: Uniq=", "\n")
