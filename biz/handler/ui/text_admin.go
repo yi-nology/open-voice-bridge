@@ -13,18 +13,18 @@ import (
 // free-form endpoint beside it.
 func (s *Server) TextCommands(ctx context.Context, c *app.RequestContext) {
 	if s.deps.TextCommands == nil {
-		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "commands unavailable"})
+		c.JSON(consts.StatusServiceUnavailable, reply{OK: false, Error: "commands unavailable"})
 		return
 	}
 	enabled, commands := s.deps.TextCommands()
-	c.JSON(consts.StatusOK, map[string]any{"ok": true, "enabled": enabled, "commands": commands})
+	c.JSON(consts.StatusOK, reply{OK: true, Enabled: &enabled, Commands: commands})
 }
 
 // TextCommandsSave stores the voice-command toggle and map and applies them
 // to the live rules immediately.
 func (s *Server) TextCommandsSave(ctx context.Context, c *app.RequestContext) {
 	if s.deps.UpdateTextCommands == nil {
-		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "commands unavailable"})
+		c.JSON(consts.StatusServiceUnavailable, reply{OK: false, Error: "commands unavailable"})
 		return
 	}
 	var req struct {
@@ -32,81 +32,82 @@ func (s *Server) TextCommandsSave(ctx context.Context, c *app.RequestContext) {
 		Commands map[string]string `json:"commands"`
 	}
 	if err := json.Unmarshal(c.Request.Body(), &req); err != nil {
-		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		c.JSON(consts.StatusBadRequest, reply{OK: false, Error: err.Error()})
 		return
 	}
 	if err := s.deps.UpdateTextCommands(req.Enabled, req.Commands); err != nil {
-		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		c.JSON(consts.StatusBadRequest, reply{OK: false, Error: err.Error()})
 		return
 	}
-	c.JSON(consts.StatusOK, map[string]any{"ok": true})
+	c.JSON(consts.StatusOK, reply{OK: true})
 }
 
 // PhrasePaste inserts a common phrase into the focused window on request —
 // the click path behind the picker overlay.
 func (s *Server) PhrasePaste(ctx context.Context, c *app.RequestContext) {
 	if s.deps.PastePhrase == nil {
-		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "phrases unavailable"})
+		c.JSON(consts.StatusServiceUnavailable, reply{OK: false, Error: "phrases unavailable"})
 		return
 	}
 	var req struct {
 		Slot int `json:"slot"`
 	}
 	if err := json.Unmarshal(c.Request.Body(), &req); err != nil || req.Slot < 1 {
-		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": "slot required"})
+		c.JSON(consts.StatusBadRequest, reply{OK: false, Error: "slot required"})
 		return
 	}
 	text, ok := s.deps.PastePhrase(req.Slot)
 	if !ok {
-		c.JSON(consts.StatusOK, map[string]any{"ok": false, "error": "该槽位没有短语"})
+		c.JSON(consts.StatusOK, reply{OK: false, Error: "该槽位没有短语"})
 		return
 	}
-	c.JSON(consts.StatusOK, map[string]any{"ok": true, "slot": req.Slot, "text": text})
+	c.JSON(consts.StatusOK, reply{OK: true, Slot: &req.Slot, Text: text})
 }
 
 // StreamingSubtitles returns the live-partial-recognition toggle (S6).
 func (s *Server) StreamingSubtitles(ctx context.Context, c *app.RequestContext) {
 	if s.deps.StreamingSubtitles == nil {
-		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "streaming unavailable"})
+		c.JSON(consts.StatusServiceUnavailable, reply{OK: false, Error: "streaming unavailable"})
 		return
 	}
-	c.JSON(consts.StatusOK, map[string]any{"ok": true, "enabled": s.deps.StreamingSubtitles()})
+	enabled := s.deps.StreamingSubtitles()
+	c.JSON(consts.StatusOK, reply{OK: true, Enabled: &enabled})
 }
 
 // StreamingSubtitlesSave stores the streaming toggle and applies it live.
 func (s *Server) StreamingSubtitlesSave(ctx context.Context, c *app.RequestContext) {
 	if s.deps.SetStreamingSubtitles == nil {
-		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "streaming unavailable"})
+		c.JSON(consts.StatusServiceUnavailable, reply{OK: false, Error: "streaming unavailable"})
 		return
 	}
 	var req struct {
 		Enabled bool `json:"enabled"`
 	}
 	if err := json.Unmarshal(c.Request.Body(), &req); err != nil {
-		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		c.JSON(consts.StatusBadRequest, reply{OK: false, Error: err.Error()})
 		return
 	}
 	if err := s.deps.SetStreamingSubtitles(req.Enabled); err != nil {
-		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		c.JSON(consts.StatusBadRequest, reply{OK: false, Error: err.Error()})
 		return
 	}
-	c.JSON(consts.StatusOK, map[string]any{"ok": true})
+	c.JSON(consts.StatusOK, reply{OK: true})
 }
 
 // WakeConfig returns the wake-word toggle and word (S7).
 func (s *Server) WakeConfig(ctx context.Context, c *app.RequestContext) {
 	if s.deps.WakeConfig == nil {
-		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "wake unavailable"})
+		c.JSON(consts.StatusServiceUnavailable, reply{OK: false, Error: "wake unavailable"})
 		return
 	}
 	enabled, word := s.deps.WakeConfig()
-	c.JSON(consts.StatusOK, map[string]any{"ok": true, "enabled": enabled, "word": word})
+	c.JSON(consts.StatusOK, reply{OK: true, Enabled: &enabled, Word: word})
 }
 
 // WakeConfigSave stores the wake-word settings and restarts the listener.
 func (s *Server) WakeConfigSave(ctx context.Context, c *app.RequestContext) {
 	if s.deps.SetWake == nil {
-		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "wake unavailable"})
+		c.JSON(consts.StatusServiceUnavailable, reply{OK: false, Error: "wake unavailable"})
 		return
 	}
 	var req struct {
@@ -114,30 +115,30 @@ func (s *Server) WakeConfigSave(ctx context.Context, c *app.RequestContext) {
 		Word    string `json:"word"`
 	}
 	if err := json.Unmarshal(c.Request.Body(), &req); err != nil {
-		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		c.JSON(consts.StatusBadRequest, reply{OK: false, Error: err.Error()})
 		return
 	}
 	if err := s.deps.SetWake(req.Enabled, req.Word); err != nil {
-		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		c.JSON(consts.StatusBadRequest, reply{OK: false, Error: err.Error()})
 		return
 	}
-	c.JSON(consts.StatusOK, map[string]any{"ok": true})
+	c.JSON(consts.StatusOK, reply{OK: true})
 }
 
 // LookbackConfig returns the 回眸 toggle and window (S8).
 func (s *Server) LookbackConfig(ctx context.Context, c *app.RequestContext) {
 	if s.deps.LookbackConfig == nil {
-		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "lookback unavailable"})
+		c.JSON(consts.StatusServiceUnavailable, reply{OK: false, Error: "lookback unavailable"})
 		return
 	}
 	enabled, seconds := s.deps.LookbackConfig()
-	c.JSON(consts.StatusOK, map[string]any{"ok": true, "enabled": enabled, "seconds": seconds})
+	c.JSON(consts.StatusOK, reply{OK: true, Enabled: &enabled, Seconds: &seconds})
 }
 
 // LookbackConfigSave stores the 回眸 settings and applies them live.
 func (s *Server) LookbackConfigSave(ctx context.Context, c *app.RequestContext) {
 	if s.deps.SetLookback == nil {
-		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "lookback unavailable"})
+		c.JSON(consts.StatusServiceUnavailable, reply{OK: false, Error: "lookback unavailable"})
 		return
 	}
 	var req struct {
@@ -145,35 +146,35 @@ func (s *Server) LookbackConfigSave(ctx context.Context, c *app.RequestContext) 
 		Seconds int  `json:"seconds"`
 	}
 	if err := json.Unmarshal(c.Request.Body(), &req); err != nil {
-		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		c.JSON(consts.StatusBadRequest, reply{OK: false, Error: err.Error()})
 		return
 	}
 	if err := s.deps.SetLookback(req.Enabled, req.Seconds); err != nil {
-		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		c.JSON(consts.StatusBadRequest, reply{OK: false, Error: err.Error()})
 		return
 	}
-	c.JSON(consts.StatusOK, map[string]any{"ok": true})
+	c.JSON(consts.StatusOK, reply{OK: true})
 }
 
 // LookbackRecover transcribes the last seconds of the 回眸 ring (S8).
 func (s *Server) LookbackRecover(ctx context.Context, c *app.RequestContext) {
 	if s.deps.RecoverLookback == nil {
-		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "lookback unavailable"})
+		c.JSON(consts.StatusServiceUnavailable, reply{OK: false, Error: "lookback unavailable"})
 		return
 	}
 	var req struct {
 		Seconds int `json:"seconds"`
 	}
 	if err := json.Unmarshal(c.Request.Body(), &req); err != nil {
-		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		c.JSON(consts.StatusBadRequest, reply{OK: false, Error: err.Error()})
 		return
 	}
 	if req.Seconds <= 0 {
 		req.Seconds = 30
 	}
 	if !s.deps.RecoverLookback(req.Seconds) {
-		c.JSON(consts.StatusOK, map[string]any{"ok": false, "error": "回眸环里还没有可识别的语音"})
+		c.JSON(consts.StatusOK, reply{OK: false, Error: "回眸环里还没有可识别的语音"})
 		return
 	}
-	c.JSON(consts.StatusOK, map[string]any{"ok": true})
+	c.JSON(consts.StatusOK, reply{OK: true})
 }

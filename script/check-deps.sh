@@ -12,7 +12,10 @@ violation() { echo "deps: $*" >&2; fail=1; }
 
 # §10-3: the target is <20. This ceiling is a ratchet — lower it whenever the
 # count drops and never raise it (the debt log in the roadmap tracks the why).
-CEILING=207
+# 2026-11-14: admin UI 应答信封收进 typed reply(#16,biz/handler/ui/reply.go)
+# ⇒ 230→199(S6/ARC-08/S8 三批全部抵扣)。基线随降到 205(留缓冲),
+# 下一批 typed 收口继续降;目标 <20 不变。
+CEILING=205
 count=$({ grep -rn --include='*.go' 'map\[string\]any' . || true; } | { grep -v _test || true; } | wc -l | tr -d ' ')
 [ "$count" -le "$CEILING" ] || violation "map[string]any count $count exceeds the ratchet ceiling $CEILING (new state goes in core typed views; free-format maps only at the documented sites — see roadmap 债务盘点; lower the ceiling when the count drops)"
 
