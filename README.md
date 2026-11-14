@@ -317,6 +317,11 @@ make openapi   # 需要 thrift2openapi
 └── script/                    # install / bootstrap / soak
 ```
 
+## 日志与重置（OPS-12）
+
+- **日志级别**：`xiaomi-remote agent --log-level DEBUG`（`DEBUG | INFO | WARN | ERROR`，默认 `INFO`；也可用环境变量 `LOG_LEVEL`）。
+- **重置本地状态**：`xiaomi-remote reset` 清空历史、使用统计与全部令牌（手机配对、Agent 授权）；会先要你确认，`--yes` 跳过。配置文件保留，要删自己删。
+
 ## 发布通道（S9）
 
 - **稳定版**：`vX.Y.Z`（如 `v0.2.0`）——正式发布，默认给所有人。

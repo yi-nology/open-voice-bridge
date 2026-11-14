@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"flag"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/oekit/logx"
@@ -32,6 +34,7 @@ func main() {
 					if _, code := cli.ParseFlags(fs, args); code != cli.ExitOK {
 						return code
 					}
+					applyLogLevel(fs)
 					return runtime.RunAgent(runtime.AgentOptions{
 						ConfigPath: *path,
 						Version:    version,
@@ -69,6 +72,7 @@ func main() {
 					if _, code := cli.ParseFlags(fs, args); code != cli.ExitOK {
 						return code
 					}
+					applyLogLevel(fs)
 					return doctor.Run(*path, newLogger("xiaomi-remote"), stdout)
 				},
 			},
@@ -79,15 +83,74 @@ func main() {
 					return runMCP(ctx, args, stdout, stderr)
 				},
 			},
+			{
+				Name:    "reset",
+				Summary: "clear local state (history, usage, tokens) after confirmation",
+				Run: func(_ context.Context, args []string, stdout, stderr io.Writer) int {
+					fs := cli.NewFlagSet("reset", stderr)
+					path := fs.String("config", config.DefaultPath(), "config file")
+					yes := fs.Bool("yes", false, "skip the confirmation prompt")
+					if _, code := cli.ParseFlags(fs, args); code != cli.ExitOK {
+						return code
+					}
+					return runReset(*path, *yes, stdout, stderr)
+				},
+			},
 		},
 	}
 	os.Exit(app.Run(context.Background(), os.Args[1:], os.Stdout, os.Stderr))
 }
 
+// runReset deletes the local state files beside the config — history, usage
+// stats and every token store — after an explicit confirmation. The config
+// file itself is kept: losing settings is not what "reset" means (OPS-12).
+func runReset(path string, assumeYes bool, stdout, stderr io.Writer) int {
+	dir := filepath.Dir(path)
+	if !assumeYes {
+		fmt.Fprint(stdout, "This deletes history, usage stats and all tokens in ", dir, ".\nType yes to confirm: ")
+		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+		if err != nil || strings.TrimSpace(line) != "yes" {
+			fmt.Fprintln(stdout, "aborted; nothing was deleted")
+			return 1
+		}
+	}
+	targets := []string{"history.jsonl", "usage-stats.json", "phone_tokens.json", "mcp-tokens.json"}
+	removed := 0
+	for _, name := range targets {
+		target := filepath.Join(dir, name)
+		switch err := os.Remove(target); {
+		case err == nil:
+			fmt.Fprintln(stdout, "removed", target)
+			removed++
+		case os.IsNotExist(err):
+		default:
+			fmt.Fprintln(stderr, "cannot remove", target, err)
+			return 1
+		}
+	}
+	fmt.Fprintf(stdout, "reset complete: %d file(s) removed; config kept at %s\n", removed, path)
+	return 0
+}
+
 func flagSet(name string, stderr io.Writer) (*flag.FlagSet, *string) {
 	fs := cli.NewFlagSet(name, stderr)
 	path := fs.String("config", config.DefaultPath(), "config file")
+	fs.String("log-level", "info", "log level: DEBUG | INFO | WARN | ERROR (OPS-12)")
 	return fs, path
+}
+
+// applyLogLevel hands the flag to the logging backend, which reads
+// LOG_LEVEL for every logger (OPS-12).
+func applyLogLevel(fs *flag.FlagSet) {
+	flag := fs.Lookup("log-level")
+	if flag == nil {
+		return
+	}
+	level := strings.ToUpper(strings.TrimSpace(flag.Value.String()))
+	switch level {
+	case "DEBUG", "INFO", "WARN", "WARNING", "ERROR":
+		_ = os.Setenv("LOG_LEVEL", level)
+	}
 }
 
 func newLogger(service string) logx.Logger {
