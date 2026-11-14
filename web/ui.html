@@ -786,7 +786,7 @@ body.listening .subtitle-live i { background: var(--accent); }
           <h2>启用遥控器自定义按键映射</h2>
           <span id="status-right" class="enable-status">按键状态：正在读取…</span>
         </div>
-        <p class="enable-desc">优先独占遥控器（RC003 / ARN9）；系统不允许独占时使用兼容监听，不影响其他键盘。</p>
+        <p class="enable-desc">映射优先独占遥控器按键（RC003 / ARN9）；拿不到独占时自动退回兼容模式，不影响你用其它键盘。</p>
       </div>
     </div>
 
@@ -839,7 +839,8 @@ body.listening .subtitle-live i { background: var(--accent); }
             <p>点击左侧按键定位；修改后自动保存。</p>
           </div>
           <div class="panel-tools">
-            <select id="keymap-profile" title="按键预设"></select>
+            <span class="sub" style="align-self:center">配置方案</span>
+            <select id="keymap-profile" title="配置方案" aria-label="配置方案"></select>
             <button id="capture-btn" class="btn small">开始捕获</button>
             <button id="reset" class="btn small">恢复默认</button>
           </div>
@@ -955,9 +956,9 @@ body.listening .subtitle-live i { background: var(--accent); }
       <div class="actions">
         <select id="asr-preset" title="语音识别快速模板"></select>
         <button id="btn-asr-add" class="btn">新增配置</button>
-        <button id="btn-asr-delete" class="btn">删除此配置</button>
         <button id="btn-asr-save" class="btn primary">保存并启用</button>
         <button id="btn-asr-test" class="btn">检查配置</button>
+        <button id="btn-asr-delete" class="btn warn" style="margin-left:auto">删除此配置</button>
       </div>
       <div id="asr-config-msg" class="msg"></div>
     </div>
@@ -978,7 +979,7 @@ body.listening .subtitle-live i { background: var(--accent); }
             <option value="translate">翻译成英文</option>
           </select>
         </label>
-        <label class="wide">API Key（保存到 Key File，0600）<input id="llm-api-key" type="password" autocomplete="off" placeholder="sk-..."></label>
+        <label class="wide">API Key（密钥仅保存在本机）<input id="llm-api-key" type="password" autocomplete="off" placeholder="sk-..."></label>
         <details class="adv wide">
           <summary>高级选项（Key 文件路径、超时、System Prompt）</summary>
           <div class="adv-body">
@@ -1130,7 +1131,7 @@ body.listening .subtitle-live i { background: var(--accent); }
         <span class="subtitle-orb b"></span>
         <span class="subtitle-orb c"></span>
         <div id="subtitle-stage" class="subtitle-stage">
-          <div id="subtitle-empty" class="subtitle-empty">按住语音键说话，字幕会像歌词一样出现在这里</div>
+          <div id="subtitle-empty" class="subtitle-empty">按住遥控器语音键（带麦克风图标的键）说话，字幕会像歌词一样出现在这里；键位可在「按键映射」查看</div>
           <div id="subtitle-lines" class="subtitle-lines"></div>
         </div>
       </div>
@@ -1251,7 +1252,7 @@ body.listening .subtitle-live i { background: var(--accent); }
       </div>
       <div class="stats-days" id="stats-days" title="最近 14 天语音时长"></div>
       <div class="stats-heat" id="stats-heat" title="最近 26 周使用热力图"></div>
-      <div class="heat-caption">最近 26 周 · 颜色越深表示当天说话越多</div>
+      <div class="heat-caption" id="heat-caption">最近 26 周 · 颜色越深表示当天说话越多</div>
     </div>
 
     <div class="panel">
@@ -1631,7 +1632,7 @@ function updateConnection(status) {
   const keyd = document.getElementById("conn-keyd");
   const keydSub = document.getElementById("conn-keyd-sub");
   if (isMac) {
-    keyd.textContent = "不适用";
+    keyd.textContent = "不适用（macOS 原生 HID）";
     keyd.className = "value";
     if (keydSub) keydSub.textContent = "macOS 无 evdev/uinput，按键走遥控器原生 HID";
   } else {
@@ -2040,7 +2041,11 @@ function renderDiscovered(items) {
   const title = document.getElementById("discovered-title");
   if (!list) return;
   list.innerHTML = "";
-  const available = items.filter(item => !item.configured);
+  // Remote-shaped matches first: the scan also lists keyboards and
+  // headsets (UX 验收 A#10), and those should not crowd out the remotes.
+  const available = items.filter(item => !item.configured).sort((a, b) =>
+    ((b.profile || b.capabilities && b.capabilities.length) ? 1 : 0) -
+    ((a.profile || a.capabilities && a.capabilities.length) ? 1 : 0));
   if (!available.length) {
     if (title) title.style.display = "none";
     return;
@@ -2712,11 +2717,16 @@ function openConfigPanel(name) {
   goTab("connection");
   showConfigPanel(name);
   if (name === "asr") loadASRConfig();
-  if (name === "llm") loadLLMConfig();
-loadLLMAppRules();
-loadStreamingToggle();
-loadWakeToggle();
-loadLookbackToggle();
+  if (name === "llm") {
+    loadLLMConfig();
+    loadLLMAppRules();
+    syncLLMEnabledState();
+  }
+  if (name === "subtitle") {
+    loadStreamingToggle();
+    loadWakeToggle();
+    loadLookbackToggle();
+  }
   if (name === "text") loadTextConfig();
 }
 
@@ -2840,11 +2850,13 @@ function renderStatsHeatmap(days) {
     const ms = (days[key] && days[key].speech_ms) || 0;
     if (ms > peak) peak = ms;
   }
+  let any = false;
   for (let cursor = new Date(start); cursor <= today; cursor.setDate(cursor.getDate() + 1)) {
     const key = cursor.getFullYear() + "-" + String(cursor.getMonth() + 1).padStart(2, "0") + "-" + String(cursor.getDate()).padStart(2, "0");
     const cell = document.createElement("div");
     const stat = days[key];
     const ms = (stat && stat.speech_ms) || 0;
+    if (ms > 0) any = true;
     cell.className = "heat-cell";
     if (ms > 0) {
       const level = Math.ceil((ms / peak) * 4);
@@ -2852,6 +2864,12 @@ function renderStatsHeatmap(days) {
     }
     cell.title = key + (stat ? "：" + stat.utterances + " 次，" + fmtDuration(stat.speech_ms) : "：无记录");
     host.appendChild(cell);
+  }
+  const caption = document.getElementById("heat-caption");
+  if (caption) {
+    caption.textContent = any
+      ? "最近 26 周 · 颜色越深表示当天说话越多"
+      : "最近 26 周 · 暂无数据，说一句话后这里会亮起来";
   }
 }
 
@@ -3853,6 +3871,19 @@ async function saveLLMAppRules() {
   }
 }
 
+function bindDraftRow(row, fields) {
+  // A blank draft row stays clean: the delete button only appears once the
+  // row has real content (UX 验收 B#2).
+  const remove = row.querySelector("button");
+  if (!remove) return row;
+  const sync = () => {
+    remove.hidden = !fields.some(field => field.value.trim());
+  };
+  for (const field of fields) field.addEventListener("input", sync);
+  sync();
+  return row;
+}
+
 function commandRow(from = "", to = "") {
   const row = document.createElement("div");
   row.className = "rule-row";
@@ -4011,6 +4042,8 @@ const modelFieldMap = {
   command: ["type", "binary", "model_path", "args", "timeout_seconds", "language", "fallback"],
 };
 
+const TYPE_LABELS = {mimo: "MiMo", openai: "OpenAI 兼容", whispercpp: "whisper.cpp 本地", command: "本地命令"};
+
 function syncModelFields() {
   const type = modelFields.type.value;
   const visible = new Set(modelFieldMap[type] || Object.keys(modelFields).concat(["fallback"]));
@@ -4065,7 +4098,7 @@ async function loadASRConfig() {
     const active = asrConfigData.provider || "";
     const live = (asrConfigData.providers || {})[active] || {};
     modelMessage(active
-      ? "当前生效：" + active + "（" + (live.model || live.type || "未配置") + "）"
+      ? "当前生效：" + active + "（" + (live.model || TYPE_LABELS[live.type] || "未配置") + "）"
       : "还没有可用的识别配置", active ? "ok" : "err");
   } catch (error) {
     modelMessage("加载模型配置失败：" + error, "err");
@@ -4348,6 +4381,18 @@ document.getElementById("dictionary-add").addEventListener("click", () => {
 document.getElementById("snippet-add").addEventListener("click", () => {
   document.getElementById("snippet-list").appendChild(snippetRow());
 });
+function syncLLMEnabledState() {
+  const toggle = document.getElementById("llm-enabled");
+  const panel = document.getElementById("cfg-llm");
+  if (!toggle || !panel) return;
+  const on = toggle.checked;
+  for (const el of panel.querySelectorAll("input, select, textarea, button")) {
+    if (el.id === "llm-enabled") continue;
+    el.disabled = !on;
+  }
+}
+document.getElementById("llm-enabled")?.addEventListener("change", syncLLMEnabledState);
+
 document.getElementById("app-rules-add")?.addEventListener("click", () => {
   document.getElementById("app-rules-list").appendChild(appRuleRow());
 });
@@ -4375,6 +4420,11 @@ document.getElementById("text-save").addEventListener("click", saveTextConfig);
 loadTextConfig();
 loadLLMConfig();
 loadASRConfig();
+loadLLMAppRules();
+syncLLMEnabledState();
+loadStreamingToggle();
+loadWakeToggle();
+loadLookbackToggle();
 loadSubtitles();
 loadOverviewRecent();
 loadStats();
