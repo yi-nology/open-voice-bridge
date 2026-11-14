@@ -9,7 +9,6 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
-	"github.com/yi-nology/open-voice-bridge/internal/text"
 	"os"
 	"path/filepath"
 	"slices"
@@ -26,7 +25,7 @@ func (s *Service) SwitchASR(ctx context.Context, name string) error {
 	}
 	snapshot := s.configSnapshotLocked()
 	snapshot.ASR.Provider = name
-	engine, err := asr.Build(snapshot.ASR)
+	engine, err := s.ops.BuildASR(snapshot.ASR)
 	if err != nil {
 		s.cfgMu.Unlock()
 		return err
@@ -74,7 +73,7 @@ func (s *Service) UpdateASRConfig(ctx context.Context, next config.ASRConfig) er
 	if err := asr.Validate(next); err != nil {
 		return err
 	}
-	engine, err := asr.Build(next)
+	engine, err := s.ops.BuildASR(next)
 	if err != nil {
 		return err
 	}
@@ -118,7 +117,7 @@ func (s *Service) TextConfig(ctx context.Context) map[string]any {
 }
 
 func (s *Service) UpdateTextConfig(ctx context.Context, next config.TextConfig) error {
-	rules, err := text.New(next)
+	rules, err := s.ops.BuildRules(next)
 	if err != nil {
 		return err
 	}
@@ -222,7 +221,7 @@ func (s *Service) UpdateTextCommands(enabled bool, commands map[string]string) e
 	previous := s.cfg.Text
 	s.cfg.Text.CommandsEnabled = enabled
 	s.cfg.Text.Commands = commands
-	rules, buildErr := text.New(s.cfg.Text)
+	rules, buildErr := s.ops.BuildRules(s.cfg.Text)
 	if buildErr == nil {
 		buildErr = config.Save(s.path, s.cfg)
 	}
@@ -284,7 +283,7 @@ func (s *Service) SaveLLMKey(ctx context.Context, key string) error {
 func (s *Service) UpdateLLMConfig(ctx context.Context, next config.LLMConfig) error {
 	// The generated request model predates app_rules; keep them across saves.
 	next.AppRules = s.LLMAppRules()
-	processor, err := llm.Build(next)
+	processor, err := s.ops.BuildLLM(next)
 	if err != nil {
 		return err
 	}
@@ -323,7 +322,7 @@ func (s *Service) TestLLM(ctx context.Context, provider string, live bool) []llm
 	if !live {
 		return diagnostics
 	}
-	processor, err := llm.Build(testCfg)
+	processor, err := s.ops.BuildLLM(testCfg)
 	if err != nil {
 		return append(diagnostics, llm.Diagnostic{OK: false, Detail: "build: " + err.Error()})
 	}

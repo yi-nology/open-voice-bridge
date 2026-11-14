@@ -8,92 +8,9 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/bluez"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/device"
-	"github.com/yi-nology/open-voice-bridge/internal/helper"
-	"sort"
 	"strings"
 	"time"
 )
-
-func (s *Service) DiscoverDevices(ctx context.Context) map[string]any {
-	items, err := device.DiscoverInputDevices()
-	if err != nil {
-		return map[string]any{"ok": false, "error": err.Error()}
-	}
-	s.cfgMu.RLock()
-	configured := make(map[string]bool, len(s.cfg.Devices))
-	for _, item := range s.cfg.Devices {
-		configured[strings.ToUpper(item.Address)] = true
-	}
-	s.cfgMu.RUnlock()
-	known := map[string]bluez.DeviceStatus{}
-	if list, err := bluez.KnownDevices(ctx); err == nil {
-		for _, item := range list {
-			known[strings.ToUpper(item.Address)] = item
-		}
-	}
-	merged := map[string]map[string]any{}
-	for _, item := range items {
-		address := strings.ToUpper(item.Address)
-		link := known[address]
-		profileID := item.Profile
-		capabilities := item.Capabilities
-		if profileID == "" {
-			if profile, ok := device.Builtin().SuggestProfile(item.Name); ok {
-				profileID = profile.ID
-				capabilities = profile.Capabilities
-			}
-		}
-		merged[address] = map[string]any{
-			"address":      address,
-			"name":         item.Name,
-			"vendor":       item.Vendor,
-			"product":      item.Product,
-			"profile":      profileID,
-			"capabilities": capabilities,
-			"configured":   configured[address],
-			"paired":       link.Paired,
-			"connected":    true,
-			"battery":      link.Battery,
-		}
-	}
-	for address, link := range known {
-		if _, ok := merged[address]; ok {
-			continue
-		}
-		profileID := ""
-		var capabilities []string
-		if profile, ok := device.Builtin().MatchIDs(link.Vendor, link.Product); ok {
-			profileID = profile.ID
-			capabilities = profile.Capabilities
-		} else if profile, ok := device.Builtin().MatchName(link.Name); ok {
-			profileID = profile.ID
-			capabilities = profile.Capabilities
-		} else if profile, ok := device.Builtin().SuggestProfile(link.Name); ok {
-			profileID = profile.ID
-			capabilities = profile.Capabilities
-		}
-		merged[address] = map[string]any{
-			"address":      address,
-			"name":         link.Name,
-			"vendor":       link.Vendor,
-			"product":      link.Product,
-			"profile":      profileID,
-			"capabilities": capabilities,
-			"configured":   configured[address],
-			"paired":       link.Paired,
-			"connected":    link.Connected,
-			"battery":      link.Battery,
-		}
-	}
-	out := make([]map[string]any, 0, len(merged))
-	for _, item := range merged {
-		out = append(out, item)
-	}
-	sort.Slice(out, func(i, j int) bool {
-		return helper.StringValue(out[i]["address"]) < helper.StringValue(out[j]["address"])
-	})
-	return map[string]any{"ok": true, "devices": out}
-}
 
 func (s *Service) SelectDevice(ctx context.Context, id string) error {
 	id = strings.TrimSpace(id)
@@ -192,7 +109,7 @@ func (s *Service) ConnectDevice(ctx context.Context, id string, connect bool) er
 		return oeerrors.Errorf("select another device before disconnecting %q", id)
 	}
 	if connect {
-		if err := bluez.Connect(ctx, item.Address); err != nil && !strings.Contains(err.Error(), "Already Connected") {
+		if err := s.ops.Connect(ctx, item.Address); err != nil && !strings.Contains(err.Error(), "Already Connected") {
 			return err
 		}
 		return nil

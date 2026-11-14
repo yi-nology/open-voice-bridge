@@ -1,6 +1,10 @@
 package runtime_test
 
 import (
+	"context"
+	"github.com/yi-nology/open-voice-bridge/internal/asr"
+	"github.com/yi-nology/open-voice-bridge/internal/llm"
+	"github.com/yi-nology/open-voice-bridge/internal/text"
 	"io"
 	"log/slog"
 	"path/filepath"
@@ -38,7 +42,12 @@ func testAdmin(t *testing.T) (runtime.Admin, *history.Store, *history.Stats) {
 	cfg := config.Config{Address: "AA:BB:CC:DD:EE:FF", MaxUtterance: 30}
 	path := filepath.Join(dir, "config.json")
 	socket := filepath.Join(dir, "helper.sock")
-	svc := service.New(cfg, path, agent.New(cfg, &stubEngine{}, nil), helper.New(socket), nil, adminLogger())
+	svc := service.New(cfg, path, agent.New(cfg, &stubEngine{}, nil), helper.New(socket), nil, adminLogger(), service.Ops{
+		BuildASR:   asr.Build,
+		BuildLLM:   llm.Build,
+		BuildRules: text.New,
+		Connect:    func(context.Context, string) error { return nil },
+	})
 	store := history.New(filepath.Join(dir, "history.jsonl"), 200, history.Policy{})
 	stats := history.NewStats(filepath.Join(dir, "usage-stats.json"))
 	hub := input.NewHub()

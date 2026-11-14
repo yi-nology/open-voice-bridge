@@ -21,12 +21,14 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/appconfig"
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/audio"
+	"github.com/yi-nology/open-voice-bridge/internal/bluez"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/focus"
 	"github.com/yi-nology/open-voice-bridge/internal/helper"
 	"github.com/yi-nology/open-voice-bridge/internal/history"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
+	"github.com/yi-nology/open-voice-bridge/internal/mcp"
 	"github.com/yi-nology/open-voice-bridge/internal/phone"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
 	"github.com/yi-nology/open-voice-bridge/web"
@@ -152,7 +154,13 @@ func RunAgent(opts AgentOptions) int {
 		})
 
 		helperClient := helper.New(cfg.HelperSocket)
-		svc := service.New(cfg, opts.ConfigPath, ag, helperClient, asrErr, logger)
+		svc := service.New(cfg, opts.ConfigPath, ag, helperClient, asrErr, logger, service.Ops{
+			BuildASR:   asr.Build,
+			BuildLLM:   llm.Build,
+			BuildRules: text.New,
+			Connect:    bluez.Connect,
+			Tokens:     mcp.NewStore(filepath.Join(filepath.Dir(opts.ConfigPath), "mcp-tokens.json")),
+		})
 		historyStore := history.New(filepath.Join(filepath.Dir(opts.ConfigPath), "history.jsonl"), 200, history.Policy{
 			RetentionDays:   cfg.HistoryRetentionDays,
 			RedactAddresses: cfg.HistoryRedactAddresses,

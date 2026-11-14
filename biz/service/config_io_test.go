@@ -20,7 +20,7 @@ func testService(t *testing.T) *Service {
 	if err != nil {
 		t.Fatalf("load default config: %v", err)
 	}
-	return New(cfg, path, &fakeAgent{}, &fakeHelper{status: map[string]any{"keyd_active": true}}, nil, logx.Delegating("test"))
+	return New(cfg, path, &fakeAgent{}, &fakeHelper{status: map[string]any{"keyd_active": true}}, nil, logx.Delegating("test"), testOps())
 }
 
 func TestExportConfigRoundTrip(t *testing.T) {

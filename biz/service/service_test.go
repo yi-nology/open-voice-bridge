@@ -179,13 +179,23 @@ func (f *fakeHelper) Call(ctx context.Context, payload any) (map[string]any, err
 	}, nil
 }
 
+// testOps wires the real builders so tests exercise the production paths.
+func testOps() Ops {
+	return Ops{
+		BuildASR:   asr.Build,
+		BuildLLM:   llm.Build,
+		BuildRules: text.New,
+		Connect:    func(context.Context, string) error { return nil },
+	}
+}
+
 func newTestService(t *testing.T) (*Service, *fakeAgent, *fakeHelper, string) {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "config.json")
 	cfg := config.Default()
 	agent := &fakeAgent{connected: true, ready: true}
 	helper := &fakeHelper{}
-	svc := New(cfg, path, agent, helper, nil, logx.NewSlogLogger("service-test"))
+	svc := New(cfg, path, agent, helper, nil, logx.NewSlogLogger("service-test"), testOps())
 	return svc, agent, helper, path
 }
 

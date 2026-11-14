@@ -64,6 +64,7 @@ type Service struct {
 	helper    Helper
 	logger    logx.Logger
 	mcpTokens *mcp.Store
+	ops       Ops
 }
 
 // configSnapshotLocked returns a deep copy of the live configuration for the
@@ -134,15 +135,30 @@ func (s *Service) ViewInputs() ViewInputs {
 	return ViewInputs{Cfg: s.cfg, ASRErr: s.asrErr, Agent: s.agent, Helper: s.helper}
 }
 
-func New(cfg config.Config, path string, agent Agent, helper Helper, asrErr error, logger logx.Logger) *Service {
+// Ops lends service the concrete capabilities it must not construct
+// (ARC-09): the composition root builds engines and owns the OS calls, so
+// this package stays a state owner rather than a second composition root.
+type Ops struct {
+	BuildASR   func(config.ASRConfig) (asr.Engine, error)
+	BuildLLM   func(config.LLMConfig) (llm.Processor, error)
+	BuildRules func(config.TextConfig) (*text.Rules, error)
+	Connect    func(context.Context, string) error
+	Tokens     *mcp.Store
+}
+
+func New(cfg config.Config, path string, agent Agent, helper Helper, asrErr error, logger logx.Logger, ops Ops) *Service {
+	if ops.Tokens == nil {
+		ops.Tokens = mcp.NewStore(filepath.Join(filepath.Dir(path), "mcp-tokens.json"))
+	}
 	return &Service{
+		ops:       ops,
 		cfg:       cfg,
 		path:      path,
 		agent:     agent,
 		helper:    helper,
 		asrErr:    asrErr,
 		logger:    logger,
-		mcpTokens: mcp.NewStore(filepath.Join(filepath.Dir(path), "mcp-tokens.json")),
+		mcpTokens: ops.Tokens,
 	}
 }
 
