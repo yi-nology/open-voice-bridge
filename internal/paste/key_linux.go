@@ -6,7 +6,6 @@ import (
 	"context"
 	"os"
 	"os/exec"
-	"strings"
 )
 
 // sendKey prefers the Wayland virtual keyboard (wtype) and falls back to

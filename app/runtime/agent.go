@@ -41,6 +41,13 @@ type AgentOptions struct {
 	Version    string
 	Logger     logx.Logger
 	Register   func(*server.Hertz, *ui.Server)
+
+	// Test seams (OPS-13): nil keeps the production wiring. Stop shuts the
+	// runtime down the same way a signal would, so the full construction can
+	// be driven from a test.
+	NewSink          func(audio.Config) (audio.Sink, error)
+	TransportFactory agent.TransportFactory
+	Stop             <-chan struct{}
 }
 
 // RunAgent starts every subsystem and blocks until the process is asked to
@@ -95,7 +102,11 @@ func RunAgent(opts AgentOptions) int {
 	}
 	err = app.Run(func(app *bootstrap.App) error {
 		ctx := app.Context()
-		sink, err := audio.New(audio.Config{SinkName: cfg.SinkName, SourceName: cfg.SourceName})
+		newSink := opts.NewSink
+		if newSink == nil {
+			newSink = audio.New
+		}
+		sink, err := newSink(audio.Config{SinkName: cfg.SinkName, SourceName: cfg.SourceName})
 		if err != nil {
 			if closeErr := engine.Close(ctx); closeErr != nil {
 				logger.Warn("close ASR engine", "err", closeErr)
@@ -112,6 +123,9 @@ func RunAgent(opts AgentOptions) int {
 			return err
 		}
 		ag := agent.New(cfg, engine, sink)
+		if opts.TransportFactory != nil {
+			ag.SetTransportFactory(opts.TransportFactory)
+		}
 		inputHub := input.NewHub()
 		ag.SetHub(inputHub)
 		transcriptsTotal, asrLatency := RegisterAgentMetrics(ag, oekitmetrics.Registry)
@@ -258,6 +272,12 @@ func RunAgent(opts AgentOptions) int {
 		ekithertz.RunServer(app, "ui", hertzServer, ekithertz.WithOnReady(func(context.Context) {
 			app.Ready()
 		}))
+		if opts.Stop != nil {
+			go func() {
+				<-opts.Stop
+				app.RequestShutdown()
+			}()
+		}
 		logger.Info("xiaoyao agent running", "ui", "http://"+cfg.UIAddr, "config", opts.ConfigPath)
 		<-ctx.Done()
 		return nil

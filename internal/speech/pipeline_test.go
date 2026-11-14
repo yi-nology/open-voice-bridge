@@ -94,6 +94,9 @@ func TestPipelineTranscribeStampsSourceAndAppliesDictionary(t *testing.T) {
 	if transcript.Address != "192.0.2.10" {
 		t.Fatalf("address = %q, want source address", transcript.Address)
 	}
+	if transcript.Source != "phone" {
+		t.Fatalf("source kind = %q, want the utterance's Kind stamped through", transcript.Source)
+	}
 	saved, pasted := probe.snapshot()
 	if len(saved) != 1 || saved[0].Address != "192.0.2.10" {
 		t.Fatalf("sink transcripts = %+v", saved)
