@@ -785,6 +785,7 @@ body.listening .subtitle-live i { background: var(--accent); }
         <div class="enable-top">
           <h2>启用遥控器自定义按键映射</h2>
           <span id="status-right" class="enable-status">按键状态：正在读取…</span>
+          <button id="goto-devices" class="btn small" hidden>去连接遥控器</button>
         </div>
         <p class="enable-desc">映射优先独占遥控器按键（RC003 / ARN9）；拿不到独占时自动退回兼容模式，不影响你用其它键盘。</p>
       </div>
@@ -1037,20 +1038,19 @@ body.listening .subtitle-live i { background: var(--accent); }
   <section id="tab-permissions" class="tab">
     <div class="panel">
       <div class="panel-head"><div><h3>系统权限与服务</h3>
-        <p>网页本身以普通用户运行；只有下面这个 root 助手拥有额外权限。</p></div></div>
+        <p>网页本身以普通用户运行；需要额外权限的只有一个：<b>xiaomi-remote-remap.service</b>（按键映射助手）。</p></div></div>
       <ul class="perm-list" id="perm-linux">
-        <li><b>xiaomi-remote-remap.service</b>（root）：Go 按键 remapper，独占遥控器 evdev 并通过 uinput 注入映射按键。</li>
-        <li><b>xiaomi-remote-go.service</b>（用户）：Go agent，负责 BLE/ATVV、ASR、PipeWire 和网页 UI，监听 127.0.0.1:8787。</li>
-        <li><b>开机自启</b>：用户 agent 通过 systemd + linger 在登录前启动，root remap 随系统启动；<code>xiaomi-remote doctor</code> 可检查启用状态。</li>
-        <li><b>keyd.service / xiaomi-remote-helper.service</b>（旧实现，已停用，保留回退）。</li>
-        <li><b>xiaomi-mic.service / xiaomi-remote-ui.service</b>（旧 Python 版，已停用，保留回退）。</li>
+        <li><b>按键映射助手</b> — 你要做的：<code>sudo make install-remap</code>。装好后它以 root 接管遥控器按键并注入映射结果；没有它语音听写照常，只是自定义键位不生效。<br><span class="sub">服务名 xiaomi-remote-remap.service（root）。</span></li>
+        <li><b>听写服务</b> — 你要做的：<code>sudo make install-user</code>（或登录前自启）。它负责遥控器连接、识别、虚拟麦克风和本页，监听 127.0.0.1:8787。<br><span class="sub">服务名 xiaomi-remote-go.service（普通用户）。</span></li>
+        <li><b>开机自启检查</b> — 运行 <code>xiaomi-remote doctor</code>，每条缺口都会给出可执行的修复命令。</li>
+        <li><span class="sub">旧实现（keyd.service、xiaomi-mic.service 等）已停用，仅保留回退记录。</span></li>
       </ul>
       <ul class="perm-list" id="perm-mac" hidden>
-        <li><b>蓝牙</b>：系统设置 → 隐私与安全性 → 蓝牙，允许运行 agent 的宿主（终端或 launchd）连接遥控器。</li>
-        <li><b>辅助功能</b>：粘贴识别结果需要合成 ⌘V，授予运行该二进制的宿主；未授权时字幕与历史照常，只是不会自动上屏。</li>
-        <li><b>按键映射不适用</b>：evdev/uinput 是 Linux 原语，macOS 上按键走遥控器原生 HID，不注入。</li>
-        <li><b>虚拟麦克风不适用</b>：macOS 需要 AudioServerPlugin 才能造虚拟麦，v1 直接把解码样本喂给 ASR。</li>
-        <li><b>开机自启</b>：用 <code>launchd</code> 或终端手动运行 <code>xiaomi-remote agent</code>；<code>xiaomi-remote doctor</code> 检查遥控器与权限。</li>
+        <li><b>蓝牙</b> — 你要做的：系统设置 → 隐私与安全性 → 蓝牙，允许运行本服务的宿主（终端或 launchd）连接遥控器。</li>
+        <li><b>辅助功能</b> — 你要做的：同一处「辅助功能」里授权，识别结果才能自动上屏；不授权也能用——字幕与历史照常，只是不自动粘贴。</li>
+        <li><b>按键映射不适用</b> — macOS 上按键走遥控器原生 HID，不注入，无需任何设置。</li>
+        <li><b>虚拟麦克风不适用</b> — 识别直接消费遥控器音频，其它应用听不到虚拟麦，无需任何设置。</li>
+        <li><b>开机自启</b> — 你要做的：用 <code>launchd</code> 或终端运行 <code>xiaomi-remote agent</code>；<code>xiaomi-remote doctor</code> 会检查遥控器与权限。</li>
       </ul>
       <p class="note" style="margin-top:12px;">
         ASR provider 可在侧边栏「语音识别」中编辑并热切换，也可直接修改
@@ -1756,6 +1756,8 @@ function updateConnection(status) {
       ? "识别配置需检查"
       : ((status.asr_backend || "ASR") + (latency > 0 ? " · " + latency + " ms" : (coreReady ? " · 就绪" : " · 待检查")));
   }
+  const gotoDevices = document.getElementById("goto-devices");
+  if (gotoDevices) gotoDevices.hidden = remoteConnected;
   const sideStatus = document.getElementById("side-status");
   if (sideStatus) sideStatus.textContent = remoteConnected ? "遥控器在线" : "等待遥控器";
   const sideDot = document.querySelector(".side-foot i");
@@ -2042,17 +2044,29 @@ function renderDiscovered(items) {
   const title = document.getElementById("discovered-title");
   if (!list) return;
   list.innerHTML = "";
-  // Remote-shaped matches first: the scan also lists keyboards and
-  // headsets (UX 验收 A#10), and those should not crowd out the remotes.
-  const available = items.filter(item => !item.configured).sort((a, b) =>
-    ((b.profile || b.capabilities && b.capabilities.length) ? 1 : 0) -
-    ((a.profile || a.capabilities && a.capabilities.length) ? 1 : 0));
+  // The scan also lists keyboards and headsets (UX 验收 A#10): split the
+  // remote-shaped matches from the rest so the remotes never drown.
+  const available = items.filter(item => !item.configured);
+  const suggest = item => !!(item.profile || (item.capabilities && item.capabilities.length));
+  const remotes = available.filter(suggest);
+  const others = available.filter(item => !suggest(item));
   if (!available.length) {
     if (title) title.style.display = "none";
     return;
   }
   if (title) title.style.display = "";
-  for (const item of available) {
+  const ordered = [...remotes, ...others];
+  let lastGroup = null;
+  for (const item of ordered) {
+    const group = suggest(item) ? "推荐（遥控器类）" : "其它蓝牙设备";
+    if (group !== lastGroup) {
+      lastGroup = group;
+      const head = document.createElement("div");
+      head.className = "note";
+      head.style.margin = "8px 0 4px";
+      head.textContent = group;
+      list.appendChild(head);
+    }
     const row = document.createElement("div");
     row.className = "device-row";
     const main = document.createElement("div");
@@ -3213,6 +3227,7 @@ document.getElementById("btn-reconnect").addEventListener("click", async () => {
   loadStatus(false);
 });
 
+document.getElementById("goto-devices")?.addEventListener("click", () => goTab("devices"));
 document.getElementById("btn-onboarding")?.addEventListener("click", openWelcome);
 
 document.getElementById("btn-restart-mic").addEventListener("click", async () => {
