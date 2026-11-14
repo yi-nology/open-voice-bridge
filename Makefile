@@ -45,7 +45,7 @@ idl:
 	$(GO) run ./script/thriftctx biz/model/api/xiaomi_remote.go
 
 openapi:
-	$(THRIFT2OPENAPI) -idl idl/xiaomi_remote.thrift -o docs/openapi.yaml -title "Open Voice Bridge API" -version 0.1.0 -description "Local RC003 and external input bridge API"
+	$(THRIFT2OPENAPI) -idl idl/xiaomi_remote.thrift -o docs/openapi.yaml -title "Open Voice Bridge API" -version $(VERSION) -description "Local RC003 and external input bridge API"
 
 soak:
 	DURATION=$${DURATION:-300} script/soak.sh

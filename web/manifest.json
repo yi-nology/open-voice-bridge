@@ -1,0 +1,10 @@
+{
+  "name": "小遥 手机输入",
+  "short_name": "小遥",
+  "start_url": "/phone",
+  "display": "standalone",
+  "background_color": "#141816",
+  "theme_color": "#2E7A5F",
+  "description": "手机作为无线遥控与外置麦克风",
+  "icons": []
+}
