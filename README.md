@@ -158,6 +158,11 @@ sudo ./install.sh --root      # 可选：remap helper + 日志轮转
 脚本只替换 `deploy/` 模板并启动服务，不会替你写配置；之后回到上面第 2 步准备
 `config.json` 即可。
 
+Release 带 `linux_amd64` / `linux_arm64` / `linux_386` / `linux_riscv64` 四种包。
+amd64/arm64 是主验证面；**386（32 位 Pi）与 riscv64 是交叉编译的尽力面**：CI 保证
+编译与测试，未做真机验证。虚拟麦克风依赖 PipeWire、按键映射依赖 evdev/uinput、
+蓝牙依赖 BlueZ，目标板上请先跑 `xiaoyao doctor` 再上生产（波 3 构建面）。
+
 ### 5. 打开界面
 
 ```bash

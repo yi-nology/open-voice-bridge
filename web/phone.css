@@ -1,14 +1,14 @@
 :root {
-  --bg: #0b1020;
-  --card: #141b33;
-  --edge: #26304f;
-  --ink: #e8ecf8;
-  --muted: #97a2c4;
-  --blue: #4a9bff;
-  --green: #2fbf71;
-  --amber: #f2b136;
-  --red: #ff6b6b;
+  /* Dark theme values live in tokens.css ([data-theme="dark"]); this block
+     only aliases the phone vocabulary and keeps page-local knobs (波 3). */
   --touch: 64px;
+  /* historical phone names → shared tokens */
+  --card: var(--panel);
+  --edge: var(--line);
+  --blue: var(--brand);
+  --green: var(--ok);
+  --amber: var(--warn);
+  --red: var(--bad);
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }

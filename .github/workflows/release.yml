@@ -42,7 +42,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        goarch: [amd64, arm64]
+        goarch: [amd64, arm64, "386", riscv64]
     steps:
       - uses: actions/checkout@v7
         with:

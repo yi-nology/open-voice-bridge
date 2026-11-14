@@ -27,6 +27,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/phone/app.js", s.servePhoneAsset("phone_app.js", "text/javascript; charset=utf-8"))
 	mux.HandleFunc("/phone/worklet.js", s.servePhoneAsset("phone_worklet.js", "text/javascript; charset=utf-8"))
 	mux.HandleFunc("/phone/app.css", s.servePhoneAsset("phone.css", "text/css; charset=utf-8"))
+	mux.HandleFunc("/phone/tokens.css", s.servePhoneAsset("tokens.css", "text/css; charset=utf-8"))
+	mux.HandleFunc("/manifest.json", s.servePhoneAsset("manifest.json", "application/manifest+json"))
 	return s.guardOrigin(mux)
 }
 

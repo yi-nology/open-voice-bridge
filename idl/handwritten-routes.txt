@@ -1,10 +1,11 @@
-# Hand-registered routes (I10 whitelist). These live in router.go's
-# customizedRegister instead of idl/xiaomi_remote.thrift; idl-check fails
+# Hand-registered routes (I10 whitelist). These live in biz/router/custom.go's
+# CustomizedRegister instead of idl/xiaomi_remote.thrift; idl-check fails
 # when a router registration is missing from this list, so the truth stays
 # in one place until the typed-reply migration absorbs them.
 GET  /
 GET  /ui.css
 GET  /ui.js
+GET  /tokens.css
 GET  /assets/*filepath
 GET  /events
 GET  /api/stats

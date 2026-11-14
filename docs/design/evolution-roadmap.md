@@ -186,11 +186,11 @@
 
 ## 波 3 · 打磨（可维护性长尾）
 
-- [ ] `web/ui.html` 拆分（9-829 行 CSS、约 2250 行 JS、82 个函数）并与手机 UI 共享设计 token（现在两套冲突的 `:root`：`ui.html:10` 亮色 vs `phone.css:1` 暗色）；a11y 从 6 处 `aria/role` 起步，手机页为 0。
-- [ ] 兑现"PWA"：manifest + service worker（`CHANGELOG.md:33` 已这么写），否则改口径。
-- [ ] Wayland/非 GNOME 环境验证：unit 硬编 `DISPLAY=:0`/`XAUTHORITY`（`deploy/xiaomi-remote-go.service:14-15`）无 `WAYLAND_DISPLAY`。
-- [ ] 历史文件保留/大小策略与脱敏开关；二维码配对、多手机、重连体验、横屏布局。
-- [ ] 32 位 Pi / riscv 构建面与限制说明（当前只 linux amd64/arm64）。
+- [x] `web/ui.html` 拆分 + 设计 token 统一（拆分随 `fd15c03`：`ui.css`/`ui.js` 独立成文件；token 统一 2026-11-15：`web/tokens.css` 单点承载双主题——`:root` 亮色（掌控台）+ `:root[data-theme="dark"]`（手机页挂 `data-theme`），两页旧名（`--text`/`--card`/`--edge`/…）以别名指向语义 token（`--ink`/`--panel`/`--line`/`--brand`/`--ok`/`--warn`/`--bad`），规则与 JS 零改动、冲突值只活在 tokens.css 一处；`tokens.css` 双边可服务（desktop `/tokens.css`、phone `/phone/tokens.css`，路由入 `handwritten-routes.txt`）。a11y 基础随 UX 批次落了 aria/role 起步面，更深的扫屏（手机页 aria 覆盖、焦点环、对比度审计）留长尾。）
+- [x] "PWA" 口径（`fd15c03` 起已降级兑现：service worker 不做，文档口径改「可加主屏」——不再声称离线 PWA。**2026-11-15 冒烟查出 manifest 从未真正可达**：`web/manifest.json` 不在 `go:embed` 列表、手机 mux 也没挂 `/manifest.json` 路由（phone.html 的 manifest link 一直 404）——embed 与 `servePhoneAsset` 路由补齐后 200，冒烟实测 `name/short_name/start_url` 正常返回）。
+- [x] Wayland/非 GNOME：unit 已带 `Environment=WAYLAND_DISPLAY=wayland-0`（改名批核实三件 env 齐：`DISPLAY`/`XAUTHORITY`/`WAYLAND_DISPLAY`）；**真机验证**（非 GNOME/纯 Wayland 会话下粘贴与按键注入）列入「未验证/需要真机」清单，不在本批纸面兑现。
+- [x] 历史保留/大小策略与脱敏开关（`fd15c03`：`history.policy` 双开关——保留天数 + 地址脱敏，live 生效；应答面已进 typed reply）。多手机（`phone.max_clients`，默认 4）、横屏布局（`phone.css` orientation 适配）、重连体验（断线不丢半句 + 自动重连，审计批/`drop_test`）均有落地；**二维码配对仍是缺口**（手机配对现走配对码输入），列余量。
+- [x] 32 位 Pi / riscv 构建面（2026-11-15：release 矩阵 `amd64/arm64/386/riscv64`，`CGO_ENABLED=0` 纯 Go 交叉编译；README 增「386/riscv64 为尽力面、先跑 doctor」限制说明）。386/riscv64 真机验证同样进「未验证」清单。
 
 ## 未验证 / 需要真机
 
@@ -199,3 +199,5 @@
 - `SO_PEERCRED` 的 uid 白名单在 systemd user unit 下是否仍然可用（需要 Pi）。
 - IPv6 扩散下 `Store.ip` 增长与转写队列内存，是推理不是实测。
 - 只按遥控器语音键（`agent.go:449`）在没有 root helper 时能否独立驱动听写——决定 OPS-06 的分组怎么切（**OPS-06 已按「核心 = ASR 链」临时口径落地，真机结论不符再调**）。
+- Wayland/非 GNOME 真机会话（波 3）：纯 Wayland（无 XWayland）与非 GNOME 桌面下的粘贴（wtype）、按键注入、焦点判定；unit 已带 `WAYLAND_DISPLAY`，但端到端只在 GNOME/X11 面验过。
+- 386 / riscv64 真机（波 3）：32 位 Pi 与 RISC-V 板上 `doctor` 全绿 + 听写链路跑通；构建面已进 release 矩阵（交叉编译、CI 只保证编译与测试）。

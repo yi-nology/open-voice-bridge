@@ -2,30 +2,25 @@
    小遥 Remote Studio — 一眼掌控台 design system
    Target: design-opt1 (glance console). Warm light surface, deep
    emerald accent, 1px hairlines, no shadows, 8px spacing rhythm.
+   Palette values live in tokens.css (light theme); this block only
+   aliases the desktop vocabulary and keeps page-local knobs (波 3).
    ============================================================ */
 :root {
-  --bg: #F5F6F5;
   --sidebar: #FAFAFA;
-  --panel: #FFFFFF;
-  --panel2: #F3F4F3;
-  --line: #E6E7E6;
-  --line-soft: #ECECEC;
-  --text: #1A1A1A;
-  --muted: #8C8C8C;
   --nav: #5F6360;
   --label: #B5B5B5;
-  --blue: #2E7A5F;
-  --blue-soft: #E7F1EC;
-  --green: #2E7A5F;
-  --green-soft: #E7F1EC;
-  --accent: #2E7A5F;
-  --red: #B4443C;
-  --orange: #B7791F;
-  --radius-card: 20px;
-  --radius-panel: 16px;
-  --radius-inner: 10px;
   --subtitle-size: 32px;
   --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  /* historical desktop names → shared tokens */
+  --text: var(--ink);
+  --panel2: var(--panel-2);
+  --blue: var(--brand);
+  --blue-soft: var(--brand-soft);
+  --green: var(--ok);
+  --green-soft: var(--ok-soft);
+  --accent: var(--brand);
+  --red: var(--bad);
+  --orange: var(--warn);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
