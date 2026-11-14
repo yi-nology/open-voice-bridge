@@ -12,6 +12,7 @@ import (
 	apihandler "github.com/yi-nology/open-voice-bridge/biz/handler/api"
 	"github.com/yi-nology/open-voice-bridge/biz/handler/ui"
 	"github.com/yi-nology/open-voice-bridge/biz/service"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/history"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
 )
@@ -69,7 +70,7 @@ func (a Admin) HTTP(uiServer *ui.Server) *server.Hertz {
 func (a Admin) deps() ui.Deps {
 	svc := a.Service
 	return ui.Deps{
-		Status:              svc.Status,
+		Status:              func(ctx context.Context) core.StatusView { return BuildStatus(ctx, svc.ViewInputs()) },
 		Apply:               svc.Apply,
 		Reconnect:           svc.Reconnect,
 		RestartMic:          svc.RestartMic,
@@ -93,7 +94,7 @@ func (a Admin) deps() ui.Deps {
 		Stats:               func() history.UsageStats { return a.Stats.Snapshot() },
 		ExportConfig:        svc.ExportConfig,
 		ImportConfig:        svc.ImportConfig,
-		Diagnostics:         func(ctx context.Context) map[string]any { return svc.Diagnostics(ctx, a.Version) },
+		Diagnostics:         func(ctx context.Context) map[string]any { return BuildDiagnostics(ctx, svc.ViewInputs(), a.Version) },
 		MCPVerify:           svc.MCPVerify,
 		MCPAudit:            svc.MCPAudit,
 		MCPCreateToken:      func(label string) (map[string]any, error) { return svc.MCPCreateToken(label, a.MCPBinaryPath()) },
@@ -107,14 +108,14 @@ func (a Admin) deps() ui.Deps {
 				"listening": map[string]any{"active": active, "source": source, "source_name": name},
 			}
 		},
-		Devices:               svc.Devices,
+		Devices:               func(ctx context.Context) core.DevicesView { return BuildDevices(ctx, svc.ViewInputs()) },
 		DiscoverDevices:       svc.DiscoverDevices,
 		SelectDevice:          svc.SelectDevice,
 		SetDeviceEnabled:      svc.SetDeviceEnabled,
 		SaveDevice:            svc.SaveDevice,
 		DeleteDevice:          svc.DeleteDevice,
 		ConnectDevice:         svc.ConnectDevice,
-		Ready:                 svc.Ready,
+		Ready:                 func(ctx context.Context) core.ReadyView { return BuildReady(ctx, svc.ViewInputs()) },
 		Inputs:                a.Phone.Inputs,
 		PhonePairing:          a.Phone.Pairing,
 		PhoneDevices:          a.Phone.Devices,

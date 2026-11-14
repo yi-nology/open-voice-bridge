@@ -7,56 +7,12 @@ import (
 	oeerrors "github.com/oekit/pkg/errors"
 	"github.com/yi-nology/open-voice-bridge/internal/bluez"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
-	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/device"
+	"github.com/yi-nology/open-voice-bridge/internal/helper"
 	"sort"
 	"strings"
 	"time"
 )
-
-func (s *Service) Devices(ctx context.Context) core.DevicesView {
-	s.cfgMu.RLock()
-	devices := append([]config.DeviceConfig(nil), s.cfg.Devices...)
-	active := s.cfg.ActiveDevice
-	s.cfgMu.RUnlock()
-	agentConnected := s.agent.Status().Connected
-	bluezStatus := map[string]bluez.DeviceStatus{}
-	if known, err := bluez.KnownDevices(ctx); err == nil {
-		for _, item := range known {
-			bluezStatus[strings.ToUpper(item.Address)] = item
-		}
-	}
-	view := core.DevicesView{OK: true, Active: active}
-	view.Devices = make([]core.DeviceView, 0, len(devices))
-	for _, item := range devices {
-		profile, _ := device.Builtin().Get(item.Profile)
-		link := bluezStatus[strings.ToUpper(item.Address)]
-		view.Devices = append(view.Devices, core.DeviceView{
-			ID:           item.ID,
-			Name:         item.Name,
-			Address:      item.Address,
-			Profile:      item.Profile,
-			Enabled:      item.Enabled,
-			Active:       item.ID == active,
-			Connected:    link.Connected || (item.ID == active && agentConnected),
-			Paired:       link.Paired,
-			Battery:      int32(link.Battery),
-			Capabilities: profile.Capabilities,
-			Vendor:       item.Vendor,
-			Product:      item.Product,
-			NameMatch:    item.NameMatch,
-		})
-	}
-	for _, profile := range device.Builtin().List() {
-		view.Profiles = append(view.Profiles, core.ProfileView{
-			ID:           profile.ID,
-			Name:         profile.Name,
-			Transport:    profile.Transport,
-			Capabilities: profile.Capabilities,
-		})
-	}
-	return view
-}
 
 func (s *Service) DiscoverDevices(ctx context.Context) map[string]any {
 	items, err := device.DiscoverInputDevices()
@@ -134,7 +90,7 @@ func (s *Service) DiscoverDevices(ctx context.Context) map[string]any {
 		out = append(out, item)
 	}
 	sort.Slice(out, func(i, j int) bool {
-		return stringValue(out[i]["address"]) < stringValue(out[j]["address"])
+		return helper.StringValue(out[i]["address"]) < helper.StringValue(out[j]["address"])
 	})
 	return map[string]any{"ok": true, "devices": out}
 }

@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,7 +11,6 @@ import (
 	"github.com/oekit/logx"
 
 	"github.com/yi-nology/open-voice-bridge/internal/config"
-	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 func testService(t *testing.T) *Service {
@@ -77,150 +75,6 @@ func TestImportConfigRejectsInvalidAndKeepsBackup(t *testing.T) {
 	saved, _ := os.ReadFile(svc.path)
 	if strings.Contains(string(saved), `"paste_enabled": true`) {
 		t.Fatal("import did not take effect")
-	}
-}
-
-func TestDiagnosticsRedactsAddressAndHome(t *testing.T) {
-	svc := testService(t)
-	svc.cfg.Address = "AA:BB:CC:DD:EE:FF"
-	home, _ := os.UserHomeDir()
-	if home == "" {
-		t.Skip("no home dir")
-	}
-	svc.cfg.APIKeyFile = filepath.Join(home, ".config", "xiaomi-mimo", "api_key")
-
-	summary := svc.Diagnostics(context.Background(), "test-version")
-	encoded, err := json.Marshal(summary)
-	if err != nil {
-		t.Fatal(err)
-	}
-	body := string(encoded)
-	if strings.Contains(body, "AA:BB:CC:DD:EE:FF") {
-		t.Fatalf("summary leaked the device address: %s", body)
-	}
-	if !strings.Contains(body, "AA:BB:CC:**:**:FF") {
-		t.Fatalf("summary should carry the redacted address: %s", body)
-	}
-	if strings.Contains(body, home) {
-		t.Fatalf("summary leaked the home directory: %s", body)
-	}
-	if summary["version"] != "test-version" {
-		t.Fatalf("version = %v", summary["version"])
-	}
-}
-
-// I7: the readiness view is typed, so scrubHome no longer walks into it. Its
-// error strings must still be scrubbed -- a helper socket path under the home
-// directory would otherwise reach a report the user attaches to a public issue.
-func TestDiagnosticsScrubsHomeFromReadyErrors(t *testing.T) {
-	home, _ := os.UserHomeDir()
-	if home == "" {
-		t.Skip("no home dir")
-	}
-	svc := testService(t)
-	svc.helper = &fakeHelper{callErr: errors.New("dial " + filepath.Join(home, ".local", "run", "helper.sock"))}
-
-	summary := svc.Diagnostics(context.Background(), "test-version")
-	encoded, err := json.Marshal(summary)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Contains(string(encoded), home) {
-		t.Fatalf("summary leaked the home directory: %s", encoded)
-	}
-	ready, ok := summary["ready"].(core.ReadyView)
-	if !ok {
-		t.Fatalf("ready = %T, want core.ReadyView", summary["ready"])
-	}
-	if !strings.Contains(ready.HelperError, "~/.local/run/helper.sock") {
-		t.Fatalf("helper error = %q", ready.HelperError)
-	}
-	// The report's keys are part of its shape; typing the view must not turn
-	// them into Go field names.
-	if !strings.Contains(string(encoded), `"keyd_active":`) {
-		t.Fatalf("ready lost its snake_case keys: %s", encoded)
-	}
-}
-
-// I7: the status view is typed too, so its path-bearing strings need the same
-// explicit scrubbing as the readiness view. The ASR error quotes the key file
-// and the helper quotes the keyd config it loaded; both live under the home
-// directory on a normal install.
-func TestDiagnosticsScrubsHomeFromStatusStrings(t *testing.T) {
-	home, _ := os.UserHomeDir()
-	if home == "" {
-		t.Skip("no home dir")
-	}
-	keyPath := filepath.Join(home, ".config", "xiaomi-mimo", "api_key")
-	svc := testService(t)
-	svc.asrErr = errors.New("read MiMo API key: open " + keyPath + ": permission denied")
-	svc.helper = &fakeHelper{status: map[string]any{
-		"keyd_active": true,
-		"config":      "# loaded from " + filepath.Join(home, ".config", "keyd", "default.conf"),
-	}}
-
-	summary := svc.Diagnostics(context.Background(), "test-version")
-	encoded, err := json.Marshal(summary)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Contains(string(encoded), home) {
-		t.Fatalf("summary leaked the home directory: %s", encoded)
-	}
-	status, ok := summary["status"].(core.StatusView)
-	if !ok {
-		t.Fatalf("status = %T, want core.StatusView", summary["status"])
-	}
-	if !strings.Contains(status.AsrError, "~/.config/xiaomi-mimo/api_key") {
-		t.Fatalf("asr error = %q", status.AsrError)
-	}
-	if !strings.Contains(status.Config, "~/.config/keyd/default.conf") {
-		t.Fatalf("config = %q", status.Config)
-	}
-
-	// The helper error is the third path-bearing string on the status view.
-	svc = testService(t)
-	svc.helper = &fakeHelper{callErr: errors.New("dial " + filepath.Join(home, ".local", "run", "helper.sock"))}
-	summary = svc.Diagnostics(context.Background(), "test-version")
-	encoded, err = json.Marshal(summary)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Contains(string(encoded), home) {
-		t.Fatalf("summary leaked the home directory: %s", encoded)
-	}
-	status, ok = summary["status"].(core.StatusView)
-	if !ok {
-		t.Fatalf("status = %T, want core.StatusView", summary["status"])
-	}
-	if !strings.Contains(status.HelperError, "~/.local/run/helper.sock") {
-		t.Fatalf("helper error = %q", status.HelperError)
-	}
-}
-
-// I7: both Diagnostics doc comments promise "no speech", but the report embedded
-// the whole status map, which carries the last dictated sentence. Attaching it
-// to a public issue would publish what the user last said.
-func TestDiagnosticsOmitsSpeech(t *testing.T) {
-	svc, agent, _, _ := newTestService(t)
-	const spoken = "明天上午十点开会"
-	agent.view = &core.AgentView{Connected: true, Ready: true, MicHealthy: true, LastText: spoken}
-
-	summary := svc.Diagnostics(context.Background(), "test-version")
-	encoded, err := json.Marshal(summary)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Contains(string(encoded), spoken) {
-		t.Fatalf("summary leaked the last transcript: %s", encoded)
-	}
-	// The rest of the status still has to be there, or the report is useless.
-	status, ok := summary["status"].(core.StatusView)
-	if !ok {
-		t.Fatalf("status = %T", summary["status"])
-	}
-	if status.AsrProvider != "mimo" {
-		t.Fatalf("status lost its provider: %+v", status)
 	}
 }
 

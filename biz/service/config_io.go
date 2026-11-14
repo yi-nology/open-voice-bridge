@@ -1,19 +1,14 @@
 package service
 
 import (
-	"context"
 	"encoding/json"
 	"os"
-	"runtime"
-	"strings"
 	"time"
 
 	oeerrors "github.com/oekit/pkg/errors"
 
 	"github.com/yi-nology/open-voice-bridge/internal/appconfig"
-	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
-	"github.com/yi-nology/open-voice-bridge/internal/redact"
 )
 
 // ExportConfig returns the live configuration as indented JSON. Provider
@@ -67,74 +62,4 @@ func (s *Service) backupConfig() error {
 	}
 	backup := s.path + ".bak-" + time.Now().Format("20060102-150405")
 	return os.WriteFile(backup, data, 0o600)
-}
-
-// Diagnostics builds the redacted troubleshooting summary to attach to an
-// issue: no device addresses, no home paths, no speech, no provider bodies.
-func (s *Service) Diagnostics(ctx context.Context, version string) map[string]any {
-	status := s.Status(ctx)
-	status.Address = redact.MAC(status.Address)
-	// The report promises no speech, and the status carries the last dictated
-	// sentence. Dropping it here is what keeps that promise true for a summary
-	// the user attaches to a public issue (I7).
-	status.LastText = ""
-	s.cfgMu.RLock()
-	asrChecks := asr.Diagnose(s.cfg.ASR)
-	s.cfgMu.RUnlock()
-	checks := make([]any, 0, len(asrChecks))
-	for _, item := range asrChecks {
-		checks = append(checks, map[string]any{
-			"provider": item.Provider,
-			"ok":       item.OK,
-			"detail":   item.Detail,
-		})
-	}
-	ready := s.Ready(ctx)
-	// scrubHome walks maps and slices; a typed view is neither, so every string
-	// that can carry a path is scrubbed here or a helper socket path under the
-	// home directory would reach a shared report (I7).
-	ready.HelperError = scrubHomeString(ready.HelperError)
-	ready.AsrError = scrubHomeString(ready.AsrError)
-	status.Config = scrubHomeString(status.Config)
-	status.HelperError = scrubHomeString(status.HelperError)
-	status.AsrError = scrubHomeString(status.AsrError)
-	return scrubHome(map[string]any{
-		"ok":           true,
-		"generated_at": time.Now().UTC().Format(time.RFC3339),
-		"version":      version,
-		"platform":     runtime.GOOS + "/" + runtime.GOARCH,
-		"ready":        ready,
-		"status":       status,
-		"asr":          checks,
-	}).(map[string]any)
-}
-
-// scrubHomeString replaces the home directory prefix with "~" so a shared
-// summary carries no personal paths.
-func scrubHomeString(value string) string {
-	home, err := os.UserHomeDir()
-	if err != nil || home == "" {
-		return value
-	}
-	return strings.ReplaceAll(value, home, "~")
-}
-
-// scrubHome is scrubHomeString over the free-form parts of the report.
-func scrubHome(value any) any {
-	switch typed := value.(type) {
-	case string:
-		return scrubHomeString(typed)
-	case map[string]any:
-		for key, item := range typed {
-			typed[key] = scrubHome(item)
-		}
-		return typed
-	case []any:
-		for index, item := range typed {
-			typed[index] = scrubHome(item)
-		}
-		return typed
-	default:
-		return value
-	}
 }

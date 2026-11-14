@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -190,55 +189,6 @@ func newTestService(t *testing.T) (*Service, *fakeAgent, *fakeHelper, string) {
 	return svc, agent, helper, path
 }
 
-func TestStatusAndReady(t *testing.T) {
-	svc, _, _, _ := newTestService(t)
-	status := svc.Status(context.Background())
-	if !status.OK || status.Address != config.Default().Address {
-		t.Fatalf("status = %+v", status)
-	}
-	if status.AsrProvider != "mimo" || status.KeymapProfile != "coding" {
-		t.Fatalf("status = %+v", status)
-	}
-	ready := svc.Ready(context.Background())
-	if !ready.OK || !ready.AsrReady {
-		t.Fatalf("ready = %+v", ready)
-	}
-}
-
-// OPS-06: readiness answers "can dictation work" (the voice key without a
-// root helper is the yardstick). Core is the ASR chain; the remapper, BLE
-// and the virtual mic are optional gaps that must not 503 a phone-only
-// setup. The old contract (any mic hiccup fails readiness) dies here.
-func TestReadyCoreIgnoresOptionalGaps(t *testing.T) {
-	svc, agent, helper, _ := newTestService(t)
-	agent.view = &core.AgentView{Connected: false, Ready: false, MicHealthy: false}
-	helper.status = map[string]any{"keyd_active": false, "remote_present": false}
-	ready := svc.Ready(context.Background())
-	if !ready.OK || !ready.CoreOK {
-		t.Fatalf("core readiness failed on optional gaps: %+v", ready)
-	}
-	if ready.OptionalOK {
-		t.Fatalf("optional_ok = %v, want false with helper/BLE/mic down", ready.OptionalOK)
-	}
-	if ready.MicHealthy || ready.BleConnected {
-		t.Fatalf("individual checks lost: %+v", ready)
-	}
-}
-
-func TestReadyFailsWhenASRBroken(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "config.json")
-	cfg := config.Default()
-	svc := New(cfg, path, &fakeAgent{connected: true, ready: true}, &fakeHelper{},
-		errors.New("no ASR provider could be built"), logx.NewSlogLogger("service-test"))
-	ready := svc.Ready(context.Background())
-	if ready.OK || ready.CoreOK {
-		t.Fatalf("core readiness passed without ASR: %+v", ready)
-	}
-	if !ready.OptionalOK {
-		t.Fatalf("optional_ok = %v, want true when only ASR is broken", ready.OptionalOK)
-	}
-}
-
 func TestApplySavesCustomProfile(t *testing.T) {
 	svc, _, _, path := newTestService(t)
 	if _, err := svc.Apply(context.Background(), map[string]string{"power": "esc", "f5": "f24"}); err != nil {
@@ -295,10 +245,6 @@ func TestSyncKeymapAppliesConfiguredProfile(t *testing.T) {
 
 func TestDevicesAndSelection(t *testing.T) {
 	svc, agent, helper, path := newTestService(t)
-	data := svc.Devices(context.Background())
-	if !data.OK || len(data.Devices) != 1 {
-		t.Fatalf("devices = %+v", data)
-	}
 	if err := svc.SaveDevice(context.Background(), config.DeviceConfig{
 		ID:      "rc003-2",
 		Name:    "Second",
