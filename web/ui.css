@@ -290,8 +290,14 @@ textarea { min-height: 96px; resize: vertical; }
 
 /* ---------- keymap / photo hotspots ---------- */
 .photo-panel { text-align: center; padding: 10px 0 4px; }
+/* The figure box must be exactly the photo's frame: hotspot --x/--y are
+   percentages of THIS box, so any max-height/object-fit letterboxing here
+   would slide every hotspot off its button (波 3 hotfix). */
 .remote-photo {
-  max-width: 100%; height: auto; max-height: 420px; display: inline-block; position: relative;
+  position: relative;
+  width: min(var(--figure-w, 300px), 100%);
+  margin: 0 auto;
+  aspect-ratio: var(--figure-ratio, auto);
   border-radius: var(--radius-panel);
 }
 .hotspot {
@@ -591,7 +597,6 @@ details.adv summary:hover { color: var(--text); }
 }
 .figure-btn:hover { color: var(--text); }
 .figure-btn.active, .figure-btn.selected { background: var(--panel); color: var(--text); font-weight: 500; }
-.remote-photo { position: relative; width: min(var(--figure-w, 300px), 100%); margin: 0 auto; }
 .remote-photo img { width: 100%; height: auto; display: block; border-radius: var(--radius-panel); }
 .key-row select { width: auto; flex: 1; min-width: 150px; }
 .panel-tools select { width: auto; min-width: 130px; }
@@ -614,7 +619,6 @@ body.listening .subtitle-live i { background: var(--accent); }
 
 /* round-2 inner-page polish */
 [hidden] { display: none !important; }
-.remote-photo img { max-height: 560px; object-fit: contain; }
 .rule-row { align-items: start; }
 .rule-row textarea { resize: vertical; }
 .model-grid .check-line { align-self: start; margin-top: 2px; }
