@@ -40,6 +40,7 @@ func Run(configPath string, logger logx.Logger, stdout io.Writer) int {
 
 	checks := addressCheck(cfg)
 	checks = append(checks, asrChecks(cfg, configPath)...)
+	checks = append(checks, configChecks(cfg, configPath)...)
 	checks = append(checks, hostChecks(cfg)...)
 	if report(stdout, checks) > 0 {
 		return 1

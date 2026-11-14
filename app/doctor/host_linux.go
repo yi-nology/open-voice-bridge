@@ -27,6 +27,7 @@ func hostChecks(cfg config.Config) []check {
 	checks = append(checks, unitChecks()...)
 	checks = append(checks, lingerCheck(), uinputCheck(), sessionCheck())
 	checks = append(checks, remoteChecks(cfg)...)
+	checks = append(checks, bluezChecks()...)
 	return checks
 }
 
@@ -56,6 +57,14 @@ func binaryChecks() []check {
 		{"xsel", core.DepPaste, "sudo apt install xsel"},
 		{"bluetoothctl", core.DepBLE, "sudo apt install bluez"},
 	}
+	if os.Getenv("WAYLAND_DISPLAY") != "" {
+		// Wayland injects text through wtype, not xsel.
+		tools = append(tools, struct {
+			binary string
+			dep    core.Dependency
+			fix    string
+		}{"wtype", core.DepPaste, "sudo apt install wtype"})
+	}
 	var checks []check
 	for _, tool := range tools {
 		if _, err := exec.LookPath(tool.binary); err != nil {
@@ -63,6 +72,32 @@ func binaryChecks() []check {
 			continue
 		}
 		checks = append(checks, ok(tool.binary))
+	}
+	return checks
+}
+
+// bluezChecks verifies the bluetooth stack is actually running (OPS-04):
+// the client binary being installed proves nothing.
+func bluezChecks() []check {
+	var checks []check
+	out, err := exec.Command("systemctl", "is-active", "bluetooth").Output()
+	state := strings.TrimSpace(string(out))
+	if err != nil || state != "active" {
+		checks = append(checks, gap(core.DepBLE, "bluetooth daemon not active ("+state+")",
+			"sudo systemctl enable --now bluetooth"))
+	} else {
+		checks = append(checks, ok("bluetooth daemon active"))
+	}
+	entries, err := os.ReadDir("/sys/class/bluetooth")
+	if err != nil || len(entries) == 0 {
+		checks = append(checks, gap(core.DepBLE, "no bluetooth adapter found",
+			"plug in a USB bluetooth adapter or enable the built-in one"))
+	} else {
+		names := make([]string, 0, len(entries))
+		for _, entry := range entries {
+			names = append(names, entry.Name())
+		}
+		checks = append(checks, ok("bluetooth adapter: "+strings.Join(names, " ")))
 	}
 	return checks
 }
