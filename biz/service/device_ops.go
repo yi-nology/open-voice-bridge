@@ -5,7 +5,6 @@ import (
 	"context"
 	"github.com/oekit/concurrency/async"
 	oeerrors "github.com/oekit/pkg/errors"
-	"github.com/yi-nology/open-voice-bridge/internal/bluez"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/device"
 	"strings"
@@ -114,7 +113,7 @@ func (s *Service) ConnectDevice(ctx context.Context, id string, connect bool) er
 		}
 		return nil
 	}
-	if err := bluez.Disconnect(ctx, item.Address); err != nil && !strings.Contains(err.Error(), "Not Connected") {
+	if err := s.ops.Disconnect(ctx, item.Address); err != nil && !strings.Contains(err.Error(), "Not Connected") {
 		return err
 	}
 	return nil

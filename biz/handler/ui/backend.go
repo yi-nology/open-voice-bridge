@@ -373,21 +373,20 @@ func (s *Server) DiscoverDevices(ctx context.Context) (*api.DiscoveredResp, erro
 		return nil, oeerrors.New("device discovery not available")
 	}
 	data := s.deps.DiscoverDevices(ctx)
-	resp := &api.DiscoveredResp{Ok: boolValue(data["ok"])}
-	items, _ := data["devices"].([]map[string]any)
-	resp.Devices = make([]*api.DiscoveredDevice, 0, len(items))
-	for _, item := range items {
+	resp := &api.DiscoveredResp{Ok: data.OK}
+	resp.Devices = make([]*api.DiscoveredDevice, 0, len(data.Devices))
+	for _, item := range data.Devices {
 		resp.Devices = append(resp.Devices, &api.DiscoveredDevice{
-			Address:      stringValue(item["address"]),
-			Name:         stringValue(item["name"]),
-			Vendor:       stringValue(item["vendor"]),
-			Product:      stringValue(item["product"]),
-			Profile:      stringValue(item["profile"]),
-			Capabilities: stringSlice(item["capabilities"]),
-			Configured:   boolValue(item["configured"]),
-			Paired:       boolValue(item["paired"]),
-			Connected:    boolValue(item["connected"]),
-			Battery:      int32Value(item["battery"]),
+			Address:      item.Address,
+			Name:         item.Name,
+			Vendor:       item.Vendor,
+			Product:      item.Product,
+			Profile:      item.Profile,
+			Capabilities: item.Capabilities,
+			Configured:   item.Configured,
+			Paired:       item.Paired,
+			Connected:    item.Connected,
+			Battery:      item.Battery,
 		})
 	}
 	return resp, nil

@@ -115,3 +115,25 @@ type DevicesView struct {
 	Devices  []DeviceView  `json:"devices"`
 	Profiles []ProfileView `json:"profiles"`
 }
+
+// DiscoveredItem is one scanned input device: what the OS saw, plus the
+// profile the matcher suggests for it and its current bluetooth link state.
+type DiscoveredItem struct {
+	Address      string   `json:"address"`
+	Name         string   `json:"name"`
+	Vendor       string   `json:"vendor"`
+	Product      string   `json:"product"`
+	Profile      string   `json:"profile"`
+	Capabilities []string `json:"capabilities"`
+	Configured   bool     `json:"configured"`
+	Paired       bool     `json:"paired"`
+	Connected    bool     `json:"connected"`
+	Battery      int32    `json:"battery"`
+}
+
+// DiscoveredView is the scan result the discovery walk produces (ARC-09).
+type DiscoveredView struct {
+	OK      bool             `json:"ok"`
+	Error   string           `json:"error,omitempty"`
+	Devices []DiscoveredItem `json:"devices"`
+}

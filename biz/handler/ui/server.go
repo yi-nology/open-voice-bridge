@@ -51,7 +51,7 @@ type Deps struct {
 	TextConfig            func(context.Context) map[string]any
 	UpdateTextConfig      func(context.Context, config.TextConfig) error
 	Devices               func(context.Context) core.DevicesView
-	DiscoverDevices       func(context.Context) map[string]any
+	DiscoverDevices       func(context.Context) core.DiscoveredView
 	SelectDevice          func(context.Context, string) error
 	SetDeviceEnabled      func(context.Context, string, bool) error
 	SaveDevice            func(context.Context, config.DeviceConfig) error

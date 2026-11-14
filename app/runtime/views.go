@@ -232,10 +232,10 @@ func scrubHome(value any) any {
 // BuildDiscovered lists bluetooth input devices with profile suggestions —
 // the discovery half of the device surface (ARC-09: it queries the OS, so it
 // lives at the composition root rather than in the state owner).
-func BuildDiscovered(ctx context.Context, in service.ViewInputs) map[string]any {
+func BuildDiscovered(ctx context.Context, in service.ViewInputs) core.DiscoveredView {
 	items, err := device.DiscoverInputDevices()
 	if err != nil {
-		return map[string]any{"ok": false, "error": err.Error()}
+		return core.DiscoveredView{Error: err.Error()}
 	}
 	configured := make(map[string]bool, len(in.Cfg.Devices))
 	for _, item := range in.Cfg.Devices {
@@ -247,7 +247,7 @@ func BuildDiscovered(ctx context.Context, in service.ViewInputs) map[string]any 
 			known[strings.ToUpper(item.Address)] = item
 		}
 	}
-	merged := map[string]map[string]any{}
+	merged := map[string]core.DiscoveredItem{}
 	for _, item := range items {
 		address := strings.ToUpper(item.Address)
 		link := known[address]
@@ -259,17 +259,17 @@ func BuildDiscovered(ctx context.Context, in service.ViewInputs) map[string]any 
 				capabilities = profile.Capabilities
 			}
 		}
-		merged[address] = map[string]any{
-			"address":      address,
-			"name":         item.Name,
-			"vendor":       item.Vendor,
-			"product":      item.Product,
-			"profile":      profileID,
-			"capabilities": capabilities,
-			"configured":   configured[address],
-			"paired":       link.Paired,
-			"connected":    true,
-			"battery":      link.Battery,
+		merged[address] = core.DiscoveredItem{
+			Address:      address,
+			Name:         item.Name,
+			Vendor:       item.Vendor,
+			Product:      item.Product,
+			Profile:      profileID,
+			Capabilities: capabilities,
+			Configured:   configured[address],
+			Paired:       link.Paired,
+			Connected:    true,
+			Battery:      int32(link.Battery),
 		}
 	}
 	for address, link := range known {
@@ -288,25 +288,25 @@ func BuildDiscovered(ctx context.Context, in service.ViewInputs) map[string]any 
 			profileID = profile.ID
 			capabilities = profile.Capabilities
 		}
-		merged[address] = map[string]any{
-			"address":      address,
-			"name":         link.Name,
-			"vendor":       link.Vendor,
-			"product":      link.Product,
-			"profile":      profileID,
-			"capabilities": capabilities,
-			"configured":   configured[address],
-			"paired":       link.Paired,
-			"connected":    link.Connected,
-			"battery":      link.Battery,
+		merged[address] = core.DiscoveredItem{
+			Address:      address,
+			Name:         link.Name,
+			Vendor:       link.Vendor,
+			Product:      link.Product,
+			Profile:      profileID,
+			Capabilities: capabilities,
+			Configured:   configured[address],
+			Paired:       link.Paired,
+			Connected:    link.Connected,
+			Battery:      int32(link.Battery),
 		}
 	}
-	out := make([]map[string]any, 0, len(merged))
+	out := make([]core.DiscoveredItem, 0, len(merged))
 	for _, item := range merged {
 		out = append(out, item)
 	}
 	sort.Slice(out, func(i, j int) bool {
-		return helper.StringValue(out[i]["address"]) < helper.StringValue(out[j]["address"])
+		return out[i].Address < out[j].Address
 	})
-	return map[string]any{"ok": true, "devices": out}
+	return core.DiscoveredView{OK: true, Devices: out}
 }

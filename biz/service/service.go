@@ -143,6 +143,7 @@ type Ops struct {
 	BuildLLM   func(config.LLMConfig) (llm.Processor, error)
 	BuildRules func(config.TextConfig) (*text.Rules, error)
 	Connect    func(context.Context, string) error
+	Disconnect func(context.Context, string) error
 	Tokens     *mcp.Store
 }
 

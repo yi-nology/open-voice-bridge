@@ -13,4 +13,8 @@ type reply struct {
 	Text     string            `json:"text,omitempty"`
 	Seconds  *int              `json:"seconds,omitempty"`
 	Commands map[string]string `json:"commands,omitempty"`
+	// History policy (波 3): retention window and address redaction toggle.
+	RetentionDays   *int  `json:"retention_days,omitempty"`
+	RedactAddresses *bool `json:"redact_addresses,omitempty"`
+	RestartRequired *bool `json:"restart_required,omitempty"`
 }

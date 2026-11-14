@@ -15,14 +15,19 @@ violation() { echo "deps: $*" >&2; fail=1; }
 # 2026-11-14: admin UI 应答信封收进 typed reply(#16,biz/handler/ui/reply.go)
 # ⇒ 230→199(S6/ARC-08/S8 三批全部抵扣)。基线随降到 205(留缓冲),
 # 下一批 typed 收口继续降;目标 <20 不变。
-CEILING=205
+# 2026-11-15: 波 3 历史策略应答进 typed reply、ARC-09 的 BuildDiscovered 改
+# core.DiscoveredView(顺带清掉 map→api.DiscoveredResp 的字段搬运)⇒ 212→196
+# (这两批曾把计数推过棘轮,提交前被门禁咬住后就地抵扣)。基线降到 202(留缓冲)。
+CEILING=202
 count=$({ grep -rn --include='*.go' 'map\[string\]any' . || true; } | { grep -v _test || true; } | wc -l | tr -d ' ')
 [ "$count" -le "$CEILING" ] || violation "map[string]any count $count exceeds the ratchet ceiling $CEILING (new state goes in core typed views; free-format maps only at the documented sites — see roadmap 债务盘点; lower the ceiling when the count drops)"
 
 # Input sources; only composition roots may combine them (R3).
-# biz/service is the second root until ARC-09 dissolves it; internal/agent
-# until ARC-08/ARC-10 split the backoff/speech concerns out of it.
-is_root() { case "$1" in main|app/*|biz/service|internal/agent) return 0 ;; *) return 1 ;; esac; }
+# biz/service left the list with ARC-09 (construction seam injected; it is a
+# state owner again). internal/agent stays: the desktop loop is where the
+# remaining source wiring lives (bluez transport factory + atvv), pending the
+# recorded core type migration / wiring move to app/runtime.
+is_root() { case "$1" in main|app/*|internal/agent) return 0 ;; *) return 1 ;; esac; }
 
 while IFS='|' read -r pkg imports; do
   pkg="${pkg#"$MOD"/}"; [ "$pkg" = "$MOD" ] && pkg=main

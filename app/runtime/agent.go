@@ -159,6 +159,7 @@ func RunAgent(opts AgentOptions) int {
 			BuildLLM:   llm.Build,
 			BuildRules: text.New,
 			Connect:    bluez.Connect,
+			Disconnect: bluez.Disconnect,
 			Tokens:     mcp.NewStore(filepath.Join(filepath.Dir(opts.ConfigPath), "mcp-tokens.json")),
 		})
 		historyStore := history.New(filepath.Join(filepath.Dir(opts.ConfigPath), "history.jsonl"), 200, history.Policy{

@@ -186,6 +186,7 @@ func testOps() Ops {
 		BuildLLM:   llm.Build,
 		BuildRules: text.New,
 		Connect:    func(context.Context, string) error { return nil },
+		Disconnect: func(context.Context, string) error { return nil },
 	}
 }
 

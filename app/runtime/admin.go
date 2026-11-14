@@ -109,7 +109,7 @@ func (a Admin) deps() ui.Deps {
 			}
 		},
 		Devices:               func(ctx context.Context) core.DevicesView { return BuildDevices(ctx, svc.ViewInputs()) },
-		DiscoverDevices:       func(ctx context.Context) map[string]any { return BuildDiscovered(ctx, svc.ViewInputs()) },
+		DiscoverDevices:       func(ctx context.Context) core.DiscoveredView { return BuildDiscovered(ctx, svc.ViewInputs()) },
 		SelectDevice:          svc.SelectDevice,
 		SetDeviceEnabled:      svc.SetDeviceEnabled,
 		SaveDevice:            svc.SaveDevice,
