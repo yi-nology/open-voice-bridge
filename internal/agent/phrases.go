@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"github.com/yi-nology/open-voice-bridge/internal/speech"
 	"time"
 
 	"github.com/oekit/concurrency/async"
@@ -33,12 +34,12 @@ type PickerEvent struct {
 
 type PhraseWatcher struct {
 	watcher  keys.F24Watcher
-	pipeline *SpeechPipeline
+	pipeline *speech.Pipeline
 	events   chan PhraseEvent
 	pickers  chan PickerEvent
 }
 
-func NewPhraseWatcher(watcher keys.F24Watcher, pipeline *SpeechPipeline) *PhraseWatcher {
+func NewPhraseWatcher(watcher keys.F24Watcher, pipeline *speech.Pipeline) *PhraseWatcher {
 	return &PhraseWatcher{
 		watcher:  watcher,
 		pipeline: pipeline,

@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"fmt"
+	"github.com/yi-nology/open-voice-bridge/internal/speech"
 	"log/slog"
 	"strings"
 	"sync"
@@ -13,7 +14,6 @@ import (
 
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
-	"github.com/yi-nology/open-voice-bridge/internal/llm"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
 
@@ -82,10 +82,10 @@ func TestRecognizedLineLogsCountsNotText(t *testing.T) {
 	if err != nil {
 		t.Fatalf("rules: %v", err)
 	}
-	probe := &pipelineProbe{}
-	pipeline := buildPipeline(engine, rules, probe, false)
+	spy := &captureSpy{}
+	pipeline := testPipeline(engine, rules, nil, spy)
 
-	if _, ok := pipeline.Transcribe(context.Background(), utterance(oneSecond(), SourceRef{Kind: "phone", Address: "192.0.2.10"})); !ok {
+	if _, ok := pipeline.Transcribe(context.Background(), testUtterance(speech.SourceRef{Kind: "phone", Address: "192.0.2.10"})); !ok {
 		t.Fatal("expected a transcript")
 	}
 	assertNoTranscriptInLogs(t, sink, "recognized")
@@ -120,13 +120,11 @@ func TestFailedLLMRequestLogsNoText(t *testing.T) {
 	if err != nil {
 		t.Fatalf("rules: %v", err)
 	}
-	probe := &pipelineProbe{}
-	pipeline := buildPipeline(engine, rules, probe, false)
-	pipeline.processor = func() llm.Processor {
-		return failingProcessor{fmt.Errorf("llm HTTP 400: rejected: %s", spoken)}
-	}
+	spy := &captureSpy{}
+	pipeline := testPipeline(engine, rules, nil, spy)
+	pipeline = testPipeline(engine, rules, failingProcessor{fmt.Errorf("llm HTTP 400: rejected: %s", spoken)}, spy)
 
-	if _, ok := pipeline.Transcribe(context.Background(), utterance(oneSecond(), SourceRef{Kind: "remote"})); !ok {
+	if _, ok := pipeline.Transcribe(context.Background(), testUtterance(speech.SourceRef{Kind: "remote"})); !ok {
 		t.Fatal("expected a transcript")
 	}
 	assertNoTranscriptInLogs(t, sink, "llm failure")

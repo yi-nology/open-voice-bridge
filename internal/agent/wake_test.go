@@ -45,9 +45,9 @@ func TestWakeLoopCapturesAfterWakeWord(t *testing.T) {
 		t.Fatalf("rules: %v", err)
 	}
 	engine := &fakeEngine{result: asr.Result{Text: "小遥小遥", Provider: "fake"}}
-	probe := &pipelineProbe{}
+	spy := &captureSpy{}
 	a := New(config.Config{PasteEnabled: false, MaxUtterance: 30}, engine, fakeSink{healthy: true})
-	a.pipeline = buildPipeline(engine, rules, probe, false)
+	a.pipeline = testPipeline(engine, rules, nil, spy)
 	a.ctx = context.Background()
 	a.maxSample = 30 * 16000
 	source := &scriptSource{frames: make(chan []int16, 64)}
@@ -87,7 +87,7 @@ func TestWakeLoopCapturesAfterWakeWord(t *testing.T) {
 
 	deadline := time.After(3 * time.Second)
 	for {
-		transcripts, _ := probe.snapshot()
+		transcripts := spy.transcripts
 		if len(transcripts) > 0 {
 			if transcripts[0].Source != "wake" {
 				t.Fatalf("source = %q, want wake", transcripts[0].Source)

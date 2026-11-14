@@ -4,9 +4,9 @@ package runtime
 
 import (
 	"context"
+	"github.com/yi-nology/open-voice-bridge/internal/speech"
 	"time"
 
-	"github.com/yi-nology/open-voice-bridge/internal/agent"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
 	"github.com/yi-nology/open-voice-bridge/internal/phone"
@@ -17,17 +17,17 @@ import (
 // input sources provably run one chain.
 type PhoneSpeech struct {
 	Metrics  *PhoneMetrics
-	Pipeline *agent.SpeechPipeline
+	Pipeline *speech.Pipeline
 }
 
 func (s PhoneSpeech) TranscribeUtterance(ctx context.Context, samples []int16, meta phone.UtteranceMeta) (phone.UtteranceResult, bool) {
 	if s.Metrics != nil {
 		s.Metrics.AudioSeconds.Add(float64(len(samples)) / float64(core.SampleRate))
 	}
-	transcript, ok := s.Pipeline.Transcribe(ctx, agent.Utterance{
+	transcript, ok := s.Pipeline.Transcribe(ctx, speech.Utterance{
 		Samples:    samples,
 		SampleRate: meta.SampleRate,
-		Ref: agent.SourceRef{
+		Ref: speech.SourceRef{
 			Kind:    string(input.KindPhone),
 			Name:    meta.Name,
 			Address: meta.Address,

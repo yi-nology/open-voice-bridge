@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"github.com/yi-nology/open-voice-bridge/internal/speech"
 	"sync"
 
 	"github.com/oekit/concurrency/async"
@@ -108,10 +109,10 @@ func (a *Agent) RecoverLookback(seconds int) bool {
 		return false
 	}
 	async.GoSafe(func() {
-		a.pipeline.Transcribe(a.wakeCtxLocked(), Utterance{
+		a.pipeline.Transcribe(a.wakeCtxLocked(), speech.Utterance{
 			Samples:    samples,
 			SampleRate: core.SampleRate,
-			Ref:        SourceRef{Kind: "lookback", Name: "回眸"},
+			Ref:        speech.SourceRef{Kind: "lookback", Name: "回眸"},
 		})
 	})
 	return true

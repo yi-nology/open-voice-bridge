@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"github.com/yi-nology/open-voice-bridge/internal/speech"
 	"testing"
 	"time"
 
@@ -9,9 +10,9 @@ import (
 )
 
 func TestPublishTranscript(t *testing.T) {
-	agent := &Agent{transcripts: make(chan Transcript, 1)}
+	agent := &Agent{transcripts: make(chan speech.Transcript, 1)}
 	at := time.Now()
-	agent.publishTranscript(Transcript{Text: "你好", Provider: "fake", At: at})
+	agent.publishTranscript(speech.Transcript{Text: "你好", Provider: "fake", At: at})
 	select {
 	case got := <-agent.Transcripts():
 		if got.Text != "你好" || got.Provider != "fake" || !got.At.Equal(at) {

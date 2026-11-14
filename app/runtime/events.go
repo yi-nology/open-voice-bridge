@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"context"
+	"github.com/yi-nology/open-voice-bridge/internal/speech"
 	"time"
 
 	"github.com/oekit/logx"
@@ -26,7 +27,7 @@ type UsageSink interface {
 // and the desktop's live event feed. It is the only place a transcript becomes
 // history, so the privacy rules for each stream live here.
 type Events struct {
-	Transcripts      <-chan agent.Transcript
+	Transcripts      <-chan speech.Transcript
 	Microphone       <-chan input.AudioState
 	Phrases          <-chan agent.PhraseEvent
 	Pickers          <-chan agent.PickerEvent

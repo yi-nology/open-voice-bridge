@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"github.com/yi-nology/open-voice-bridge/internal/speech"
 	"strings"
 	"time"
 	"unicode"
@@ -181,7 +182,7 @@ func (a *Agent) desktopLoop(ctx context.Context, source miccap.FrameSource) {
 			lastCheck = now
 			snapshot := append([]int16(nil), window...)
 			async.GoSafe(func() {
-				text, err := a.pipeline.TranscribePartial(ctx, Utterance{Samples: snapshot, SampleRate: core.SampleRate})
+				text, err := a.pipeline.TranscribePartial(ctx, speech.Utterance{Samples: snapshot, SampleRate: core.SampleRate})
 				if err != nil || !wakeHit(text, word) {
 					return
 				}
@@ -211,10 +212,10 @@ func (a *Agent) wakeForward(frame []int16) {
 // own source kind, so history says where the words came from.
 func (a *Agent) runWakeSpeech(samples []int16) {
 	ctx := a.wakeCtxLocked()
-	a.pipeline.Transcribe(ctx, Utterance{
+	a.pipeline.Transcribe(ctx, speech.Utterance{
 		Samples:    samples,
 		SampleRate: core.SampleRate,
-		Ref:        SourceRef{Kind: "wake", Name: "唤醒词"},
+		Ref:        speech.SourceRef{Kind: "wake", Name: "唤醒词"},
 	})
 }
 

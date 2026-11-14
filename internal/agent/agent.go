@@ -4,6 +4,7 @@ package agent
 import (
 	"context"
 	"fmt"
+	"github.com/yi-nology/open-voice-bridge/internal/speech"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -85,10 +86,10 @@ type Agent struct {
 	dictTruncated bool // the open capture hit its time cap (DOM-09)
 	maxSample     int
 
-	pipeline *SpeechPipeline
+	pipeline *speech.Pipeline
 
 	reconnectCh chan struct{}
-	transcripts chan Transcript
+	transcripts chan speech.Transcript
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -98,23 +99,7 @@ type Agent struct {
 	closeErr  error
 }
 
-// Transcript is one finalized utterance emitted for live subtitles.
-type Transcript struct {
-	Text       string
-	RawText    string
-	Language   string
-	Provider   string
-	Source     string // "remote" | "phone" (SourceRef.Kind)
-	SourceName string
-	Address    string
-	Processed  bool
-	Truncated  bool   // the capture hit its time cap (DOM-09)
-	Command    string // non-empty: a voice command ran this combo (语音命令)
-	Partial    bool   // live in-flight recognition for the subtitle line (S6)
-	Latency    time.Duration
-	Duration   time.Duration // length of the spoken audio
-	At         time.Time
-}
+// speech.Transcript is one finalized utterance emitted for live subtitles.
 
 func New(cfg config.Config, engine asr.Engine, sink audio.Sink) *Agent {
 	a := &Agent{
@@ -124,7 +109,7 @@ func New(cfg config.Config, engine asr.Engine, sink audio.Sink) *Agent {
 		audio:       sink,
 		watcher:     keys.NewF24Watcher(),
 		reconnectCh: make(chan struct{}, 1),
-		transcripts: make(chan Transcript, 16),
+		transcripts: make(chan speech.Transcript, 16),
 		maxSample:   core.Cap(cfg.MaxUtterance),
 		linkFactory: DefaultTransportFactory,
 		linkStart:   time.Second,
@@ -142,36 +127,36 @@ func (a *Agent) SetTransportFactory(f TransportFactory) {
 
 // newPipeline wires the shared transcription chain to the agent's live
 // collaborators so provider/rule/LLM switches apply without rebuilding it.
-func (a *Agent) newPipeline() *SpeechPipeline {
-	return &SpeechPipeline{
-		engine: func() asr.Engine {
+func (a *Agent) newPipeline() *speech.Pipeline {
+	return speech.New(speech.Options{
+		Engine: func() asr.Engine {
 			a.asrMu.RLock()
 			defer a.asrMu.RUnlock()
 			return a.asr
 		},
-		rules: func() *text.Rules {
+		Rules: func() *text.Rules {
 			a.textMu.RLock()
 			defer a.textMu.RUnlock()
 			return a.text
 		},
-		processor: func() llm.Processor {
+		Processor: func() llm.Processor {
 			a.llmMu.RLock()
 			defer a.llmMu.RUnlock()
 			return a.llm
 		},
-		pasteEnabled: func() bool { return a.cfg.PasteEnabled },
-		pasteText:    paste.Text,
-		sendKeys:     paste.Key,
-		rewriteMode:  a.rewriteModeFor,
-		sink:         a.recordTranscript,
-		asrTimeout:   180 * time.Second,
-	}
+		PasteEnabled: func() bool { return a.cfg.PasteEnabled },
+		PasteText:    paste.Text,
+		SendKeys:     paste.Key,
+		RewriteMode:  a.rewriteModeFor,
+		Sink:         a.recordTranscript,
+		ASRTimeout:   180 * time.Second,
+	})
 }
 
 // Speech exposes the shared transcription chain so another input source (the
 // phone listener) can run an utterance through exactly the same path as the
 // BLE remote: same engine, same rules, same subtitle and history sink.
-func (a *Agent) Speech() *SpeechPipeline { return a.pipeline }
+func (a *Agent) Speech() *speech.Pipeline { return a.pipeline }
 
 // SetActiveClassFunc injects the foreground-window probe the app-aware
 // rewrite rules match against (S5).
@@ -268,7 +253,7 @@ func (a *Agent) partialLoop(ctx context.Context) {
 			if !inflight.CompareAndSwap(false, true) {
 				continue
 			}
-			utterance := Utterance{Samples: snapshot, SampleRate: rate, Ref: SourceRef{Kind: "remote"}}
+			utterance := speech.Utterance{Samples: snapshot, SampleRate: rate, Ref: speech.SourceRef{Kind: "remote"}}
 			async.GoSafe(func() {
 				defer inflight.Store(false)
 				if ctx.Err() != nil {
@@ -278,7 +263,7 @@ func (a *Agent) partialLoop(ctx context.Context) {
 				if err != nil || text == "" {
 					return
 				}
-				a.recordTranscript(Transcript{Text: text, Source: "remote", Partial: true, At: time.Now()})
+				a.recordTranscript(speech.Transcript{Text: text, Source: "remote", Partial: true, At: time.Now()})
 			})
 		}
 	}
@@ -292,7 +277,7 @@ func (a *Agent) InsertPhrase(slot int) (string, bool) {
 
 // recordTranscript updates the agent's last-result fields and forwards the
 // utterance to the subtitle stream.
-func (a *Agent) recordTranscript(transcript Transcript) {
+func (a *Agent) recordTranscript(transcript speech.Transcript) {
 	if transcript.Command != "" || transcript.Partial {
 		// Voice commands and partials are not dictation: they stay out of the
 		// "last text" strip even though the subtitle stream still sees them.
@@ -308,7 +293,7 @@ func (a *Agent) recordTranscript(transcript Transcript) {
 }
 
 // Transcripts yields finalized utterances for the subtitle stream.
-func (a *Agent) Transcripts() <-chan Transcript { return a.transcripts }
+func (a *Agent) Transcripts() <-chan speech.Transcript { return a.transcripts }
 
 // SetHub registers the BLE remote as an input source. It is safe to leave the
 // hub unset; the agent behaves exactly as before when no hub is provided.
@@ -357,7 +342,7 @@ func (a *Agent) releaseMic() {
 	hub.ReleaseAudio(input.RemoteID)
 }
 
-func (a *Agent) publishTranscript(transcript Transcript) {
+func (a *Agent) publishTranscript(transcript speech.Transcript) {
 	select {
 	case a.transcripts <- transcript:
 	default:
@@ -744,10 +729,10 @@ func (a *Agent) runSpeech(samples []int16, rate int, truncated bool) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	a.pipeline.Transcribe(ctx, Utterance{
+	a.pipeline.Transcribe(ctx, speech.Utterance{
 		Samples:    samples,
 		SampleRate: rate,
-		Ref: SourceRef{
+		Ref: speech.SourceRef{
 			Kind:    string(input.KindRemote),
 			Name:    a.cfg.DeviceName(),
 			Address: a.currentAddress(),

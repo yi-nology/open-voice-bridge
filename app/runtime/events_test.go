@@ -15,6 +15,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/agent"
 	"github.com/yi-nology/open-voice-bridge/internal/history"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
+	"github.com/yi-nology/open-voice-bridge/internal/speech"
 )
 
 type usageCall struct {
@@ -66,14 +67,14 @@ func (r *eventRecorder) snapshot() ([]history.Entry, []usageCall) {
 }
 
 type eventFeeds struct {
-	transcripts chan agent.Transcript
+	transcripts chan speech.Transcript
 	microphone  chan input.AudioState
 	phrases     chan agent.PhraseEvent
 }
 
 func testEvents(recorder *eventRecorder) (Events, eventFeeds) {
 	feeds := eventFeeds{
-		transcripts: make(chan agent.Transcript, 4),
+		transcripts: make(chan speech.Transcript, 4),
 		microphone:  make(chan input.AudioState, 4),
 		phrases:     make(chan agent.PhraseEvent, 4),
 	}
@@ -102,7 +103,7 @@ func TestEventsTranscriptReachesHistoryUsageAndSubtitle(t *testing.T) {
 	go func() { events.Run(ctx); close(done) }()
 
 	at := time.Date(2026, 11, 12, 9, 30, 0, 0, time.UTC)
-	feeds.transcripts <- agent.Transcript{
+	feeds.transcripts <- speech.Transcript{
 		Text: "你好世界", RawText: "你好 世界", Provider: "mimo", Language: "zh",
 		Source: "remote", SourceName: "遥控器", Latency: 300 * time.Millisecond,
 		Duration: 2 * time.Second, At: at,
@@ -144,8 +145,8 @@ func TestEventsLetTheHistoryStoreOwnEntryIDs(t *testing.T) {
 	go events.Run(ctx)
 
 	at := time.Date(2026, 11, 12, 9, 32, 0, 0, time.UTC)
-	feeds.transcripts <- agent.Transcript{Text: "第一句", At: at}
-	feeds.transcripts <- agent.Transcript{Text: "第二句", At: at}
+	feeds.transcripts <- speech.Transcript{Text: "第一句", At: at}
+	feeds.transcripts <- speech.Transcript{Text: "第二句", At: at}
 	recorder.next(t)
 	recorder.next(t)
 

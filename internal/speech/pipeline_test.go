@@ -1,4 +1,4 @@
-package agent
+package speech
 
 import (
 	"context"
@@ -12,9 +12,23 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
-	"github.com/yi-nology/open-voice-bridge/internal/remap"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
+
+// fakeEngine is a stub ASR engine returning a canned result.
+type fakeEngine struct {
+	result asr.Result
+	err    error
+	calls  int
+}
+
+func (f *fakeEngine) Name() string                { return "fake" }
+func (f *fakeEngine) Local() bool                 { return true }
+func (f *fakeEngine) Close(context.Context) error { return nil }
+func (f *fakeEngine) Transcribe(context.Context, asr.Audio) (asr.Result, error) {
+	f.calls++
+	return f.result, f.err
+}
 
 type pipelineProbe struct {
 	transcripts []Transcript
@@ -41,8 +55,8 @@ func (p *pipelineProbe) snapshot() ([]Transcript, []string) {
 	return append([]Transcript(nil), p.transcripts...), append([]string(nil), p.pasted...)
 }
 
-func buildPipeline(engine asr.Engine, rules *text.Rules, probe *pipelineProbe, pasteOn bool) *SpeechPipeline {
-	return &SpeechPipeline{
+func buildPipeline(engine asr.Engine, rules *text.Rules, probe *pipelineProbe, pasteOn bool) *Pipeline {
+	return &Pipeline{
 		engine:       func() asr.Engine { return engine },
 		rules:        func() *text.Rules { return rules },
 		processor:    func() llm.Processor { return nil },
@@ -167,9 +181,12 @@ func TestPipelineReusedByTwoSources(t *testing.T) {
 // blockingEngine holds the ASR call open until its context ends.
 type blockingEngine struct{}
 
-func (blockingEngine) Name() string                { return "blocking" }
-func (blockingEngine) Local() bool                 { return true }
+func (blockingEngine) Name() string { return "blocking" }
+
+func (blockingEngine) Local() bool { return true }
+
 func (blockingEngine) Close(context.Context) error { return nil }
+
 func (blockingEngine) Transcribe(ctx context.Context, _ asr.Audio) (asr.Result, error) {
 	<-ctx.Done()
 	return asr.Result{}, ctx.Err()
@@ -208,7 +225,7 @@ func TestTranscribeHonorsCallerCancellation(t *testing.T) {
 // CON-03: the deadline scales with the captured audio — a one-second tap must
 // not inherit the whole long-dictation window.
 func TestTranscribeBudgetScalesWithAudio(t *testing.T) {
-	p := &SpeechPipeline{asrTimeout: 180 * time.Second}
+	p := &Pipeline{asrTimeout: 180 * time.Second}
 	short := p.budgetFor(utterance(oneSecond(), SourceRef{}))
 	if short != 28*time.Second {
 		t.Fatalf("1s audio budget = %v, want 28s", short)
@@ -233,9 +250,12 @@ type gateEngine struct {
 	release chan struct{}
 }
 
-func (g *gateEngine) Name() string                { return "gate" }
-func (g *gateEngine) Local() bool                 { return true }
+func (g *gateEngine) Name() string { return "gate" }
+
+func (g *gateEngine) Local() bool { return true }
+
 func (g *gateEngine) Close(context.Context) error { return nil }
+
 func (g *gateEngine) Transcribe(ctx context.Context, _ asr.Audio) (asr.Result, error) {
 	g.mu.Lock()
 	g.calls++
@@ -336,78 +356,6 @@ func TestInsertPhrasePastesTheNthSnippet(t *testing.T) {
 	}
 }
 
-// phraseStub feeds phrase slots to the watcher without any evdev.
-type phraseStub struct {
-	ch       chan int
-	pickerCh chan struct{}
-	actionCh chan int
-}
-
-func (p *phraseStub) Start(context.Context) error { return nil }
-func (p *phraseStub) Close(context.Context) error { return nil }
-func (p *phraseStub) C() <-chan struct{}          { return nil }
-func (p *phraseStub) Phrases() <-chan int         { return p.ch }
-func (p *phraseStub) Actions() <-chan int {
-	if p.actionCh == nil {
-		p.actionCh = make(chan int)
-	}
-	return p.actionCh
-}
-
-func (p *phraseStub) Picker() <-chan struct{} {
-	if p.pickerCh == nil {
-		p.pickerCh = make(chan struct{})
-	}
-	return p.pickerCh
-}
-
-// End to end over the watcher: a phrase key-down pastes the phrase and
-// surfaces a notice for the UI, while an unbound slot stays silent.
-func TestPhraseWatcherInsertsAndNotifies(t *testing.T) {
-	rules, err := text.New(config.TextConfig{Snippets: []config.Snippet{
-		{Trigger: "确认", Text: "好的，确认执行。"},
-	}})
-	if err != nil {
-		t.Fatalf("rules: %v", err)
-	}
-	probe := &pipelineProbe{}
-	stub := &phraseStub{ch: make(chan int, 4)}
-	watcher := NewPhraseWatcher(stub, buildPipeline(&fakeEngine{}, rules, probe, true))
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		watcher.Run(ctx)
-	}()
-
-	stub.ch <- 1
-	select {
-	case event := <-watcher.Events():
-		if event.Slot != 1 || event.Text != "好的，确认执行。" {
-			t.Fatalf("event = %+v", event)
-		}
-	case <-time.After(2 * time.Second):
-		t.Fatal("no phrase event after a bound key")
-	}
-	if _, pasted := probe.snapshot(); len(pasted) != 1 {
-		t.Fatalf("pasted = %v", pasted)
-	}
-
-	stub.ch <- 8
-	select {
-	case event := <-watcher.Events():
-		t.Fatalf("unbound slot must not notify, got %+v", event)
-	case <-time.After(150 * time.Millisecond):
-	}
-	cancel()
-	select {
-	case <-done:
-	case <-time.After(2 * time.Second):
-		t.Fatal("phrase watcher did not stop")
-	}
-}
-
 // DOM-09 / I8: the shared chain stamps who spoke and whether the capture was
 // cut short, so subtitles and history stop showing an anonymous address.
 func TestTranscriptStampsSourceIdentity(t *testing.T) {
@@ -500,65 +448,6 @@ func TestVoiceCommandFallsBackToDictation(t *testing.T) {
 	}
 }
 
-// S3: deferred type()/open() steps run on the agent side — the daemon only
-// presses the synthetic key. Empty slots stay silent.
-func TestSeqActionWatcherRunsDeferredSteps(t *testing.T) {
-	stub := &phraseStub{ch: make(chan int)}
-	stub.actionCh = make(chan int, 4)
-	registry := map[int]remap.AgentAction{
-		0: {Kind: "type", Arg: "你好"},
-		1: {Kind: "open", Arg: "firefox"},
-	}
-	// pasteText/launch 在 watcher goroutine 里回调,主 goroutine 轮询读——
-	// 必须走锁内快照(与 pipelineProbe.snapshot 同范式),裸 slice 是 data race
-	// (race detector 实锤,Test (linux) -race 门禁红)。
-	var mu sync.Mutex
-	var pasted, launched []string
-	rec := func() (p, l []string) {
-		mu.Lock()
-		defer mu.Unlock()
-		return append([]string(nil), pasted...), append([]string(nil), launched...)
-	}
-	watcher := NewSeqActionWatcher(stub, func(slot int) (remap.AgentAction, bool) {
-		action, ok := registry[slot]
-		return action, ok
-	})
-	watcher.pasteText = func(_ context.Context, text string) error {
-		mu.Lock()
-		defer mu.Unlock()
-		pasted = append(pasted, text)
-		return nil
-	}
-	watcher.launch = func(_ context.Context, name string) error {
-		mu.Lock()
-		defer mu.Unlock()
-		launched = append(launched, name)
-		return nil
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	watcher.Start(ctx)
-	stub.actionCh <- 0
-	stub.actionCh <- 9 // no such slot: silent no-op
-	stub.actionCh <- 1
-	deadline := time.After(2 * time.Second)
-	for {
-		p, l := rec()
-		if len(p) >= 1 && len(l) >= 1 {
-			pasted, launched = p, l
-			break
-		}
-		select {
-		case <-deadline:
-			t.Fatalf("pasted=%v launched=%v", p, l)
-		case <-time.After(10 * time.Millisecond):
-		}
-	}
-	if pasted[0] != "你好" || launched[0] != "firefox" {
-		t.Fatalf("pasted=%v launched=%v", pasted, launched)
-	}
-}
-
 // S5: the app-aware mode rides into the processor; "off" keeps the words
 // literal without touching it at all.
 type modeProbe struct {
@@ -577,9 +466,11 @@ func (m *modeProbe) ProcessMode(_ context.Context, text, mode string) (string, e
 }
 
 func (m *modeProbe) Name() string { return "mode-probe" }
+
 func (m *modeProbe) Ping(context.Context) (time.Duration, error) {
 	return 0, nil
 }
+
 func (m *modeProbe) Close(context.Context) error { return nil }
 
 func TestRewriteModeRoutesPerApp(t *testing.T) {

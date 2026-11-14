@@ -1,4 +1,4 @@
-package agent
+package speech
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/oekit/logx"
 	oeerrors "github.com/oekit/pkg/errors"
 
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
@@ -13,6 +14,8 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
+
+var log = logx.Delegating("speech")
 
 // SourceRef labels which input source produced an utterance so the shared
 // transcription chain can stamp subtitles and history consistently (I8).
@@ -34,10 +37,6 @@ type Utterance struct {
 	// Truncated marks a capture that hit its time cap instead of ending on
 	// the user's release (DOM-09): both sources label it the same way.
 	Truncated bool
-	// Command is non-empty when the utterance was a voice command (语音命令):
-	// the value is the key combo that ran. Commands are spoken acts like
-	// phrases — never history, never the "last text" strip.
-	Command string
 }
 
 // Rate is the capture rate, defaulting to the negotiated remote rate when a
@@ -53,7 +52,24 @@ func (u Utterance) Rate() int {
 // 250 ms has never carried a word.
 func (u Utterance) MinSamples() int { return core.MinUtterance(u.Rate()) }
 
-// SpeechPipeline is the single transcription chain used by every input source:
+type Transcript struct {
+	Text       string
+	RawText    string
+	Language   string
+	Provider   string
+	Source     string // "remote" | "phone" (SourceRef.Kind)
+	SourceName string
+	Address    string
+	Processed  bool
+	Truncated  bool   // the capture hit its time cap (DOM-09)
+	Command    string // non-empty: a voice command ran this combo (语音命令)
+	Partial    bool   // live in-flight recognition for the subtitle line (S6)
+	Latency    time.Duration
+	Duration   time.Duration // length of the spoken audio
+	At         time.Time
+}
+
+// Pipeline is the single transcription chain used by every input source:
 // mono PCM to ASR, then text rules and LLM rewrite, then a Transcript
 // event and optional desktop paste. The BLE remote drives it through finalize;
 // phone sources call Transcribe directly, so the two paths can never diverge.
@@ -62,7 +78,7 @@ func (u Utterance) MinSamples() int { return core.MinUtterance(u.Rate()) }
 // take effect without rebuilding the pipeline. Collaborator closures are
 // expected to be safe for concurrent use; the pipeline itself serialises only
 // the desktop paste, never the ASR request (CON-03).
-type SpeechPipeline struct {
+type Pipeline struct {
 	pasteMu      sync.Mutex
 	engine       func() asr.Engine
 	rules        func() *text.Rules
@@ -77,10 +93,39 @@ type SpeechPipeline struct {
 	asrTimeout  time.Duration
 }
 
+// Options wires the pipeline to its live collaborators; the producer of a
+// Pipeline is the composition root (or a test), never the pipeline itself.
+type Options struct {
+	Engine       func() asr.Engine
+	Rules        func() *text.Rules
+	Processor    func() llm.Processor
+	PasteEnabled func() bool
+	PasteText    func(context.Context, string) error
+	SendKeys     func(context.Context, string) error
+	RewriteMode  func() string
+	Sink         func(Transcript)
+	ASRTimeout   time.Duration
+}
+
+// New builds a pipeline from live collaborator accessors.
+func New(opts Options) *Pipeline {
+	return &Pipeline{
+		engine:       opts.Engine,
+		rules:        opts.Rules,
+		processor:    opts.Processor,
+		pasteEnabled: opts.PasteEnabled,
+		pasteText:    opts.PasteText,
+		sendKeys:     opts.SendKeys,
+		rewriteMode:  opts.RewriteMode,
+		sink:         opts.Sink,
+		asrTimeout:   opts.ASRTimeout,
+	}
+}
+
 // budgetFor scales the ASR deadline with the captured audio: a one-second tap
 // must not inherit the whole long-dictation window, and a hung provider must
 // not hold the serial chain that long (CON-03). asrTimeout is the hard cap.
-func (p *SpeechPipeline) budgetFor(u Utterance) time.Duration {
+func (p *Pipeline) budgetFor(u Utterance) time.Duration {
 	rate := u.Rate()
 	audio := time.Duration(len(u.Samples)) * time.Second / time.Duration(rate)
 	budget := 20*time.Second + 8*audio
@@ -97,7 +142,7 @@ func (p *SpeechPipeline) budgetFor(u Utterance) time.Duration {
 // The request runs without holding a pipeline-wide lock: a wedged provider
 // costs its own deadline, never the other input sources'. Each call builds its
 // own engine request, so two sources never share one.
-func (p *SpeechPipeline) Transcribe(parent context.Context, u Utterance) (Transcript, bool) {
+func (p *Pipeline) Transcribe(parent context.Context, u Utterance) (Transcript, bool) {
 	if parent == nil {
 		parent = context.Background()
 	}
@@ -181,7 +226,7 @@ func (p *SpeechPipeline) Transcribe(parent context.Context, u Utterance) (Transc
 // TranscribePartial recognises the capture so far for the live subtitle line
 // (S6). It never rewrites, pastes or publishes history — the final
 // Transcribe after release owns all of that.
-func (p *SpeechPipeline) TranscribePartial(parent context.Context, u Utterance) (string, error) {
+func (p *Pipeline) TranscribePartial(parent context.Context, u Utterance) (string, error) {
 	if parent == nil {
 		parent = context.Background()
 	}
@@ -202,7 +247,7 @@ func (p *SpeechPipeline) TranscribePartial(parent context.Context, u Utterance) 
 }
 
 // applyText runs voice snippets, then LLM rewrite, then the user dictionary.
-func (p *SpeechPipeline) applyText(parent context.Context, input string) string {
+func (p *Pipeline) applyText(parent context.Context, input string) string {
 	rules := p.rules()
 	if snippet, ok := rules.Snippet(input); ok {
 		log.Info("voice snippet matched")
@@ -233,7 +278,7 @@ func (p *SpeechPipeline) applyText(parent context.Context, input string) string 
 	return rules.Dictionary(output)
 }
 
-func (p *SpeechPipeline) applyPaste(_ context.Context, processed string) {
+func (p *Pipeline) applyPaste(_ context.Context, processed string) {
 	if p.pasteEnabled == nil || !p.pasteEnabled() || p.pasteText == nil {
 		return
 	}
@@ -252,7 +297,7 @@ func (p *SpeechPipeline) applyPaste(_ context.Context, processed string) {
 // InsertPhrase pastes the phrase bound to slot n (1-based) into the focused
 // window — the "one key, one sentence" path of the common-phrase feature. It
 // reports false when the slot is unbound so a stale keymap stays a no-op.
-func (p *SpeechPipeline) InsertPhrase(slot int) (string, bool) {
+func (p *Pipeline) InsertPhrase(slot int) (string, bool) {
 	phrase, ok := p.rules().SnippetAt(slot)
 	if !ok || phrase == "" {
 		return "", false
