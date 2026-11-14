@@ -91,6 +91,11 @@ jobs:
       - name: Extract changelog section
         run: |
           version="${TAG#v}"
+          # 双通道（S9）: a hyphen in the tag (v0.3.0-rc.1) marks the preview
+          # channel — published, but flagged pre-release so the stable channel
+          # stays clean.
+          prerelease=""
+          case "$TAG" in *-*) prerelease="--prerelease" ;; esac
           awk -v hdr="## $version" 'index($0,hdr)==1{f=1;print;next} f&&/^## /{exit} f{print}' \
             CHANGELOG.md > notes.md
       - name: Create GitHub Release
@@ -101,10 +106,12 @@ jobs:
             gh release create "$TAG" dist/* \
               --title "Open Voice Bridge $TAG" \
               --notes-file notes.md \
+              $prerelease \
               --verify-tag
           else
             gh release create "$TAG" dist/* \
               --title "Open Voice Bridge $TAG" \
               --generate-notes \
+              $prerelease \
               --verify-tag
           fi

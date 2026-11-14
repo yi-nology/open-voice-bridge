@@ -302,6 +302,12 @@ make openapi   # 需要 thrift2openapi
 └── script/                    # install / bootstrap / soak
 ```
 
+## 发布通道（S9）
+
+- **稳定版**：`vX.Y.Z`（如 `v0.2.0`）——正式发布，默认给所有人。
+- **预发布**：`vX.Y.Z-rc.N` / `-beta.N`（如 `v0.3.0-rc.1`）——同一工作流出包，但 GitHub 标记为
+  Pre-release，供尝鲜与真机验收；硬件验收通过后再切稳定 tag。
+
 ## 开发与测试
 
 ```bash
