@@ -153,7 +153,10 @@ func RunAgent(opts AgentOptions) int {
 
 		helperClient := helper.New(cfg.HelperSocket)
 		svc := service.New(cfg, opts.ConfigPath, ag, helperClient, asrErr, logger)
-		historyStore := history.New(filepath.Join(filepath.Dir(opts.ConfigPath), "history.jsonl"), 200)
+		historyStore := history.New(filepath.Join(filepath.Dir(opts.ConfigPath), "history.jsonl"), 200, history.Policy{
+			RetentionDays:   cfg.HistoryRetentionDays,
+			RedactAddresses: cfg.HistoryRedactAddresses,
+		})
 		statsStore := history.NewStats(filepath.Join(filepath.Dir(opts.ConfigPath), "usage-stats.json"))
 
 		phoneEnabled := cfg.Phone.Enabled

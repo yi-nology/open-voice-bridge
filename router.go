@@ -15,6 +15,8 @@ func customizedRegister(r *server.Hertz, customUI *ui.Server) {
 		return
 	}
 	r.GET("/", customUI.Root)
+	r.GET("/ui.css", customUI.UIAsset("ui.css", "text/css; charset=utf-8"))
+	r.GET("/ui.js", customUI.UIAsset("ui.js", "text/javascript; charset=utf-8"))
 	assets := hertzadaptor.NativeStaticFSHandler("/assets", ui.AssetsFS(),
 		hertzadaptor.WithNativeCacheControl("max-age=3600"))
 	r.GET("/assets/*filepath", assets)
@@ -44,6 +46,8 @@ func customizedRegister(r *server.Hertz, customUI *ui.Server) {
 	r.GET("/api/lookback", customUI.LookbackConfig)
 	r.POST("/api/lookback", customUI.LookbackConfigSave)
 	r.POST("/api/lookback/recover", customUI.LookbackRecover)
+	r.GET("/api/history/policy", customUI.HistoryPolicy)
+	r.POST("/api/history/policy", customUI.HistoryPolicySave)
 	r.GET("/api/inputs", customUI.Inputs)
 	r.POST("/api/phone/enabled", customUI.PhoneEnabled)
 	r.GET("/api/phone/power", customUI.PhonePowerKey)

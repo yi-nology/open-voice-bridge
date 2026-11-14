@@ -82,12 +82,16 @@ type Config struct {
 	// docs/design/lookback.md). Memory only — never disk, never logs.
 	LookbackEnabled bool `json:"lookback_enabled"`
 	// LookbackSeconds is the ring window (5..60, default 30).
-	LookbackSeconds int          `json:"lookback_seconds"`
-	ASR             ASRConfig    `json:"asr"`
-	LLM             LLMConfig    `json:"llm"`
-	Text            TextConfig   `json:"text"`
-	Keymap          KeymapConfig `json:"keymap"`
-	Phone           PhoneConfig  `json:"phone"`
+	LookbackSeconds int `json:"lookback_seconds"`
+	// HistoryRetentionDays drops history rows older than N days (0 = keep
+	// everything). HistoryRedactAddresses stores MACs already scrubbed (波 3).
+	HistoryRetentionDays   int          `json:"history_retention_days"`
+	HistoryRedactAddresses bool         `json:"history_redact_addresses"`
+	ASR                    ASRConfig    `json:"asr"`
+	LLM                    LLMConfig    `json:"llm"`
+	Text                   TextConfig   `json:"text"`
+	Keymap                 KeymapConfig `json:"keymap"`
+	Phone                  PhoneConfig  `json:"phone"`
 }
 
 var macPattern = regexp.MustCompile(`^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$`)

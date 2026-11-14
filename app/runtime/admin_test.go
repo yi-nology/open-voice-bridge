@@ -39,7 +39,7 @@ func testAdmin(t *testing.T) (runtime.Admin, *history.Store, *history.Stats) {
 	path := filepath.Join(dir, "config.json")
 	socket := filepath.Join(dir, "helper.sock")
 	svc := service.New(cfg, path, agent.New(cfg, &stubEngine{}, nil), helper.New(socket), nil, adminLogger())
-	store := history.New(filepath.Join(dir, "history.jsonl"), 200)
+	store := history.New(filepath.Join(dir, "history.jsonl"), 200, history.Policy{})
 	stats := history.NewStats(filepath.Join(dir, "usage-stats.json"))
 	hub := input.NewHub()
 	return runtime.Admin{

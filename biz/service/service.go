@@ -85,6 +85,32 @@ func (s *Service) persistConfig(snapshot config.Config) error {
 	return appconfig.Save(s.path, snapshot)
 }
 
+// HistoryPolicy returns the retention window and address redaction (波 3).
+func (s *Service) HistoryPolicy() (int, bool) {
+	s.cfgMu.RLock()
+	defer s.cfgMu.RUnlock()
+	return s.cfg.HistoryRetentionDays, s.cfg.HistoryRedactAddresses
+}
+
+// SetHistoryPolicy saves the history policy. The store applies redaction on
+// future rows; retention is enforced on the next load/append.
+func (s *Service) SetHistoryPolicy(retentionDays int, redactAddresses bool) error {
+	if retentionDays < 0 {
+		retentionDays = 0
+	}
+	s.cfgMu.Lock()
+	snapshot := s.configSnapshotLocked()
+	snapshot.HistoryRetentionDays = retentionDays
+	snapshot.HistoryRedactAddresses = redactAddresses
+	saveErr := s.persistConfig(snapshot)
+	if saveErr == nil {
+		s.cfg.HistoryRetentionDays = retentionDays
+		s.cfg.HistoryRedactAddresses = redactAddresses
+	}
+	s.cfgMu.Unlock()
+	return saveErr
+}
+
 // ViewInputs snapshots the raw material the typed view builders need
 // (ARC-09): the builders live in app/runtime, this service owns state.
 type ViewInputs struct {

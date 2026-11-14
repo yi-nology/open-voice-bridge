@@ -81,6 +81,8 @@ type Deps struct {
 	UpdateLLMAppRules     func([]config.AppRewriteRule) error
 	StreamingSubtitles    func() bool
 	SetStreamingSubtitles func(bool) error
+	HistoryPolicy         func() (int, bool)
+	SetHistoryPolicy      func(int, bool) error
 	WakeConfig            func() (bool, string)
 	SetWake               func(bool, string) error
 	LookbackConfig        func() (bool, int)
@@ -152,6 +154,19 @@ func (s *Server) Stats(ctx context.Context, c *app.RequestContext) {
 		"longest_ms": snap.LongestMS,
 		"days":       snap.Days,
 	})
+}
+
+// UIAsset serves one embedded UI asset (ui.css / ui.js) beside the page.
+func (s *Server) UIAsset(name, contentType string) app.HandlerFunc {
+	return func(ctx context.Context, c *app.RequestContext) {
+		data, err := web.FS.ReadFile(name)
+		if err != nil {
+			c.NotFound()
+			return
+		}
+		c.Response.Header.Set("Cache-Control", "no-store")
+		c.Data(consts.StatusOK, contentType, data)
+	}
 }
 
 func (s *Server) Root(ctx context.Context, c *app.RequestContext) {

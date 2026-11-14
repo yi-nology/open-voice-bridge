@@ -178,3 +178,34 @@ func (s *Server) LookbackRecover(ctx context.Context, c *app.RequestContext) {
 	}
 	c.JSON(consts.StatusOK, reply{OK: true})
 }
+
+// HistoryPolicy returns the history retention window and redaction (波 3).
+func (s *Server) HistoryPolicy(ctx context.Context, c *app.RequestContext) {
+	if s.deps.HistoryPolicy == nil {
+		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "history policy unavailable"})
+		return
+	}
+	retention, redact := s.deps.HistoryPolicy()
+	c.JSON(consts.StatusOK, map[string]any{"ok": true, "retention_days": retention, "redact_addresses": redact})
+}
+
+// HistoryPolicySave stores the history policy and applies it live.
+func (s *Server) HistoryPolicySave(ctx context.Context, c *app.RequestContext) {
+	if s.deps.SetHistoryPolicy == nil {
+		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "history policy unavailable"})
+		return
+	}
+	var req struct {
+		RetentionDays   int  `json:"retention_days"`
+		RedactAddresses bool `json:"redact_addresses"`
+	}
+	if err := json.Unmarshal(c.Request.Body(), &req); err != nil {
+		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if err := s.deps.SetHistoryPolicy(req.RetentionDays, req.RedactAddresses); err != nil {
+		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	c.JSON(consts.StatusOK, map[string]any{"ok": true, "restart_required": true})
+}

@@ -12,6 +12,8 @@ import (
 
 	"github.com/oekit/logx"
 
+	"github.com/yi-nology/open-voice-bridge/internal/redact"
+
 	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
 )
 
@@ -32,6 +34,14 @@ type Entry struct {
 	At         time.Time `json:"at"`
 }
 
+// Policy bounds what the store keeps (波 3): RetentionDays drops rows older
+// than N days (0 keeps everything); RedactAddresses stores MACs already
+// scrubbed so the history file itself carries no identifiers.
+type Policy struct {
+	RetentionDays   int
+	RedactAddresses bool
+}
+
 type Store struct {
 	mu           sync.RWMutex
 	path         string
@@ -39,15 +49,19 @@ type Store struct {
 	entries      []Entry
 	sinceCompact int
 	now          func() time.Time
+	policy       Policy
 	lastStamp    string
 	seq          int
 }
 
-func New(path string, limit int) *Store {
+func New(path string, limit int, policy Policy) *Store {
 	if limit <= 0 {
 		limit = 200
 	}
-	store := &Store{path: path, limit: limit, now: time.Now}
+	if policy.RetentionDays < 0 {
+		policy.RetentionDays = 0
+	}
+	store := &Store{path: path, limit: limit, now: time.Now, policy: policy}
 	store.load()
 	return store
 }
@@ -74,6 +88,7 @@ func (s *Store) load() {
 		}
 		s.entries = append(s.entries, entry)
 	}
+	s.trimLocked()
 	if len(s.entries) > s.limit {
 		s.entries = s.entries[len(s.entries)-s.limit:]
 	}
@@ -95,7 +110,34 @@ func (s *Store) nextIDLocked() string {
 	return fmt.Sprintf("%s-%02d", stamp, s.seq)
 }
 
+// cutoff returns the earliest instant still within the retention window, or
+// the zero time when retention is off.
+func (s *Store) cutoff() time.Time {
+	if s.policy.RetentionDays <= 0 {
+		return time.Time{}
+	}
+	return s.now().AddDate(0, 0, -s.policy.RetentionDays)
+}
+
+// trimLocked drops rows older than the retention window.
+func (s *Store) trimLocked() {
+	cutoff := s.cutoff()
+	if cutoff.IsZero() {
+		return
+	}
+	kept := s.entries[:0]
+	for _, entry := range s.entries {
+		if entry.At.After(cutoff) {
+			kept = append(kept, entry)
+		}
+	}
+	s.entries = kept
+}
+
 func (s *Store) Append(entry Entry) error {
+	if s.policy.RedactAddresses && entry.Address != "" {
+		entry.Address = redact.MAC(entry.Address)
+	}
 	s.mu.Lock()
 	if entry.ID == "" {
 		entry.ID = s.nextIDLocked()
@@ -105,6 +147,7 @@ func (s *Store) Append(entry Entry) error {
 	}
 	defer s.mu.Unlock()
 	s.entries = append(s.entries, entry)
+	s.trimLocked()
 	if len(s.entries) > s.limit {
 		s.entries = s.entries[len(s.entries)-s.limit:]
 	}

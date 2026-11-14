@@ -138,7 +138,7 @@ func TestEventsTranscriptReachesHistoryUsageAndSubtitle(t *testing.T) {
 func TestEventsLetTheHistoryStoreOwnEntryIDs(t *testing.T) {
 	recorder := newEventRecorder()
 	events, feeds := testEvents(recorder)
-	store := history.New("", 10)
+	store := history.New("", 10, history.Policy{})
 	events.History = store
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
