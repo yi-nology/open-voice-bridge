@@ -54,6 +54,8 @@ type Agent interface {
 	SetStreamingSubtitles(bool)
 	SetWake(enabled bool, word string)
 	WakeStatus() (bool, error)
+	SetLookback(enabled bool, seconds int)
+	RecoverLookback(seconds int) bool
 }
 
 // Helper is the root remapper client.
@@ -843,6 +845,48 @@ func (s *Service) SetWake(enabled bool, word string) error {
 	}
 	s.agent.SetWake(enabled, word)
 	return nil
+}
+
+// LookbackConfig returns the 回眸 toggle and window (S8).
+func (s *Service) LookbackConfig() (bool, int) {
+	s.cfgMu.RLock()
+	defer s.cfgMu.RUnlock()
+	seconds := s.cfg.LookbackSeconds
+	if seconds == 0 {
+		seconds = 30
+	}
+	return s.cfg.LookbackEnabled, seconds
+}
+
+// SetLookback saves the 回眸 settings and applies them live. Disabling
+// forgets the ring immediately (docs/design/lookback.md).
+func (s *Service) SetLookback(enabled bool, seconds int) error {
+	if seconds < 5 {
+		seconds = 5
+	}
+	if seconds > 60 {
+		seconds = 60
+	}
+	s.cfgMu.Lock()
+	snapshot := s.configSnapshotLocked()
+	snapshot.LookbackEnabled = enabled
+	snapshot.LookbackSeconds = seconds
+	saveErr := s.persistConfig(snapshot)
+	if saveErr == nil {
+		s.cfg.LookbackEnabled = enabled
+		s.cfg.LookbackSeconds = seconds
+	}
+	s.cfgMu.Unlock()
+	if saveErr != nil {
+		return saveErr
+	}
+	s.agent.SetLookback(enabled, seconds)
+	return nil
+}
+
+// RecoverLookback transcribes the last seconds of the 回眸 ring (S8).
+func (s *Service) RecoverLookback(seconds int) bool {
+	return s.agent.RecoverLookback(seconds)
 }
 
 // LLMAppRules returns the app-aware rewrite rules (S5).

@@ -53,7 +53,9 @@ func TestWakeLoopCapturesAfterWakeWord(t *testing.T) {
 	source := &scriptSource{frames: make(chan []int16, 64)}
 
 	a.wakeMu.Lock()
-	a.startWakeLocked(source, "小遥小遥")
+	a.wakeWord = "小遥小遥"
+	a.wakeOn = true
+	a.startDesktopLocked(source)
 	a.wakeMu.Unlock()
 
 	voice := make([]int16, 1600)

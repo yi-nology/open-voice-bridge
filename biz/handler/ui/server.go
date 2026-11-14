@@ -81,6 +81,9 @@ type Deps struct {
 	SetStreamingSubtitles func(bool) error
 	WakeConfig            func() (bool, string)
 	SetWake               func(bool, string) error
+	LookbackConfig        func() (bool, int)
+	SetLookback           func(bool, int) error
+	RecoverLookback       func(int) bool
 	HelperSocket          string
 }
 

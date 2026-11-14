@@ -30,6 +30,8 @@ type fakeAgent struct {
 	streaming    bool
 	wake         bool
 	wakeWord     string
+	lookback     bool
+	lookbackSecs int
 	connected    bool
 	ready        bool
 	engine       asr.Engine
@@ -50,6 +52,19 @@ func (f *fakeAgent) Status() core.AgentView {
 }
 
 func (f *fakeAgent) Reconnect() error { return nil }
+func (f *fakeAgent) SetLookback(enabled bool, seconds int) {
+	f.seqMu.Lock()
+	defer f.seqMu.Unlock()
+	f.lookback = enabled
+	f.lookbackSecs = seconds
+}
+
+func (f *fakeAgent) RecoverLookback(seconds int) bool {
+	f.seqMu.Lock()
+	defer f.seqMu.Unlock()
+	return f.lookback
+}
+
 func (f *fakeAgent) SetWake(enabled bool, word string) {
 	f.seqMu.Lock()
 	defer f.seqMu.Unlock()

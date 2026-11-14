@@ -130,6 +130,9 @@ func RunAgent(opts AgentOptions) int {
 		if cfg.WakeEnabled {
 			ag.SetWake(true, cfg.WakeWord)
 		}
+		if cfg.LookbackEnabled {
+			ag.SetLookback(true, cfg.LookbackSeconds)
+		}
 		app.AddResource("agent", func(closeCtx context.Context) error {
 			return ag.Close(closeCtx)
 		})

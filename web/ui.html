@@ -1114,10 +1114,16 @@ body.listening .subtitle-live i { background: var(--accent); }
         <button id="subtitle-fullscreen" class="btn small primary">全屏</button>
       </div>
       <label class="check-line" style="margin:0 0 6px"><input id="streaming-toggle" type="checkbox"> 边说边滚字（实验）：按住说话时把识别中的文字实时滚在字幕底部，松手后由完整结果落定</label>
-      <div class="check-line" style="margin:0 0 10px">
+      <div class="check-line" style="margin:0 0 6px">
         <label class="check-line" style="margin:0"><input id="wake-toggle" type="checkbox"> 唤醒词（实验）：对麦克风说</label>
         <input id="wake-word" style="width:120px" placeholder="小遥小遥">
         <span class="sub">即可直接听写，不用按任何键。唤醒匹配走识别链路，用本地引擎才完全离线。</span>
+      </div>
+      <div class="check-line" style="margin:0 0 10px">
+        <label class="check-line" style="margin:0"><input id="lookback-toggle" type="checkbox"> 回眸（实验）：记住最近</label>
+        <input id="lookback-seconds" type="number" min="5" max="60" style="width:64px" value="30">
+        <span class="sub">秒麦克风声音，说漏了按右边捞回来听写。只在内存、关即清空、按下按钮才识别。</span>
+        <button id="lookback-recover" class="btn small">识别刚才</button>
       </div>
       <div id="subtitle-scene" class="subtitle-scene">
         <span class="subtitle-orb a"></span>
@@ -2710,6 +2716,7 @@ function openConfigPanel(name) {
 loadLLMAppRules();
 loadStreamingToggle();
 loadWakeToggle();
+loadLookbackToggle();
   if (name === "text") loadTextConfig();
 }
 
@@ -3562,6 +3569,47 @@ async function loadWakeToggle() {
   };
   toggle.addEventListener("change", save);
   if (word) word.addEventListener("change", save);
+}
+
+async function loadLookbackToggle() {
+  const toggle = document.getElementById("lookback-toggle");
+  const seconds = document.getElementById("lookback-seconds");
+  const recover = document.getElementById("lookback-recover");
+  if (!toggle) return;
+  try {
+    const res = await fetch("/api/lookback");
+    const data = await res.json();
+    if (data.ok) {
+      toggle.checked = !!data.enabled;
+      if (seconds && data.seconds) seconds.value = data.seconds;
+    }
+  } catch (error) {}
+  const save = async () => {
+    try {
+      await fetch("/api/lookback", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({enabled: toggle.checked, seconds: seconds ? Number(seconds.value) || 30 : 30}),
+      });
+    } catch (error) {}
+  };
+  toggle.addEventListener("change", save);
+  if (seconds) seconds.addEventListener("change", save);
+  if (recover) recover.addEventListener("click", async () => {
+    recover.disabled = true;
+    try {
+      const res = await fetch("/api/lookback/recover", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({seconds: seconds ? Number(seconds.value) || 30 : 30}),
+      });
+      const data = await res.json();
+      recover.textContent = data.ok ? "识别中…" : (data.error || "无可识别内容");
+    } catch (error) {
+      recover.textContent = "识别失败";
+    }
+    setTimeout(() => { recover.textContent = "识别刚才"; recover.disabled = false; }, 1500);
+  });
 }
 
 // ---- phrase picker overlay (S2) ----

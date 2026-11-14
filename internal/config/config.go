@@ -76,12 +76,18 @@ type Config struct {
 	// WakeEnabled turns on the hands-free wake word over the desktop mic (S7).
 	WakeEnabled bool `json:"wake_enabled"`
 	// WakeWord is what the listener hears before it captures (default 小遥小遥).
-	WakeWord string       `json:"wake_word"`
-	ASR      ASRConfig    `json:"asr"`
-	LLM      LLMConfig    `json:"llm"`
-	Text     TextConfig   `json:"text"`
-	Keymap   KeymapConfig `json:"keymap"`
-	Phone    PhoneConfig  `json:"phone"`
+	WakeWord string `json:"wake_word"`
+	// LookbackEnabled keeps a bounded in-memory ring of the desktop mic so a
+	// missed utterance can be recovered by explicit action (S8, 设计稿
+	// docs/design/lookback.md). Memory only — never disk, never logs.
+	LookbackEnabled bool `json:"lookback_enabled"`
+	// LookbackSeconds is the ring window (5..60, default 30).
+	LookbackSeconds int          `json:"lookback_seconds"`
+	ASR             ASRConfig    `json:"asr"`
+	LLM             LLMConfig    `json:"llm"`
+	Text            TextConfig   `json:"text"`
+	Keymap          KeymapConfig `json:"keymap"`
+	Phone           PhoneConfig  `json:"phone"`
 }
 
 var macPattern = regexp.MustCompile(`^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$`)

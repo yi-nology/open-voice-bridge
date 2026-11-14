@@ -58,7 +58,10 @@ type Agent struct {
 	wakeStop   context.CancelFunc
 	wakeSource miccap.FrameSource
 	wakeWord   string
+	wakeOn     bool
 	wakeErr    error
+	lookbackOn atomic.Bool
+	ring       *sampleRing
 
 	hub *input.Hub
 

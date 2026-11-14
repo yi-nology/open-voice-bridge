@@ -123,3 +123,57 @@ func (s *Server) WakeConfigSave(ctx context.Context, c *app.RequestContext) {
 	}
 	c.JSON(consts.StatusOK, map[string]any{"ok": true})
 }
+
+// LookbackConfig returns the 回眸 toggle and window (S8).
+func (s *Server) LookbackConfig(ctx context.Context, c *app.RequestContext) {
+	if s.deps.LookbackConfig == nil {
+		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "lookback unavailable"})
+		return
+	}
+	enabled, seconds := s.deps.LookbackConfig()
+	c.JSON(consts.StatusOK, map[string]any{"ok": true, "enabled": enabled, "seconds": seconds})
+}
+
+// LookbackConfigSave stores the 回眸 settings and applies them live.
+func (s *Server) LookbackConfigSave(ctx context.Context, c *app.RequestContext) {
+	if s.deps.SetLookback == nil {
+		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "lookback unavailable"})
+		return
+	}
+	var req struct {
+		Enabled bool `json:"enabled"`
+		Seconds int  `json:"seconds"`
+	}
+	if err := json.Unmarshal(c.Request.Body(), &req); err != nil {
+		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if err := s.deps.SetLookback(req.Enabled, req.Seconds); err != nil {
+		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	c.JSON(consts.StatusOK, map[string]any{"ok": true})
+}
+
+// LookbackRecover transcribes the last seconds of the 回眸 ring (S8).
+func (s *Server) LookbackRecover(ctx context.Context, c *app.RequestContext) {
+	if s.deps.RecoverLookback == nil {
+		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "lookback unavailable"})
+		return
+	}
+	var req struct {
+		Seconds int `json:"seconds"`
+	}
+	if err := json.Unmarshal(c.Request.Body(), &req); err != nil {
+		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if req.Seconds <= 0 {
+		req.Seconds = 30
+	}
+	if !s.deps.RecoverLookback(req.Seconds) {
+		c.JSON(consts.StatusOK, map[string]any{"ok": false, "error": "回眸环里还没有可识别的语音"})
+		return
+	}
+	c.JSON(consts.StatusOK, map[string]any{"ok": true})
+}

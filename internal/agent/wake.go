@@ -29,33 +29,55 @@ const (
 )
 
 // SetWake turns the wake-word listener on or off (S7). Word defaults to
-// 小遥小遥; the listener is built on the platform capture tool (miccap).
+// 小遥小遥. The desktop mic session is shared with the 回眸 ring (S8): it
+// runs while either feature needs it and closes when neither does.
 func (a *Agent) SetWake(enabled bool, word string) {
 	a.wakeMu.Lock()
 	defer a.wakeMu.Unlock()
-	a.wakeStopLocked()
-	if !enabled {
-		return
-	}
 	if strings.TrimSpace(word) == "" {
 		word = "小遥小遥"
 	}
 	a.wakeWord = word
-	source, err := miccap.Start(a.wakeCtxLocked(), "")
-	if err != nil {
-		log.Warn("wake listener unavailable", "err", err)
-		a.wakeErr = err
-		return
-	}
+	a.wakeOn = enabled
 	a.wakeErr = nil
-	a.startWakeLocked(source, word)
+	a.updateDesktopLocked()
 }
 
 // WakeStatus reports the listener state for the UI.
 func (a *Agent) WakeStatus() (bool, error) {
 	a.wakeMu.Lock()
 	defer a.wakeMu.Unlock()
-	return a.wakeStop != nil, a.wakeErr
+	return a.wakeOn, a.wakeErr
+}
+
+// updateDesktopLocked starts or stops the shared desktop mic session.
+func (a *Agent) updateDesktopLocked() {
+	want := a.wakeOn || a.lookbackOn.Load()
+	if !want {
+		a.wakeStopLocked()
+		return
+	}
+	if a.wakeStop != nil {
+		return
+	}
+	source, err := miccap.Start(a.wakeCtxLocked(), "")
+	if err != nil {
+		log.Warn("desktop mic listener unavailable", "err", err)
+		a.wakeErr = err
+		return
+	}
+	a.wakeErr = nil
+	a.startDesktopLocked(source)
+}
+
+// currentWakeWord reports the wake word while the listener is on.
+func (a *Agent) currentWakeWord() string {
+	a.wakeMu.Lock()
+	defer a.wakeMu.Unlock()
+	if !a.wakeOn {
+		return ""
+	}
+	return a.wakeWord
 }
 
 func (a *Agent) wakeCtxLocked() context.Context {
@@ -67,11 +89,11 @@ func (a *Agent) wakeCtxLocked() context.Context {
 	return a.ctx
 }
 
-func (a *Agent) startWakeLocked(source miccap.FrameSource, word string) {
+func (a *Agent) startDesktopLocked(source miccap.FrameSource) {
 	ctx, cancel := context.WithCancel(a.wakeCtxLocked())
 	a.wakeStop = cancel
 	a.wakeSource = source
-	async.GoSafe(func() { a.wakeLoop(ctx, source, word) })
+	async.GoSafe(func() { a.desktopLoop(ctx, source) })
 }
 
 func (a *Agent) wakeStopLocked() {
@@ -87,7 +109,7 @@ func (a *Agent) wakeStopLocked() {
 
 // wakeLoop watches the mic: rolling-window wake checks while voice is
 // active, then a dictation capture that ends on silence or the time cap.
-func (a *Agent) wakeLoop(ctx context.Context, source miccap.FrameSource, word string) {
+func (a *Agent) desktopLoop(ctx context.Context, source miccap.FrameSource) {
 	defer func() {
 		a.wakeMu.Lock()
 		defer a.wakeMu.Unlock()
@@ -110,6 +132,11 @@ func (a *Agent) wakeLoop(ctx context.Context, source miccap.FrameSource, word st
 				return
 			}
 			now := time.Now()
+			a.lookbackTap(frame)
+			word := a.currentWakeWord()
+			if word == "" && len(dictation) == 0 {
+				continue
+			}
 			if len(dictation) > 0 {
 				a.wakeForward(frame)
 				dictation = append(dictation, frame...)
