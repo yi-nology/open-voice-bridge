@@ -168,14 +168,18 @@ func RunAgent(opts AgentOptions) int {
 				phoneEnabled = false
 			} else {
 				phoneStore = store
-				phoneServer = phone.NewServer(store, phone.NewKeyInjector(helperClient, cfg.Phone.AllowPowerKey), inputHub, phone.ServerConfig{
+				phoneMetrics := NewPhoneMetrics()
+				phoneServer = phone.NewServer(store, phone.NewKeyInjector(countingTransport{inner: helperClient, mux: phoneMetrics}, cfg.Phone.AllowPowerKey), inputHub, phone.ServerConfig{
 					Addr:                cfg.Phone.Addr,
 					TLSMode:             cfg.Phone.TLS,
 					CertDir:             filepath.Dir(opts.ConfigPath),
 					MaxClients:          cfg.Phone.MaxClients,
 					MaxUtteranceSeconds: cfg.Phone.MaxUtteranceSeconds,
-					Transcriber:         PhoneSpeech{Pipeline: ag.Speech()},
+					Transcriber:         PhoneSpeech{Pipeline: ag.Speech(), Metrics: phoneMetrics},
 					Assets:              web.FS,
+				})
+				RegisterPhoneMetrics(oekitmetrics.Registry, phoneMetrics, func() int {
+					return len(phoneServer.ConnectedDevices())
 				})
 			}
 		}

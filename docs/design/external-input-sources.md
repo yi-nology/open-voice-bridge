@@ -274,12 +274,12 @@ BLE 链路把 `agent.finalize` 改为调用 `SpeechPipeline.Transcribe`；手机
 
 ## 10. 可观测性
 
-规划中的手机面指标（**尚未实现**，归 R10；当前 6 个 `xiaomi_remote_*` 指标不含手机）：
+手机面指标（**已实现** 2026-11-14，口径按实现收窄）：
 
-- `xiaomi_remote_phone_clients{state="connected|paired"}`
+- `xiaomi_remote_phone_clients`（在线会话数）
 - `xiaomi_remote_phone_audio_seconds_total`
-- `xiaomi_remote_phone_utterances_total{result="ok|empty|busy|error"}`
-- `xiaomi_remote_phone_keys_total`
+- `xiaomi_remote_phone_utterances_total{result="ok|miss"}`（ok=出字，miss=无可识别文本；busy 属队列层未单列）
+- `xiaomi_remote_phone_keys_total`（按下载荷）
 - `xiaomi_remote_phone_inject_errors_total`
 
 状态接口增加输入源列表；日志只记录设备名/IP/事件，不记录音频与令牌。

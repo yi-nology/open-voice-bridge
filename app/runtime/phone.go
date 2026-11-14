@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/yi-nology/open-voice-bridge/internal/agent"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
 	"github.com/yi-nology/open-voice-bridge/internal/phone"
 )
@@ -15,10 +16,14 @@ import (
 // narrow interface, so internal/phone never imports internal/agent and both
 // input sources provably run one chain.
 type PhoneSpeech struct {
+	Metrics  *PhoneMetrics
 	Pipeline *agent.SpeechPipeline
 }
 
 func (s PhoneSpeech) TranscribeUtterance(ctx context.Context, samples []int16, meta phone.UtteranceMeta) (phone.UtteranceResult, bool) {
+	if s.Metrics != nil {
+		s.Metrics.AudioSeconds.Add(float64(len(samples)) / float64(core.SampleRate))
+	}
 	transcript, ok := s.Pipeline.Transcribe(ctx, agent.Utterance{
 		Samples:    samples,
 		SampleRate: meta.SampleRate,
@@ -30,7 +35,13 @@ func (s PhoneSpeech) TranscribeUtterance(ctx context.Context, samples []int16, m
 		Truncated: meta.Truncated,
 	})
 	if !ok {
+		if s.Metrics != nil {
+			s.Metrics.Utterances.WithLabelValues("miss").Inc()
+		}
 		return phone.UtteranceResult{}, false
+	}
+	if s.Metrics != nil {
+		s.Metrics.Utterances.WithLabelValues("ok").Inc()
 	}
 	text := transcript.Text
 	if transcript.Command != "" {

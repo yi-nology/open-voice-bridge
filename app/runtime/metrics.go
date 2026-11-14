@@ -1,7 +1,11 @@
 package runtime
 
 import (
+	"context"
+
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/yi-nology/open-voice-bridge/internal/phone"
 
 	"github.com/yi-nology/open-voice-bridge/internal/agent"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
@@ -52,4 +56,71 @@ func boolGauge(ag *agent.Agent, pick func(core.AgentView) bool) float64 {
 		return 1
 	}
 	return 0
+}
+
+// PhoneMetrics are the phone-facing instruments (R10 / OPS-12). They are
+// created empty and registered by RegisterPhoneMetrics once the listener
+// exists, so the transcription adapter can carry them before the server is
+// built.
+type PhoneMetrics struct {
+	AudioSeconds prometheus.Counter
+	Utterances   *prometheus.CounterVec
+	Keys         prometheus.Counter
+	InjectErrors prometheus.Counter
+}
+
+// NewPhoneMetrics builds unregistered phone instruments.
+func NewPhoneMetrics() *PhoneMetrics {
+	return &PhoneMetrics{
+		AudioSeconds: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "xiaomi_remote_phone_audio_seconds_total",
+			Help: "Seconds of phone microphone audio accepted for transcription.",
+		}),
+		Utterances: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "xiaomi_remote_phone_utterances_total",
+			Help: "Phone utterances by result (ok: transcribed, miss: no usable text).",
+		}, []string{"result"}),
+		Keys: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "xiaomi_remote_phone_keys_total",
+			Help: "Key presses injected on behalf of paired phones.",
+		}),
+		InjectErrors: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "xiaomi_remote_phone_inject_errors_total",
+			Help: "Failed key injections from paired phones.",
+		}),
+	}
+}
+
+// RegisterPhoneMetrics registers the phone instruments plus a client gauge.
+func RegisterPhoneMetrics(registry prometheus.Registerer, metrics *PhoneMetrics, connected func() int) {
+	registry.MustRegister(
+		metrics.AudioSeconds,
+		metrics.Utterances,
+		metrics.Keys,
+		metrics.InjectErrors,
+		prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+			Name: "xiaomi_remote_phone_clients",
+			Help: "Paired phones with a live session (1/0 per connected device).",
+		}, func() float64 { return float64(connected()) }),
+	)
+}
+
+// countingTransport wraps the helper transport so phone key presses are
+// observable without the phone package knowing about metrics.
+type countingTransport struct {
+	inner phone.KeyTransport
+	mux   *PhoneMetrics
+}
+
+func (c countingTransport) Inject(ctx context.Context, key string, value int) error {
+	err := c.inner.Inject(ctx, key, value)
+	if c.mux == nil {
+		return err
+	}
+	if err != nil {
+		c.mux.InjectErrors.Inc()
+	} else if value == 1 {
+		c.mux.Keys.Inc()
+	}
+	return err
 }

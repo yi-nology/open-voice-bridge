@@ -287,7 +287,10 @@ make openapi   # 需要 thrift2openapi
 
 指标端点：`http://127.0.0.1:8787/metrics`，包含 Go 运行时指标与
 `xiaomi_remote_ble_connected`、`xiaomi_remote_mic_healthy`、
-`xiaomi_remote_transcripts_total`、`xiaomi_remote_asr_duration_seconds` 等。
+`xiaomi_remote_transcripts_total`、`xiaomi_remote_asr_duration_seconds` 等；
+手机面有 `xiaomi_remote_phone_clients`、`xiaomi_remote_phone_audio_seconds_total`、
+`xiaomi_remote_phone_utterances_total`、`xiaomi_remote_phone_keys_total`、
+`xiaomi_remote_phone_inject_errors_total`。
 
 ## 目录结构
 
