@@ -1,0 +1,40 @@
+# Hand-registered routes (I10 whitelist). These live in router.go's
+# customizedRegister instead of idl/xiaomi_remote.thrift; idl-check fails
+# when a router registration is missing from this list, so the truth stays
+# in one place until the typed-reply migration absorbs them.
+GET  /
+GET  /ui.css
+GET  /ui.js
+GET  /assets/*filepath
+GET  /events
+GET  /api/stats
+GET  /api/config/export
+POST /api/config/import
+GET  /api/diagnostics
+GET  /api/agent/verify
+GET  /api/agent/history
+GET  /api/agent/stats
+GET  /api/mcp/tokens
+POST /api/mcp/tokens
+POST /api/mcp/tokens/revoke
+GET  /api/inputs
+POST /api/phone/enabled
+GET  /api/phone/power
+POST /api/phone/power
+POST /api/phone/pairing
+GET  /api/phone/devices
+POST /api/phone/revoke
+GET  /api/text/commands
+POST /api/text/commands
+POST /api/phrases/paste
+GET  /api/llm/app-rules
+POST /api/llm/app-rules
+GET  /api/streaming
+POST /api/streaming
+GET  /api/wake
+POST /api/wake
+GET  /api/lookback
+POST /api/lookback
+POST /api/lookback/recover
+GET  /api/history/policy
+POST /api/history/policy

@@ -629,6 +629,384 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/OperationResp'
+# Hand-registered routes (I10 whitelist) — kept in sync with
+# idl/handwritten-routes.txt; regenerate the IDL section with `make openapi`.
+    /events:
+        get:
+            summary: "Server-sent event stream (status, transcripts, phrase picker)"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/stats:
+        get:
+            summary: "Lifetime usage statistics (counts and durations only)"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/config/export:
+        get:
+            summary: "Export the configuration (no key material)"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/config/import:
+        post:
+            summary: "Import a configuration (validated first)"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/diagnostics:
+        get:
+            summary: "Redacted troubleshooting summary"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/agent/verify:
+        get:
+            summary: "Verify a local Agent (MCP) grant"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/agent/history:
+        get:
+            summary: "Read-only history for a local Agent grant"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/agent/stats:
+        get:
+            summary: "Usage stats for a local Agent grant"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/mcp/tokens:
+        get:
+            summary: "List or create Agent (MCP) grants"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+        post:
+            summary: "List or create Agent (MCP) grants"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/mcp/tokens/revoke:
+        post:
+            summary: "Revoke an Agent (MCP) grant"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/inputs:
+        get:
+            summary: "Input sources: enabled flag, paired phones, saved intent"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/phone/enabled:
+        post:
+            summary: "Enable or disable phone input (restart required)"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/phone/power:
+        get:
+            summary: "Phone power-key opt-in (restart required)"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+        post:
+            summary: "Phone power-key opt-in (restart required)"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/phone/pairing:
+        post:
+            summary: "Mint a phone pairing code"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/phone/devices:
+        get:
+            summary: "Paired phones and their sessions"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/phone/revoke:
+        post:
+            summary: "Revoke a paired phone and drop its session"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/text/commands:
+        get:
+            summary: "Voice-command toggle and map"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+        post:
+            summary: "Voice-command toggle and map"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/phrases/paste:
+        post:
+            summary: "Insert a common phrase into the focused window"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/llm/app-rules:
+        get:
+            summary: "App-aware rewrite rules"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+        post:
+            summary: "App-aware rewrite rules"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/streaming:
+        get:
+            summary: "Live partial recognition toggle (S6)"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+        post:
+            summary: "Live partial recognition toggle (S6)"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/wake:
+        get:
+            summary: "Wake-word toggle and word (S7)"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+        post:
+            summary: "Wake-word toggle and word (S7)"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/lookback:
+        get:
+            summary: "Lookback ring toggle and window (S8)"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+        post:
+            summary: "Lookback ring toggle and window (S8)"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/lookback/recover:
+        post:
+            summary: "Transcribe the last N seconds of the ring"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/history/policy:
+        get:
+            summary: "History retention and address redaction"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+        post:
+            summary: "History retention and address redaction"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
 components:
     schemas:
         HealthResp:

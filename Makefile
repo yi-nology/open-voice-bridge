@@ -44,6 +44,11 @@ idl:
 	PATH="$(dir $(GO)):$$PATH" $(HZ) update -idl idl/xiaomi_remote.thrift
 	$(GO) run ./script/thriftctx biz/model/api/xiaomi_remote.go
 
+idl-check:
+	$(GO) run ./script/thriftctx biz/model/api/xiaomi_remote.go
+	sh ./script/routecheck.sh
+	@echo "idl-check: generated code in sync; handwritten routes listed"
+
 openapi:
 	$(THRIFT2OPENAPI) -idl idl/xiaomi_remote.thrift -o docs/openapi.yaml -title "Open Voice Bridge API" -version $(VERSION) -description "Local RC003 and external input bridge API"
 
