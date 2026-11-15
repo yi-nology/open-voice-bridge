@@ -448,6 +448,10 @@ func (c Config) Validate() error {
 	if c.MaxUtterance < core.MinUtteranceSeconds || c.MaxUtterance > core.MaxUtteranceSeconds {
 		return oeerrors.Errorf("max_utterance_seconds must be %d..%d", core.MinUtteranceSeconds, core.MaxUtteranceSeconds)
 	}
+	if c.LookbackSeconds != 0 && (c.LookbackSeconds < core.MinLookbackSeconds || c.LookbackSeconds > core.MaxLookbackSeconds) {
+		return oeerrors.Errorf("lookback_seconds must be %d..%d (0 = default), got %d",
+			core.MinLookbackSeconds, core.MaxLookbackSeconds, c.LookbackSeconds)
+	}
 	switch strings.ToLower(strings.TrimSpace(c.PasteBackend)) {
 	case "", "auto", "wayland", "x11":
 	default:

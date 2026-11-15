@@ -9,6 +9,7 @@ import (
 
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/device"
 	"github.com/yi-nology/open-voice-bridge/internal/remap"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
@@ -47,6 +48,12 @@ func Save(path string, cfg config.Config) error {
 
 // Normalize fills the defaults that come from a subsystem's own catalogue.
 func Normalize(cfg *config.Config) {
+	if cfg.LookbackSeconds == 0 {
+		cfg.LookbackSeconds = core.DefaultLookbackSeconds
+	}
+	if cfg.WakeWord == "" {
+		cfg.WakeWord = core.DefaultWakeWord
+	}
 	if preset, ok := config.LLMPresetByID(cfg.LLM.Provider); ok {
 		if cfg.LLM.BaseURL == "" {
 			cfg.LLM.BaseURL = preset.BaseURL

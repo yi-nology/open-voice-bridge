@@ -25,6 +25,10 @@ type ASRResult struct {
 	Latency  time.Duration
 }
 
+// DefaultWakeWord is what the S7 listener hears before it captures. The
+// config normaliser fills it in and the agent falls back to the same word.
+const DefaultWakeWord = "小遥小遥"
+
 // ASRAudio is the PCM one transcription consumes.
 type ASRAudio struct {
 	Samples    []int16

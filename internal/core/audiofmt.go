@@ -22,6 +22,14 @@ const (
 	DefaultUtteranceSeconds = 30
 )
 
+// Lookback ring window bounds in seconds (S8). One definition so the config
+// validator, the normaliser and the ring agree on what "30" means.
+const (
+	MinLookbackSeconds     = 5
+	MaxLookbackSeconds     = 60
+	DefaultLookbackSeconds = 30
+)
+
 // Cap is the sample budget for an utterance of at most seconds at SampleRate.
 func Cap(seconds int) int { return seconds * SampleRate }
 

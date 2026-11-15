@@ -236,3 +236,24 @@ func TestValidateChecksPasteBackend(t *testing.T) {
 		t.Fatal("unknown paste_backend accepted")
 	}
 }
+
+// TestValidateChecksLookbackWindow pins the S8 window contract at the file
+// level: the value the file says is the value the ring runs with. Writing 100
+// used to sail through and the ring silently clamped to 60 — the UI and the
+// config disagreed about reality.
+func TestValidateChecksLookbackWindow(t *testing.T) {
+	for _, ok := range []int{0, 5, 30, 60} {
+		cfg := Default()
+		cfg.LookbackSeconds = ok
+		if err := cfg.Validate(); err != nil {
+			t.Errorf("lookback_seconds %d rejected: %v", ok, err)
+		}
+	}
+	for _, bad := range []int{-1, 1, 4, 61, 100} {
+		cfg := Default()
+		cfg.LookbackSeconds = bad
+		if err := cfg.Validate(); err == nil {
+			t.Errorf("lookback_seconds %d accepted", bad)
+		}
+	}
+}

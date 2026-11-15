@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 // The subsystem semantics (provider catalogue, keymap vocabulary, device
@@ -131,5 +132,27 @@ func assertNotWritten(t *testing.T, path string) {
 	t.Helper()
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
 		t.Fatalf("a rejected config was written: %v", err)
+	}
+}
+
+// TestNormalizeFillsLookbackAndWakeDefaults: a zero window means "use the
+// default 30" and an empty wake word means 小遥小遥 — the normaliser makes
+// both explicit so Validate sees the real bounds and the UI never shows 0.
+func TestNormalizeFillsLookbackAndWakeDefaults(t *testing.T) {
+	cfg := config.Default()
+	cfg.LookbackSeconds = 0
+	cfg.WakeWord = ""
+	Normalize(&cfg)
+	if cfg.LookbackSeconds != core.DefaultLookbackSeconds {
+		t.Fatalf("lookback_seconds = %d, want %d", cfg.LookbackSeconds, core.DefaultLookbackSeconds)
+	}
+	if cfg.WakeWord != core.DefaultWakeWord {
+		t.Fatalf("wake_word = %q, want %q", cfg.WakeWord, core.DefaultWakeWord)
+	}
+	cfg.LookbackSeconds = 45
+	cfg.WakeWord = "自定义唤醒"
+	Normalize(&cfg)
+	if cfg.LookbackSeconds != 45 || cfg.WakeWord != "自定义唤醒" {
+		t.Fatalf("Normalize touched explicit values: %+v", cfg)
 	}
 }

@@ -36,7 +36,7 @@ func (a *Agent) SetWake(enabled bool, word string) {
 	a.wakeMu.Lock()
 	defer a.wakeMu.Unlock()
 	if strings.TrimSpace(word) == "" {
-		word = "小遥小遥"
+		word = core.DefaultWakeWord
 	}
 	a.wakeWord = word
 	a.wakeOn = enabled
