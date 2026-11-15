@@ -312,6 +312,7 @@ function mapStateOf(status) {
 
 function updateConnection(status) {
   lastStatus = status;
+  syncWakeCostHint();
   renderAttention(status);
   loadInputsOverview();
   const remoteConnected = remoteConnectedOf(status);
@@ -2411,6 +2412,23 @@ async function loadStreamingToggle() {
   });
 }
 
+// syncWakeCostHint: S7 matches the wake word over the recognition chain, so a
+// cloud engine turns the listener into a standing metered request stream —
+// say so instead of letting the bill surprise the user.
+function syncWakeCostHint() {
+  const hint = document.getElementById("wake-cost-hint");
+  const toggle = document.getElementById("wake-toggle");
+  if (!hint || !toggle) return;
+  const cloud = lastStatus && lastStatus.asr_local === false;
+  if (toggle.checked && cloud) {
+    hint.hidden = false;
+    hint.textContent = "唤醒词每隔几秒就送一段音频去识别来判断唤醒：当前引擎是云端接口，会持续产生识别费用。换本地 whisper.cpp 才完全离线。";
+  } else {
+    hint.hidden = true;
+    hint.textContent = "";
+  }
+}
+
 async function loadWakeToggle() {
   const toggle = document.getElementById("wake-toggle");
   const word = document.getElementById("wake-word");
@@ -2438,6 +2456,7 @@ async function loadWakeToggle() {
         return;
       }
       subtitleMsg("唤醒词设置已保存", "ok");
+      syncWakeCostHint();
       if (needsRestart(data)) showRestartBanner();
     } catch (error) {
       subtitleMsg("唤醒词保存失败：" + error, "err");

@@ -2,6 +2,37 @@
 
 ## Unreleased
 
+- Fixed: the lookback window and the wake word have one home (S8/S7).
+  `config.Validate` rejects `lookback_seconds` outside 5..60 — writing 100
+  used to sail through and the ring silently clamped to 60, so the file and
+  the UI disagreed. `appconfig.Normalize` fills the defaults (0 → 30, empty
+  word → 小遥小遥), `core` owns the constants, and the ring survives a
+  re-set of the same window (the compare used to run against the unclamped
+  request and rebuilt — dropping the buffered audio — on every call).
+
+- Changed: the fallback chain opens with the last winner. `Chain` already
+  recorded which provider last succeeded; `Transcribe` now attempts it
+  first, so a dead primary costs one failure per session instead of one per
+  utterance. The agent's two LLM locks collapse into one (three fields,
+  two locks, zero nesting between them).
+
+- Fixed: the trust trio on the admin UI. 恢复默认 asks before clobbering
+  custom mappings; the ASR page's 当前生效 line distinguishes configured
+  from running (已配置…但引擎未运行 with the plain-speech reason); the scan
+  list's green 添加为遥控器 only stays green for remote-shaped matches —
+  keyboards and headsets get a grey 仍要添加… with a confirm.
+
+- Fixed: the dialog and the phone stop cutting corners. 新手引导 closes on
+  Esc and manages focus; 字幕复制 and MCP 撤销 report their outcome; the
+  手机输入 hint drops the `config.phone.enabled` jargon; the phone page
+  allows pinch-zoom, labels its pair inputs, and the talk button takes
+  pointer capture so a slide-off no longer ends the recording mid-word.
+
+- Changed: the wake word toggle carries its cost. S7 matches over the
+  recognition chain, so a cloud engine is a standing metered request
+  stream — the 字幕页 now says so (and points at whisper.cpp) whenever the
+  toggle is on and `asr_local` is false.
+
 - Fixed: the dead switches got their wires (易用性评审 P1). `ui.Deps` shipped
   five unwired fields — `LookbackConfig`/`SetLookback`/`RecoverLookback` and
   `HistoryPolicy`/`SetHistoryPolicy` — so `/api/lookback` and
