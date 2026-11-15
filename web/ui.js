@@ -619,9 +619,16 @@ function copySubtitles() {
   if (!subtitleLinesEl) return;
   const text = [...subtitleLinesEl.querySelectorAll(".subtitle-text")]
     .map(item => item.textContent).join("\n");
-  if (!text) return;
+  if (!text) {
+    subtitleMsg("还没有可复制的字幕", "");
+    return;
+  }
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).catch(() => {});
+    navigator.clipboard.writeText(text)
+      .then(() => subtitleMsg("字幕已复制", "ok"))
+      .catch((error) => subtitleMsg("复制失败：" + error, "err"));
+  } else {
+    subtitleMsg("这个浏览器不支持一键复制", "err");
   }
 }
 
@@ -1113,7 +1120,7 @@ function renderInputs(data) {
     note.className = "note";
     note.textContent = saved
       ? "配置已启用手机输入，重启服务后这里会显示遥控器与已连接手机。"
-      : "手机输入未启用（config.phone.enabled = false）。开启后这里会显示遥控器与已连接手机。";
+      : "手机输入未启用。开启后这里会显示遥控器与已连接手机。";
     list.appendChild(note);
     return;
   }
@@ -1717,7 +1724,13 @@ async function loadMCPTokens() {
         btn.textContent = "撤销";
         btn.addEventListener("click", async () => {
           const res = await fetch("/api/mcp/tokens/revoke", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: item.id }) });
-          if (res.ok) { mcpMsg("已撤销，" + item.label + " 的下一次调用即失败。", "ok"); loadMCPTokens(); }
+          if (res.ok) {
+            mcpMsg("已撤销，" + item.label + " 的下一次调用即失败。", "ok");
+            loadMCPTokens();
+          } else {
+            const data = await res.json().catch(() => ({}));
+            mcpMsg("撤销失败：" + errorText(data, String(res.status)), "err");
+          }
         });
         row.appendChild(btn);
       }
@@ -2577,6 +2590,12 @@ document.getElementById("phrase-picker")?.addEventListener("click", (event) => {
   if (event.target.id === "phrase-picker") closePhrasePicker();
 });
 document.addEventListener("keydown", (event) => {
+  const welcome = document.getElementById("welcome");
+  if (welcome?.classList.contains("open") && event.key === "Escape") {
+    event.preventDefault();
+    closeWelcome(true);
+    return;
+  }
   const picker = document.getElementById("phrase-picker");
   if (!picker?.classList.contains("open")) return;
   if (event.key === "Escape") {
@@ -2649,16 +2668,27 @@ function renderWelcome() {
   });
 }
 
+let welcomeReturnFocus = null;
+
 function openWelcome() {
   renderWelcome();
-  document.getElementById("welcome")?.classList.add("open");
+  const dialog = document.getElementById("welcome");
+  if (!dialog) return;
+  welcomeReturnFocus = document.activeElement;
+  dialog.classList.add("open");
+  dialog.querySelector("#welcome-start")?.focus();
 }
 
 function closeWelcome(saveFlag) {
-  document.getElementById("welcome")?.classList.remove("open");
+  const dialog = document.getElementById("welcome");
+  dialog?.classList.remove("open");
   if (saveFlag) {
     try { localStorage.setItem("xiaomiOnboarded", "1"); } catch (error) {}
   }
+  if (welcomeReturnFocus && typeof welcomeReturnFocus.focus === "function") {
+    welcomeReturnFocus.focus();
+  }
+  welcomeReturnFocus = null;
 }
 
 function maybeOpenWelcome() {

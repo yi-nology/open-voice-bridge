@@ -372,6 +372,9 @@
   function bindTalk(button) {
     const start = (event) => {
       event.preventDefault();
+      // Capture so the release lands here even after a slide-off; pointerleave
+      // must not end the recording (误断录音).
+      try { button.setPointerCapture(event.pointerId); } catch (error) {}
       $('transcript').hidden = true;
       startMic();
     };
@@ -380,7 +383,7 @@
       stopMic(true);
     };
     button.addEventListener('pointerdown', start);
-    ['pointerup', 'pointercancel', 'pointerleave'].forEach((name) => button.addEventListener(name, stop));
+    ['pointerup', 'pointercancel'].forEach((name) => button.addEventListener(name, stop));
     button.addEventListener('contextmenu', (event) => event.preventDefault());
   }
 
