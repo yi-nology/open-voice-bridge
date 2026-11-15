@@ -90,7 +90,7 @@
 - 三件套：`gofmt -l . && go vet -tags stdjson ./... && go test -tags stdjson -count=1 ./...`。输出重定向到临时文件再看退出码，不要把 `go test` 管进 `grep`（会吞掉真实 `$?`）。
 - `-race` 在 Pi 上跑不起来：竞争类结论只以 CI 的 `Test (linux)` 作业为证据，勾选时要标 **CI**。macOS 开发机可用 Docker（`golang:1.27`）跑 Linux 侧测试作近似证据。
 - 管理端永远只绑 `127.0.0.1:8787`；配对码只进 URL fragment（`#pair=`）；token / ticket / 配对码 / 音频字节 / 转写正文永不进日志与提交物；提交的文档与测试里不写真实 MAC 与机器路径（示例一律 `AA:BB:CC:DD:EE:FF`）。
-- 推送用显式 SSH URL（`origin` 是 HTTPS，凭据不在那里）；`git remote set-url` 这条路被拒过，别再试。
+- 推送走 HTTPS `origin`（`git push origin main`）：gh 登录有效时 `gh auth git-credential` 助手直接可用（2026-11-15 实测）。SSH 路是死的——22 端口断连，`ssh.github.com:443` 公钥被拒；`git remote set-url` 这条路被拒过，别再试。
 - **不打 `v0.2.0` tag**：`release.yml` 由 tag 触发并公开发布，硬件验收通过之前不切版本。（**2026-11-12 作者豁免本次**：v0.2.0 已按正式版发出，后续版本回归此门槛。）
 - `docs/superpowers/plans/*.md` 是本地工作稿（含机器绝对路径），已进 `.gitignore`，不要提交。
 
