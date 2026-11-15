@@ -5,6 +5,7 @@
 GET  /
 GET  /ui.css
 GET  /ui.js
+GET  /ui-core.js
 GET  /tokens.css
 GET  /assets/*filepath
 GET  /events

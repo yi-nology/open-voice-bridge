@@ -19,6 +19,7 @@ func CustomizedRegister(r *server.Hertz, customUI *ui.Server) {
 	r.GET("/", customUI.Root)
 	r.GET("/ui.css", customUI.UIAsset("ui.css", "text/css; charset=utf-8"))
 	r.GET("/ui.js", customUI.UIAsset("ui.js", "text/javascript; charset=utf-8"))
+	r.GET("/ui-core.js", customUI.UIAsset("ui-core.js", "text/javascript; charset=utf-8"))
 	r.GET("/tokens.css", customUI.UIAsset("tokens.css", "text/css; charset=utf-8"))
 	assets := hertzadaptor.NativeStaticFSHandler("/assets", ui.AssetsFS(),
 		hertzadaptor.WithNativeCacheControl("max-age=3600"))

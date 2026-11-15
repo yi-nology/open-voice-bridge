@@ -6,5 +6,5 @@ import "embed"
 // FS contains the desktop UI, the phone PWA and the static assets referenced
 // by them.
 //
-//go:embed ui.html ui.css ui.js tokens.css manifest.json phone.html phone.css phone_app.js phone_worklet.js assets
+//go:embed ui.html ui.css ui.js ui-core.js tokens.css manifest.json phone.html phone.css phone_app.js phone_worklet.js assets
 var FS embed.FS

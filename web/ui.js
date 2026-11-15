@@ -1,3 +1,6 @@
+// Pure helpers live in ui-core.js (shared with the node:test suite).
+const { errorText, buildPairLink, fmtDuration, sealDiagPack } = XiaoyaoCore;
+
 const KEYS = [
   {key: "power",      chip: "电源", name: "电源键",   hid: "0x66", def: "esc"},
   {key: "up",         chip: "上",   name: "上键",     hid: "0x52", def: "native"},
@@ -280,11 +283,6 @@ function logKey(key, value) {
   row.textContent = `${time}  ${item ? item.name : key}  ${value ? "按下" : "松开"}`;
   box.prepend(row);
   while (box.children.length > 12) box.removeChild(box.lastChild);
-}
-
-function errorText(data, fallback) {
-  if (!data) return fallback || "";
-  return data.message || data.error || data.output || fallback || "";
 }
 
 function setChip(id, text, cls) {
@@ -1126,13 +1124,6 @@ function stopPairCountdown() {
   }
 }
 
-function buildPairLink(data) {
-  const scheme = data.scheme || "https";
-  const port = data.port || "8788";
-  const base = data.link || (scheme + "://" + location.hostname + ":" + port + "/phone");
-  return base + "#pair=" + data.code;
-}
-
 function tickPairCountdown() {
   const remaining = Math.max(0, Math.round((pairExpiresAt - Date.now()) / 1000));
   const node = document.getElementById("pair-countdown");
@@ -1164,7 +1155,7 @@ async function generatePairCode(silent) {
       return;
     }
     document.getElementById("pair-code").textContent = data.code;
-    document.getElementById("pair-link").value = buildPairLink(data);
+    document.getElementById("pair-link").value = buildPairLink(data, location.hostname);
     const qr = document.getElementById("pair-qr");
     if (qr) {
       if (data.qr) { qr.src = data.qr; qr.hidden = false; }
@@ -1467,15 +1458,6 @@ document.querySelectorAll(".side-item").forEach(item => {
 
 const guidedSubtitle = document.getElementById("guided-subtitle");
 if (guidedSubtitle) guidedSubtitle.addEventListener("click", () => goTab("subtitle"));
-function fmtDuration(ms) {
-  const total = Math.round((ms || 0) / 1000);
-  if (total < 60) return total + " 秒";
-  const minutes = Math.floor(total / 60);
-  const rest = total % 60;
-  if (minutes < 60) return rest ? minutes + " 分 " + rest + " 秒" : minutes + " 分";
-  return Math.floor(minutes / 60) + " 小时 " + (minutes % 60) + " 分";
-}
-
 async function loadStats() {
   const el = document.getElementById("stats-utterances");
   if (!el) return;
@@ -1539,30 +1521,6 @@ if (configImportBtn && configImportFile) {
     }
   });
 }
-// sealDiagPack encrypts the diagnostics pack in the browser (R10): the
-// export passphrase never reaches the agent process. Format OVBDIA1 —
-// PBKDF2-HMAC-SHA256 (600k) + AES-256-GCM, mirrored by internal/diagbox.
-async function sealDiagPack(bytes, passphrase) {
-  const enc = new TextEncoder();
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const nonce = crypto.getRandomValues(new Uint8Array(12));
-  const head = new Uint8Array(40);
-  head.set(enc.encode("OVBDIA1\n"), 0);
-  head.set(salt, 8);
-  head.set(nonce, 24);
-  new DataView(head.buffer).setUint32(36, 600000);
-  const baseKey = await crypto.subtle.importKey("raw", enc.encode(passphrase), "PBKDF2", false, ["deriveKey"]);
-  const key = await crypto.subtle.deriveKey(
-    { name: "PBKDF2", hash: "SHA-256", salt, iterations: 600000 },
-    baseKey, { name: "AES-GCM", length: 256 }, false, ["encrypt"]);
-  const cipher = new Uint8Array(await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv: nonce, additionalData: head }, key, bytes));
-  const out = new Uint8Array(40 + cipher.length);
-  out.set(head, 0);
-  out.set(cipher, 40);
-  return out;
-}
-
 function downloadBlob(bytes, filename, type) {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([bytes], { type: type || "application/octet-stream" }));
