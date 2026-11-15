@@ -39,7 +39,7 @@ func TestInjectPrefersWtypeOnWayland(t *testing.T) {
 	t.Setenv("WAYLAND_DISPLAY", "wayland-0")
 	t.Setenv("DISPLAY", "")
 
-	if err := inject(context.Background(), "hello wtype"); err != nil {
+	if err := injectBackend(context.Background(), "hello wtype", BackendAuto); err != nil {
 		t.Fatalf("inject: %v", err)
 	}
 	data, err := os.ReadFile(log)
@@ -60,7 +60,7 @@ func TestInjectFallsBackToX11ClipboardPaste(t *testing.T) {
 	t.Setenv("WAYLAND_DISPLAY", "")
 	t.Setenv("DISPLAY", "")
 
-	err := inject(context.Background(), "hello x11")
+	err := injectBackend(context.Background(), "hello x11", BackendAuto)
 	// xsel carries the clipboard first; without an X server the XTEST half
 	// fails after it — proving the fallback path ran, text and all.
 	if err == nil || !strings.Contains(err.Error(), "connect X display") {

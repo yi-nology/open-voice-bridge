@@ -4,4 +4,4 @@ package paste
 
 import "context"
 
-func inject(ctx context.Context, text string) error { return ErrUnsupported }
+func injectBackend(ctx context.Context, text, backend string) error { return ErrUnsupported }

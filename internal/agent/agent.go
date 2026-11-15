@@ -144,7 +144,7 @@ func (a *Agent) newPipeline() *speech.Pipeline {
 			return a.llm
 		},
 		PasteEnabled: func() bool { return a.cfg.PasteEnabled },
-		PasteText:    paste.Text,
+		PasteText:    paste.Injector(a.cfg.PasteBackend),
 		SendKeys:     paste.Key,
 		RewriteMode:  a.rewriteModeFor,
 		Sink:         a.recordTranscript,

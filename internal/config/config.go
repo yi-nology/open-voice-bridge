@@ -70,6 +70,10 @@ type Config struct {
 	KeydConfig   string         `json:"keyd_config"`
 	MaxUtterance int            `json:"max_utterance_seconds"`
 	PasteEnabled bool           `json:"paste_enabled"`
+	// PasteBackend picks the text-injection path: auto (Wayland when available,
+	// X11 otherwise), wayland, or x11. labwc's virtual-keyboard handling types
+	// the wrong keys, so a host may need to pin x11.
+	PasteBackend string `json:"paste_backend"`
 	// StreamingSubtitles turns on live partial recognition while the voice
 	// key is held (S6 边说边滚字): throttled extra ASR calls, opt-in.
 	StreamingSubtitles bool `json:"streaming_subtitles"`
@@ -154,6 +158,7 @@ func Default() Config {
 		KeydConfig:   "/etc/keyd/xiaomi.conf",
 		MaxUtterance: core.DefaultUtteranceSeconds,
 		PasteEnabled: true,
+		PasteBackend: "auto",
 	}
 	cfg.ASR = DefaultASR()
 	cfg.ASR.Providers["mimo"] = ASRProviderConfig{
@@ -442,6 +447,11 @@ func (c Config) Validate() error {
 	}
 	if c.MaxUtterance < core.MinUtteranceSeconds || c.MaxUtterance > core.MaxUtteranceSeconds {
 		return oeerrors.Errorf("max_utterance_seconds must be %d..%d", core.MinUtteranceSeconds, core.MaxUtteranceSeconds)
+	}
+	switch strings.ToLower(strings.TrimSpace(c.PasteBackend)) {
+	case "", "auto", "wayland", "x11":
+	default:
+		return oeerrors.Errorf("paste_backend must be auto, wayland or x11, got %q", c.PasteBackend)
 	}
 	if strings.TrimSpace(c.HelperSocket) == "" {
 		return oeerrors.Errorf("helper_socket is required")

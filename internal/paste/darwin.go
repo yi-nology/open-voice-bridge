@@ -14,7 +14,7 @@ import (
 // needs Accessibility permission for the keystroke half ("osascript is not
 // allowed to send keystrokes" until it is granted); without it the
 // transcription still lands in subtitles and history.
-func inject(ctx context.Context, text string) error {
+func injectBackend(ctx context.Context, text, backend string) error {
 	copyCmd := exec.CommandContext(ctx, "pbcopy")
 	copyCmd.Stdin = strings.NewReader(text)
 	if err := copyCmd.Run(); err != nil {

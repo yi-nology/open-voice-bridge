@@ -219,3 +219,20 @@ func TestLLMRoundTrip(t *testing.T) {
 		t.Fatalf("llm = %+v", loaded.LLM)
 	}
 }
+
+// paste_backend selects the injection path; a typo must fail loudly instead of
+// silently falling back to the backend that mangles text on this host.
+func TestValidateChecksPasteBackend(t *testing.T) {
+	for _, ok := range []string{"", "auto", "wayland", "x11", "X11"} {
+		cfg := Default()
+		cfg.PasteBackend = ok
+		if err := cfg.Validate(); err != nil {
+			t.Errorf("paste_backend %q rejected: %v", ok, err)
+		}
+	}
+	cfg := Default()
+	cfg.PasteBackend = "wtype"
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("unknown paste_backend accepted")
+	}
+}
