@@ -10,7 +10,9 @@
   cool-dark solid in the same family, heat cells and badges ride emerald
   tints, and hotspots over the remote photo are dark-glass chips.
   `tokens.css` owns the palette; `design-qa.md` marks the light round's
-  colour conclusions as history.
+  colour conclusions as history. The phone page follows: its talk slab and
+  toast are glass, the recording states ride the warn/bad tokens (no more
+  iOS fallbacks), and one theme-color meta remains.
 
 - Fixed: the lookback window and the wake word have one home (S8/S7).
   `config.Validate` rejects `lookback_seconds` outside 5..60 — writing 100
