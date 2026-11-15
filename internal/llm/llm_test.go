@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/yi-nology/open-voice-bridge/internal/config"
@@ -124,5 +125,75 @@ func TestOpenAIPing(t *testing.T) {
 	latency, err := processor.Ping(context.Background())
 	if err != nil || latency <= 0 {
 		t.Fatalf("latency=%v err=%v", latency, err)
+	}
+}
+
+// TestProcessModeConcurrentKeepsEachMode pins the S5 concurrency contract:
+// ProcessMode must not mutate shared state — two callers with different modes
+// may run at the same time and each request has to carry its own system prompt.
+// The body's user text names the mode the call asked for (P1 fix).
+func TestProcessModeConcurrentKeepsEachMode(t *testing.T) {
+	type call struct {
+		text string
+		mode string
+	}
+	want := map[string]string{}
+	for _, mode := range []string{"format", "translate", "cleanup"} {
+		want[mode] = systemPrompt(mode, "")
+	}
+	var mu sync.Mutex
+	got := map[string]string{}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Messages []struct {
+				Role    string `json:"role"`
+				Content string `json:"content"`
+			} `json:"messages"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Error(err)
+		}
+		sys, user := "", ""
+		for _, m := range body.Messages {
+			switch m.Role {
+			case "system":
+				sys = m.Content
+			case "user":
+				user = m.Content
+			}
+		}
+		mu.Lock()
+		got[user] = sys
+		mu.Unlock()
+		_, _ = w.Write([]byte(`{"choices":[{"message":{"content":"ok"}}]}`))
+	}))
+	defer server.Close()
+
+	processor, err := NewOpenAI(OpenAIConfig{BaseURL: server.URL, Model: "m", Mode: "cleanup"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	calls := []call{{"format", "format"}, {"translate", "translate"}, {"cleanup", "cleanup"}}
+	var wg sync.WaitGroup
+	for _, c := range calls {
+		wg.Add(1)
+		go func(c call) {
+			defer wg.Done()
+			for i := 0; i < 20; i++ {
+				if _, err := processor.ProcessMode(context.Background(), c.text, c.mode); err != nil {
+					t.Error(err)
+					return
+				}
+			}
+		}(c)
+	}
+	wg.Wait()
+	mu.Lock()
+	defer mu.Unlock()
+	for _, c := range calls {
+		if got[c.text] != want[c.mode] {
+			t.Fatalf("request for %q carried system prompt of another mode:\n got %q\nwant %q",
+				c.text, got[c.text], want[c.mode])
+		}
 	}
 }

@@ -56,18 +56,20 @@ func (o *OpenAI) Ping(ctx context.Context) (time.Duration, error) {
 
 // ProcessMode rewrites with an explicit mode, overriding the configured one
 // for this call — the app-aware rewrite path (S5). Empty mode = default.
+// The mode travels as a parameter; nothing shared is written (I3).
 func (o *OpenAI) ProcessMode(ctx context.Context, text, mode string) (string, error) {
 	mode = strings.TrimSpace(mode)
 	if mode == "" {
 		mode = o.cfg.Mode
 	}
-	saved := o.cfg.Mode
-	o.cfg.Mode = mode
-	defer func() { o.cfg.Mode = saved }()
-	return o.Process(ctx, text)
+	return o.processWithMode(ctx, text, mode)
 }
 
 func (o *OpenAI) Process(ctx context.Context, text string) (string, error) {
+	return o.processWithMode(ctx, text, o.cfg.Mode)
+}
+
+func (o *OpenAI) processWithMode(ctx context.Context, text, mode string) (string, error) {
 	text = strings.TrimSpace(text)
 	if text == "" {
 		return "", nil
@@ -77,7 +79,7 @@ func (o *OpenAI) Process(ctx context.Context, text string) (string, error) {
 		"temperature": 0.2,
 		"max_tokens":  1024,
 		"messages": []any{
-			map[string]any{"role": "system", "content": systemPrompt(o.cfg.Mode, o.cfg.Prompt)},
+			map[string]any{"role": "system", "content": systemPrompt(mode, o.cfg.Prompt)},
 			map[string]any{"role": "user", "content": text},
 		},
 	}
