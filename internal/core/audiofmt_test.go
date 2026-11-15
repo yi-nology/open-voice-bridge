@@ -90,3 +90,14 @@ func TestNoOtherPackageRedefinesTheRate(t *testing.T) {
 		t.Fatalf("walk: %v", err)
 	}
 }
+
+// Peak is what the diagnostics report instead of the waveform, so it has to
+// see the sign the same way on both sides.
+func TestPeakReadsBothSigns(t *testing.T) {
+	if got := Peak([]int16{0, -900, 400}); got != 900 {
+		t.Fatalf("Peak = %d, want 900", got)
+	}
+	if got := Peak(nil); got != 0 {
+		t.Fatalf("Peak(nil) = %d, want 0", got)
+	}
+}

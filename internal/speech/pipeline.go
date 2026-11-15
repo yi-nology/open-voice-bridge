@@ -2,6 +2,7 @@ package speech
 
 import (
 	"context"
+	"math"
 	"strings"
 	"sync"
 	"time"
@@ -152,7 +153,10 @@ func (p *Pipeline) Transcribe(parent context.Context, u Utterance) (Transcript, 
 	// Cloud engines answer dead air with a confident short line ("你好。",
 	// "1234567890"), so a mis-tap would otherwise turn into a wrong sentence.
 	if !core.CarriesSpeech(u.Samples) {
-		log.Debug("capture is below the speech floor; not sending it to ASR")
+		// Level and duration, never the samples: this is what separates "the
+		// user tapped" from "the capture is broken".
+		log.Info("capture below the speech floor; not sending it to ASR",
+			"seconds", secondsOf(u), "peak", core.Peak(u.Samples))
 		return Transcript{}, false
 	}
 	engine := p.engine()
@@ -203,6 +207,8 @@ func (p *Pipeline) Transcribe(parent context.Context, u Utterance) (Transcript, 
 	processed := p.applyText(ctx, rawText)
 	log.Info("recognized",
 		"chars", len([]rune(processed)),
+		"seconds", secondsOf(u),
+		"peak", core.Peak(u.Samples),
 		"language", result.Language,
 		"provider", result.Provider,
 		"source", u.Ref.Kind,
@@ -255,6 +261,16 @@ func (p *Pipeline) TranscribePartial(parent context.Context, u Utterance) (strin
 		return "", err
 	}
 	return strings.TrimSpace(result.Text), nil
+}
+
+// secondsOf is the capture length rounded to a tenth, for the diagnostics
+// line: duration and level say whether a capture carried speech without ever
+// carrying the words (SEC-02).
+func secondsOf(u Utterance) float64 {
+	if u.Rate() <= 0 {
+		return 0
+	}
+	return math.Round(float64(len(u.Samples))*10/float64(u.Rate())) / 10
 }
 
 // applyText runs voice snippets, then LLM rewrite, then the user dictionary.

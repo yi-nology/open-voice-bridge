@@ -46,10 +46,22 @@ const SpeechFloor = 300
 // peak is what matters, not the mean: one syllable inside a long silence is
 // still speech, while a whole capture of room tone is not.
 func CarriesSpeech(samples []int16) bool {
+	return Peak(samples) > SpeechFloor
+}
+
+// Peak is the largest absolute sample. Diagnostics report it instead of the
+// waveform: a level proves the capture carried sound without carrying the
+// speech itself (SEC-02).
+func Peak(samples []int16) int {
+	peak := 0
 	for _, sample := range samples {
-		if sample > SpeechFloor || sample < -SpeechFloor {
-			return true
+		value := int(sample)
+		if value < 0 {
+			value = -value
+		}
+		if value > peak {
+			peak = value
 		}
 	}
-	return false
+	return peak
 }

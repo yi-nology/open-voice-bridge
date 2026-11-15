@@ -62,7 +62,10 @@ install-user: build
 		deploy/xiaoyao.service > $(USER_UNIT)
 	chmod 644 $(USER_UNIT)
 	systemctl --user daemon-reload
-	systemctl --user enable --now xiaoyao.service
+	systemctl --user enable xiaoyao.service
+	# restart, not enable --now: a running unit keeps the old binary in memory,
+	# so enable --now silently installs nothing while the service is up.
+	systemctl --user restart xiaoyao.service
 
 install-remap:
 	mkdir -p $(dir $(SYSTEM_UNIT))
@@ -71,7 +74,8 @@ install-remap:
 		deploy/xiaoyao-remap.service > $(SYSTEM_UNIT)
 	chmod 644 $(SYSTEM_UNIT)
 	systemctl daemon-reload
-	systemctl enable --now xiaoyao-remap.service
+	systemctl enable xiaoyao-remap.service
+	systemctl restart xiaoyao-remap.service
 
 install-logrotate:
 	sed -e 's|@ROOT@|$(ROOT)|g' -e 's|@USER@|$(RUN_USER)|g' \
