@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func (s *Service) Apply(ctx context.Context, mapping map[string]string) (map[string]any, error) {
+func (s *Service) Apply(ctx context.Context, mapping map[string]string) (core.HelperResponse, error) {
 	merged := s.ops.MergeDefaults(mapping)
 	s.cfgMu.Lock()
 	if s.cfg.Keymap.Profiles == nil {
@@ -19,7 +19,7 @@ func (s *Service) Apply(ctx context.Context, mapping map[string]string) (map[str
 	snapshot.Keymap.Profile = "custom"
 	s.cfgMu.Unlock()
 	if err := s.persistConfig(snapshot); err != nil {
-		return nil, err
+		return core.HelperResponse{}, err
 	}
 	s.cfgMu.Lock()
 	if s.cfg.Keymap.Profiles == nil {
@@ -37,10 +37,10 @@ func (s *Service) Apply(ctx context.Context, mapping map[string]string) (map[str
 // applyMapping hands a mapping to the remapper after swapping every
 // type()/open() seq step for an agent(n) key the user-level agent watches —
 // the root daemon only ever presses keys (S3).
-func (s *Service) applyMapping(ctx context.Context, mapping map[string]string) (map[string]any, error) {
+func (s *Service) applyMapping(ctx context.Context, mapping map[string]string) (core.HelperResponse, error) {
 	rewritten, actions := s.ops.RewriteActions(mapping)
 	s.agent.SetSeqActions(actions)
-	return s.helper.Call(ctx, map[string]any{"cmd": "apply", "mapping": rewritten})
+	return s.helper.Call(ctx, core.HelperRequest{Cmd: "apply", Mapping: rewritten})
 }
 
 func (s *Service) KeymapProfiles(ctx context.Context) (string, map[string]map[string]string) {
@@ -53,7 +53,7 @@ func (s *Service) KeymapProfiles(ctx context.Context) (string, map[string]map[st
 	return s.cfg.Keymap.Profile, profiles
 }
 
-func (s *Service) ApplyKeymapProfile(ctx context.Context, name string) (map[string]any, error) {
+func (s *Service) ApplyKeymapProfile(ctx context.Context, name string) (core.HelperResponse, error) {
 	s.cfgMu.RLock()
 	mapping, ok := s.cfg.Keymap.Profiles[name]
 	if ok {
@@ -61,14 +61,14 @@ func (s *Service) ApplyKeymapProfile(ctx context.Context, name string) (map[stri
 	}
 	s.cfgMu.RUnlock()
 	if !ok {
-		return nil, oeerrors.Errorf("unknown keymap profile %q", name)
+		return core.HelperResponse{}, oeerrors.Errorf("unknown keymap profile %q", name)
 	}
 	s.cfgMu.Lock()
 	snapshot := s.configSnapshotLocked()
 	snapshot.Keymap.Profile = name
 	s.cfgMu.Unlock()
 	if err := s.persistConfig(snapshot); err != nil {
-		return nil, err
+		return core.HelperResponse{}, err
 	}
 	s.cfgMu.Lock()
 	s.cfg.Keymap.Profile = name
@@ -76,17 +76,17 @@ func (s *Service) ApplyKeymapProfile(ctx context.Context, name string) (map[stri
 	return s.applyMapping(ctx, mapping)
 }
 
-func (s *Service) SaveKeymapProfile(ctx context.Context, name string, mapping map[string]string) (map[string]any, error) {
+func (s *Service) SaveKeymapProfile(ctx context.Context, name string, mapping map[string]string) (core.HelperResponse, error) {
 	name = strings.TrimSpace(name)
 	if !profileNamePattern.MatchString(name) {
-		return nil, oeerrors.Errorf("profile name must be 1-32 chars of a-z, 0-9, _ or -")
+		return core.HelperResponse{}, oeerrors.Errorf("profile name must be 1-32 chars of a-z, 0-9, _ or -")
 	}
 	if builtinProfile(name) {
-		return nil, oeerrors.Errorf("%q is a built-in profile and cannot be overwritten", name)
+		return core.HelperResponse{}, oeerrors.Errorf("%q is a built-in profile and cannot be overwritten", name)
 	}
 	cleaned := s.ops.MergeDefaults(mapping)
 	if err := s.ops.ValidateMapping(cleaned); err != nil {
-		return nil, err
+		return core.HelperResponse{}, err
 	}
 	s.cfgMu.Lock()
 	snapshot := s.configSnapshotLocked()
@@ -97,7 +97,7 @@ func (s *Service) SaveKeymapProfile(ctx context.Context, name string, mapping ma
 	snapshot.Keymap.Profile = name
 	s.cfgMu.Unlock()
 	if err := s.persistConfig(snapshot); err != nil {
-		return nil, err
+		return core.HelperResponse{}, err
 	}
 	s.cfgMu.Lock()
 	if s.cfg.Keymap.Profiles == nil {

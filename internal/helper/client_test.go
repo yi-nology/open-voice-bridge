@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"net"
 	"os"
 	"path/filepath"
@@ -70,12 +71,12 @@ func TestCallSuccess(t *testing.T) {
 		}
 		writeLine(t, conn, map[string]any{"ok": true, "key": "enter"})
 	})
-	response, err := New(path).Call(context.Background(), map[string]any{"cmd": "inject", "key": "enter", "value": 1})
+	response, err := New(path).Call(context.Background(), core.HelperRequest{Cmd: "inject", Key: "enter", Value: 1})
 	if err != nil {
 		t.Fatalf("Call: %v", err)
 	}
-	if response["ok"] != true || response["key"] != "enter" {
-		t.Fatalf("response = %v", response)
+	if !response.OK || response.Key != "enter" {
+		t.Fatalf("response = %+v", response)
 	}
 }
 
@@ -117,7 +118,7 @@ func TestInjectRejected(t *testing.T) {
 func TestCallDialError(t *testing.T) {
 	client := New(filepath.Join(t.TempDir(), "missing.sock"))
 	client.Timeout = 200 * time.Millisecond
-	if _, err := client.Call(context.Background(), map[string]string{"cmd": "ping"}); err == nil {
+	if _, err := client.Call(context.Background(), core.HelperRequest{Cmd: "ping"}); err == nil {
 		t.Fatal("expected dial error")
 	}
 }
@@ -132,7 +133,7 @@ func TestCallDecodeError(t *testing.T) {
 			t.Errorf("write response: %v", err)
 		}
 	})
-	if _, err := New(path).Call(context.Background(), map[string]string{"cmd": "ping"}); err == nil {
+	if _, err := New(path).Call(context.Background(), core.HelperRequest{Cmd: "ping"}); err == nil {
 		t.Fatal("expected decode error")
 	}
 }
@@ -158,8 +159,8 @@ func TestStartCaptureStreamsEvents(t *testing.T) {
 			return
 		}
 		writeLine(t, conn, map[string]any{"ok": true})
-		writeLine(t, conn, map[string]any{"type": "key", "key": "up"})
-		writeLine(t, conn, map[string]any{"type": "key", "key": "enter"})
+		writeLine(t, conn, map[string]any{"event": "key", "key": "up"})
+		writeLine(t, conn, map[string]any{"event": "key", "key": "enter"})
 		for {
 			if _, err := reader.ReadBytes('\n'); err != nil {
 				return
@@ -174,8 +175,8 @@ func TestStartCaptureStreamsEvents(t *testing.T) {
 	for _, want := range []string{"up", "enter"} {
 		select {
 		case event := <-capture.Events():
-			if event["key"] != want {
-				t.Fatalf("event = %v, want key %q", event, want)
+			if event.Key != want {
+				t.Fatalf("event = %+v, want key %q", event, want)
 			}
 		case <-time.After(2 * time.Second):
 			t.Fatalf("timed out waiting for key %q", want)

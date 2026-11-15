@@ -43,7 +43,7 @@ type Agent interface {
 
 // Helper is the root remapper client.
 type Helper interface {
-	Call(context.Context, any) (map[string]any, error)
+	Call(context.Context, core.HelperRequest) (core.HelperResponse, error)
 }
 
 // Service owns runtime configuration and coordinates the agent and remapper.
@@ -240,7 +240,7 @@ func (s *Service) SyncDevices(ctx context.Context) {
 				appleEnabled = true
 			}
 		}
-		if _, err := s.helper.Call(ctx, map[string]any{"cmd": "set_devices", "devices": matches, "apple": appleEnabled, "allow_power": allowPower}); err == nil {
+		if _, err := s.helper.Call(ctx, core.HelperRequest{Cmd: "set_devices", Devices: matches, Apple: appleEnabled, AllowPower: allowPower}); err == nil {
 			s.logger.Info("device matchers applied", "count", len(matches), "apple", appleEnabled, "allow_power", allowPower)
 			return
 		} else {

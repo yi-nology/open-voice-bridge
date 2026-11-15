@@ -119,7 +119,7 @@ func (f *fakeAgent) ASRName() string {
 
 type fakeHelper struct {
 	mu         sync.Mutex
-	status     map[string]any
+	status     *core.HelperResponse
 	applied    map[string]string
 	devices    []device.Match
 	allowPower bool
@@ -145,38 +145,35 @@ func (f *fakeHelper) devicesSnapshot() []device.Match {
 	return f.devices
 }
 
-func (f *fakeHelper) Call(ctx context.Context, payload any) (map[string]any, error) {
+func (f *fakeHelper) Call(ctx context.Context, payload core.HelperRequest) (core.HelperResponse, error) {
 	if f.callErr != nil {
-		return nil, f.callErr
+		return core.HelperResponse{}, f.callErr
 	}
-	command, _ := payload.(map[string]any)
-	if command["cmd"] == "apply" && f.applyErr != nil {
-		return nil, f.applyErr
+	if payload.Cmd == "apply" && f.applyErr != nil {
+		return core.HelperResponse{}, f.applyErr
 	}
-	if command["cmd"] == "apply" {
-		if mapping, ok := command["mapping"].(map[string]string); ok {
-			f.mu.Lock()
-			f.applied = mapping
-			f.mu.Unlock()
-		}
-		return map[string]any{"ok": true, "config": "{}"}, nil
-	}
-	if command["cmd"] == "set_devices" {
+	if payload.Cmd == "apply" {
 		f.mu.Lock()
-		f.devices, _ = command["devices"].([]device.Match)
-		f.allowPower, _ = command["allow_power"].(bool)
+		f.applied = payload.Mapping
+		f.mu.Unlock()
+		return core.HelperResponse{OK: true, Config: "{}"}, nil
+	}
+	if payload.Cmd == "set_devices" {
+		f.mu.Lock()
+		f.devices = payload.Devices
+		f.allowPower = payload.AllowPower
 		n := len(f.devices)
 		f.mu.Unlock()
-		return map[string]any{"ok": true, "devices": n}, nil
+		return core.HelperResponse{OK: true, Devices: n}, nil
 	}
 	if f.status != nil {
-		return f.status, nil
+		return *f.status, nil
 	}
-	return map[string]any{
-		"keyd_active":    true,
-		"remote_present": true,
-		"mapping":        map[string]string{"power": "esc"},
-		"config":         "{}",
+	return core.HelperResponse{
+		KeydActive:    true,
+		RemotePresent: true,
+		Mapping:       map[string]string{"power": "esc"},
+		Config:        "{}",
 	}, nil
 }
 

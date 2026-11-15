@@ -230,25 +230,17 @@ func (d *Daemon) handleConn(conn net.Conn) {
 	scanner := bufio.NewScanner(conn)
 	scanner.Buffer(make([]byte, 0, 4096), 1<<20)
 	for scanner.Scan() {
-		var command struct {
-			Cmd     string            `json:"cmd"`
-			Mapping map[string]string `json:"mapping"`
-			Devices []device.Match    `json:"devices"`
-			Apple   bool              `json:"apple"`
-			// AllowPower carries phone.allow_power_key. It rides set_devices
-			// because that command is already the agent's policy push and is
-			// restricted to root/agent uid — a group peer cannot flip it.
-			AllowPower bool   `json:"allow_power"`
-			Key        string `json:"key"`
-			Value      int    `json:"value"`
-		}
+		// AllowPower carries phone.allow_power_key. It rides set_devices
+		// because that command is already the agent's policy push and is
+		// restricted to root/agent uid — a group peer cannot flip it.
+		var command core.HelperRequest
 		if err := json.Unmarshal(scanner.Bytes(), &command); err != nil {
-			d.writeConn(conn, map[string]any{"ok": false, "error": "bad json"})
+			d.writeConn(conn, core.HelperResponse{Error: "bad json"})
 			continue
 		}
 		if !authorizeCommand(peerUID, d.cfg.AgentUID, command.Cmd) {
 			log.Warn("rejected helper command", "cmd", command.Cmd, "peer_uid", peerUID)
-			d.writeConn(conn, map[string]any{"ok": false, "error": "denied"})
+			d.writeConn(conn, core.HelperResponse{Error: "denied"})
 			continue
 		}
 		switch command.Cmd {
@@ -257,54 +249,51 @@ func (d *Daemon) handleConn(conn net.Conn) {
 		case "apply":
 			mapping := MergeDefaults(command.Mapping)
 			if err := Validate(mapping); err != nil {
-				d.writeConn(conn, map[string]any{"ok": false, "error": err.Error()})
+				d.writeConn(conn, core.HelperResponse{Error: err.Error()})
 				continue
 			}
 			if err := Save(d.cfg.MappingPath, mapping); err != nil {
-				d.writeConn(conn, map[string]any{"ok": false, "error": err.Error()})
+				d.writeConn(conn, core.HelperResponse{Error: err.Error()})
 				continue
 			}
 			d.mu.Lock()
 			d.mapping = mapping
 			d.mu.Unlock()
-			d.writeConn(conn, map[string]any{
-				"ok":     true,
-				"config": ConfigText(mapping),
-			})
+			d.writeConn(conn, core.HelperResponse{OK: true, Config: ConfigText(mapping)})
 		case "set_devices":
 			d.mu.Lock()
 			d.matchers = append([]device.Match(nil), command.Devices...)
 			d.appleEnabled = command.Apple
 			d.allowPowerKey = command.AllowPower
 			d.mu.Unlock()
-			d.writeConn(conn, map[string]any{"ok": true, "devices": len(command.Devices), "apple": command.Apple, "allow_power": command.AllowPower})
+			d.writeConn(conn, core.HelperResponse{OK: true, Devices: len(command.Devices), Apple: command.Apple, AllowPower: command.AllowPower})
 		case "capture_start":
 			if client == nil {
 				client = &captureClient{conn: conn}
 				d.addClient(client)
 			}
-			d.writeConn(conn, map[string]any{"ok": true, "event": "capture_started"})
+			d.writeConn(conn, core.HelperResponse{OK: true, Event: "capture_started"})
 		case "capture_stop":
 			if client != nil {
 				d.removeClient(client)
 			}
-			d.writeConn(conn, map[string]any{"ok": true, "event": "capture_stopped"})
+			d.writeConn(conn, core.HelperResponse{OK: true, Event: "capture_stopped"})
 			return
 		case "inject":
 			code, ok := InjectKeyCode(command.Key, d.powerAllowed())
 			if !ok {
 				log.Warn("rejected phone key injection", "key", command.Key)
-				d.writeConn(conn, map[string]any{"ok": false, "error": "key not allowed"})
+				d.writeConn(conn, core.HelperResponse{Error: "key not allowed"})
 				continue
 			}
 			if command.Value != 0 && command.Value != 1 {
-				d.writeConn(conn, map[string]any{"ok": false, "error": "invalid value"})
+				d.writeConn(conn, core.HelperResponse{Error: "invalid value"})
 				continue
 			}
 			d.applyKey(code, command.Key, command.Value)
-			d.writeConn(conn, map[string]any{"ok": true, "key": command.Key, "value": command.Value})
+			d.writeConn(conn, core.HelperResponse{OK: true, Key: command.Key, Value: command.Value})
 		default:
-			d.writeConn(conn, map[string]any{"ok": false, "error": "unknown command"})
+			d.writeConn(conn, core.HelperResponse{Error: "unknown command"})
 		}
 	}
 	if client != nil {
@@ -312,18 +301,18 @@ func (d *Daemon) handleConn(conn net.Conn) {
 	}
 }
 
-func (d *Daemon) status() map[string]any {
+func (d *Daemon) status() core.HelperResponse {
 	keyTotal, keyCounts := d.keySnapshot()
 	d.mu.RLock()
 	defer d.mu.RUnlock()
-	return map[string]any{
-		"ok":             true,
-		"keyd_active":    !d.capturing,
-		"remote_present": d.remotePresent,
-		"mapping":        core.CopyMapping(d.mapping),
-		"config":         ConfigText(d.mapping),
-		"key_total":      keyTotal,
-		"key_counts":     keyCounts,
+	return core.HelperResponse{
+		OK:            true,
+		KeydActive:    !d.capturing,
+		RemotePresent: d.remotePresent,
+		Mapping:       core.CopyMapping(d.mapping),
+		Config:        ConfigText(d.mapping),
+		KeyTotal:      keyTotal,
+		KeyCounts:     keyCounts,
 	}
 }
 
@@ -508,12 +497,7 @@ func (d *Daemon) streamRaw(name string, code, value int) {
 	if len(clients) == 0 {
 		return
 	}
-	event := map[string]any{
-		"event": "key",
-		"key":   name,
-		"code":  code,
-		"value": value,
-	}
+	event := core.HelperEvent{Event: "key", Key: name, Code: code, Value: value}
 	for _, client := range clients {
 		data, err := json.Marshal(event)
 		if err != nil {

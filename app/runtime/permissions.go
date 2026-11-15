@@ -36,7 +36,7 @@ type permProbes struct {
 // BuildPermissions measures the host's grants for the permissions page.
 func BuildPermissions(ctx context.Context, in service.ViewInputs) core.PermissionsView {
 	p := permProbes{platform: runtime.GOOS, addr: in.Cfg.UIAddr, active: "unknown", enabled: "unknown", access: "unknown"}
-	if _, err := in.Helper.Call(ctx, map[string]string{"cmd": "status"}); err != nil {
+	if _, err := in.Helper.Call(ctx, core.HelperRequest{Cmd: "status"}); err != nil {
 		p.helperErr = err.Error()
 	} else {
 		p.helperOK = true

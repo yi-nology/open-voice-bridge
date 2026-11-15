@@ -16,10 +16,10 @@ func TestSaveKeymapProfileBackend(t *testing.T) {
 	var gotName string
 	var gotMapping map[string]string
 	server := New(Deps{
-		SaveKeymapProfile: func(ctx context.Context, name string, mapping map[string]string) (map[string]any, error) {
+		SaveKeymapProfile: func(ctx context.Context, name string, mapping map[string]string) (core.HelperResponse, error) {
 			gotName = name
 			gotMapping = mapping
-			return map[string]any{"ok": true, "config": "{}"}, nil
+			return core.HelperResponse{OK: true, Config: "{}"}, nil
 		},
 	})
 	resp, err := server.SaveKeymapProfile(context.Background(), "studio", map[string]string{"power": "esc"})

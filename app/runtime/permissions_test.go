@@ -113,7 +113,9 @@ func TestDarwinPermissionsMarkWhatCannotApply(t *testing.T) {
 
 type permHelper struct{ err error }
 
-func (h permHelper) Call(context.Context, any) (map[string]any, error) { return nil, h.err }
+func (h permHelper) Call(context.Context, core.HelperRequest) (core.HelperResponse, error) {
+	return core.HelperResponse{}, h.err
+}
 
 func TestBuildPermissionsAlwaysReturnsABoard(t *testing.T) {
 	view := BuildPermissions(context.Background(), service.ViewInputs{

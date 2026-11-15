@@ -23,11 +23,11 @@ func (s stubAgent) Status() core.AgentView { return s.view }
 func (s stubAgent) ASRName() string        { return s.name }
 
 type stubHelper struct {
-	status map[string]any
+	status core.HelperResponse
 	err    error
 }
 
-func (s stubHelper) Call(context.Context, any) (map[string]any, error) {
+func (s stubHelper) Call(context.Context, core.HelperRequest) (core.HelperResponse, error) {
 	return s.status, s.err
 }
 
@@ -38,7 +38,7 @@ func readyInputs() service.ViewInputs {
 			view: core.AgentView{Connected: true, Ready: true, MicHealthy: true},
 			name: "fake",
 		},
-		Helper: stubHelper{status: map[string]any{"keyd_active": true, "remote_present": true}},
+		Helper: stubHelper{status: core.HelperResponse{KeydActive: true, RemotePresent: true}},
 	}
 }
 
@@ -62,7 +62,7 @@ func TestBuildStatusAndReady(t *testing.T) {
 func TestReadyCoreIgnoresOptionalGaps(t *testing.T) {
 	in := readyInputs()
 	in.Agent = stubAgent{view: core.AgentView{Connected: false, Ready: false, MicHealthy: false}}
-	in.Helper = stubHelper{status: map[string]any{"keyd_active": false, "remote_present": false}}
+	in.Helper = stubHelper{}
 	ready := BuildReady(context.Background(), in)
 	if !ready.OK || !ready.CoreOK {
 		t.Fatalf("core readiness failed on optional gaps: %+v", ready)
@@ -158,9 +158,9 @@ func TestBuildDiagnosticsScrubsHomeFromStatusStrings(t *testing.T) {
 	keyPath := filepath.Join(home, ".config", "xiaomi-mimo", "api_key")
 	in := readyInputs()
 	in.ASRErr = errors.New("read MiMo API key: open " + keyPath + ": permission denied")
-	in.Helper = stubHelper{status: map[string]any{
-		"keyd_active": true,
-		"config":      "# loaded from " + filepath.Join(home, ".config", "keyd", "default.conf"),
+	in.Helper = stubHelper{status: core.HelperResponse{
+		KeydActive: true,
+		Config:     "# loaded from " + filepath.Join(home, ".config", "keyd", "default.conf"),
 	}}
 	summary := BuildDiagnostics(context.Background(), in, "test-version")
 	encoded, err := json.Marshal(summary)

@@ -17,8 +17,11 @@ violation() { echo "deps: $*" >&2; fail=1; }
 # 下一批 typed 收口继续降;目标 <20 不变。
 # 2026-11-15: 波 3 历史策略应答进 typed reply、ARC-09 的 BuildDiscovered 改
 # core.DiscoveredView(顺带清掉 map→api.DiscoveredResp 的字段搬运)⇒ 212→196
-# (这两批曾把计数推过棘轮,提交前被门禁咬住后就地抵扣)。基线降到 202(留缓冲)。
-CEILING=202
+# (这两批曾把计数推过棘轮,提交前被门禁咬住后就地抵扣)。
+# 2026-11-15(二): helper↔daemon 线协议 typed 化(core.HelperRequest/Response/
+# Event)⇒ 196→156,基线降到 162(留缓冲)。余债见路线图债务盘点:mcp JSON-RPC
+# 31(自由格式,文档点)、SSE 信封/Publish、PhoneAdmin 视图、agent_api、诊断包。
+CEILING=162
 count=$({ grep -rn --include='*.go' 'map\[string\]any' . || true; } | { grep -v _test || true; } | wc -l | tr -d ' ')
 [ "$count" -le "$CEILING" ] || violation "map[string]any count $count exceeds the ratchet ceiling $CEILING (new state goes in core typed views; free-format maps only at the documented sites — see roadmap 债务盘点; lower the ceiling when the count drops)"
 

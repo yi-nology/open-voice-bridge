@@ -29,13 +29,13 @@ var log = logx.Delegating("ui")
 
 type Deps struct {
 	Status                func(context.Context) core.StatusView
-	Apply                 func(context.Context, map[string]string) (map[string]any, error)
+	Apply                 func(context.Context, map[string]string) (core.HelperResponse, error)
 	Reconnect             func(context.Context) error
 	RestartMic            func(context.Context) error
 	SwitchASR             func(context.Context, string) error
 	KeymapProfiles        func(context.Context) (string, map[string]map[string]string)
-	ApplyKeymapProfile    func(context.Context, string) (map[string]any, error)
-	SaveKeymapProfile     func(context.Context, string, map[string]string) (map[string]any, error)
+	ApplyKeymapProfile    func(context.Context, string) (core.HelperResponse, error)
+	SaveKeymapProfile     func(context.Context, string, map[string]string) (core.HelperResponse, error)
 	DeleteKeymapProfile   func(context.Context, string) error
 	ASRConfig             func(context.Context) map[string]any
 	UpdateASRConfig       func(context.Context, config.ASRConfig) error
@@ -93,8 +93,14 @@ type Deps struct {
 }
 
 type sseClient struct {
-	ch      chan map[string]any
+	ch      chan any
 	dropped int // events lost to a full buffer (I4)
+}
+
+// sseGap is the out-of-band "you missed frames" SSE marker.
+type sseGap struct {
+	Event   string `json:"event"`
+	Dropped int    `json:"dropped"`
 }
 
 type Server struct {
@@ -185,7 +191,7 @@ func (s *Server) Root(ctx context.Context, c *app.RequestContext) {
 }
 
 func (s *Server) Events(ctx context.Context, c *app.RequestContext) {
-	client := &sseClient{ch: make(chan map[string]any, 16)}
+	client := &sseClient{ch: make(chan any, 16)}
 	snapshot := s.registerClient(client)
 	defer func() {
 		s.mu.Lock()
@@ -245,7 +251,7 @@ func (s *Server) registerClient(client *sseClient) map[string]any {
 
 // enqueue pushes without blocking. When the buffer is full it drops the
 // oldest event so the newest survive, and reports how many were dropped (I4).
-func enqueue(ch chan map[string]any, event map[string]any) int {
+func enqueue(ch chan any, event any) int {
 	dropped := 0
 	for {
 		select {
@@ -264,13 +270,13 @@ func enqueue(ch chan map[string]any, event map[string]any) int {
 	}
 }
 
-func (s *Server) broadcast(event map[string]any) {
+func (s *Server) broadcast(event any) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for client := range s.clients {
 		if lost := enqueue(client.ch, event); lost > 0 {
 			client.dropped += lost
-			enqueue(client.ch, map[string]any{"event": "stream_gap", "dropped": client.dropped})
+			enqueue(client.ch, sseGap{Event: "stream_gap", Dropped: client.dropped})
 		}
 	}
 }
@@ -285,7 +291,7 @@ func (s *Server) relayCapture(capture *helper.Capture) {
 	for event := range capture.Events() {
 		s.broadcast(event)
 	}
-	s.broadcast(map[string]any{"event": "capture_closed"})
+	s.broadcast(core.HelperEvent{Event: "capture_closed"})
 	s.mu.Lock()
 	if s.capture == capture {
 		s.capture = nil

@@ -259,25 +259,16 @@ func (s *Server) DeleteKeymapProfile(ctx context.Context, name string) (*api.Ope
 	return &api.OperationResp{Ok: true}, nil
 }
 
-func operationResult(result map[string]any) *api.OperationResp {
-	resp := &api.OperationResp{Ok: true}
-	if result == nil {
-		return resp
+func operationResult(result core.HelperResponse) *api.OperationResp {
+	resp := &api.OperationResp{Ok: result.OK}
+	if result.Config != "" {
+		resp.Config = ptrx.Of(result.Config)
 	}
-	if value, ok := result["ok"].(bool); ok {
-		resp.Ok = value
+	if result.Error != "" {
+		resp.Error = ptrx.Of(result.Error)
 	}
-	if value := stringValue(result["config"]); value != "" {
-		resp.Config = ptrx.Of(value)
-	}
-	if value := stringValue(result["error"]); value != "" {
-		resp.Error = ptrx.Of(value)
-	}
-	if value := stringValue(result["event"]); value != "" {
-		resp.Event = ptrx.Of(value)
-	}
-	if value := stringValue(result["output"]); value != "" {
-		resp.Output = ptrx.Of(value)
+	if result.Event != "" {
+		resp.Event = ptrx.Of(result.Event)
 	}
 	return resp
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/oekit/logx"
 
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 func testService(t *testing.T) *Service {
@@ -20,7 +21,7 @@ func testService(t *testing.T) *Service {
 	if err != nil {
 		t.Fatalf("load default config: %v", err)
 	}
-	return New(cfg, path, &fakeAgent{}, &fakeHelper{status: map[string]any{"keyd_active": true}}, nil, logx.Delegating("test"), testOps())
+	return New(cfg, path, &fakeAgent{}, &fakeHelper{status: &core.HelperResponse{KeydActive: true}}, nil, logx.Delegating("test"), testOps())
 }
 
 func TestExportConfigRoundTrip(t *testing.T) {

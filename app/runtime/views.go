@@ -17,7 +17,6 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/device"
-	"github.com/yi-nology/open-voice-bridge/internal/helper"
 )
 
 // The typed view builders live here (ARC-09/ARC-05): app/runtime is the
@@ -43,16 +42,15 @@ func BuildStatus(ctx context.Context, in service.ViewInputs) core.StatusView {
 	sort.Strings(view.AsrProviders)
 	sort.Strings(view.KeymapProfiles)
 
-	// The helper's reply stays a map: that is the root daemon's IPC protocol,
-	// not a status model this repo owns (R6). These coercions are the only
-	// place it is decoded.
-	if helperStatus, err := in.Helper.Call(ctx, map[string]string{"cmd": "status"}); err == nil {
-		view.KeydActive, _ = helperStatus["keyd_active"].(bool)
-		view.RemotePresent, _ = helperStatus["remote_present"].(bool)
-		view.Mapping = helper.StringMap(helperStatus["mapping"])
-		view.Config = helper.StringValue(helperStatus["config"])
-		view.KeyTotal = helper.Int64Value(helperStatus["key_total"])
-		view.KeyCounts = helper.Int64Map(helperStatus["key_counts"])
+	// The helper's reply is our own wire protocol (core.HelperResponse) —
+	// typed end to end, decoded nowhere (map 棘轮).
+	if helperStatus, err := in.Helper.Call(ctx, core.HelperRequest{Cmd: "status"}); err == nil {
+		view.KeydActive = helperStatus.KeydActive
+		view.RemotePresent = helperStatus.RemotePresent
+		view.Mapping = helperStatus.Mapping
+		view.Config = helperStatus.Config
+		view.KeyTotal = helperStatus.KeyTotal
+		view.KeyCounts = helperStatus.KeyCounts
 	} else {
 		view.OK = false
 		view.HelperError = err.Error()
@@ -87,14 +85,12 @@ func BuildStatus(ctx context.Context, in service.ViewInputs) core.StatusView {
 
 func BuildReady(ctx context.Context, in service.ViewInputs) core.ReadyView {
 	view := core.ReadyView{OK: true}
-	// The helper's reply stays a map: that is the root daemon's IPC protocol,
-	// not a status model this repo owns (R6).
-	helperStatus, err := in.Helper.Call(ctx, map[string]string{"cmd": "status"})
+	helperStatus, err := in.Helper.Call(ctx, core.HelperRequest{Cmd: "status"})
 	if err != nil {
 		view.HelperError = err.Error()
 	} else {
-		view.KeydActive, _ = helperStatus["keyd_active"].(bool)
-		view.RemotePresent, _ = helperStatus["remote_present"].(bool)
+		view.KeydActive = helperStatus.KeydActive
+		view.RemotePresent = helperStatus.RemotePresent
 	}
 	agentStatus := in.Agent.Status()
 	view.BleConnected = agentStatus.Connected

@@ -34,7 +34,7 @@ func hostChecks(cfg config.Config) []check {
 func helperCheck(cfg config.Config) []check {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	status, err := helper.New(cfg.HelperSocket).Call(ctx, map[string]string{"cmd": "status"})
+	status, err := helper.New(cfg.HelperSocket).Call(ctx, core.HelperRequest{Cmd: "status"})
 	if err != nil {
 		return []check{gap(core.DepHelper, "remap helper: "+err.Error(),
 			"sudo systemctl start xiaoyao-remap.service")}
