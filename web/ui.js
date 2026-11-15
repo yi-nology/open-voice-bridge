@@ -2630,8 +2630,8 @@ function welcomeSteps(status) {
   const phoneLive = !!lastInputs?.enabled && (lastInputs.sources || []).some(item => item.kind === "phone");
   return [
     {
-      title: "连接遥控器",
-      hint: "系统蓝牙配对后，到「设备」页点扫描已连接设备",
+      title: "连接遥控器或手机",
+      hint: "遥控器走系统蓝牙配对后到「设备」页扫描；手机在第 3 步配对",
       done: !!(status.ble_connected || status.remote_present),
       go: () => goTab("devices"),
     },

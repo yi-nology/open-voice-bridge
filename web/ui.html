@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#eef0f3">
-<title>小遥 Remote Studio · 小米遥控器</title>
+<title>小遥 · 语音输入掌控台</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232a2a2e'/%3E%3Crect x='13' y='7' width='6' height='11' rx='3' fill='white'/%3E%3Cpath d='M9 16a7 7 0 0 0 14 0M16 23v3' stroke='white' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/tokens.css">
 <link rel="stylesheet" href="/ui.css">
@@ -149,11 +149,11 @@
       <div class="hero">
         <div class="hero-row">
           <span class="hero-dot" id="hero-dot"></span>
-          <h1 class="hero-title"><span id="hero-device">Xiaomi Remote 2 Pro</span><span class="sep"> · </span><span class="state" id="guided-state">正在读取…</span></h1>
+          <h1 class="hero-title">小遥<span class="sep"> · </span><span class="state" id="guided-state">正在读取…</span></h1>
         </div>
-        <p class="hero-sub">将光标放入任意输入框，按住遥控器语音键直接说话，识别结果自动输入当前应用。</p>
+        <p class="hero-sub">小米 / Google / Android TV 遥控器和手机都是你的麦克风。将光标放入任意输入框，按住语音键说话，识别结果自动输入当前应用。</p>
         <div class="hero-meta">
-          <span>遥控器 <b class="value" id="conn-remote">…</b> <b id="conn-address">…</b></span>
+          <span>语音设备 <b class="value" id="conn-remote">…</b> <b id="conn-address">…</b></span>
           <span>麦克风桥接 <b class="value" id="conn-mic">…</b></span>
           <span>开机自启 <b class="value" id="conn-autostart">…</b></span>
           <span id="conn-last">语音输入前请先点进目标输入框</span>
@@ -431,7 +431,7 @@
         <span class="subtitle-orb b"></span>
         <span class="subtitle-orb c"></span>
         <div id="subtitle-stage" class="subtitle-stage">
-          <div id="subtitle-empty" class="subtitle-empty">按住遥控器语音键（带麦克风图标的键）说话，字幕会像歌词一样出现在这里；键位可在「按键映射」查看</div>
+          <div id="subtitle-empty" class="subtitle-empty">按住遥控器语音键（带麦克风图标的键）或手机上的「说话」，字幕会像歌词一样出现在这里；键位可在「按键映射」查看</div>
           <div id="subtitle-lines" class="subtitle-lines" aria-live="polite" aria-label="实时字幕"></div>
         </div>
       </div>
@@ -591,7 +591,7 @@
 <div id="welcome" role="dialog" aria-modal="true" aria-label="新手引导">
   <div class="welcome-card">
     <h2>欢迎使用小遥</h2>
-    <p class="sub">把小米蓝牙遥控器变成电脑语音输入：按住语音键说话，文字直接进当前窗口。下面四步按需完成即可。</p>
+    <p class="sub">把遥控器和手机变成电脑语音输入：按住语音键说话，文字直接进当前窗口。下面四步按需完成即可。</p>
     <div id="welcome-steps"></div>
     <div class="welcome-foot">
       <p class="note">更完整的体检在终端运行 <code>xiaoyao doctor</code>，每项都会给出可执行的修复命令。</p>

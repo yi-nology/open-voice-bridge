@@ -1,13 +1,13 @@
 # Open Voice Bridge · 小遥
 
-> Turn a Bluetooth remote — and, soon, a phone — into a local voice input device for Linux.
+> Turn Bluetooth remotes and phones into local voice input devices for Linux.
 
 [![CI](https://github.com/yi-nology/open-voice-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/yi-nology/open-voice-bridge/actions/workflows/ci.yml)
 [![Go](https://img.shields.io/badge/Go-1.27-00ADD8?logo=go)](go.mod)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)](#requirements)
 
-小遥把小米蓝牙遥控器变成一套可长期运行的本地语音输入服务：按住语音键说话，识别结果直接进入当前焦点窗口，同时以歌词样式显示在字幕屏；按键可以完全重映射，不依赖厂商 App。整个管理界面只监听 `127.0.0.1`，API Key 只以文件路径形式保存。
+小遥把蓝牙遥控器（小米 / Google / Android TV / Fire TV 等）和手机变成一套可长期运行的本地语音输入服务：按住语音键说话，识别结果直接进入当前焦点窗口，同时以歌词样式显示在字幕屏；按键可以完全重映射，不依赖厂商 App。整个管理界面只监听 `127.0.0.1`，API Key 只以文件路径形式保存。
 
 <p align="center">
   <img src="docs/assets/overview-desktop.jpg" alt="桌面端概览" width="920">

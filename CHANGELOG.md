@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Changed: the homepage speaks for every input device, not one brand. The
+  hero title is now the product verdict (小遥 · 待检查/待连接/语音就绪)
+  instead of a hardcoded device name — that string never updated anyway —
+  and the sub-line frames the product as 小米 / Google / Android TV 遥控器
+  and phones sharing one dictation chain. Onboarding, the subtitle empty
+  state, the page title and the README intro/tagline follow; the
+  遥控器 meta line reads 语音设备. The PWA manifest drops the last stale
+  colour values.
+
 - Changed: the whole admin wears the subtitle stage's glass (深玻璃掌控台).
   Every surface — sidebar, hero, cards, panels, dialogs, the 词句 button —
   is frosted glass over a deep slate/emerald ambient, with the phone page
