@@ -14,11 +14,17 @@ type Kind string
 const (
 	KindRemote Kind = "remote"
 	KindPhone  Kind = "phone"
+	KindWake   Kind = "wake"
 )
 
 // RemoteID is the hub id of the BLE remote. It is exported because the agent
 // claims the microphone under this id and the dashboard maps it to a label.
 const RemoteID = "remote"
+
+// WakeID is the hub id of a wake-word capture (S7). It claims the microphone
+// as its own source — never as the remote — so the voice button can preempt
+// it and a wake capture can never steal the mic out of a phone's hands.
+const WakeID = "wake"
 
 // kindRank orders sources for the dashboard: the BLE remote leads, then
 // phones. Unknown kinds sort last by their own name.

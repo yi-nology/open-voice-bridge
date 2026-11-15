@@ -7,6 +7,7 @@ import (
 
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/input"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
 
@@ -102,5 +103,60 @@ func TestWakeLoopCapturesAfterWakeWord(t *testing.T) {
 			t.Fatal("no wake dictation reached the chain")
 		case <-time.After(20 * time.Millisecond):
 		}
+	}
+}
+
+// TestWakeLoopYieldsToTheVoiceButton (P2-2): the wake capture claims the mic
+// as its own hub source, so the voice button's force-claim preempts it and
+// the half-sentence is dropped — the two captures may never interleave text
+// in the focused window, and a wake capture may never steal the mic from a
+// phone (it acquires, it does not force).
+func TestWakeLoopYieldsToTheVoiceButton(t *testing.T) {
+	rules, err := text.New(config.TextConfig{})
+	if err != nil {
+		t.Fatalf("rules: %v", err)
+	}
+	engine := &fakeEngine{result: asr.Result{Text: "小遥小遥", Provider: "fake"}}
+	spy := &captureSpy{}
+	a := New(config.Config{PasteEnabled: false, MaxUtterance: 30}, engine, fakeSink{healthy: true})
+	a.pipeline = testPipeline(engine, rules, nil, spy)
+	a.ctx = context.Background()
+	a.maxSample = 30 * 16000
+	source := &scriptSource{frames: make(chan []int16, 64)}
+	a.SetHub(input.NewHub())
+
+	a.wakeMu.Lock()
+	a.wakeWord = "小遥小遥"
+	a.wakeOn = true
+	a.startDesktopLocked(source)
+	a.wakeMu.Unlock()
+
+	voice := make([]int16, 1600)
+	for i := range voice {
+		voice[i] = 6000
+	}
+	quiet := make([]int16, 1600)
+
+	for i := 0; i < 12; i++ {
+		source.frames <- voice
+		time.Sleep(5 * time.Millisecond)
+	}
+	time.Sleep(950 * time.Millisecond)
+	source.frames <- voice
+	time.Sleep(150 * time.Millisecond)
+	// The wake match has landed and the dictation is running — the button
+	// takes the mic out from under it.
+	a.acquireMic()
+	for i := 0; i < 10; i++ {
+		source.frames <- voice
+		time.Sleep(5 * time.Millisecond)
+	}
+	source.frames <- quiet
+	time.Sleep(700 * time.Millisecond)
+	source.frames <- quiet
+	time.Sleep(300 * time.Millisecond)
+
+	if got := spy.snapshot(); len(got) != 0 {
+		t.Fatalf("preempted wake capture still transcribed: %+v", got)
 	}
 }

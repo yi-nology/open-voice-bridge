@@ -2,15 +2,17 @@ package agent
 
 import (
 	"context"
-	"github.com/yi-nology/open-voice-bridge/internal/speech"
 	"strings"
+	"sync/atomic"
 	"time"
 	"unicode"
 
 	"github.com/oekit/concurrency/async"
 
 	"github.com/yi-nology/open-voice-bridge/internal/core"
+	"github.com/yi-nology/open-voice-bridge/internal/input"
 	"github.com/yi-nology/open-voice-bridge/internal/miccap"
+	"github.com/yi-nology/open-voice-bridge/internal/speech"
 )
 
 // S7 唤醒词: the desktop microphone listens for a wake word, then captures
@@ -108,6 +110,51 @@ func (a *Agent) wakeStopLocked() {
 	}
 }
 
+// wakeClaim is the wake capture's hub face (S7): a Preemptable source so the
+// voice button's force-claim stops the capture at once (I1) instead of the
+// two paths interleaving text in the focused window (P2-2).
+type wakeClaim struct{ preempted atomic.Bool }
+
+func (*wakeClaim) ID() string       { return input.WakeID }
+func (*wakeClaim) Kind() input.Kind { return input.KindWake }
+
+func (*wakeClaim) Status() input.Status {
+	return input.Status{ID: input.WakeID, Kind: input.KindWake, Name: "唤醒词", Speaking: true}
+}
+
+func (w *wakeClaim) Preempt() { w.preempted.Store(true) }
+
+// acquireWakeMic claims the microphone as the wake source — non-forcing, so a
+// wake capture can never steal the mic out of a phone's hands. Returns nil
+// when the mic is busy (the wake hit is dropped); a nil hub behaves as before.
+func (a *Agent) acquireWakeMic() *wakeClaim {
+	hub := a.currentHub()
+	if hub == nil {
+		return &wakeClaim{}
+	}
+	claim := &wakeClaim{}
+	hub.Register(claim)
+	if !hub.AcquireAudio(input.WakeID) {
+		hub.Unregister(input.WakeID)
+		return nil
+	}
+	return claim
+}
+
+// releaseWakeMic drops the wake claim. After a Preempt the hub owner is
+// already someone else, so the release is a harmless no-op.
+func (a *Agent) releaseWakeMic(claim *wakeClaim) {
+	if claim == nil {
+		return
+	}
+	hub := a.currentHub()
+	if hub == nil {
+		return
+	}
+	hub.ReleaseAudio(input.WakeID)
+	hub.Unregister(input.WakeID)
+}
+
 // wakeLoop watches the mic: rolling-window wake checks while voice is
 // active, then a dictation capture that ends on silence or the time cap.
 func (a *Agent) desktopLoop(ctx context.Context, source miccap.FrameSource) {
@@ -123,6 +170,8 @@ func (a *Agent) desktopLoop(ctx context.Context, source miccap.FrameSource) {
 	var dictation []int16
 	var silenceSince time.Time
 	var hardStop time.Time
+	var claim *wakeClaim
+	defer func() { a.releaseWakeMic(claim) }()
 
 	for {
 		select {
@@ -136,6 +185,14 @@ func (a *Agent) desktopLoop(ctx context.Context, source miccap.FrameSource) {
 			a.lookbackTap(frame)
 			word := a.currentWakeWord()
 			if word == "" && len(dictation) == 0 {
+				continue
+			}
+			if claim != nil && claim.preempted.Load() {
+				// The voice button (or any stronger claim) took the mic —
+				// drop the half-sentence rather than interleave it (I1).
+				dictation = nil
+				a.releaseWakeMic(claim)
+				claim = nil
 				continue
 			}
 			if len(dictation) > 0 {
@@ -155,14 +212,19 @@ func (a *Agent) desktopLoop(ctx context.Context, source miccap.FrameSource) {
 				}
 				samples := dictation
 				dictation = nil
-				a.releaseMic()
+				a.releaseWakeMic(claim)
+				claim = nil
 				async.GoSafe(func() { a.runWakeSpeech(samples) })
 				continue
 			}
 			select {
 			case <-wakeHitCh:
+				claim = a.acquireWakeMic()
+				if claim == nil {
+					log.Debug("wake hit dropped; microphone busy")
+					continue
+				}
 				log.Info("wake word matched; capturing")
-				a.acquireMic()
 				dictation = append(dictation, frame...)
 				hardStop = now.Add(15 * time.Second)
 				silenceSince = time.Time{}
