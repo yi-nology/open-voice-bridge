@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Changed: the whole admin wears the subtitle stage's glass (深玻璃掌控台).
+  Every surface — sidebar, hero, cards, panels, dialogs, the 词句 button —
+  is frosted glass over a deep slate/emerald ambient, with the phone page
+  on the same palette, so the app finally reads as one product. Dense form
+  controls keep a solid-ish fill (readability first), the lyrics stage is a
+  cool-dark solid in the same family, heat cells and badges ride emerald
+  tints, and hotspots over the remote photo are dark-glass chips.
+  `tokens.css` owns the palette; `design-qa.md` marks the light round's
+  colour conclusions as history.
+
 - Fixed: the lookback window and the wake word have one home (S8/S7).
   `config.Validate` rejects `lookback_seconds` outside 5..60 — writing 100
   used to sail through and the ring silently clamped to 60, so the file and

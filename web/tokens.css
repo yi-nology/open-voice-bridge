@@ -1,41 +1,71 @@
 /* ============================================================
    Shared design tokens (波 3) — the one palette both surfaces read.
-   Desktop (ui.css) is the light theme; the phone page opts into the
-   dark theme via <html data-theme="dark">. Pages alias their historical
-   names to these so every rule keeps working while the values live here
-   and only here.
+   「深玻璃掌控台」(dark-glass console): every surface is frosted glass
+   over a deep slate/emerald ambient, the subtitle stage's language
+   taken site-wide. Pages alias their historical names to these so
+   every rule keeps working while the values live here only.
    ============================================================ */
 :root {
-  --bg: #F5F6F5;
-  --panel: #FFFFFF;
-  --panel-2: #F3F4F3;
-  --line: #E6E7E6;
-  --line-soft: #ECECEC;
-  --ink: #1A1A1A;
-  --muted: #6E6E6E;
-  --brand: #2E7A5F;
-  --brand-soft: #E7F1EC;
-  --ok: #2E7A5F;
-  --ok-soft: #E7F1EC;
-  --warn: #B7791F;
-  --bad: #B4443C;
+  --bg: #0B1020;
+  --panel: rgba(255, 255, 255, 0.055);
+  --panel-solid: rgba(16, 22, 40, 0.72); /* readable fill for form controls */
+  --panel-2: rgba(255, 255, 255, 0.10);
+  --line: rgba(255, 255, 255, 0.11);
+  --line-soft: rgba(255, 255, 255, 0.06);
+  --ink: #EAF0FA;
+  --muted: #9DABC8;
+  --brand: #4FC593;
+  --brand-strong: #2FA373; /* filled buttons: white text stays AA */
+  --brand-soft: rgba(79, 197, 147, 0.16);
+  --ok: #4FC593;
+  --ok-soft: rgba(79, 197, 147, 0.14);
+  --warn: #F2B136;
+  --warn-soft: rgba(242, 177, 54, 0.14);
+  --bad: #FF8474;
+  --bad-soft: rgba(255, 132, 116, 0.14);
   --radius-card: 20px;
   --radius-panel: 16px;
   --radius-inner: 10px;
+  --glass-blur: blur(26px) saturate(1.35);
+  --glass-shadow: 0 18px 48px rgba(2, 6, 18, 0.45);
 }
 
+/* The ambient the glass refracts: soft emerald and slate blooms on a
+   deep base. Fixed, behind everything (z: -1), no scroll cost. */
+body {
+  background: var(--bg);
+  position: relative;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(1100px 720px at 12% -10%, rgba(46, 122, 95, 0.22), transparent 62%),
+    radial-gradient(920px 640px at 102% 10%, rgba(42, 62, 118, 0.26), transparent 58%),
+    radial-gradient(760px 520px at 72% 112%, rgba(46, 122, 95, 0.13), transparent 62%);
+  pointer-events: none;
+}
+
+/* Dark alias — the phone page opts in via <html data-theme="dark">;
+   same glass palette, so every surface speaks one language. */
 :root[data-theme="dark"] {
-  --bg: #0b1020;
-  --panel: #141b33;
-  --panel-2: #1a2340;
-  --line: #26304f;
-  --line-soft: #1c2644;
-  --ink: #e8ecf8;
-  --muted: #97a2c4;
-  --brand: #4a9bff;
-  --brand-soft: #16263f;
-  --ok: #2fbf71;
-  --ok-soft: #123826;
-  --warn: #f2b136;
-  --bad: #ff6b6b;
+  --bg: #0B1020;
+  --panel: rgba(255, 255, 255, 0.055);
+  --panel-solid: rgba(16, 22, 40, 0.72);
+  --panel-2: rgba(255, 255, 255, 0.10);
+  --line: rgba(255, 255, 255, 0.11);
+  --line-soft: rgba(255, 255, 255, 0.06);
+  --ink: #EAF0FA;
+  --muted: #9DABC8;
+  --brand: #4FC593;
+  --brand-strong: #2FA373;
+  --brand-soft: rgba(79, 197, 147, 0.16);
+  --ok: #4FC593;
+  --ok-soft: rgba(79, 197, 147, 0.14);
+  --warn: #F2B136;
+  --warn-soft: rgba(242, 177, 54, 0.14);
+  --bad: #FF8474;
+  --bad-soft: rgba(255, 132, 116, 0.14);
 }

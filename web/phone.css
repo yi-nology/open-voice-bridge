@@ -34,7 +34,9 @@ body {
 .status.warn { color: var(--amber); }
 .status.bad { color: var(--red); }
 
-.panel { padding: 16px; max-width: 520px; margin: 0 auto; }
+.panel { padding: 16px; max-width: 520px; margin: 0 auto;   backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
 h1 { font-size: 20px; margin: 8px 0; }
 .hint { color: var(--muted); font-size: 14px; }
 .error { color: var(--red); min-height: 20px; font-size: 14px; }
