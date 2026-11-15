@@ -44,3 +44,24 @@ func TestRecoverLookbackRefusesWhenOff(t *testing.T) {
 		t.Fatal("recovered from an empty ring")
 	}
 }
+
+// TestSetLookbackKeepsRingForTheSameWindow: SetLookback must not rebuild the
+// ring when the clamped window is unchanged. The compare used to run against
+// the unclamped request (3 vs the clamped 5), so every call dropped the
+// buffered audio and started a fresh ring.
+func TestSetLookbackKeepsRingForTheSameWindow(t *testing.T) {
+	a := New(config.Config{MaxUtterance: 30}, &fakeEngine{}, fakeSink{healthy: true})
+	a.SetLookback(true, 3)
+	first := a.ring
+	if first == nil {
+		t.Fatal("ring not created")
+	}
+	a.SetLookback(true, 3)
+	if a.ring != first {
+		t.Fatal("ring rebuilt for the same clamped window — buffered audio dropped")
+	}
+	a.SetLookback(true, 30)
+	if a.ring == first {
+		t.Fatal("ring kept across a window change")
+	}
+}

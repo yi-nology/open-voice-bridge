@@ -21,14 +21,19 @@ type sampleRing struct {
 	max  int
 }
 
+// clampLookbackSeconds bounds the window to the S8 policy (5..60).
+func clampLookbackSeconds(seconds int) int {
+	if seconds < core.MinLookbackSeconds {
+		return core.MinLookbackSeconds
+	}
+	if seconds > core.MaxLookbackSeconds {
+		return core.MaxLookbackSeconds
+	}
+	return seconds
+}
+
 func newSampleRing(seconds int) *sampleRing {
-	if seconds < 5 {
-		seconds = 5
-	}
-	if seconds > 60 {
-		seconds = 60
-	}
-	return &sampleRing{max: seconds * core.SampleRate}
+	return &sampleRing{max: clampLookbackSeconds(seconds) * core.SampleRate}
 }
 
 // Append keeps the newest samples; anything beyond the window is dropped.
@@ -67,7 +72,7 @@ func (a *Agent) SetLookback(enabled bool, seconds int) {
 	a.wakeMu.Lock()
 	defer a.wakeMu.Unlock()
 	if enabled {
-		if a.ring == nil || a.ring.max != seconds*core.SampleRate {
+		if a.ring == nil || a.ring.max != clampLookbackSeconds(seconds)*core.SampleRate {
 			a.ring = newSampleRing(seconds)
 		}
 		a.lookbackOn.Store(true)
