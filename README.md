@@ -363,6 +363,11 @@ make openapi     # 需要 thrift2openapi
 
 - **日志级别**：`xiaoyao agent --log-level DEBUG`（`DEBUG | INFO | WARN | ERROR`，默认 `INFO`；也可用环境变量 `LOG_LEVEL`）。
 - **重置本地状态**：`xiaoyao reset` 清空历史、使用统计与全部令牌（手机配对、Agent 授权）；会先要你确认，`--yes` 跳过。配置文件保留，要删自己删。
+- **加密诊断包**（R10）：维护页「下载诊断」会在浏览器里用你设置的口令本地加密成 `xiaoyao-diagnostics.ovbdiag`（PBKDF2-SHA256 + AES-256-GCM，口令不经过服务端），明文继续走既有脱敏口径。提交问题时附这个文件即可；解密：
+
+  ```bash
+  xiaoyao diag xiaoyao-diagnostics.ovbdiag -o out.json   # 口令在终端输入
+  ```
 
 ## 发布通道（S9）
 

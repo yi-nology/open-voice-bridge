@@ -2,6 +2,13 @@
 
 ## 0.3.0 — 2026-11-13
 
+- New: encrypted diagnostics export (R10 收官). The maintenance page's
+  下载诊断 now seals the pack in the browser under a passphrase you set
+  (PBKDF2-HMAC-SHA256 600k + AES-256-GCM, header format `OVBDIA1`) — the
+  passphrase never reaches the agent and the attachment carries no
+  plaintext. `xiaoyao diag <pack.ovbdiag> [-o out.json]` decrypts it
+  again; redaction is unchanged.
+
 - Changed: the product ships as `xiaoyao` (小遥). Binary, config/state
   dirs, helper socket, systemd units, logrotate, `XIAOYAO_TOKEN` and every
   metric (`xiaomi_remote_*` → `xiaoyao_*`) were renamed from `xiaomi-*`;

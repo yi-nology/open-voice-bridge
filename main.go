@@ -16,6 +16,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/app/doctor"
 	"github.com/yi-nology/open-voice-bridge/app/runtime"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/diagbox"
 	"github.com/yi-nology/open-voice-bridge/internal/mcp"
 )
 
@@ -96,6 +97,23 @@ func main() {
 					return runReset(*path, *yes, stdout, stderr)
 				},
 			},
+			{
+				Name:    "diag",
+				Summary: "decrypt an exported diagnostics pack (passphrase prompted on stderr)",
+				Run: func(_ context.Context, args []string, stdout, stderr io.Writer) int {
+					fs := cli.NewFlagSet("diag", stderr)
+					out := fs.String("o", "", "write plaintext to this file instead of stdout")
+					rest, code := cli.ParseFlags(fs, args)
+					if code != cli.ExitOK {
+						return code
+					}
+					if len(rest) != 1 {
+						fmt.Fprintln(stderr, "usage: xiaoyao diag <pack.ovbdiag> [-o out.json]")
+						return 2
+					}
+					return runDiagDecrypt(rest[0], *out, stdout, stderr)
+				},
+			},
 		},
 	}
 	os.Exit(app.Run(context.Background(), os.Args[1:], os.Stdout, os.Stderr))
@@ -129,6 +147,41 @@ func runReset(path string, assumeYes bool, stdout, stderr io.Writer) int {
 		}
 	}
 	fmt.Fprintf(stdout, "reset complete: %d file(s) removed; config kept at %s\n", removed, path)
+	return 0
+}
+
+// runDiagDecrypt opens an encrypted diagnostics pack (R10) and writes the
+// plaintext out. The passphrase is prompted on stderr so stdout stays pipe
+// clean: xiaoyao diag pack.ovbdiag | jq .
+func runDiagDecrypt(packPath, outPath string, stdout, stderr io.Writer) int {
+	pack, err := os.ReadFile(packPath)
+	if err != nil {
+		fmt.Fprintln(stderr, "read pack:", err)
+		return 1
+	}
+	fmt.Fprint(stderr, "passphrase: ")
+	line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	if err != nil && line == "" {
+		fmt.Fprintln(stderr, "read passphrase:", err)
+		return 1
+	}
+	plain, err := diagbox.Open(pack, strings.TrimRight(line, "\r\n"))
+	if err != nil {
+		fmt.Fprintln(stderr, "decrypt:", err)
+		return 1
+	}
+	if outPath == "" {
+		_, _ = stdout.Write(plain)
+		if len(plain) == 0 || plain[len(plain)-1] != '\n' {
+			fmt.Fprintln(stdout)
+		}
+		return 0
+	}
+	if err := os.WriteFile(outPath, plain, 0o600); err != nil {
+		fmt.Fprintln(stderr, "write:", err)
+		return 1
+	}
+	fmt.Fprintln(stdout, "wrote", outPath)
 	return 0
 }
 

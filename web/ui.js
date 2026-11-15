@@ -1534,13 +1534,51 @@ if (configImportBtn && configImportFile) {
     }
   });
 }
+// sealDiagPack encrypts the diagnostics pack in the browser (R10): the
+// export passphrase never reaches the agent process. Format OVBDIA1 —
+// PBKDF2-HMAC-SHA256 (600k) + AES-256-GCM, mirrored by internal/diagbox.
+async function sealDiagPack(bytes, passphrase) {
+  const enc = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const nonce = crypto.getRandomValues(new Uint8Array(12));
+  const head = new Uint8Array(40);
+  head.set(enc.encode("OVBDIA1\n"), 0);
+  head.set(salt, 8);
+  head.set(nonce, 24);
+  new DataView(head.buffer).setUint32(36, 600000);
+  const baseKey = await crypto.subtle.importKey("raw", enc.encode(passphrase), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey(
+    { name: "PBKDF2", hash: "SHA-256", salt, iterations: 600000 },
+    baseKey, { name: "AES-GCM", length: 256 }, false, ["encrypt"]);
+  const cipher = new Uint8Array(await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv: nonce, additionalData: head }, key, bytes));
+  const out = new Uint8Array(40 + cipher.length);
+  out.set(head, 0);
+  out.set(cipher, 40);
+  return out;
+}
+
+function downloadBlob(bytes, filename, type) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([bytes], { type: type || "application/octet-stream" }));
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 const diagnosticsBtn = document.getElementById("diagnostics-download");
 if (diagnosticsBtn) diagnosticsBtn.addEventListener("click", async () => {
   try {
+    const passphrase = prompt("设置诊断包加密口令（解密时需要；取消或留空则不导出）");
+    if (passphrase === null || passphrase === "") {
+      return maintenanceMsg("已取消导出：诊断包需要口令加密。", "err");
+    }
     const res = await fetch("/api/diagnostics");
     if (!res.ok) return maintenanceMsg("生成失败（" + res.status + "）", "err");
-    await downloadJSON(res, "xiaoyao-diagnostics.json");
-    maintenanceMsg("诊断摘要已下载，可随问题反馈一起提交。", "ok");
+    const plain = new TextEncoder().encode(JSON.stringify(await res.json(), null, 2));
+    const pack = await sealDiagPack(plain, passphrase);
+    downloadBlob(pack, "xiaoyao-diagnostics.ovbdiag");
+    maintenanceMsg("诊断包已加密下载；解密：xiaoyao diag xiaoyao-diagnostics.ovbdiag -o out.json", "ok");
   } catch (error) {
     maintenanceMsg("生成失败：" + error, "err");
   }
