@@ -1,5 +1,5 @@
 // Pure helpers live in ui-core.js (shared with the node:test suite).
-const { errorText, buildPairLink, fmtDuration, needsRestart, sealDiagPack } = XiaoyaoCore;
+const { errorText, buildPairLink, fmtDuration, needsRestart, friendlyAsrError, sealDiagPack } = XiaoyaoCore;
 
 const KEYS = [
   {key: "power",      chip: "电源", name: "电源键",   hid: "0x66", def: "esc"},
@@ -347,12 +347,13 @@ function updateConnection(status) {
     if (micSub) micSub.textContent = "xiaoyao_mic → PipeWire";
   }
   const asr = document.getElementById("conn-asr");
-  asr.textContent = status.asr_backend || "未知";
+  const backendName = status.asr_backend || "未知";
+  asr.textContent = status.asr_error || backendName === "unavailable" ? "未配置" : backendName;
   asr.className = "value";
   const last = document.getElementById("conn-last");
   if (last) {
     if (status.asr_error) {
-      last.textContent = status.asr_error;
+      last.textContent = friendlyAsrError(status.asr_error);
       last.className = "sub err";
     } else {
       const ago = fmtAgo(status.last_at);

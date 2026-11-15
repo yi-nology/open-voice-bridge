@@ -38,6 +38,31 @@
     return !!(data && (data.restart_required === true || data.restart_required === "true"));
   }
 
+  // friendlyAsrError maps the engine's Go-level failures onto plain speech
+  // for the hero line; unknown text passes through untouched so a novel
+  // error is never swallowed.
+  function friendlyAsrError(text) {
+    const raw = (text || "").trim();
+    if (!raw) return "";
+    const lower = raw.toLowerCase();
+    if (lower.includes("no such file") && (lower.includes("api key") || lower.includes("api_key") || lower.includes("key file"))) {
+      return "识别密钥文件缺失：把 API Key 写进「语音识别」页配置的密钥文件路径";
+    }
+    if (lower.includes("no such file") && (lower.includes("whisper") || lower.includes("binary") || lower.includes("model"))) {
+      return "本地识别程序或模型不存在：检查 Binary 与 Model Path";
+    }
+    if (lower.includes("no asr provider could be built")) {
+      return "没有可用的识别引擎：到「语音识别」页配置云端接口或本地 whisper.cpp";
+    }
+    if (lower.includes("401") || lower.includes("unauthorized") || lower.includes("invalid api key")) {
+      return "识别服务拒绝访问（401）：检查 API Key 是否有效";
+    }
+    if (lower.includes("connection refused") || lower.includes("dial tcp") || lower.includes("timeout") || lower.includes("deadline")) {
+      return "连不上识别服务：检查 Base URL 与网络";
+    }
+    return raw;
+  }
+
   // sealDiagPack encrypts the diagnostics pack (R10). Format OVBDIA1 —
   // PBKDF2-HMAC-SHA256 (600k) + AES-256-GCM with the 40-byte header as
   // additional data, mirrored by internal/diagbox. The AAD binding is load-
@@ -64,5 +89,5 @@
     return out;
   }
 
-  return { errorText, buildPairLink, fmtDuration, needsRestart, sealDiagPack };
+  return { errorText, buildPairLink, fmtDuration, needsRestart, friendlyAsrError, sealDiagPack };
 });
