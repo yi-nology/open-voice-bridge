@@ -225,6 +225,7 @@ async function applyMapping() {
 }
 
 function resetDefaults() {
+  if (!confirm("恢复为默认按键映射？当前自定义映射会被覆盖。")) return;
   mapping = {...DEFAULTS};
   for (const item of KEYS) {
     if (selects[item.key]) selects[item.key].value = mapping[item.key];
@@ -845,9 +846,14 @@ function renderDiscovered(items) {
       actions.appendChild(added);
     } else {
       const add = document.createElement("button");
-      add.className = "btn small primary";
-      add.textContent = "添加为遥控器";
-      add.addEventListener("click", () => addDiscoveredDevice(item));
+      const remoteLike = suggest(item);
+      add.className = remoteLike ? "btn small primary" : "btn small";
+      add.textContent = remoteLike ? "添加为遥控器" : "仍要添加…";
+      if (!remoteLike) add.title = "看起来不是遥控器（键鼠/耳机等），添加前会再确认一次";
+      add.addEventListener("click", () => {
+        if (!remoteLike && !confirm("「" + (item.name || item.address) + "」看起来不是遥控器（键鼠/耳机等）。仍要添加为遥控器？")) return;
+        addDiscoveredDevice(item);
+      });
       actions.appendChild(add);
     }
     row.append(main, actions);
@@ -2973,9 +2979,22 @@ async function loadASRConfig() {
     fillModelFields(modelProvider.value || asrConfigData.provider);
     const active = asrConfigData.provider || "";
     const live = (asrConfigData.providers || {})[active] || {};
-    modelMessage(active
-      ? "当前生效：" + active + "（" + (live.model || TYPE_LABELS[live.type] || "未配置") + "）"
-      : "还没有可用的识别配置", active ? "ok" : "err");
+    const label = live.model || TYPE_LABELS[live.type] || "未配置";
+    if (!lastStatus) {
+      // First paint may beat loadStatus — ask once so 配置 vs 运行 is never a lie.
+      try {
+        const statusRes = await fetch("/api/status");
+        if (statusRes.ok) lastStatus = await statusRes.json();
+      } catch (error) {}
+    }
+    if (!active) {
+      modelMessage("还没有可用的识别配置", "err");
+    } else if (lastStatus && lastStatus.asr_error) {
+      // Configured is not the same as running — say which one it is.
+      modelMessage("已配置：" + active + "（" + label + "），但引擎未运行 — " + friendlyAsrError(lastStatus.asr_error), "warn");
+    } else {
+      modelMessage("当前生效：" + active + "（" + label + "）", "ok");
+    }
   } catch (error) {
     modelMessage("加载模型配置失败：" + error, "err");
   }
