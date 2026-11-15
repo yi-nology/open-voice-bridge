@@ -1,5 +1,43 @@
 # Changelog
 
+## Unreleased
+
+- Fixed: the dead switches got their wires (易用性评审 P1). `ui.Deps` shipped
+  five unwired fields — `LookbackConfig`/`SetLookback`/`RecoverLookback` and
+  `HistoryPolicy`/`SetHistoryPolicy` — so `/api/lookback` and
+  `/api/history/policy` answered 503 and the 回眸 controls plus the 历史
+  保留/脱敏 switches behind them were decoration. All five are connected;
+  `TestAdminDepsLeaveNoFieldUnwired` refuses to let another field ship the
+  same way. The 手机电源键 checkbox now loads at init instead of only after
+  a visit to the 字幕 panel, and every toggle binds its change listener once.
+
+- Fixed: the history policy applies live. `Store.SetPolicy` trims the
+  retention window and rewrites the file at once (later appends follow the
+  new redaction rule), the composition root moves the running store
+  alongside the saved config, and the save reply no longer claims
+  `restart_required` — the 『已保存并生效』 receipt is now the truth.
+
+- Fixed: the LLM rewrite mode travels as a parameter (P1 竞态).
+  `ProcessMode` used to stash the call's mode into shared `OpenAI.cfg`, so
+  concurrent rewrites (remote + phone, or S5 app rules in play) could carry
+  each other's system prompt. Also: `go test -race ./internal/agent` is
+  green again (the wake spy reads its transcripts under the lock).
+
+- Changed: the admin UI wears its receipts. The three experimental toggles
+  (边说边滚字/唤醒词/回眸) report 保存成功/失败 inline instead of fetching
+  into a void; every save whose reply carries `restart_required` raises one
+  global banner with the restart command to copy (`needsRestart` in
+  ui-core.js pins the contract). The hero line speaks plainly — a missing
+  key file now says where to put the key (`friendlyAsrError`, node:test
+  pinned) instead of quoting `os.ReadFile` — and the 语音识别引擎 card grows
+  back the one-step 切换 dropdown (`/api/asr/switch`).
+
+- Changed: labels and docs tell the truth. 生成诊断摘要 → 下载加密诊断包
+  (what the button always did); README's 多设备 claim now admits 按键多
+  设备、语音单设备, and the roadmap drops S5/S1–S3/S4/S7/S8/S9 which have
+  shipped. `--muted`/`--label` lifted to WCAG AA contrast on the light
+  theme.
+
 ## 0.3.0 — 2026-11-13
 
 - New: QR pairing. The 手机配对 card now renders a QR encoding the

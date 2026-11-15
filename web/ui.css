@@ -8,7 +8,7 @@
 :root {
   --sidebar: #FAFAFA;
   --nav: #5F6360;
-  --label: #B5B5B5;
+  --label: #707070;
   --subtitle-size: 32px;
   --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
   /* historical desktop names → shared tokens */
@@ -277,7 +277,7 @@ textarea { min-height: 96px; resize: vertical; }
 .tab, .view { display: none; }
 .tab.active, .view.active { display: block; }
 .cfg-nav { display: none; }
-.msg { font-size: 13px; margin: 10px 0; min-height: 18px; }
+.msg { white-space: pre-wrap; font-size: 13px; margin: 10px 0; min-height: 18px; }
 .msg.ok, .ok { color: var(--green); }
 .msg.err, .err { color: var(--red); }
 .msg.warn, .warn { color: var(--orange); }
