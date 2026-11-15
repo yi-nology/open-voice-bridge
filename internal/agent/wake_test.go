@@ -87,7 +87,7 @@ func TestWakeLoopCapturesAfterWakeWord(t *testing.T) {
 
 	deadline := time.After(3 * time.Second)
 	for {
-		transcripts := spy.transcripts
+		transcripts := spy.snapshot()
 		if len(transcripts) > 0 {
 			if transcripts[0].Source != "wake" {
 				t.Fatalf("source = %q, want wake", transcripts[0].Source)

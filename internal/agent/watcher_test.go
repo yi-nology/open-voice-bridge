@@ -72,6 +72,12 @@ func (c *captureSpy) sink(t speech.Transcript) {
 	c.transcripts = append(c.transcripts, t)
 }
 
+func (c *captureSpy) snapshot() []speech.Transcript {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return append([]speech.Transcript(nil), c.transcripts...)
+}
+
 func (c *captureSpy) paste(_ context.Context, text string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
