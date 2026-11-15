@@ -20,6 +20,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/audio"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
+	"github.com/yi-nology/open-voice-bridge/internal/gtvkeys"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
 	"github.com/yi-nology/open-voice-bridge/internal/keys"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
@@ -52,6 +53,10 @@ type Agent struct {
 	streaming   atomic.Bool
 	partialMu   sync.Mutex
 	partialStop context.CancelFunc
+
+	gattMu      sync.Mutex
+	gattKeys    func(gtvkeys.Event)
+	gattDecoder *gtvkeys.Decoder
 
 	wakeMu     sync.Mutex
 	wakeStop   context.CancelFunc
@@ -295,6 +300,28 @@ func (a *Agent) recordTranscript(transcript speech.Transcript) {
 // Transcripts yields finalized utterances for the subtitle stream.
 func (a *Agent) Transcripts() <-chan speech.Transcript { return a.transcripts }
 
+// SetGattKeyHandler installs the sink for decoded GATT button reports (the
+// Google TV family's key channel). It is safe to leave unset: the reports are
+// then decoded and dropped.
+func (a *Agent) SetGattKeyHandler(fn func(gtvkeys.Event)) {
+	a.gattMu.Lock()
+	defer a.gattMu.Unlock()
+	a.gattKeys = fn
+}
+
+// handleKeyReport decodes one raw HID report and forwards the transitions.
+func (a *Agent) handleKeyReport(source string, data []byte) {
+	a.gattMu.Lock()
+	decoder, handler := a.gattDecoder, a.gattKeys
+	a.gattMu.Unlock()
+	if decoder == nil || handler == nil {
+		return
+	}
+	for _, event := range decoder.Handle(source, data) {
+		handler(event)
+	}
+}
+
 // SetHub registers the BLE remote as an input source. It is safe to leave the
 // hub unset; the agent behaves exactly as before when no hub is provided.
 func (a *Agent) SetHub(hub *input.Hub) {
@@ -517,6 +544,19 @@ func (a *Agent) connectLoop() {
 				return
 			}
 			continue
+		}
+		// The key channel is optional (KeySubscribable): the Google TV family
+		// reports buttons over GATT because its HID descriptor never reaches
+		// the kernel input stack. A fresh decoder per connection keeps held
+		// state from leaking across reconnects.
+		if subscribable, ok := transport.(KeySubscribable); ok {
+			decoder := gtvkeys.NewDecoder()
+			a.gattMu.Lock()
+			a.gattDecoder = decoder
+			a.gattMu.Unlock()
+			if err := subscribable.SubscribeKeys(a.handleKeyReport); err != nil {
+				log.Debug("HID report channel unavailable", "err", err)
+			}
 		}
 		if err := transport.WriteTX(atvv.GetCapabilities); err != nil {
 			log.Warn("GET_CAPABILITIES failed", "err", err, "retry_in", backoff.current())

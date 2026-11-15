@@ -166,7 +166,7 @@ func MacroTokenCodes(action string) ([]int, bool) {
 var injectWhitelist = map[string]bool{
 	"up": true, "down": true, "left": true, "right": true,
 	"enter": true, "back": true, "home": true, "menu": true,
-	"volumeup": true, "volumedown": true, "f5": true,
+	"volumeup": true, "volumedown": true, "mute": true, "playpause": true, "f5": true,
 }
 
 // powerInjectKey stays out of injectWhitelist: logind acts on KEY_POWER, so

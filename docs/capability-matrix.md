@@ -13,7 +13,7 @@
 | 小米遥控器 2 Pro（RC003-MS） | ✅ 按住收音 | ✅ 全键 | `rc003` | 主力机型；语音键默认映射 F24 |
 | 小米遥控器 2（RC001-MS） | ✅ 按住收音 | ✅ 全键 | `rc003` | 与 RC003 同 profile |
 | 小米/米家语音遥控器（ARN9） | ✅ 按住收音 | ✅ 全键 | `rc003` | 键码与 RC003 一致；键位图鉴有独立外形 |
-| Google TV / Chromecast 语音遥控器（Onn 等同族） | ✅ 按住收音（协商 8 kHz，入引擎前自动重采样到 16 kHz） | ❌ 内核拒收 HID 描述符，无 evdev | `google-tv-remote` | VID/PID `18d1:9450`；配对按住 Back+Home；按键需 GATT 直读（路线图） |
+| Google TV / Chromecast 语音遥控器（Onn 等同族） | ✅ 按住收音（协商 8 kHz，入引擎前自动重采样到 16 kHz） | ✅ GATT 直读 0x2A4D（Linux；内核拒收描述符，无 evdev） | `google-tv-remote` | VID/PID `18d1:9450`；配对按住 Back+Home；白名单导航键直注，键位映射待接 |
 | 其他 ATVV 遥控器（Fire TV 等） | ✅ 按住收音 | 视 evdev 而定 | `generic-atvv` | 在「设备」页手动指定 Generic |
 | Apple Siri Remote 1 代 | ❌ | ✅ | `apple-siri-remote-1` | 无 ATVV，语音不可用 |
 | 手机浏览器（虚拟输入源） | ✅ 按住收音 | ✅ 方向/确认/音量 | 内置 | 需开 `phone` 段并完成配对 |

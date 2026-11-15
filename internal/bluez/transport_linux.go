@@ -29,6 +29,10 @@ type links struct {
 	audioPath   dbus.ObjectPath
 	controlPath dbus.ObjectPath
 	devicePath  dbus.ObjectPath
+	// keyReports is the HID Report characteristic set (0x2A4D): the Google TV
+	// family carries buttons there because its HID descriptor never reaches
+	// the kernel input stack. Several per device, keyed by object path.
+	keyReports map[dbus.ObjectPath]dbus.BusObject
 }
 
 // Transport is one BlueZ GATT connection to a remote. Every mutable field sits
@@ -42,6 +46,7 @@ type Transport struct {
 	links     links
 	onAudio   func([]byte)
 	onControl func([]byte)
+	onKeys    func(source string, data []byte)
 	closed    bool
 
 	signals        chan *dbus.Signal
@@ -231,7 +236,33 @@ func findATVV(conn *dbus.Conn, objects map[dbus.ObjectPath]map[string]map[string
 			lk.control, lk.controlPath = obj, path
 		}
 	}
+	lk.keyReports = findKeyReports(conn, objects)
 	return lk
+}
+
+// isHIDReportUUID matches the 16-bit HID Report uuid (0x2A4D) in either the
+// short or the Bluetooth-base form BlueZ may publish.
+func isHIDReportUUID(uuid string) bool {
+	uuid = strings.ToLower(strings.TrimSpace(uuid))
+	return uuid == "2a4d" || uuid == "00002a4d-0000-1000-8000-00805f9b34fb"
+}
+
+// findKeyReports collects every notifying HID Report characteristic on the
+// device, however many report channels the remote exposes.
+func findKeyReports(conn *dbus.Conn, objects map[dbus.ObjectPath]map[string]map[string]dbus.Variant) map[dbus.ObjectPath]dbus.BusObject {
+	out := map[dbus.ObjectPath]dbus.BusObject{}
+	for path, ifaces := range objects {
+		ch, ok := ifaces["org.bluez.GattCharacteristic1"]
+		if !ok {
+			continue
+		}
+		uuid, _ := ch["UUID"].Value().(string)
+		if !isHIDReportUUID(uuid) {
+			continue
+		}
+		out[path] = conn.Object("org.bluez", path)
+	}
+	return out
 }
 
 func (t *Transport) Subscribe(audio, control func([]byte)) error {
@@ -247,6 +278,26 @@ func (t *Transport) Subscribe(audio, control func([]byte)) error {
 		call := char.Call("org.bluez.GattCharacteristic1.StartNotify", 0)
 		if call.Err != nil && !strings.Contains(call.Err.Error(), "Already") {
 			return oeerrors.Errorf("StartNotify: %w", call.Err)
+		}
+	}
+	return nil
+}
+
+// SubscribeKeys starts notifications on every HID Report characteristic and
+// routes raw payloads to fn(source, data); source is the characteristic's
+// object path so held-key state stays per report channel (KeySubscribable).
+func (t *Transport) SubscribeKeys(fn func(source string, data []byte)) error {
+	t.mu.Lock()
+	t.onKeys = fn
+	reports := t.links.keyReports
+	t.mu.Unlock()
+	if len(reports) == 0 {
+		return oeerrors.Errorf("no HID report characteristic (0x2A4D)")
+	}
+	for path, char := range reports {
+		call := char.Call("org.bluez.GattCharacteristic1.StartNotify", 0)
+		if call.Err != nil && !strings.Contains(call.Err.Error(), "Already") {
+			return oeerrors.Errorf("StartNotify %s: %w", path, call.Err)
 		}
 	}
 	return nil
@@ -305,7 +356,7 @@ func (t *Transport) handleSignal(sig *dbus.Signal) {
 	}
 	t.mu.RLock()
 	lk := t.links
-	audio, control := t.onAudio, t.onControl
+	audio, control, keys := t.onAudio, t.onControl, t.onKeys
 	t.mu.RUnlock()
 
 	if iface == "org.bluez.Device1" && sig.Path == lk.devicePath {
@@ -335,6 +386,12 @@ func (t *Transport) handleSignal(sig *dbus.Signal) {
 	case lk.controlPath:
 		if control != nil {
 			control(data)
+		}
+	default:
+		if keys != nil {
+			if _, ok := lk.keyReports[sig.Path]; ok {
+				keys(string(sig.Path), data)
+			}
 		}
 	}
 }

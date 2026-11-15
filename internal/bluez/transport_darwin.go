@@ -264,6 +264,13 @@ func (t *Transport) Subscribe(audio, control func([]byte)) error {
 	}
 }
 
+// SubscribeKeys reports the platform gap honestly: CoreBluetooth hides the
+// HID service (0x1812) from ordinary apps, so the Google TV family's button
+// reports are unreadable on macOS (KeySubscribable is Linux-only).
+func (t *Transport) SubscribeKeys(func(source string, data []byte)) error {
+	return ErrUnsupported
+}
+
 func (t *Transport) WriteTX(data []byte) error {
 	t.mu.RLock()
 	handle := t.handle

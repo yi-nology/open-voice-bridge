@@ -7,9 +7,12 @@ import (
 )
 
 func TestInjectAllowed(t *testing.T) {
+	// mute and playpause joined for the GATT key channel (the Google TV
+	// family's buttons): media keys, same risk class as volumeup — no system
+	// state, no text, no focus change.
 	allowed := []string{
 		"up", "down", "left", "right", "enter", "back", "home",
-		"menu", "volumeup", "volumedown", "f5",
+		"menu", "volumeup", "volumedown", "mute", "playpause", "f5",
 	}
 	for _, allowPower := range []bool{false, true} {
 		for _, key := range allowed {
@@ -22,7 +25,7 @@ func TestInjectAllowed(t *testing.T) {
 			}
 		}
 	}
-	rejected := []string{"", "ok", "homepage", "playpause", "compose", "grave", "siri", "nope", "UP", "Enter"}
+	rejected := []string{"", "ok", "homepage", "compose", "grave", "siri", "nope", "UP", "Enter"}
 	for _, allowPower := range []bool{false, true} {
 		for _, key := range rejected {
 			if InjectAllowed(key, allowPower) {

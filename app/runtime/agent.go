@@ -27,6 +27,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/device"
 	"github.com/yi-nology/open-voice-bridge/internal/focus"
+	"github.com/yi-nology/open-voice-bridge/internal/gtvkeys"
 	"github.com/yi-nology/open-voice-bridge/internal/helper"
 	"github.com/yi-nology/open-voice-bridge/internal/history"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
@@ -172,6 +173,26 @@ func RunAgent(opts AgentOptions) int {
 		})
 
 		helperClient := helper.New(cfg.HelperSocket)
+		// The Google TV family's buttons arrive as GATT HID reports (its HID
+		// descriptor never reaches the kernel input stack). Decode them and
+		// inject the whitelisted navigation keys through the same helper path
+		// the phone speaks — power rides the same allow_power_key opt-in.
+		gattInjector := phone.NewKeyInjector(helperClient, cfg.Phone.AllowPowerKey)
+		ag.SetGattKeyHandler(func(event gtvkeys.Event) {
+			logical, ok := gtvkeys.ToLogical(event.Button)
+			if !ok {
+				return
+			}
+			value := 0
+			if event.Down {
+				value = 1
+			}
+			injectCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			if err := gattInjector.Inject(injectCtx, logical, value); err != nil {
+				logger.Warn("GATT key inject failed", "key", logical, "err", err)
+			}
+		})
 		auditPath := filepath.Join(filepath.Dir(opts.ConfigPath), "mcp-audit.jsonl")
 		svc := service.New(cfg, opts.ConfigPath, ag, helperClient, asrErr, logger, service.Ops{
 			BuildASR:        asr.Build,

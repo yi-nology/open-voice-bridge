@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- New: the Google TV family's buttons arrive over GATT (Linux). The family's
+  HID descriptor is rejected by the kernel input stack — no `/dev/input`, no
+  evdev remap — so the agent now subscribes to the HID Report characteristic
+  (0x2A4D) and decodes its raw reports (`internal/gtvkeys`): the 16-bit
+  Consumer usage form, the fw 26.0 one-byte index form (17-entry report map),
+  the 8-byte keyboard volume form, and all-zero releases with per-channel
+  held tracking. 方向/OK/返回/主页/静音/音量/播放暂停 inject through the same
+  helper whitelist the phone speaks (mute and playpause join the whitelist —
+  media keys, same risk class as volumeup), power rides the
+  `phone.allow_power_key` opt-in, and the Assistant key stays out of the way
+  (the ATVV control channel already owns the mic). Keymap remapping of these
+  buttons is the roadmap's next step; macOS stays honest — CoreBluetooth
+  hides the HID service.
+
 - New: the Google TV / Chromecast voice remote family joins (`google-tv-remote`,
   Onn 同族). It speaks the same ATVV voice service as the Xiaomi remotes
   (`ab5e0001-…`) — the existing chain just works — and matches by Google's

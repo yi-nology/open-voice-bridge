@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/gtvkeys"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
 )
 
@@ -46,4 +47,27 @@ func TestSetHubRegistersRemote(t *testing.T) {
 	}
 	// Setting a nil hub must not panic and leaves the agent usable.
 	agent.SetHub(nil)
+}
+
+// TestGattKeyReportsReachTheHandler (P3 keys channel): the raw HID reports
+// the Google TV family sends over GATT are decoded and forwarded — the
+// handler is the composition root's injection seam.
+func TestGattKeyReportsReachTheHandler(t *testing.T) {
+	a := New(config.Config{MaxUtterance: 30}, &fakeEngine{}, fakeSink{healthy: true})
+	var got []gtvkeys.Event
+	a.SetGattKeyHandler(func(ev gtvkeys.Event) { got = append(got, ev) })
+	a.gattMu.Lock()
+	a.gattDecoder = gtvkeys.NewDecoder()
+	a.gattMu.Unlock()
+
+	a.handleKeyReport("char1", []byte{0x42, 0x00}) // up press
+	a.handleKeyReport("char1", []byte{0x00, 0x00}) // release
+	if len(got) != 2 || got[0] != (gtvkeys.Event{Button: "up", Down: true}) ||
+		got[1] != (gtvkeys.Event{Button: "up", Down: false}) {
+		t.Fatalf("handler saw %+v", got)
+	}
+
+	// No handler installed: decode-and-drop, no panic.
+	a.SetGattKeyHandler(nil)
+	a.handleKeyReport("char1", []byte{0x43, 0x00})
 }

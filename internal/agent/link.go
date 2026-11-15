@@ -19,6 +19,16 @@ type Transport interface {
 	Disconnected() <-chan struct{}
 }
 
+// KeySubscribable is an optional Transport capability, type-asserted by
+// connectLoop: raw HID button reports over GATT (0x2A4D), for remote families
+// whose HID descriptor never reaches the kernel input stack (the Google TV /
+// Chromecast remotes). The source names the report characteristic so held
+// state stays per channel. Linux only — CoreBluetooth hides the HID service
+// from ordinary apps.
+type KeySubscribable interface {
+	SubscribeKeys(func(source string, data []byte)) error
+}
+
 // Session is the ATVV protocol state for one connection — the slice of
 // internal/atvv the agent drives.
 type Session interface {
