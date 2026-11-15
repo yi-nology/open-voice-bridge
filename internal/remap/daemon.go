@@ -451,7 +451,14 @@ func (d *Daemon) readLoop(ctx context.Context, fd int, path string) {
 			if value < 0 || value > 2 {
 				continue
 			}
-			name := SourceName(int(event.Code))
+			name, known := SourceKeyName(int(event.Code))
+			if !known {
+				// Not a key this profile declares. Capture still sees it (that
+				// is how the digit stream was found), but it is never applied:
+				// the grab means anything forwarded lands in the user's window.
+				d.streamRaw(SourceName(int(event.Code)), int(event.Code), value)
+				continue
+			}
 			d.streamRaw(name, int(event.Code), value)
 			if d.isCapturing() {
 				continue

@@ -205,6 +205,29 @@ func SourceName(code int) string {
 	return fmt.Sprintf("KEY_%d", code)
 }
 
+// sourceKeyNames is the reverse of SourceCodes: the logical keys the profile
+// actually declares. Code 0 (siri's reserved placeholder) is not a key.
+var sourceKeyNames = func() map[int]string {
+	out := make(map[int]string, len(SourceCodes))
+	for name, code := range SourceCodes {
+		if code == 0 {
+			continue
+		}
+		out[code] = name
+	}
+	return out
+}()
+
+// SourceKeyName resolves an evdev code to the profile's logical key. Unknown
+// codes report false and must not be forwarded: the remapper grabs the device,
+// so a code the keymap never names would be typed straight into the focused
+// window. The voice key's HID report arrives as digit usages, which is how
+// "1212111112" used to land in the user's editor.
+func SourceKeyName(code int) (string, bool) {
+	name, ok := sourceKeyNames[code]
+	return name, ok
+}
+
 func Load(path string) (map[string]string, error) {
 	data, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
@@ -379,7 +402,16 @@ func RewriteAgentActions(mapping map[string]string) (map[string]string, map[int]
 	actions := map[int]AgentAction{}
 	slots := map[AgentAction]int{}
 	used := 0
-	for key, action := range mapping {
+	// Sorted, not map order: the slot numbers end up in the rewritten keymap
+	// and in the actions the agent binds, so the same input must always
+	// produce the same output.
+	keys := make([]string, 0, len(mapping))
+	for key := range mapping {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		action := mapping[key]
 		if !strings.HasPrefix(action, "seq(") {
 			rewritten[key] = action
 			continue

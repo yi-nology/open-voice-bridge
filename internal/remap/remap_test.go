@@ -172,3 +172,43 @@ func TestRewriteAgentActionsSharesSlots(t *testing.T) {
 		t.Fatalf("actions = %+v", actions)
 	}
 }
+
+// The remapper grabs the device, so anything it forwards lands in the focused
+// window. A code the profile does not name must never be forwarded: the voice
+// key's HID report arrives as digit usages, and passing them through typed
+// "1212111112" into whatever the user had focused.
+func TestSourceKeyNameRefusesCodesTheProfileDoesNotName(t *testing.T) {
+	for name, code := range SourceCodes {
+		if code == 0 {
+			continue
+		}
+		got, ok := SourceKeyName(code)
+		if !ok || got != name {
+			t.Fatalf("SourceKeyName(%d) = %q,%v; want %q", code, got, ok, name)
+		}
+	}
+	for _, code := range []int{2, 3, 10, 11, 999} {
+		if name, ok := SourceKeyName(code); ok {
+			t.Fatalf("SourceKeyName(%d) = %q, want it rejected", code, name)
+		}
+	}
+}
+
+// Slot numbers travel with the rewritten keymap, so two runs over the same
+// mapping must agree; map iteration order used to number them differently.
+func TestRewriteAgentActionsIsDeterministic(t *testing.T) {
+	mapping := map[string]string{
+		"f5":       `seq(open(firefox), 120, type(你好))`,
+		"f6":       `seq(type(你好), enter)`,
+		"volumeup": "native",
+	}
+	first, _ := RewriteAgentActions(mapping)
+	for attempt := 0; attempt < 20; attempt++ {
+		again, _ := RewriteAgentActions(mapping)
+		for key, want := range first {
+			if again[key] != want {
+				t.Fatalf("attempt %d: %s = %q, want %q", attempt, key, again[key], want)
+			}
+		}
+	}
+}
