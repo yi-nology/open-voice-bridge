@@ -134,11 +134,29 @@ func (s *Store) trimLocked() {
 	s.entries = kept
 }
 
+// SetPolicy replaces the retention/redaction bounds and enforces them at once:
+// rows past the window are dropped (and the file rewritten), later appends
+// follow the new redaction rule (波 3 "applies it live").
+func (s *Store) SetPolicy(policy Policy) {
+	if policy.RetentionDays < 0 {
+		policy.RetentionDays = 0
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.policy = policy
+	s.trimLocked()
+	if len(s.entries) > s.limit {
+		s.entries = s.entries[len(s.entries)-s.limit:]
+	}
+	s.sinceCompact = 0
+	_ = s.rewrite()
+}
+
 func (s *Store) Append(entry Entry) error {
+	s.mu.Lock()
 	if s.policy.RedactAddresses && entry.Address != "" {
 		entry.Address = redact.MAC(entry.Address)
 	}
-	s.mu.Lock()
 	if entry.ID == "" {
 		entry.ID = s.nextIDLocked()
 	}

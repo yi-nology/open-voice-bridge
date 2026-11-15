@@ -86,8 +86,8 @@ func (s *Service) HistoryPolicy() (int, bool) {
 	return s.cfg.HistoryRetentionDays, s.cfg.HistoryRedactAddresses
 }
 
-// SetHistoryPolicy saves the history policy. The store applies redaction on
-// future rows; retention is enforced on the next load/append.
+// SetHistoryPolicy saves the history policy. The composition root applies the
+// same bounds to the running store (Applying on future rows; trimming now).
 func (s *Service) SetHistoryPolicy(retentionDays int, redactAddresses bool) error {
 	if retentionDays < 0 {
 		retentionDays = 0

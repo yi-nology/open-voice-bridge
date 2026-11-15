@@ -207,6 +207,5 @@ func (s *Server) HistoryPolicySave(ctx context.Context, c *app.RequestContext) {
 		c.JSON(consts.StatusBadRequest, reply{OK: false, Error: err.Error()})
 		return
 	}
-	restartRequired := true
-	c.JSON(consts.StatusOK, reply{OK: true, RestartRequired: &restartRequired})
+	c.JSON(consts.StatusOK, reply{OK: true})
 }

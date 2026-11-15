@@ -134,10 +134,18 @@ func (a Admin) deps() ui.Deps {
 		SetLookback:           svc.SetLookback,
 		RecoverLookback:       svc.RecoverLookback,
 		HistoryPolicy:         svc.HistoryPolicy,
-		SetHistoryPolicy:      svc.SetHistoryPolicy,
-		SetPhoneEnabled:       svc.SetPhoneEnabled,
-		PhonePowerKey:         svc.PhonePowerKey,
-		SetPhonePowerKey:      svc.SetPhonePowerKey,
-		HelperSocket:          a.HelperSocket,
+		SetHistoryPolicy: func(retentionDays int, redactAddresses bool) error {
+			if err := svc.SetHistoryPolicy(retentionDays, redactAddresses); err != nil {
+				return err
+			}
+			// The store holds the running bounds; the service owns the saved
+			// config. Both must move together or the control lies (波 3).
+			a.History.SetPolicy(history.Policy{RetentionDays: retentionDays, RedactAddresses: redactAddresses})
+			return nil
+		},
+		SetPhoneEnabled:  svc.SetPhoneEnabled,
+		PhonePowerKey:    svc.PhonePowerKey,
+		SetPhonePowerKey: svc.SetPhonePowerKey,
+		HelperSocket:     a.HelperSocket,
 	}
 }

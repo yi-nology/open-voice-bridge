@@ -114,3 +114,40 @@ func TestPolicyRetentionAndRedaction(t *testing.T) {
 		t.Fatalf("entries = %+v, want only the fresh row", entries)
 	}
 }
+
+// TestSetPolicyAppliesLive pins the 波 3 policy contract: swapping the policy
+// on a running store must trim the retained rows and re-bind redaction right
+// away — no restart, no "takes effect on next load" limbo (the admin API says
+// "applies it live" and the UI control must be able to believe it).
+func TestSetPolicyAppliesLive(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "history.jsonl")
+	store := New(path, 200, Policy{})
+	now := time.Now()
+	if err := store.Append(Entry{ID: "old", Text: "旧话", At: now.AddDate(0, 0, -90)}); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Append(Entry{ID: "fresh", Text: "新话", At: now}); err != nil {
+		t.Fatal(err)
+	}
+	store.SetPolicy(Policy{RetentionDays: 30, RedactAddresses: true})
+	if entries := store.List(10); len(entries) != 1 || entries[0].ID != "fresh" {
+		t.Fatalf("retention did not trim live: %+v", entries)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(data), "old") {
+		t.Fatalf("file still carries the trimmed row: %s", data)
+	}
+	if err := store.Append(Entry{ID: "later", Text: "后话", Address: "AA:BB:CC:DD:EE:FF", At: now}); err != nil {
+		t.Fatal(err)
+	}
+	data, err = os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(data), "AA:BB:CC:DD:EE:FF") {
+		t.Fatalf("redaction did not follow the live policy: %s", data)
+	}
+}
