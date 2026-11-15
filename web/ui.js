@@ -2200,7 +2200,7 @@ function dictionaryRow(from = "", to = "") {
 
 function snippetRow(trigger = "", text = "", slot = 0) {
   const row = document.createElement("div");
-  row.className = "rule-row";
+  row.className = "rule-row snippet-row";
   const source = document.createElement("input");
   source.className = "rule-from";
   source.placeholder = "触发词，如：收货地址";
@@ -2214,15 +2214,13 @@ function snippetRow(trigger = "", text = "", slot = 0) {
   remove.className = "btn small";
   remove.textContent = "删除";
   remove.addEventListener("click", () => row.remove());
+  const badge = document.createElement("span");
+  badge.className = "rule-slot";
   if (slot > 0 && slot <= 8) {
-    const badge = document.createElement("span");
-    badge.className = "rule-slot";
     badge.textContent = "常用语 " + slot;
     badge.title = "按键映射里选「常用语 " + slot + "（按下插入）」，按一下就上屏这段文字";
-    row.append(badge, source, target, remove);
-  } else {
-    row.append(source, target, remove);
   }
+  row.append(badge, source, target, remove);
   return row;
 }
 
