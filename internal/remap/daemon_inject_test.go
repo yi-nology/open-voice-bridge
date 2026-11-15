@@ -303,10 +303,10 @@ func TestKeyCountsTrackPressesAndPersist(t *testing.T) {
 	d.applyKey(2, "home", 1)
 
 	status := d.status()
-	if status["key_total"] != int64(3) {
-		t.Fatalf("key_total = %v, want 3 presses", status["key_total"])
+	if status.KeyTotal != int64(3) {
+		t.Fatalf("key_total = %v, want 3 presses", status.KeyTotal)
 	}
-	counts, _ := status["key_counts"].(map[string]int64)
+	counts := status.KeyCounts
 	if counts["up"] != 2 || counts["home"] != 1 {
 		t.Fatalf("key_counts = %v", counts)
 	}
@@ -317,8 +317,8 @@ func TestKeyCountsTrackPressesAndPersist(t *testing.T) {
 	restarted := newInjectDaemon()
 	restarted.cfg.MappingPath = filepath.Join(dir, "mapping.json")
 	restarted.loadKeyCounts()
-	if restarted.status()["key_total"] != int64(3) {
-		t.Fatalf("counts lost across restart: %v", restarted.status()["key_total"])
+	if restarted.status().KeyTotal != int64(3) {
+		t.Fatalf("counts lost across restart: %v", restarted.status().KeyTotal)
 	}
 }
 

@@ -40,7 +40,7 @@ func helperCheck(cfg config.Config) []check {
 			"sudo systemctl start xiaoyao-remap.service")}
 	}
 	return []check{ok(fmt.Sprintf("remap helper (active=%v, remote_present=%v)",
-		status["keyd_active"], status["remote_present"]))}
+		status.KeydActive, status.RemotePresent))}
 }
 
 // binaryChecks covers the external tools the agent shells out to. Each is an
