@@ -5,10 +5,9 @@ import (
 	"context"
 	"fmt"
 	oeerrors "github.com/oekit/pkg/errors"
-	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
-	"github.com/yi-nology/open-voice-bridge/internal/llm"
 	"os"
 	"path/filepath"
 	"slices"
@@ -70,7 +69,7 @@ func (s *Service) ASRConfig(ctx context.Context) map[string]any {
 }
 
 func (s *Service) UpdateASRConfig(ctx context.Context, next config.ASRConfig) error {
-	if err := asr.Validate(next); err != nil {
+	if err := s.ops.ValidateASR(next); err != nil {
 		return err
 	}
 	engine, err := s.ops.BuildASR(next)
@@ -98,16 +97,16 @@ func (s *Service) UpdateASRConfig(ctx context.Context, next config.ASRConfig) er
 	return nil
 }
 
-func (s *Service) TestASR(ctx context.Context, provider string) []asr.Diagnostic {
+func (s *Service) TestASR(ctx context.Context, provider string) []core.ASRDiagnostic {
 	s.cfgMu.RLock()
 	testCfg := s.cfg.ASR
 	s.cfgMu.RUnlock()
 	testCfg.Provider = provider
 	testCfg.Fallback = nil
-	if err := asr.Validate(testCfg); err != nil {
-		return []asr.Diagnostic{{Provider: provider, OK: false, Detail: err.Error()}}
+	if err := s.ops.ValidateASR(testCfg); err != nil {
+		return []core.ASRDiagnostic{{Provider: provider, OK: false, Detail: err.Error()}}
 	}
-	return asr.Diagnose(testCfg)
+	return s.ops.DiagnoseASR(testCfg)
 }
 
 func (s *Service) TextConfig(ctx context.Context) map[string]any {
@@ -306,7 +305,7 @@ func (s *Service) UpdateLLMConfig(ctx context.Context, next config.LLMConfig) er
 	return nil
 }
 
-func (s *Service) TestLLM(ctx context.Context, provider string, live bool) []llm.Diagnostic {
+func (s *Service) TestLLM(ctx context.Context, provider string, live bool) []core.LLMDiagnostic {
 	s.cfgMu.RLock()
 	testCfg := s.cfg.LLM
 	s.cfgMu.RUnlock()
@@ -318,20 +317,20 @@ func (s *Service) TestLLM(ctx context.Context, provider string, live bool) []llm
 		}
 		testCfg.Provider = provider
 	}
-	diagnostics := llm.Diagnose(testCfg)
+	diagnostics := s.ops.DiagnoseLLM(testCfg)
 	if !live {
 		return diagnostics
 	}
 	processor, err := s.ops.BuildLLM(testCfg)
 	if err != nil {
-		return append(diagnostics, llm.Diagnostic{OK: false, Detail: "build: " + err.Error()})
+		return append(diagnostics, core.LLMDiagnostic{OK: false, Detail: "build: " + err.Error()})
 	}
 	latency, pingErr := processor.Ping(ctx)
 	if closeErr := processor.Close(ctx); closeErr != nil {
 		s.logger.Warn("close tested LLM", "err", closeErr)
 	}
 	if pingErr != nil {
-		return append(diagnostics, llm.Diagnostic{OK: false, Detail: "live: " + pingErr.Error()})
+		return append(diagnostics, core.LLMDiagnostic{OK: false, Detail: "live: " + pingErr.Error()})
 	}
-	return append(diagnostics, llm.Diagnostic{OK: true, Detail: fmt.Sprintf("live: %s", latency.Round(time.Millisecond))})
+	return append(diagnostics, core.LLMDiagnostic{OK: true, Detail: fmt.Sprintf("live: %s", latency.Round(time.Millisecond))})
 }

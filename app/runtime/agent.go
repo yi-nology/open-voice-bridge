@@ -23,6 +23,8 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/audio"
 	"github.com/yi-nology/open-voice-bridge/internal/bluez"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
+	"github.com/yi-nology/open-voice-bridge/internal/device"
 	"github.com/yi-nology/open-voice-bridge/internal/focus"
 	"github.com/yi-nology/open-voice-bridge/internal/helper"
 	"github.com/yi-nology/open-voice-bridge/internal/history"
@@ -30,6 +32,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
 	"github.com/yi-nology/open-voice-bridge/internal/mcp"
 	"github.com/yi-nology/open-voice-bridge/internal/phone"
+	"github.com/yi-nology/open-voice-bridge/internal/remap"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
 	"github.com/yi-nology/open-voice-bridge/web"
 )
@@ -168,13 +171,22 @@ func RunAgent(opts AgentOptions) int {
 		})
 
 		helperClient := helper.New(cfg.HelperSocket)
+		auditPath := filepath.Join(filepath.Dir(opts.ConfigPath), "mcp-audit.jsonl")
 		svc := service.New(cfg, opts.ConfigPath, ag, helperClient, asrErr, logger, service.Ops{
-			BuildASR:   asr.Build,
-			BuildLLM:   llm.Build,
-			BuildRules: text.New,
-			Connect:    bluez.Connect,
-			Disconnect: bluez.Disconnect,
-			Tokens:     mcp.NewStore(filepath.Join(filepath.Dir(opts.ConfigPath), "mcp-tokens.json")),
+			BuildASR:        asr.Build,
+			BuildLLM:        llm.Build,
+			BuildRules:      func(c config.TextConfig) (core.TextRules, error) { return text.New(c) },
+			ValidateASR:     asr.Validate,
+			DiagnoseASR:     asr.Diagnose,
+			DiagnoseLLM:     llm.Diagnose,
+			Connect:         bluez.Connect,
+			Disconnect:      bluez.Disconnect,
+			MergeDefaults:   remap.MergeDefaults,
+			ValidateMapping: remap.Validate,
+			RewriteActions:  remap.RewriteAgentActions,
+			Devices:         device.Builtin(),
+			AppendAudit:     func(entry core.AuditEntry) error { return mcp.AppendAudit(auditPath, entry) },
+			Tokens:          mcp.NewStore(filepath.Join(filepath.Dir(opts.ConfigPath), "mcp-tokens.json")),
 		})
 		historyStore := history.New(filepath.Join(filepath.Dir(opts.ConfigPath), "history.jsonl"), 200, history.Policy{
 			RetentionDays:   cfg.HistoryRetentionDays,

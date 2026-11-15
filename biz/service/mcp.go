@@ -9,7 +9,7 @@ import (
 
 	oeerrors "github.com/oekit/pkg/errors"
 
-	"github.com/yi-nology/open-voice-bridge/internal/mcp"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 func (s *Service) mcpPath(name string) string {
@@ -32,7 +32,7 @@ func (s *Service) MCPCreateToken(label, binary string) (map[string]any, error) {
 		"id":      id,
 		"label":   label,
 		"token":   raw,
-		"snippet": mcp.ClientConfig("xiaoyao", binary, raw),
+		"snippet": core.ClientConfigSnippet("xiaoyao", binary, raw),
 	}, nil
 }
 
@@ -50,21 +50,21 @@ func (s *Service) MCPRevokeToken(id string) map[string]any {
 }
 
 // MCPVerify checks a client token for the read-only agent endpoints.
-func (s *Service) MCPVerify(raw string) (mcp.TokenInfo, bool) {
+func (s *Service) MCPVerify(raw string) (core.TokenInfo, bool) {
 	return s.mcpTokens.Validate(raw)
 }
 
 // MCPAudit records one agent query. Counts only: never speech content and
 // never the search text (SayAll 按天审计).
-func (s *Service) MCPAudit(info mcp.TokenInfo, tool string, items int) {
-	entry := mcp.AuditEntry{
+func (s *Service) MCPAudit(info core.TokenInfo, tool string, items int) {
+	entry := core.AuditEntry{
 		At:      time.Now(),
 		TokenID: info.ID,
 		Label:   info.Label,
 		Tool:    tool,
 		Items:   items,
 	}
-	if err := mcp.AppendAudit(s.mcpPath("mcp-audit.jsonl"), entry); err != nil {
+	if err := s.ops.AppendAudit(entry); err != nil {
 		s.logger.Warn("append mcp audit", "err", err)
 	}
 }
@@ -81,7 +81,7 @@ func (s *Service) MCPAuditBody() map[string]any {
 		if line == "" {
 			continue
 		}
-		var entry mcp.AuditEntry
+		var entry core.AuditEntry
 		if err := json.Unmarshal([]byte(line), &entry); err == nil {
 			entries = append(entries, entry)
 		}

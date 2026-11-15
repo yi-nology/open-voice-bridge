@@ -85,10 +85,10 @@ func testUtterance(ref speech.SourceRef) speech.Utterance {
 }
 
 // testPipeline assembles the shared chain with spies for agent-side tests.
-func testPipeline(engine asr.Engine, rules *text.Rules, processor llm.Processor, spy *captureSpy) *speech.Pipeline {
+func testPipeline(engine asr.Engine, rules core.TextRules, processor llm.Processor, spy *captureSpy) *speech.Pipeline {
 	return speech.New(speech.Options{
 		Engine:       func() asr.Engine { return engine },
-		Rules:        func() *text.Rules { return rules },
+		Rules:        func() core.TextRules { return rules },
 		Processor:    func() llm.Processor { return processor },
 		PasteEnabled: func() bool { return false },
 		PasteText:    spy.paste,
@@ -100,7 +100,7 @@ func testPipeline(engine asr.Engine, rules *text.Rules, processor llm.Processor,
 func watcherPipeline(rules *text.Rules, spy *pasteSpy) *speech.Pipeline {
 	return speech.New(speech.Options{
 		Engine:       func() asr.Engine { return nil },
-		Rules:        func() *text.Rules { return rules },
+		Rules:        func() core.TextRules { return rules },
 		PasteEnabled: func() bool { return true },
 		PasteText:    spy.paste,
 		ASRTimeout:   5 * time.Second,

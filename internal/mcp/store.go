@@ -17,18 +17,13 @@ import (
 
 	oeerrors "github.com/oekit/pkg/errors"
 
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
 )
 
 // TokenInfo is the displayable record of one client grant. The raw token and
-// its hash never leave the store.
-type TokenInfo struct {
-	ID        string    `json:"id"`
-	Label     string    `json:"label"`
-	CreatedAt time.Time `json:"created_at"`
-	LastUsed  time.Time `json:"last_used,omitempty"`
-	Revoked   bool      `json:"revoked,omitempty"`
-}
+// its hash never leave the store. The type lives in core (core 类型迁移).
+type TokenInfo = core.TokenInfo
 
 type storedToken struct {
 	TokenInfo

@@ -4,12 +4,12 @@ package service
 import (
 	"context"
 	oeerrors "github.com/oekit/pkg/errors"
-	"github.com/yi-nology/open-voice-bridge/internal/remap"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"strings"
 )
 
 func (s *Service) Apply(ctx context.Context, mapping map[string]string) (map[string]any, error) {
-	merged := remap.MergeDefaults(mapping)
+	merged := s.ops.MergeDefaults(mapping)
 	s.cfgMu.Lock()
 	if s.cfg.Keymap.Profiles == nil {
 		s.cfg.Keymap.Profiles = map[string]map[string]string{}
@@ -38,7 +38,7 @@ func (s *Service) Apply(ctx context.Context, mapping map[string]string) (map[str
 // type()/open() seq step for an agent(n) key the user-level agent watches —
 // the root daemon only ever presses keys (S3).
 func (s *Service) applyMapping(ctx context.Context, mapping map[string]string) (map[string]any, error) {
-	rewritten, actions := remap.RewriteAgentActions(mapping)
+	rewritten, actions := s.ops.RewriteActions(mapping)
 	s.agent.SetSeqActions(actions)
 	return s.helper.Call(ctx, map[string]any{"cmd": "apply", "mapping": rewritten})
 }
@@ -48,7 +48,7 @@ func (s *Service) KeymapProfiles(ctx context.Context) (string, map[string]map[st
 	defer s.cfgMu.RUnlock()
 	profiles := make(map[string]map[string]string, len(s.cfg.Keymap.Profiles))
 	for name, mapping := range s.cfg.Keymap.Profiles {
-		profiles[name] = remap.Copy(mapping)
+		profiles[name] = core.CopyMapping(mapping)
 	}
 	return s.cfg.Keymap.Profile, profiles
 }
@@ -57,7 +57,7 @@ func (s *Service) ApplyKeymapProfile(ctx context.Context, name string) (map[stri
 	s.cfgMu.RLock()
 	mapping, ok := s.cfg.Keymap.Profiles[name]
 	if ok {
-		mapping = remap.Copy(mapping)
+		mapping = core.CopyMapping(mapping)
 	}
 	s.cfgMu.RUnlock()
 	if !ok {
@@ -84,8 +84,8 @@ func (s *Service) SaveKeymapProfile(ctx context.Context, name string, mapping ma
 	if builtinProfile(name) {
 		return nil, oeerrors.Errorf("%q is a built-in profile and cannot be overwritten", name)
 	}
-	cleaned := remap.MergeDefaults(mapping)
-	if err := remap.Validate(cleaned); err != nil {
+	cleaned := s.ops.MergeDefaults(mapping)
+	if err := s.ops.ValidateMapping(cleaned); err != nil {
 		return nil, err
 	}
 	s.cfgMu.Lock()

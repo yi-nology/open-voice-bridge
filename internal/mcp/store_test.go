@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 func newTestStore(t *testing.T) *Store {
@@ -147,7 +149,7 @@ func TestAuditRecordsCountsNotContent(t *testing.T) {
 }
 
 func TestClientConfigSnippet(t *testing.T) {
-	snippet := ClientConfig("xiaoyao", "/usr/local/bin/xiaoyao", "tok-123")
+	snippet := core.ClientConfigSnippet("xiaoyao", "/usr/local/bin/xiaoyao", "tok-123")
 	servers, _ := snippet["mcpServers"].(map[string]any)
 	entry, _ := servers["xiaoyao"].(map[string]any)
 	if entry["command"] != "/usr/local/bin/xiaoyao" {

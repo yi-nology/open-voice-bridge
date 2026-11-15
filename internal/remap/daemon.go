@@ -21,6 +21,7 @@ import (
 	"github.com/oekit/logx"
 	"golang.org/x/sys/unix"
 
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/device"
 )
 
@@ -319,7 +320,7 @@ func (d *Daemon) status() map[string]any {
 		"ok":             true,
 		"keyd_active":    !d.capturing,
 		"remote_present": d.remotePresent,
-		"mapping":        Copy(d.mapping),
+		"mapping":        core.CopyMapping(d.mapping),
 		"config":         ConfigText(d.mapping),
 		"key_total":      keyTotal,
 		"key_counts":     keyCounts,

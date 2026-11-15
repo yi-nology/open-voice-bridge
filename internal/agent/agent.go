@@ -27,7 +27,6 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/paste"
 	"github.com/yi-nology/open-voice-bridge/internal/redact"
 	"github.com/yi-nology/open-voice-bridge/internal/remap"
-	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
 
 var log = logx.Delegating("agent")
@@ -38,7 +37,7 @@ type Agent struct {
 	asrMu   sync.RWMutex
 	llm     llm.Processor
 	llmMu   sync.RWMutex
-	text    *text.Rules
+	text    core.TextRules
 	textMu  sync.RWMutex
 	audio   audio.Sink
 	audioMu sync.Mutex
@@ -134,7 +133,7 @@ func (a *Agent) newPipeline() *speech.Pipeline {
 			defer a.asrMu.RUnlock()
 			return a.asr
 		},
-		Rules: func() *text.Rules {
+		Rules: func() core.TextRules {
 			a.textMu.RLock()
 			defer a.textMu.RUnlock()
 			return a.text
@@ -190,7 +189,7 @@ func (a *Agent) rewriteModeFor() string {
 		}
 	}
 	for _, rule := range rules {
-		if remap.MatchClass(class, rule.Class) {
+		if core.MatchWindowClass(class, rule.Class) {
 			return rule.Mode
 		}
 	}
@@ -415,7 +414,7 @@ func joinAgentErrors(errs []error) error {
 	return out
 }
 
-func (a *Agent) SetTextRules(rules *text.Rules) {
+func (a *Agent) SetTextRules(rules core.TextRules) {
 	a.textMu.Lock()
 	a.text = rules
 	a.textMu.Unlock()

@@ -11,13 +11,10 @@ import (
 	"time"
 
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
-type Diagnostic struct {
-	Provider string
-	OK       bool
-	Detail   string
-}
+type Diagnostic = core.ASRDiagnostic
 
 func providerType(name string, cfg config.ASRProviderConfig) string {
 	value := strings.ToLower(strings.TrimSpace(cfg.Type))

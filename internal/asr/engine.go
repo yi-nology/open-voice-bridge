@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/oekit/logx"
+
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 var log = logx.Delegating("asr")
@@ -16,24 +18,13 @@ var log = logx.Delegating("asr")
 // stops instead of spending money/time on fallback providers.
 var ErrNoSpeech = oeerrors.New("no speech detected")
 
-type Audio struct {
-	Samples    []int16
-	SampleRate int
-}
+// Audio/Result are core vocabulary (core 类型迁移): aliases keep every
+// call site in this package unchanged.
+type Audio = core.ASRAudio
 
-type Result struct {
-	Text     string
-	Language string
-	Provider string
-	Latency  time.Duration
-}
+type Result = core.ASRResult
 
-type Engine interface {
-	Name() string
-	Local() bool
-	Transcribe(ctx context.Context, audio Audio) (Result, error)
-	Close(ctx context.Context) error
-}
+type Engine = core.ASREngine
 
 // Chain tries the primary provider and then each fallback in order.
 type Chain struct {

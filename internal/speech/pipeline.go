@@ -12,7 +12,6 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
-	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
 
 var log = logx.Delegating("speech")
@@ -81,7 +80,7 @@ type Transcript struct {
 type Pipeline struct {
 	pasteMu      sync.Mutex
 	engine       func() asr.Engine
-	rules        func() *text.Rules
+	rules        func() core.TextRules
 	processor    func() llm.Processor
 	pasteEnabled func() bool
 	pasteText    func(context.Context, string) error
@@ -97,7 +96,7 @@ type Pipeline struct {
 // Pipeline is the composition root (or a test), never the pipeline itself.
 type Options struct {
 	Engine       func() asr.Engine
-	Rules        func() *text.Rules
+	Rules        func() core.TextRules
 	Processor    func() llm.Processor
 	PasteEnabled func() bool
 	PasteText    func(context.Context, string) error

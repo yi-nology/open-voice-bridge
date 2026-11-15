@@ -6,7 +6,6 @@ import (
 	"github.com/oekit/concurrency/async"
 	oeerrors "github.com/oekit/pkg/errors"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
-	"github.com/yi-nology/open-voice-bridge/internal/device"
 	"strings"
 	"time"
 )
@@ -30,7 +29,7 @@ func (s *Service) SelectDevice(ctx context.Context, id string) error {
 		s.cfgMu.Unlock()
 		return oeerrors.Errorf("device %q is disabled", id)
 	}
-	profile, ok := device.Builtin().Get(item.Profile)
+	profile, ok := s.ops.Devices.Get(item.Profile)
 	if !ok || !profile.HasCapability("voice") {
 		s.cfgMu.Unlock()
 		return oeerrors.Errorf("device %q does not support voice", id)
@@ -100,7 +99,7 @@ func (s *Service) ConnectDevice(ctx context.Context, id string, connect bool) er
 	if !item.Enabled {
 		return oeerrors.Errorf("device %q is disabled", id)
 	}
-	profile, _ := device.Builtin().Get(item.Profile)
+	profile, _ := s.ops.Devices.Get(item.Profile)
 	if connect && active && profile.HasCapability("voice") {
 		return s.agent.SetAddress(item.Address)
 	}
@@ -127,7 +126,7 @@ func (s *Service) SaveDevice(ctx context.Context, item config.DeviceConfig) erro
 	if item.Profile == "" {
 		item.Profile = "rc003"
 	}
-	if _, ok := device.Builtin().Get(item.Profile); !ok {
+	if _, ok := s.ops.Devices.Get(item.Profile); !ok {
 		return oeerrors.Errorf("unknown device profile %q", item.Profile)
 	}
 	if item.ID == "" {

@@ -17,6 +17,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/device"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
+	"github.com/yi-nology/open-voice-bridge/internal/mcp"
 	"github.com/yi-nology/open-voice-bridge/internal/remap"
 	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
@@ -108,7 +109,7 @@ func (f *fakeAgent) SetAddress(address string) error {
 func (f *fakeAgent) RestartAudio(context.Context) error { return nil }
 func (f *fakeAgent) SetEngine(engine asr.Engine)        { f.engine = engine }
 func (f *fakeAgent) SetLLM(processor llm.Processor)     {}
-func (f *fakeAgent) SetTextRules(rules *text.Rules)     {}
+func (f *fakeAgent) SetTextRules(rules core.TextRules)  {}
 func (f *fakeAgent) ASRName() string {
 	if f.engine != nil {
 		return f.engine.Name()
@@ -182,11 +183,20 @@ func (f *fakeHelper) Call(ctx context.Context, payload any) (map[string]any, err
 // testOps wires the real builders so tests exercise the production paths.
 func testOps() Ops {
 	return Ops{
-		BuildASR:   asr.Build,
-		BuildLLM:   llm.Build,
-		BuildRules: text.New,
-		Connect:    func(context.Context, string) error { return nil },
-		Disconnect: func(context.Context, string) error { return nil },
+		BuildASR:        asr.Build,
+		BuildLLM:        llm.Build,
+		BuildRules:      func(c config.TextConfig) (core.TextRules, error) { return text.New(c) },
+		ValidateASR:     asr.Validate,
+		DiagnoseASR:     asr.Diagnose,
+		DiagnoseLLM:     llm.Diagnose,
+		Connect:         func(context.Context, string) error { return nil },
+		Disconnect:      func(context.Context, string) error { return nil },
+		MergeDefaults:   remap.MergeDefaults,
+		ValidateMapping: remap.Validate,
+		RewriteActions:  remap.RewriteAgentActions,
+		Devices:         device.Builtin(),
+		AppendAudit:     func(core.AuditEntry) error { return nil },
+		Tokens:          mcp.NewStore(""),
 	}
 }
 

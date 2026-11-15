@@ -7,55 +7,18 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 //go:embed profiles/*.json
 var builtinFS embed.FS
 
-type Match struct {
-	Vendor  string   `json:"vendor"`
-	Product string   `json:"product"`
-	Names   []string `json:"names"`
-}
+// Match/Profile are core vocabulary (core 类型迁移); the registry builds and
+// looks them up here.
+type Match = core.DeviceMatch
 
-type Profile struct {
-	ID           string   `json:"id"`
-	Name         string   `json:"name"`
-	Transport    string   `json:"transport"`
-	Capabilities []string `json:"capabilities"`
-	Models       []string `json:"models,omitempty"`
-	Aliases      []string `json:"aliases,omitempty"`
-	Match        Match    `json:"match"`
-}
-
-func (p Profile) HasCapability(capability string) bool {
-	for _, item := range p.Capabilities {
-		if item == capability {
-			return true
-		}
-	}
-	return false
-}
-
-// MatchInputBlock reports whether a /proc/bus/input/devices block belongs to
-// this profile. Vendor/product matching wins even when BlueZ renames the
-// device to a generic "bluez-hog-device".
-func (p Profile) MatchInputBlock(block string) bool {
-	lower := strings.ToLower(block)
-	vendor := strings.ToLower(strings.TrimSpace(p.Match.Vendor))
-	product := strings.ToLower(strings.TrimSpace(p.Match.Product))
-	if vendor != "" && product != "" &&
-		strings.Contains(lower, "vendor="+vendor) &&
-		strings.Contains(lower, "product="+product) {
-		return true
-	}
-	for _, name := range p.Match.Names {
-		if name != "" && strings.Contains(block, `Name="`+name+`"`) {
-			return true
-		}
-	}
-	return false
-}
+type Profile = core.DeviceProfile
 
 type Registry struct {
 	order []string
@@ -104,19 +67,6 @@ func loadBuiltin() (*Registry, error) {
 		registry.byID[profile.ID] = profile
 	}
 	return registry, nil
-}
-
-func (p Profile) Validate() error {
-	if strings.TrimSpace(p.ID) == "" {
-		return fmt.Errorf("device profile id is required")
-	}
-	if strings.TrimSpace(p.Name) == "" {
-		return fmt.Errorf("device profile %q: name is required", p.ID)
-	}
-	if strings.TrimSpace(p.Transport) == "" {
-		return fmt.Errorf("device profile %q: transport is required", p.ID)
-	}
-	return nil
 }
 
 func (r *Registry) Get(id string) (Profile, bool) {

@@ -137,22 +137,3 @@ func TestParseSeqSteps(t *testing.T) {
 		t.Fatal("Validate must reject a bad seq")
 	}
 }
-
-// Per-app keymap matching is a plain case-insensitive substring test on the
-// focused window class (X11 WM_CLASS res_class).
-func TestMatchClass(t *testing.T) {
-	cases := []struct {
-		class, pattern string
-		want           bool
-	}{
-		{"Navigator/firefox", "firefox", true},
-		{"Code", "code", true},
-		{"kitty", "firefox", false},
-		{"anything", "", false},
-	}
-	for _, tc := range cases {
-		if got := MatchClass(tc.class, tc.pattern); got != tc.want {
-			t.Fatalf("MatchClass(%q,%q) = %v", tc.class, tc.pattern, got)
-		}
-	}
-}

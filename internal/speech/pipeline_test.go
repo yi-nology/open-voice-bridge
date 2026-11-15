@@ -55,10 +55,10 @@ func (p *pipelineProbe) snapshot() ([]Transcript, []string) {
 	return append([]Transcript(nil), p.transcripts...), append([]string(nil), p.pasted...)
 }
 
-func buildPipeline(engine asr.Engine, rules *text.Rules, probe *pipelineProbe, pasteOn bool) *Pipeline {
+func buildPipeline(engine asr.Engine, rules core.TextRules, probe *pipelineProbe, pasteOn bool) *Pipeline {
 	return &Pipeline{
 		engine:       func() asr.Engine { return engine },
-		rules:        func() *text.Rules { return rules },
+		rules:        func() core.TextRules { return rules },
 		processor:    func() llm.Processor { return nil },
 		pasteEnabled: func() bool { return pasteOn },
 		pasteText:    probe.paste,

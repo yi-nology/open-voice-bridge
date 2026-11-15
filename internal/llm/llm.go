@@ -10,6 +10,7 @@ import (
 	oeerrors "github.com/oekit/pkg/errors"
 
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 // ModeProcessor is implemented by processors that can switch rewrite mode
@@ -18,12 +19,7 @@ type ModeProcessor interface {
 	ProcessMode(ctx context.Context, text, mode string) (string, error)
 }
 
-type Processor interface {
-	Name() string
-	Process(ctx context.Context, text string) (string, error)
-	Ping(ctx context.Context) (time.Duration, error)
-	Close(ctx context.Context) error
-}
+type Processor = core.LLMProcessor
 
 func Build(cfg config.LLMConfig) (Processor, error) {
 	if !cfg.Enabled {
@@ -60,10 +56,7 @@ func Build(cfg config.LLMConfig) (Processor, error) {
 	})
 }
 
-type Diagnostic struct {
-	OK     bool
-	Detail string
-}
+type Diagnostic = core.LLMDiagnostic
 
 func Diagnose(cfg config.LLMConfig) []Diagnostic {
 	var out []Diagnostic

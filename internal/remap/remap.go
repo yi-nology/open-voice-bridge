@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
 )
 
@@ -64,16 +65,8 @@ var MacroTokens = map[string]int{
 	"7": 8, "8": 9, "9": 10,
 }
 
-func Copy(mapping map[string]string) map[string]string {
-	out := make(map[string]string, len(mapping))
-	for key, value := range mapping {
-		out[key] = value
-	}
-	return out
-}
-
 func MergeDefaults(mapping map[string]string) map[string]string {
-	out := Copy(config.DefaultKeymap)
+	out := core.CopyMapping(config.DefaultKeymap)
 	for key, value := range mapping {
 		out[key] = value
 	}
@@ -215,7 +208,7 @@ func SourceName(code int) string {
 func Load(path string) (map[string]string, error) {
 	data, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
-		return Copy(config.DefaultKeymap), nil
+		return core.CopyMapping(config.DefaultKeymap), nil
 	}
 	if err != nil {
 		return nil, err
@@ -273,11 +266,9 @@ type SeqStep struct {
 	Arg   string
 }
 
-// AgentAction is a deferred step the agent executes on the user side.
-type AgentAction struct {
-	Kind string // "type" | "open"
-	Arg  string
-}
+// AgentAction is a deferred step the agent executes on the user side; the
+// type lives in core (core 类型迁移).
+type AgentAction = core.AgentAction
 
 // AgentActionBase/AgentActionSlots live in internal/keys: the remapper
 // presses these synthetic keys and the agent watches the same range.
@@ -435,16 +426,4 @@ func RewriteAgentActions(mapping map[string]string) (map[string]string, map[int]
 		}
 	}
 	return rewritten, actions
-}
-
-// MatchClass reports whether a focused window class matches a per-app rule
-// (SayAll 切得准): case-insensitive substring, so "firefox" finds
-// "Navigator/firefox".
-func MatchClass(class, pattern string) bool {
-	class = strings.TrimSpace(class)
-	pattern = strings.TrimSpace(pattern)
-	if class == "" || pattern == "" {
-		return false
-	}
-	return strings.Contains(strings.ToLower(class), strings.ToLower(pattern))
 }

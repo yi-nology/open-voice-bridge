@@ -3,7 +3,6 @@ package service
 
 import (
 	"context"
-	"path/filepath"
 	"regexp"
 	"sync"
 	"time"
@@ -11,14 +10,8 @@ import (
 	"github.com/oekit/logx"
 
 	"github.com/yi-nology/open-voice-bridge/internal/appconfig"
-	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
-	"github.com/yi-nology/open-voice-bridge/internal/device"
-	"github.com/yi-nology/open-voice-bridge/internal/llm"
-	"github.com/yi-nology/open-voice-bridge/internal/mcp"
-	"github.com/yi-nology/open-voice-bridge/internal/remap"
-	"github.com/yi-nology/open-voice-bridge/internal/text"
 )
 
 var profileNamePattern = regexp.MustCompile(`^[a-z0-9][a-z0-9_-]{0,31}$`)
@@ -34,12 +27,12 @@ type Agent interface {
 	Reconnect() error
 	SetAddress(string) error
 	RestartAudio(context.Context) error
-	SetEngine(asr.Engine)
-	SetLLM(llm.Processor)
-	SetTextRules(*text.Rules)
+	SetEngine(core.ASREngine)
+	SetLLM(core.LLMProcessor)
+	SetTextRules(core.TextRules)
 	ASRName() string
 	InsertPhrase(slot int) (string, bool)
-	SetSeqActions(map[int]remap.AgentAction)
+	SetSeqActions(map[int]core.AgentAction)
 	SetRewriteRules([]config.AppRewriteRule)
 	SetStreamingSubtitles(bool)
 	SetWake(enabled bool, word string)
@@ -63,7 +56,7 @@ type Service struct {
 	agent     Agent
 	helper    Helper
 	logger    logx.Logger
-	mcpTokens *mcp.Store
+	mcpTokens core.TokenStore
 	ops       Ops
 }
 
@@ -138,19 +131,26 @@ func (s *Service) ViewInputs() ViewInputs {
 // Ops lends service the concrete capabilities it must not construct
 // (ARC-09): the composition root builds engines and owns the OS calls, so
 // this package stays a state owner rather than a second composition root.
+// Engine/token vocabulary is core's (core 类型迁移); behaviour that talks to
+// a provider, the OS or a file arrives here as a function value.
 type Ops struct {
-	BuildASR   func(config.ASRConfig) (asr.Engine, error)
-	BuildLLM   func(config.LLMConfig) (llm.Processor, error)
-	BuildRules func(config.TextConfig) (*text.Rules, error)
-	Connect    func(context.Context, string) error
-	Disconnect func(context.Context, string) error
-	Tokens     *mcp.Store
+	BuildASR        func(config.ASRConfig) (core.ASREngine, error)
+	BuildLLM        func(config.LLMConfig) (core.LLMProcessor, error)
+	BuildRules      func(config.TextConfig) (core.TextRules, error)
+	ValidateASR     func(config.ASRConfig) error
+	DiagnoseASR     func(config.ASRConfig) []core.ASRDiagnostic
+	DiagnoseLLM     func(config.LLMConfig) []core.LLMDiagnostic
+	Connect         func(context.Context, string) error
+	Disconnect      func(context.Context, string) error
+	MergeDefaults   func(map[string]string) map[string]string
+	ValidateMapping func(map[string]string) error
+	RewriteActions  func(map[string]string) (map[string]string, map[int]core.AgentAction)
+	Devices         core.DeviceCatalog
+	AppendAudit     func(core.AuditEntry) error
+	Tokens          core.TokenStore
 }
 
 func New(cfg config.Config, path string, agent Agent, helper Helper, asrErr error, logger logx.Logger, ops Ops) *Service {
-	if ops.Tokens == nil {
-		ops.Tokens = mcp.NewStore(filepath.Join(filepath.Dir(path), "mcp-tokens.json"))
-	}
 	return &Service{
 		ops:       ops,
 		cfg:       cfg,
@@ -215,13 +215,13 @@ func (s *Service) SyncDevices(ctx context.Context) {
 		devices := append([]config.DeviceConfig(nil), s.cfg.Devices...)
 		allowPower := s.cfg.Phone.AllowPowerKey
 		s.cfgMu.RUnlock()
-		matches := make([]device.Match, 0, len(devices))
+		matches := make([]core.DeviceMatch, 0, len(devices))
 		appleEnabled := false
 		for _, item := range devices {
 			if !item.Enabled {
 				continue
 			}
-			profile, ok := device.Builtin().Get(item.Profile)
+			profile, ok := s.ops.Devices.Get(item.Profile)
 			if !ok {
 				continue
 			}
@@ -264,7 +264,7 @@ func (s *Service) SyncKeymap(ctx context.Context) {
 		profile := s.cfg.Keymap.Profile
 		mapping, ok := s.cfg.Keymap.Profiles[profile]
 		if ok {
-			mapping = remap.Copy(mapping)
+			mapping = core.CopyMapping(mapping)
 		}
 		s.cfgMu.RUnlock()
 		if !ok {

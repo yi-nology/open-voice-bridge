@@ -23,9 +23,11 @@ import (
 	"github.com/yi-nology/open-voice-bridge/biz/service"
 	"github.com/yi-nology/open-voice-bridge/internal/agent"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/helper"
 	"github.com/yi-nology/open-voice-bridge/internal/history"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
+	"github.com/yi-nology/open-voice-bridge/internal/mcp"
 )
 
 func adminLogger() logx.Logger {
@@ -45,8 +47,9 @@ func testAdmin(t *testing.T) (runtime.Admin, *history.Store, *history.Stats) {
 	svc := service.New(cfg, path, agent.New(cfg, &stubEngine{}, nil), helper.New(socket), nil, adminLogger(), service.Ops{
 		BuildASR:   asr.Build,
 		BuildLLM:   llm.Build,
-		BuildRules: text.New,
+		BuildRules: func(c config.TextConfig) (core.TextRules, error) { return text.New(c) },
 		Connect:    func(context.Context, string) error { return nil },
+		Tokens:     mcp.NewStore(filepath.Join(dir, "mcp-tokens.json")),
 	})
 	store := history.New(filepath.Join(dir, "history.jsonl"), 200, history.Policy{})
 	stats := history.NewStats(filepath.Join(dir, "usage-stats.json"))

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/yi-nology/open-voice-bridge/internal/config"
-	"github.com/yi-nology/open-voice-bridge/internal/remap"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 // applyAppRule picks the keymap profile for a focused window class and pushes
@@ -16,7 +16,7 @@ func (s *Service) applyAppRule(ctx context.Context, class string) {
 	s.cfgMu.RLock()
 	target := s.cfg.Keymap.Profile
 	for _, rule := range s.cfg.Keymap.AppRules {
-		if remap.MatchClass(class, rule.Class) {
+		if core.MatchWindowClass(class, rule.Class) {
 			target = rule.Profile
 			break
 		}
@@ -26,7 +26,7 @@ func (s *Service) applyAppRule(ctx context.Context, class string) {
 	if !ok {
 		return
 	}
-	if _, err := s.applyMapping(ctx, remap.Copy(mapping)); err != nil {
+	if _, err := s.applyMapping(ctx, core.CopyMapping(mapping)); err != nil {
 		s.logger.Warn("apply app-rule keymap", "class", class, "profile", target, "err", err)
 	}
 }
