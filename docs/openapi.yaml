@@ -691,6 +691,18 @@ paths:
                         application/json:
                             schema:
                                 type: object
+    /api/permissions:
+        get:
+            summary: "Live status board for the permissions page"
+            tags:
+                - handwritten
+            responses:
+                "200":
+                    description: 成功响应
+                    content:
+                        application/json:
+                            schema:
+                                type: object
     /api/agent/verify:
         get:
             summary: "Verify a local Agent (MCP) grant"

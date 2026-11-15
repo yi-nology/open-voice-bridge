@@ -83,6 +83,7 @@ type Deps struct {
 	SetStreamingSubtitles func(bool) error
 	HistoryPolicy         func() (int, bool)
 	SetHistoryPolicy      func(int, bool) error
+	Permissions           func(context.Context) core.PermissionsView
 	WakeConfig            func() (bool, string)
 	SetWake               func(bool, string) error
 	LookbackConfig        func() (bool, int)

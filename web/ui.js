@@ -1943,8 +1943,37 @@ document.getElementById("enabled").addEventListener("change", (event) => {
 document.getElementById("capture-btn").addEventListener("click", toggleCapture);
 document.getElementById("reset").addEventListener("click", resetDefaults);
 
+// loadPermissions renders the live status pills on the permissions page
+// (design-qa P2 授权状态展示); the probes run on the agent side on demand.
+const PERM_LABELS = { ok: "已就绪", todo: "待处理", na: "不适用", unknown: "未知" };
+
+function renderPermissions(items) {
+  for (const item of items || []) {
+    for (const li of document.querySelectorAll('#tab-permissions li[data-perm="' + item.id + '"]')) {
+      let badge = li.querySelector(".perm-status");
+      if (!badge) {
+        badge = document.createElement("span");
+        badge.className = "perm-status";
+        li.prepend(badge);
+      }
+      badge.textContent = PERM_LABELS[item.status] || item.status;
+      badge.className = "perm-status " + item.status;
+      badge.title = item.detail + (item.fix ? "；修复：" + item.fix : "");
+    }
+  }
+}
+
+async function loadPermissions() {
+  try {
+    const res = await fetch("/api/permissions");
+    if (!res.ok) return;
+    renderPermissions((await res.json()).items);
+  } catch (error) {}
+}
+
 document.getElementById("btn-refresh").addEventListener("click", async () => {
   await loadStatus(false);
+  await loadPermissions();
   document.getElementById("conn-msg").textContent = "状态已刷新。";
   document.getElementById("conn-msg").className = "msg ok";
 });
@@ -3201,6 +3230,7 @@ loadOverviewRecent();
 loadStats();
 syncNav();
 loadStatus(true);
+loadPermissions();
 connectEvents();
 maybeOpenWelcome();
 setInterval(() => { if (!document.hidden) loadStatus(false); }, 15000);

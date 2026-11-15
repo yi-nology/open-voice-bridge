@@ -29,6 +29,7 @@ func CustomizedRegister(r *server.Hertz, customUI *ui.Server) {
 	r.GET("/api/config/export", customUI.ConfigExport)
 	r.POST("/api/config/import", customUI.ConfigImport)
 	r.GET("/api/diagnostics", customUI.Diagnostics)
+	r.GET("/api/permissions", customUI.Permissions)
 	r.GET("/api/agent/verify", customUI.AgentVerify)
 	r.GET("/api/agent/history", customUI.AgentHistory)
 	r.GET("/api/agent/stats", customUI.AgentStats)

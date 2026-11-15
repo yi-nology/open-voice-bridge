@@ -12,6 +12,7 @@ GET  /api/stats
 GET  /api/config/export
 POST /api/config/import
 GET  /api/diagnostics
+GET  /api/permissions
 GET  /api/agent/verify
 GET  /api/agent/history
 GET  /api/agent/stats

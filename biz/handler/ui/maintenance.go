@@ -46,3 +46,13 @@ func (s *Server) Diagnostics(ctx context.Context, c *app.RequestContext) {
 	}
 	c.JSON(consts.StatusOK, s.deps.Diagnostics(ctx))
 }
+
+// Permissions returns the live status board for the permissions page: one
+// probed state per row instead of instructions alone (design-qa P2).
+func (s *Server) Permissions(ctx context.Context, c *app.RequestContext) {
+	if s.deps.Permissions == nil {
+		c.JSON(consts.StatusServiceUnavailable, reply{OK: false, Error: "permission probes unavailable"})
+		return
+	}
+	c.JSON(consts.StatusOK, s.deps.Permissions(ctx))
+}

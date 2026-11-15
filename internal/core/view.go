@@ -137,3 +137,29 @@ type DiscoveredView struct {
 	Error   string           `json:"error,omitempty"`
 	Devices []DiscoveredItem `json:"devices"`
 }
+
+// Permission status values for the permissions page's live board.
+const (
+	PermOK      = "ok"      // prerequisite met
+	PermTodo    = "todo"    // user action needed
+	PermNA      = "na"      // does not apply on this platform
+	PermUnknown = "unknown" // cannot be probed from here
+)
+
+// PermissionItem is one host permission/service row with its live probe
+// result (design-qa P2: 授权状态展示).
+type PermissionItem struct {
+	ID     string `json:"id"`
+	Title  string `json:"title"`
+	Status string `json:"status"`
+	Detail string `json:"detail"`
+	Fix    string `json:"fix,omitempty"`
+}
+
+// PermissionsView is the permissions page's status board: what the host
+// grants, what still needs the user's hand, and what never applies here.
+type PermissionsView struct {
+	OK       bool             `json:"ok"`
+	Platform string           `json:"platform"`
+	Items    []PermissionItem `json:"items"`
+}
