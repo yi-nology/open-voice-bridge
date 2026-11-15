@@ -241,8 +241,6 @@ function setCaptureUi(active) {
   document.getElementById("capture-btn").className = active ? "btn small primary" : "btn small";
   document.getElementById("capture-banner").classList.toggle("show", active);
   document.getElementById("log").classList.toggle("show", active);
-  const micChip = document.getElementById("chip-mic");
-  if (micChip) micChip.classList.toggle("warn", active);
   const right = document.getElementById("status-right");
   if (right && active) right.textContent = "按键状态：捕获中 · 注入已暂停";
 }
@@ -286,13 +284,6 @@ function logKey(key, value) {
   while (box.children.length > 12) box.removeChild(box.lastChild);
 }
 
-function setChip(id, text, cls) {
-  const chip = document.getElementById(id);
-  if (!chip) return;
-  chip.textContent = text;
-  chip.classList.remove("good", "bad", "warn");
-  if (cls) chip.classList.add(cls);
-}
 
 function remoteConnectedOf(status) {
   return !!(status.remote_present || status.ble_connected);
@@ -356,12 +347,14 @@ function updateConnection(status) {
   if (last) {
     if (status.asr_error) {
       last.textContent = friendlyAsrError(status.asr_error);
+      last.title = friendlyAsrError(status.asr_error);
       last.className = "sub err";
     } else {
       const ago = fmtAgo(status.last_at);
       last.textContent = status.last_text
         ? "最近识别" + (ago ? "（" + ago + "）" : "") + "：" + status.last_text
         : "语音输入前请先点进目标输入框";
+      last.title = status.last_text || "";
       last.className = "sub";
     }
   }
@@ -422,19 +415,11 @@ function updateConnection(status) {
       if (autostartSub) autostartSub.textContent = "systemd 用户 agent + 系统 remap 服务";
     }
   }
-  setChip("chip-remote", remoteConnected ? "遥控器已连接" : "遥控器未连接",
-          remoteConnected ? "good" : "bad");
-  setChip("chip-keyd", mapState,
-          status.keyd_active ? "good" : "warn");
-  setChip("chip-mic",
-    status.mic_active ? ((micHealthy || status.atvv_ready) ? "语音就绪" : "音频节点异常") : "语音未运行",
-    status.mic_active ? ((micHealthy || status.atvv_ready) ? "good" : "warn") : "bad");
   // OPS-06: readiness is "can dictation work" — the ASR chain is the core;
   // the remote, the remapper and the virtual mic are optional gaps (see the
   // quickstart groups) and must not hold the verdict hostage.
   const coreReady = !!(!status.asr_error && status.asr_provider);
   const guidedState = document.getElementById("guided-state");
-  const guidedAsr = document.getElementById("guided-asr");
   const guidedMeta = document.getElementById("guided-meta");
   // Three-state verdict: the chain must be ready AND some input source must
   // be reachable, or the green "语音就绪" contradicts a red 未连接 beside it.
@@ -445,7 +430,6 @@ function updateConnection(status) {
   if (guidedState) guidedState.textContent = verdict;
   const heroDot = document.getElementById("hero-dot");
   if (heroDot) heroDot.className = "hero-dot" + (coreReady && hasSource ? "" : (coreReady ? " warn" : " bad"));
-  if (guidedAsr) guidedAsr.textContent = status.asr_error ? "需检查" : ((status.asr_backend || "未知").split(" ")[0] || "未知");
   if (guidedMeta) {
     const latency = Number(status.last_latency_ms) || 0;
     guidedMeta.textContent = status.asr_error
@@ -454,10 +438,6 @@ function updateConnection(status) {
   }
   const gotoDevices = document.getElementById("goto-devices");
   if (gotoDevices) gotoDevices.hidden = remoteConnected;
-  const sideStatus = document.getElementById("side-status");
-  if (sideStatus) sideStatus.textContent = remoteConnected ? "遥控器在线" : "等待遥控器";
-  const sideDot = document.querySelector(".side-foot i");
-  if (sideDot) sideDot.style.background = remoteConnected ? "var(--green)" : "var(--orange)";
   document.getElementById("perm-config").textContent = status.config || "";
   const permLinux = document.getElementById("perm-linux");
   const permMac = document.getElementById("perm-mac");
@@ -518,7 +498,6 @@ async function loadStatus(initial, syncMapping) {
       preview.textContent = status.config || "";
     }
   } catch (error) {
-    setChip("chip-keyd", "无法连接助手", "bad");
   }
 }
 
@@ -1416,11 +1395,6 @@ function setListening(active, source, name) {
     if (text) text.textContent = label;
   }
   document.body.classList.toggle("listening", !!active);
-  if (lastStatus) {
-    setChip("chip-mic",
-      active ? label : (lastStatus.mic_active ? "语音就绪" : "语音未运行"),
-      active ? "warn" : (lastStatus.mic_active ? "good" : "bad"));
-  }
   const state = document.getElementById("guided-state");
   if (state) {
     if (active) {
@@ -1436,7 +1410,7 @@ function setListening(active, source, name) {
 
 let activeConfig = "overview";
 const TAB_LABELS = { connection: "概览", keys: "按键映射", devices: "设备", subtitle: "字幕", history: "历史", permissions: "权限" };
-const CFG_LABELS = { overview: "概览", asr: "语音识别", llm: "文本模型", text: "词典短语" };
+const CFG_LABELS = { overview: "概览", asr: "语音识别", llm: "文本模型", text: "词典短语", paste: "粘贴注入" };
 
 function syncNav() {
   const activeTab = document.querySelector(".tab-btn.active");
@@ -1449,21 +1423,14 @@ function syncNav() {
     if (on) item.setAttribute("aria-current", "page");
     else item.removeAttribute("aria-current");
   });
-  const crumb = document.getElementById("crumb");
   const label = tab === "connection" ? (CFG_LABELS[activeConfig] || "概览") : (TAB_LABELS[tab] || "");
-  if (crumb) crumb.textContent = label;
   document.title = "小遥 · " + label;
   const footer = document.getElementById("conn-footer");
   if (footer) footer.hidden = tab !== "permissions";
-  const configNav = document.querySelector(".config-nav");
-  if (configNav) configNav.style.display = activeConfig === "overview" ? "none" : "";
 }
 
 function showConfigPanel(name) {
   activeConfig = name;
-  document.querySelectorAll(".config-tab").forEach(button => {
-    button.classList.toggle("active", button.dataset.cfg === name);
-  });
   document.querySelectorAll(".cfg-panel").forEach(panel => {
     panel.classList.toggle("active", panel.id === "cfg-" + name);
   });
@@ -1473,6 +1440,9 @@ function showConfigPanel(name) {
 function openConfigPanel(name) {
   goTab("connection");
   showConfigPanel(name);
+  window.scrollTo(0, 0);
+  const mainScroll = document.querySelector("main");
+  if (mainScroll) mainScroll.scrollTop = 0;
   if (name === "asr") loadASRConfig();
   if (name === "llm") {
     loadLLMConfig();
@@ -1485,20 +1455,8 @@ function openConfigPanel(name) {
     loadLookbackToggle();
   }
   if (name === "text") loadTextConfig();
+  if (name === "paste") loadPasteConfig();
 }
-
-document.querySelectorAll(".config-tab").forEach(button => {
-  button.addEventListener("click", () => {
-    showConfigPanel(button.dataset.cfg);
-    window.scrollTo(0, 0);
-    const mainEl = document.querySelector("main");
-    if (mainEl) mainEl.scrollTop = 0;
-    if (button.dataset.cfg === "asr") loadASRConfig();
-    if (button.dataset.cfg === "llm") loadLLMConfig();
-    if (button.dataset.cfg === "text") loadTextConfig();
-    if (button.dataset.cfg === "paste") loadPasteConfig();
-  });
-});
 
 document.querySelectorAll(".side-item").forEach(item => {
   item.addEventListener("click", () => {
@@ -1838,7 +1796,7 @@ async function loadOverviewRecent() {
 }
 
 const initialConfig = new URLSearchParams(location.search).get("cfg");
-if (["overview", "asr", "llm", "text"].includes(initialConfig)) {
+if (["overview", "asr", "llm", "text", "paste"].includes(initialConfig)) {
   showConfigPanel(initialConfig);
 }
 
@@ -1882,7 +1840,6 @@ function connectEvents() {
       addSubtitle("〔指令〕" + data.text + " → " + data.combo, data.at, {kind: "phrase"});
     } else if (data.event === "capture_started") {
       setCaptureUi(true);
-      setChip("chip-keyd", "捕获中 · 注入已暂停", "warn");
     } else if (data.event === "capture_stopped" || data.event === "capture_closed") {
       setCaptureUi(false);
       loadStatus(false);
@@ -1932,7 +1889,7 @@ if (["connection", "keys", "devices", "subtitle", "history", "permissions"].incl
   const initialButton = document.querySelector(`.tab-btn[data-tab="${initialTab}"]`);
   if (initialButton) initialButton.click();
 }
-if (initialConfig && ["overview", "asr", "llm", "text"].includes(initialConfig)) {
+if (initialConfig && ["overview", "asr", "llm", "text", "paste"].includes(initialConfig)) {
   showConfigPanel(initialConfig);
 }
 
@@ -1948,7 +1905,9 @@ function setRemoteFigure(model, pinned) {
     figure.hidden = figure.dataset.model !== model;
   });
   document.querySelectorAll(".figure-btn").forEach(button => {
-    button.classList.toggle("active", button.dataset.model === model);
+    const on = button.dataset.model === model;
+    button.classList.toggle("active", on);
+    button.setAttribute("aria-selected", on ? "true" : "false");
   });
   if (pinned) {
     remoteFigurePinned = true;
@@ -2564,6 +2523,7 @@ function renderPhrasePicker() {
     const body = document.createElement("span");
     body.className = "txt" + (text ? "" : " empty");
     body.textContent = text || "（空槽位）";
+    if (text) item.title = text;
     item.append(num, body);
     item.addEventListener("click", () => pickPhrase(slot));
     list.appendChild(item);

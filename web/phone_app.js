@@ -375,6 +375,7 @@
       // Capture so the release lands here even after a slide-off; pointerleave
       // must not end the recording (误断录音).
       try { button.setPointerCapture(event.pointerId); } catch (error) {}
+      if (navigator.vibrate) navigator.vibrate(15);
       $('transcript').hidden = true;
       startMic();
     };

@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+- Fixed: the 粘贴注入 panel found its way home. Its only entry button lived
+  inside the legacy `.config-nav` tablist, which the redesign left permanently
+  `display: none` — so the injection-backend switch added earlier this cycle
+  was unreachable. A sidebar item owns it now (title, `?cfg=paste` and the
+  loaders follow), and the hidden tablist is gone with its dead wiring.
+
+- Fixed: the wake capture claims the mic as its own source (P2-2) and every
+  transcript publish is non-blocking (P2-1) — see the agent fixes above for
+  the full story.
+
+- Changed: detail sweep on the glass console. Dead references to the
+  pre-redesign chips / sidebar foot / crumb are deleted (they pointed at
+  elements that no longer exist), subtitle inactive lines lift to readable
+  contrast, truncated texts (最近识别、常用语项) carry their full string in
+  `title`, the remote figure tabs answer `aria-selected`, the phone talk
+  button vibrates on press and its transcript is `aria-live`, and the 词句
+  floating button grows an icon.
+
 - Changed: the homepage speaks for every input device, not one brand. The
   hero title is now the product verdict (小遥 · 待检查/待连接/语音就绪)
   instead of a hardcoded device name — that string never updated anyway —
