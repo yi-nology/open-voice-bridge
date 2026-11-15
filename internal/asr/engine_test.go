@@ -104,3 +104,46 @@ func TestUnavailableEngineStaysUsable(t *testing.T) {
 		t.Fatalf("close: %v", err)
 	}
 }
+
+// orderEngine records the name on every call so the chain's attempt order
+// is observable.
+type orderEngine struct {
+	name string
+	err  error
+	log  *[]string
+}
+
+func (o orderEngine) Name() string                    { return o.name }
+func (o orderEngine) Local() bool                     { return true }
+func (o orderEngine) Close(ctx context.Context) error { return nil }
+func (o orderEngine) Transcribe(ctx context.Context, audio Audio) (Result, error) {
+	*o.log = append(*o.log, o.name)
+	if o.err != nil {
+		return Result{}, o.err
+	}
+	return Result{Text: "好"}, nil
+}
+
+// TestChainPrefersTheLastWinner: once the fallback wins, the next call opens
+// with it instead of re-probing the broken primary first — one less paid
+// failure per utterance and the latency of the winner (health scheduling).
+func TestChainPrefersTheLastWinner(t *testing.T) {
+	var log []string
+	chain := NewChain(
+		orderEngine{name: "primary", err: oeerrors.New("boom"), log: &log},
+		orderEngine{name: "fallback", log: &log},
+	)
+	if _, err := chain.Transcribe(context.Background(), Audio{}); err != nil {
+		t.Fatalf("first call: %v", err)
+	}
+	if got := strings.Join(log, ","); got != "primary,fallback" {
+		t.Fatalf("first attempt order = %s", got)
+	}
+	log = log[:0]
+	if _, err := chain.Transcribe(context.Background(), Audio{}); err != nil {
+		t.Fatalf("second call: %v", err)
+	}
+	if got := strings.Join(log, ","); got != "fallback" {
+		t.Fatalf("second attempt order = %s, want the last winner first", got)
+	}
+}

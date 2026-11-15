@@ -58,8 +58,28 @@ func (c *Chain) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 	if len(c.engines) == 0 {
 		return Result{}, oeerrors.New("no ASR providers configured")
 	}
-	var failures []error
+	// Health scheduling: the last winner opens, the rest keep fallback order.
+	// A dead primary costs one paid failure per utterance otherwise.
+	c.mu.RLock()
+	last := c.last
+	c.mu.RUnlock()
+	ordered := make([]Engine, 0, len(c.engines))
 	for _, engine := range c.engines {
+		if engine.Name() == last {
+			continue
+		}
+		ordered = append(ordered, engine)
+	}
+	if last != "" {
+		for _, engine := range c.engines {
+			if engine.Name() == last {
+				ordered = append([]Engine{engine}, ordered...)
+				break
+			}
+		}
+	}
+	var failures []error
+	for _, engine := range ordered {
 		started := time.Now()
 		result, err := engine.Transcribe(ctx, audio)
 		if oeerrors.Is(err, ErrNoSpeech) {
