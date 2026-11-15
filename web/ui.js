@@ -1432,7 +1432,6 @@ function openConfigPanel(name) {
     loadStreamingToggle();
     loadWakeToggle();
     loadLookbackToggle();
-loadPhonePowerToggle();
   }
   if (name === "text") loadTextConfig();
 }
@@ -2293,6 +2292,8 @@ async function loadStreamingToggle() {
     const data = await res.json();
     if (data.ok) toggle.checked = !!data.enabled;
   } catch (error) {}
+  if (toggle.dataset.bound) return;
+  toggle.dataset.bound = "1";
   toggle.addEventListener("change", async () => {
     try {
       await fetch("/api/streaming", {
@@ -2316,6 +2317,8 @@ async function loadWakeToggle() {
       if (word && data.word) word.value = data.word;
     }
   } catch (error) {}
+  if (toggle.dataset.bound) return;
+  toggle.dataset.bound = "1";
   const save = async () => {
     try {
       await fetch("/api/wake", {
@@ -2337,6 +2340,8 @@ async function loadPhonePowerToggle() {
     const data = await res.json();
     if (data.ok) toggle.checked = !!data.allow;
   } catch (error) {}
+  if (toggle.dataset.bound) return;
+  toggle.dataset.bound = "1";
   toggle.addEventListener("change", async () => {
     try {
       const res = await fetch("/api/phone/power", {
@@ -2365,6 +2370,8 @@ async function loadLookbackToggle() {
       if (seconds && data.seconds) seconds.value = data.seconds;
     }
   } catch (error) {}
+  if (toggle.dataset.bound) return;
+  toggle.dataset.bound = "1";
   const save = async () => {
     try {
       await fetch("/api/lookback", {
@@ -3105,6 +3112,43 @@ document.getElementById("btn-llm-ping").addEventListener("click", () => testLLM(
 
 document.getElementById("history-refresh").addEventListener("click", loadHistory);
 document.getElementById("history-search").addEventListener("input", renderHistory);
+
+// The 保留/脱敏 controls speak to /api/history/policy; both travel together
+// because the endpoint takes the pair.
+async function loadHistoryPolicy() {
+  const retention = document.getElementById("history-retention");
+  const redact = document.getElementById("history-redact");
+  if (!retention || !redact) return;
+  try {
+    const res = await fetch("/api/history/policy");
+    const data = await res.json();
+    if (data.ok) {
+      retention.value = String(data.retention_days ?? 0);
+      redact.checked = !!data.redact_addresses;
+    }
+  } catch (error) {
+    historyMessage("历史策略读取失败：" + errorText(error), "err");
+  }
+  const save = async () => {
+    try {
+      const res = await fetch("/api/history/policy", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          retention_days: Number(retention.value) || 0,
+          redact_addresses: redact.checked,
+        }),
+      });
+      const data = await res.json();
+      historyMessage(data.ok ? "历史策略已保存并生效" : ("保存失败：" + errorText(data)), data.ok ? "ok" : "err");
+    } catch (error) {
+      historyMessage("保存失败：" + error, "err");
+    }
+  };
+  retention.addEventListener("change", save);
+  redact.addEventListener("change", save);
+}
+loadHistoryPolicy();
 function syncHistoryActions() {
   const empty = !historyEntries.length;
   for (const id of ["history-export", "history-clear"]) {
@@ -3188,6 +3232,7 @@ syncLLMEnabledState();
 loadStreamingToggle();
 loadWakeToggle();
 loadLookbackToggle();
+loadPhonePowerToggle();
 loadSubtitles();
 loadOverviewRecent();
 loadStats();
