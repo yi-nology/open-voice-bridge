@@ -45,15 +45,11 @@ while IFS='|' read -r pkg imports; do
         case "$imp" in internal/core|internal/fsutil) ;; *) violation "$pkg imports $imp (R1: config only core+fsutil)" ;; esac ;;
     esac
 
-    # R2: the domain layer never imports edge/app. The one transitional edge
-    # is internal/phone -> edge/netguard until ARC-09 splits source from edge.
+    # R2: the domain layer never imports edge/app. The phone surface gets its
+    # boundary checks through the seams in internal/phone/guard.go (ARC-09).
     case "$pkg" in internal/*)
       case "$imp" in
-        app/*) violation "$pkg imports $imp (R2)" ;;
-        edge/*)
-          if [ "$pkg" != "internal/phone" ] || [ "$imp" != "edge/netguard" ]; then
-            violation "$pkg imports $imp (R2; only internal/phone->edge/netguard is transitional until ARC-09)"
-          fi ;;
+        app/*|edge/*) violation "$pkg imports $imp (R2)" ;;
       esac ;;
     esac
 

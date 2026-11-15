@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"github.com/oekit/concurrency/async"
-	"github.com/yi-nology/open-voice-bridge/edge/netguard"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
 	"io"
 	"io/fs"
@@ -41,7 +40,7 @@ func (s *Server) Handler() http.Handler {
 // browser's Origin will not match it.
 func (s *Server) guardOrigin(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !netguard.SameOrigin(r.Method, r.Host, r.Header.Get("Origin"), r.Header.Get("Sec-Fetch-Site")) {
+		if !SameOrigin(r.Method, r.Host, r.Header.Get("Origin"), r.Header.Get("Sec-Fetch-Site")) {
 			writeJSONError(w, http.StatusForbidden, "cross-origin request")
 			return
 		}
@@ -163,9 +162,10 @@ func (s *Server) handlePing(w http.ResponseWriter, r *http.Request) {
 
 // phoneSecurityHeaders is deliberately NOT the admin UI's policy: that page
 // denies the microphone, this one must allow it for getUserMedia. The shared
-// guards and the two policies live in edge/netguard so a fix reaches both.
+// guards and the two policies live in edge/netguard so a fix reaches both;
+// the root lends them in through the seams in guard.go (R2).
 func phoneSecurityHeaders(w http.ResponseWriter) {
-	netguard.WriteHeaders(netguard.Phone, w.Header().Set)
+	WriteSecHeaders(w.Header().Set)
 	w.Header().Set("Cache-Control", "no-store")
 }
 

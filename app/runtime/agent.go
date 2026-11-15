@@ -17,6 +17,7 @@ import (
 
 	"github.com/yi-nology/open-voice-bridge/biz/handler/ui"
 	"github.com/yi-nology/open-voice-bridge/biz/service"
+	"github.com/yi-nology/open-voice-bridge/edge/netguard"
 	"github.com/yi-nology/open-voice-bridge/internal/agent"
 	"github.com/yi-nology/open-voice-bridge/internal/appconfig"
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
@@ -206,6 +207,12 @@ func RunAgent(opts AgentOptions) int {
 				phoneEnabled = false
 			} else {
 				phoneStore = store
+				// Lend the phone surface its edge guards (R2: internal/phone
+				// must not import edge/netguard itself).
+				phone.SameOrigin = netguard.SameOrigin
+				phone.WriteSecHeaders = func(set func(key, value string)) {
+					netguard.WriteHeaders(netguard.Phone, set)
+				}
 				phoneMetrics := NewPhoneMetrics()
 				phoneServer = phone.NewServer(store, phone.NewKeyInjector(countingTransport{inner: helperClient, mux: phoneMetrics}, cfg.Phone.AllowPowerKey), inputHub, phone.ServerConfig{
 					Addr:                cfg.Phone.Addr,
