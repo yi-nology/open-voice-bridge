@@ -108,7 +108,7 @@ func main() {
 						return code
 					}
 					if len(rest) != 1 {
-						fmt.Fprintln(stderr, "usage: xiaoyao diag <pack.ovbdiag> [-o out.json]")
+						_, _ = fmt.Fprintln(stderr, "usage: xiaoyao diag <pack.ovbdiag> [-o out.json]")
 						return 2
 					}
 					return runDiagDecrypt(rest[0], *out, stdout, stderr)
@@ -125,10 +125,10 @@ func main() {
 func runReset(path string, assumeYes bool, stdout, stderr io.Writer) int {
 	dir := filepath.Dir(path)
 	if !assumeYes {
-		fmt.Fprint(stdout, "This deletes history, usage stats and all tokens in ", dir, ".\nType yes to confirm: ")
+		_, _ = fmt.Fprint(stdout, "This deletes history, usage stats and all tokens in ", dir, ".\nType yes to confirm: ")
 		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
 		if err != nil || strings.TrimSpace(line) != "yes" {
-			fmt.Fprintln(stdout, "aborted; nothing was deleted")
+			_, _ = fmt.Fprintln(stdout, "aborted; nothing was deleted")
 			return 1
 		}
 	}
@@ -138,15 +138,15 @@ func runReset(path string, assumeYes bool, stdout, stderr io.Writer) int {
 		target := filepath.Join(dir, name)
 		switch err := os.Remove(target); {
 		case err == nil:
-			fmt.Fprintln(stdout, "removed", target)
+			_, _ = fmt.Fprintln(stdout, "removed", target)
 			removed++
 		case os.IsNotExist(err):
 		default:
-			fmt.Fprintln(stderr, "cannot remove", target, err)
+			_, _ = fmt.Fprintln(stderr, "cannot remove", target, err)
 			return 1
 		}
 	}
-	fmt.Fprintf(stdout, "reset complete: %d file(s) removed; config kept at %s\n", removed, path)
+	_, _ = fmt.Fprintf(stdout, "reset complete: %d file(s) removed; config kept at %s\n", removed, path)
 	return 0
 }
 
@@ -156,32 +156,32 @@ func runReset(path string, assumeYes bool, stdout, stderr io.Writer) int {
 func runDiagDecrypt(packPath, outPath string, stdout, stderr io.Writer) int {
 	pack, err := os.ReadFile(packPath)
 	if err != nil {
-		fmt.Fprintln(stderr, "read pack:", err)
+		_, _ = fmt.Fprintln(stderr, "read pack:", err)
 		return 1
 	}
-	fmt.Fprint(stderr, "passphrase: ")
+	_, _ = fmt.Fprint(stderr, "passphrase: ")
 	line, err := bufio.NewReader(os.Stdin).ReadString('\n')
 	if err != nil && line == "" {
-		fmt.Fprintln(stderr, "read passphrase:", err)
+		_, _ = fmt.Fprintln(stderr, "read passphrase:", err)
 		return 1
 	}
 	plain, err := diagbox.Open(pack, strings.TrimRight(line, "\r\n"))
 	if err != nil {
-		fmt.Fprintln(stderr, "decrypt:", err)
+		_, _ = fmt.Fprintln(stderr, "decrypt:", err)
 		return 1
 	}
 	if outPath == "" {
 		_, _ = stdout.Write(plain)
 		if len(plain) == 0 || plain[len(plain)-1] != '\n' {
-			fmt.Fprintln(stdout)
+			_, _ = fmt.Fprintln(stdout)
 		}
 		return 0
 	}
 	if err := os.WriteFile(outPath, plain, 0o600); err != nil {
-		fmt.Fprintln(stderr, "write:", err)
+		_, _ = fmt.Fprintln(stderr, "write:", err)
 		return 1
 	}
-	fmt.Fprintln(stdout, "wrote", outPath)
+	_, _ = fmt.Fprintln(stdout, "wrote", outPath)
 	return 0
 }
 

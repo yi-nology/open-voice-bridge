@@ -63,7 +63,7 @@ func TestRunAgentBootsAndShutsDownCleanly(t *testing.T) {
 		t.Fatalf("free port: %v", err)
 	}
 	addr := ln.Addr().String()
-	ln.Close()
+	_ = ln.Close()
 
 	cfg := config.Default()
 	cfg.Address = "27:17:32:B8:AA:01"
@@ -103,7 +103,7 @@ func TestRunAgentBootsAndShutsDownCleanly(t *testing.T) {
 		resp, err := http.Get(base + "/readyz")
 		if err == nil {
 			readyBody, _ = io.ReadAll(resp.Body)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			if len(readyBody) > 0 && readyBody[0] == '{' {
 				break
 			}
@@ -134,7 +134,7 @@ func TestRunAgentBootsAndShutsDownCleanly(t *testing.T) {
 		t.Fatalf("status: %v", err)
 	}
 	statusBody, _ := io.ReadAll(resp.Body)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	var status map[string]any
 	if err := json.Unmarshal(statusBody, &status); err != nil {
 		t.Fatalf("status not JSON: %v\n%s", err, statusBody)
