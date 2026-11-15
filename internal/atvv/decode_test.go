@@ -35,11 +35,8 @@ func TestDecoderResetClamps(t *testing.T) {
 	if len(out) != 2 {
 		t.Fatalf("out = %v", out)
 	}
-	for _, sample := range out {
-		if sample < -32768 || sample > 32767 {
-			t.Fatalf("sample out of range: %d", sample)
-		}
-	}
+	// out is []int16, so a range check would be tautological; the length is
+	// what proves the decoder produced samples at all.
 }
 
 func TestFrameAccumulatorFraming(t *testing.T) {

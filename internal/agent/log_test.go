@@ -121,8 +121,7 @@ func TestFailedLLMRequestLogsNoText(t *testing.T) {
 		t.Fatalf("rules: %v", err)
 	}
 	spy := &captureSpy{}
-	pipeline := testPipeline(engine, rules, nil, spy)
-	pipeline = testPipeline(engine, rules, failingProcessor{fmt.Errorf("llm HTTP 400: rejected: %s", spoken)}, spy)
+	pipeline := testPipeline(engine, rules, failingProcessor{fmt.Errorf("llm HTTP 400: rejected: %s", spoken)}, spy)
 
 	if _, ok := pipeline.Transcribe(context.Background(), testUtterance(speech.SourceRef{Kind: "remote"})); !ok {
 		t.Fatal("expected a transcript")

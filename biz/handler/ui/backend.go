@@ -445,21 +445,6 @@ func (s *Server) DeleteDevice(ctx context.Context, id string) (*api.OperationRes
 	return &api.OperationResp{Ok: true}, nil
 }
 
-func int32Value(value any) int32 {
-	switch typed := value.(type) {
-	case int:
-		return int32(typed)
-	case int32:
-		return typed
-	case int64:
-		return int32(typed)
-	case float64:
-		return int32(typed)
-	default:
-		return -1
-	}
-}
-
 func (s *Server) SaveLLMKey(ctx context.Context, key string) (*api.OperationResp, error) {
 	if s.deps.SaveLLMKey == nil {
 		return nil, oeerrors.New("llm key save not available")

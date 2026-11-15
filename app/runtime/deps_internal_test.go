@@ -57,7 +57,7 @@ func TestAdminDepsLeaveNoFieldUnwired(t *testing.T) {
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
 		switch field.Kind() {
-		case reflect.Func, reflect.Interface, reflect.Ptr, reflect.Map, reflect.Slice, reflect.Chan:
+		case reflect.Func, reflect.Interface, reflect.Pointer, reflect.Map, reflect.Slice, reflect.Chan:
 			if field.IsNil() {
 				t.Errorf("ui.Deps.%s is not wired in Admin.deps() — its API face answers 503", typ.Field(i).Name)
 			}
