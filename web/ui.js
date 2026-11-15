@@ -1165,6 +1165,11 @@ async function generatePairCode(silent) {
     }
     document.getElementById("pair-code").textContent = data.code;
     document.getElementById("pair-link").value = buildPairLink(data);
+    const qr = document.getElementById("pair-qr");
+    if (qr) {
+      if (data.qr) { qr.src = data.qr; qr.hidden = false; }
+      else { qr.hidden = true; qr.removeAttribute("src"); }
+    }
     const expires = new Date(data.expires_at);
     pairExpiresAt = Number.isNaN(expires.getTime()) ? Date.now() + 300000 : expires.getTime();
     document.getElementById("pair-expiry").textContent = Number.isNaN(expires.getTime())

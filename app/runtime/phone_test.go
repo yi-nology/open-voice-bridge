@@ -1,7 +1,9 @@
 package runtime_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -172,6 +174,14 @@ func TestPhoneAdminPairingOffersThePhoneLink(t *testing.T) {
 	}
 	if link != "http://"+host+":8788/phone" {
 		t.Fatalf("link = %q, want the pairing page on the LAN address", link)
+	}
+	qr, _ := pairing["qr"].(string)
+	if !strings.HasPrefix(qr, "data:image/png;base64,") {
+		t.Fatalf("qr = %q, want a PNG data URI", qr[:min(30, len(qr))])
+	}
+	png, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(qr, "data:image/png;base64,"))
+	if err != nil || len(png) < 100 || !bytes.HasPrefix(png, []byte{0x89, 'P', 'N', 'G'}) {
+		t.Fatalf("qr payload is not a PNG: err=%v len=%d", err, len(png))
 	}
 }
 

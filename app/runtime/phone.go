@@ -4,12 +4,15 @@ package runtime
 
 import (
 	"context"
-	"github.com/yi-nology/open-voice-bridge/internal/speech"
+	"encoding/base64"
 	"time"
+
+	qrcode "github.com/skip2/go-qrcode"
 
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
 	"github.com/yi-nology/open-voice-bridge/internal/phone"
+	"github.com/yi-nology/open-voice-bridge/internal/speech"
 )
 
 // PhoneSpeech adapts the shared transcription chain to the phone listener's
@@ -91,6 +94,12 @@ func (a PhoneAdmin) Pairing(context.Context) map[string]any {
 	if host != "" {
 		out["host"] = host
 		out["link"] = scheme + "://" + host + ":" + port + "/phone"
+		// The QR carries the same auto-filling link the card shows — one
+		// scan on the phone lands on the pairing screen with the code in the
+		// #pair= fragment (波 3 二维码配对).
+		if png, err := qrcode.Encode(out["link"].(string)+"#pair="+code, qrcode.Medium, 256); err == nil {
+			out["qr"] = "data:image/png;base64," + base64.StdEncoding.EncodeToString(png)
+		}
 	}
 	return out
 }

@@ -432,6 +432,10 @@ figure { margin: 0; }
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 40px; font-weight: 600; letter-spacing: .22em; color: var(--text);
 }
+.pair-qr {
+  display: block; width: 168px; height: 168px; margin: 12px auto 0;
+  border: 1px solid var(--line-soft); border-radius: 10px; background: #fff;
+}
 .pair-meta { display: flex; gap: 16px; color: var(--muted); font-size: 13px; margin: 10px 0; }
 .pair-link-row { display: flex; gap: 8px; margin: 10px 0; }
 .pair-link-row input { flex: 1; }

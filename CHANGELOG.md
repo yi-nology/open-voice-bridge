@@ -2,6 +2,11 @@
 
 ## 0.3.0 — 2026-11-13
 
+- New: QR pairing. The 手机配对 card now renders a QR encoding the
+  auto-filling link (`…/phone#pair=NNNNNN`, the fragment never reaches the
+  server log) next to the six-digit code — scan on the phone and land on
+  the pairing screen with the code already in place.
+
 - New: encrypted diagnostics export (R10 收官). The maintenance page's
   下载诊断 now seals the pack in the browser under a passphrase you set
   (PBKDF2-HMAC-SHA256 600k + AES-256-GCM, header format `OVBDIA1`) — the
