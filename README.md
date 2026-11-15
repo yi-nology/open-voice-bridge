@@ -72,10 +72,16 @@ BlueZ ──► agent ──► PipeWire 虚拟麦克风 (xiaoyao_mic)
 | 小米遥控器 2 Pro（RC003-MS） | ✅ ATVV | ✅ | `rc003` |
 | 小米遥控器 2（RC001-MS） | ✅ ATVV | ✅ | `rc003` |
 | 小米/米家语音遥控器（ARN9） | ✅ ATVV | ✅ | `rc003` |
-| Google / Android TV / Fire TV / NVIDIA 等 ATVV 遥控器 | ✅ ATVV | 视 evdev 而定 | `generic-atvv` |
+| Google TV / Chromecast 语音遥控器（含 Onn 等同族） | ✅ ATVV（8 kHz，链路内自动重采样） | ❌ 内核拒收 HID 描述符 | `google-tv-remote` |
+| 其他 Google / Android TV / Fire TV / NVIDIA 等 ATVV 遥控器 | ✅ ATVV | 视 evdev 而定 | `generic-atvv` |
 | Apple Siri Remote 1 代（A1513 / A1962） | ❌ | ✅ | `apple-siri-remote-1` |
 
-同名设备按 VID/PID（`2717:32b8`）和名称匹配；其他 ATVV 设备可在「设备」页选择 Generic 配置。
+同名设备按 VID/PID（小米 `2717:32b8`、Google `18d1:9450`）和名称匹配；其他
+ATVV 设备可在「设备」页选择 Generic 配置。Chromecast / Google TV 语音遥控器
+（含 Onn 同族）配对按住 **Back + Home** 进配对模式；语音走与小米遥控器同一条
+ATVV 链路（协商 8 kHz，进入识别前自动重采样到 16 kHz）。按键暂不可用：该族
+遥控器的 HID 描述符被内核 HID 栈拒收（无 `/dev/input` 设备），需要 GATT 直读
+通路（路线图）。
 
 ## 环境要求
 
@@ -413,6 +419,7 @@ CI 在 Linux 上执行测试与构建，并对 macOS / Windows 做交叉编译�
 
 - 手机 / 虚拟设备作为外部输入源（阶段 1 虚拟遥控 + 阶段 2 麦克风已交付，见「配对手机」）
 - 更多本地 ASR 与真正的流式识别（边说边滚字已有节流增量识别，见 `streaming_subtitles`）
+- GATT 直读按键通路（Google TV / Chromecast 族：内核拒收 HID 描述符，需从 0x2A4D 特征直读 Consumer 报告）
 - 多遥控器并发语音会话（今日按键多设备、语音单设备）
 - Windows / macOS 的语音链路
 - 历史音频回放与更细的输入源管理

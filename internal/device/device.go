@@ -123,8 +123,17 @@ func (r *Registry) MatchIDs(vendor, product string) (Profile, bool) {
 }
 
 // SuggestProfile maps vendor-neutral product names to a suitable profile.
+// The Google TV / Chromecast voice remote family gets its own profile first:
+// same ATVV voice service, but its HID descriptor never reaches the kernel
+// input stack, so keys cannot ride the evdev path the way other remotes do.
 func (r *Registry) SuggestProfile(name string) (Profile, bool) {
 	lower := strings.ToLower(name)
+	if strings.Contains(lower, "onn") || strings.Contains(lower, "chromecast") ||
+		strings.Contains(lower, "google tv") {
+		if profile, ok := r.Get("google-tv-remote"); ok {
+			return profile, true
+		}
+	}
 	for _, needle := range []string{"google", "chromecast", "android tv", "fire tv", "firetv", "nvidia", "shield"} {
 		if strings.Contains(lower, needle) {
 			return r.Get("generic-atvv")

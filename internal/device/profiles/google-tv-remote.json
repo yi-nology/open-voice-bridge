@@ -1,0 +1,27 @@
+{
+  "id": "google-tv-remote",
+  "name": "Google TV / Chromecast Voice Remote",
+  "transport": "ble-atvv",
+  "capabilities": [
+    "voice"
+  ],
+  "match": {
+    "vendor": "18d1",
+    "product": "9450",
+    "names": [
+      "Google TV Remote",
+      "Google TV Bluetooth Remote",
+      "Chromecast Remote",
+      "Onn-Remote"
+    ]
+  },
+  "models": [
+    "Chromecast with Google TV (voice remote)",
+    "Onn. Google TV streaming box remote"
+  ],
+  "aliases": [
+    "chromecast-remote",
+    "gtv-remote",
+    "onn-remote"
+  ]
+}

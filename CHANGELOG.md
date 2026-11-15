@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- New: the Google TV / Chromecast voice remote family joins (`google-tv-remote`,
+  Onn 同族). It speaks the same ATVV voice service as the Xiaomi remotes
+  (`ab5e0001-…`) — the existing chain just works — and matches by Google's
+  USB-IF ids (`18d1:9450`) and the names the family advertises. Two
+  adaptation gaps close with it: the remote negotiates **8 kHz**, so the
+  engine door now resamples to the house 16 kHz (`core.Resample`, linear) —
+  MiMo refuses anything else; and keys are honestly marked **unavailable** —
+  the family's HID descriptor is rejected by the kernel input stack (no
+  `/dev/input`), so the evdev remap path has nothing to read. A GATT raw-HID
+  key channel is on the roadmap. Pairing: hold Back + Home.
+
 - Fixed: the 粘贴注入 panel found its way home. Its only entry button lived
   inside the legacy `.config-nav` tablist, which the redesign left permanently
   `display: none` — so the injection-backend switch added earlier this cycle

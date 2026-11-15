@@ -84,11 +84,47 @@ func TestGenericATVVProfile(t *testing.T) {
 }
 
 func TestSuggestATVVProfiles(t *testing.T) {
-	for _, name := range []string{"Google TV Remote", "Chromecast Remote", "Fire TV Remote", "NVIDIA Shield Remote"} {
+	// The Google TV / Chromecast family carries its own profile; the rest of
+	// the ATVV crowd still lands on the generic one.
+	for name, want := range map[string]string{
+		"Google TV Remote":        "google-tv-remote",
+		"Chromecast Voice Remote": "google-tv-remote",
+		"Onn-Remote":              "google-tv-remote",
+		"Fire TV Remote":          "generic-atvv",
+		"NVIDIA Shield Remote":    "generic-atvv",
+		"Android TV Voice Remote": "generic-atvv",
+	} {
 		profile, ok := Builtin().SuggestProfile(name)
-		if !ok || profile.ID != "generic-atvv" {
-			t.Fatalf("%q -> %+v ok=%v", name, profile, ok)
+		if !ok || profile.ID != want {
+			t.Fatalf("%q -> %+v ok=%v, want %q", name, profile, ok, want)
 		}
+	}
+}
+
+// The Chromecast / Google TV voice remote speaks the same ATVV voice service
+// as the Xiaomi remotes (ab5e0001-…), but its HID descriptor never reaches
+// the kernel input stack — so the profile promises voice only, and matches
+// by Google's USB-IF ids (18D1:9450) and the names the family advertises.
+func TestMatchGoogleTVRemote(t *testing.T) {
+	profile, ok := Builtin().Get("google-tv-remote")
+	if !ok || !profile.HasCapability("voice") || profile.HasCapability("keys") {
+		t.Fatalf("profile = %+v ok=%v, want voice-only", profile, ok)
+	}
+	if p, ok := Builtin().MatchIDs("18d1", "9450"); !ok || p.ID != "google-tv-remote" {
+		t.Fatalf("vid/pid match = %+v ok=%v", p, ok)
+	}
+	for _, name := range []string{"Onn-Remote", "Google TV Remote", "Chromecast Remote"} {
+		if p, ok := Builtin().MatchName(name); !ok || p.ID != "google-tv-remote" {
+			t.Fatalf("name %q -> %+v ok=%v", name, p, ok)
+		}
+	}
+	if p, ok := Builtin().Get("chromecast-remote"); !ok || p.ID != "google-tv-remote" {
+		t.Fatalf("alias = %+v ok=%v", p, ok)
+	}
+	block := `I: Bus=0005 Vendor=18d1 Product=9450
+N: Name="Google TV Remote"`
+	if p, ok := Builtin().MatchInputBlock(block); !ok || p.ID != "google-tv-remote" {
+		t.Fatalf("input block = %+v ok=%v", p, ok)
 	}
 }
 
