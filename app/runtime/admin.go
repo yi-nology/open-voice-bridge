@@ -128,6 +128,8 @@ func (a Admin) deps() ui.Deps {
 		UpdateLLMAppRules:     svc.UpdateLLMAppRules,
 		StreamingSubtitles:    svc.StreamingSubtitles,
 		SetStreamingSubtitles: svc.SetStreamingSubtitles,
+		PasteConfig:           svc.PasteConfig,
+		SetPasteConfig:        svc.SetPasteConfig,
 		WakeConfig:            svc.WakeConfig,
 		SetWake:               svc.SetWake,
 		LookbackConfig:        svc.LookbackConfig,

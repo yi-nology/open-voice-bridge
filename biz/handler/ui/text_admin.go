@@ -94,6 +94,41 @@ func (s *Server) StreamingSubtitlesSave(ctx context.Context, c *app.RequestConte
 	c.JSON(consts.StatusOK, reply{OK: true})
 }
 
+// PasteConfig returns the text-injection settings. paste_backend matters on
+// Wayland hosts where wtype types the wrong keys (labwc): the transcript is
+// right, the characters are not.
+func (s *Server) PasteConfig(ctx context.Context, c *app.RequestContext) {
+	if s.deps.PasteConfig == nil {
+		c.JSON(consts.StatusServiceUnavailable, reply{OK: false, Error: "paste unavailable"})
+		return
+	}
+	enabled, backend := s.deps.PasteConfig()
+	c.JSON(consts.StatusOK, reply{OK: true, Enabled: &enabled, Backend: backend})
+}
+
+// PasteConfigSave stores the injection settings. The backend is resolved when
+// the speech pipeline is built, so a change needs a restart.
+func (s *Server) PasteConfigSave(ctx context.Context, c *app.RequestContext) {
+	if s.deps.SetPasteConfig == nil {
+		c.JSON(consts.StatusServiceUnavailable, reply{OK: false, Error: "paste unavailable"})
+		return
+	}
+	var req struct {
+		Enabled bool   `json:"enabled"`
+		Backend string `json:"backend"`
+	}
+	if err := json.Unmarshal(c.Request.Body(), &req); err != nil {
+		c.JSON(consts.StatusBadRequest, reply{OK: false, Error: err.Error()})
+		return
+	}
+	if err := s.deps.SetPasteConfig(req.Enabled, req.Backend); err != nil {
+		c.JSON(consts.StatusBadRequest, reply{OK: false, Error: err.Error()})
+		return
+	}
+	restart := true
+	c.JSON(consts.StatusOK, reply{OK: true, RestartRequired: &restart})
+}
+
 // WakeConfig returns the wake-word toggle and word (S7).
 func (s *Server) WakeConfig(ctx context.Context, c *app.RequestContext) {
 	if s.deps.WakeConfig == nil {

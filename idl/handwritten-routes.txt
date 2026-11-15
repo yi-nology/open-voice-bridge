@@ -34,6 +34,8 @@ GET  /api/llm/app-rules
 POST /api/llm/app-rules
 GET  /api/streaming
 POST /api/streaming
+GET  /api/paste
+POST /api/paste
 GET  /api/wake
 POST /api/wake
 GET  /api/lookback

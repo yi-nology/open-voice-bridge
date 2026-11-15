@@ -143,6 +143,7 @@
       <button class="config-tab" data-cfg="asr">语音识别</button>
       <button class="config-tab" data-cfg="llm">文本模型</button>
       <button class="config-tab" data-cfg="text">词典短语</button>
+      <button class="config-tab" data-cfg="paste">粘贴注入</button>
     </div>
     <div id="cfg-overview" class="cfg-panel active">
       <div class="hero">
@@ -286,6 +287,23 @@
         <button id="app-rules-save" class="btn small primary">保存应用规则</button>
       </div>
       <div id="app-rules-msg" class="msg"></div>
+    </div>
+    </div>
+    <div id="cfg-paste" class="cfg-panel">
+    <div class="card">
+      <h3>文本注入（自动上屏）</h3>
+      <p class="sub">识别结果通过键盘事件写进当前焦点窗口。如果出现「识别是对的、上屏却是数字或乱码」，把注入通路切成 X11 即可。</p>
+      <div class="model-grid">
+        <label class="check-line"><input id="paste-enabled" type="checkbox"> 启用自动上屏</label>
+        <label>注入通路
+          <select id="paste-backend">
+            <option value="auto">自动（Wayland 优先，失败回落 X11）</option>
+            <option value="wayland">仅 Wayland（wtype）</option>
+            <option value="x11">仅 X11（剪贴板 + XTEST）</option>
+          </select>
+        </label>
+      </div>
+      <p class="note" id="paste-status">切换注入通路后需要重启服务：<code>systemctl --user restart xiaoyao.service</code></p>
     </div>
     </div>
     <div id="cfg-text" class="cfg-panel">

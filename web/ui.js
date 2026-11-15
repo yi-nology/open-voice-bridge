@@ -1482,6 +1482,7 @@ document.querySelectorAll(".config-tab").forEach(button => {
     if (button.dataset.cfg === "asr") loadASRConfig();
     if (button.dataset.cfg === "llm") loadLLMConfig();
     if (button.dataset.cfg === "text") loadTextConfig();
+    if (button.dataset.cfg === "paste") loadPasteConfig();
   });
 });
 
@@ -1494,6 +1495,45 @@ document.querySelectorAll(".side-item").forEach(item => {
 
 const guidedSubtitle = document.getElementById("guided-subtitle");
 if (guidedSubtitle) guidedSubtitle.addEventListener("click", () => goTab("subtitle"));
+// loadPasteConfig drives the injection settings: the toggle applies live, the
+// backend is resolved when the pipeline is built and needs a restart.
+async function loadPasteConfig() {
+  const enabled = document.getElementById("paste-enabled");
+  const backend = document.getElementById("paste-backend");
+  const status = document.getElementById("paste-status");
+  if (!enabled || !backend) return;
+  try {
+    const res = await fetch("/api/paste");
+    const data = await res.json();
+    if (data.ok) {
+      enabled.checked = !!data.enabled;
+      backend.value = data.backend || "auto";
+    }
+  } catch (error) {}
+  if (backend.dataset.bound) return;
+  backend.dataset.bound = "1";
+  const save = async () => {
+    try {
+      const res = await fetch("/api/paste", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({enabled: enabled.checked, backend: backend.value}),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        if (status) status.textContent = "保存失败：" + errorText(data, String(res.status));
+        return;
+      }
+      if (status) status.textContent = "已保存。重启服务后生效：systemctl --user restart xiaoyao.service";
+      if (needsRestart(data)) showRestartBanner();
+    } catch (error) {
+      if (status) status.textContent = "保存失败：" + error;
+    }
+  };
+  enabled.addEventListener("change", save);
+  backend.addEventListener("change", save);
+}
+
 async function loadStats() {
   const el = document.getElementById("stats-utterances");
   if (!el) return;

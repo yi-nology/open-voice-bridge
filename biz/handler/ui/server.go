@@ -81,6 +81,8 @@ type Deps struct {
 	UpdateLLMAppRules     func([]config.AppRewriteRule) error
 	StreamingSubtitles    func() bool
 	SetStreamingSubtitles func(bool) error
+	PasteConfig           func() (bool, string)
+	SetPasteConfig        func(bool, string) error
 	HistoryPolicy         func() (int, bool)
 	SetHistoryPolicy      func(int, bool) error
 	Permissions           func(context.Context) core.PermissionsView
