@@ -4,7 +4,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
-const { errorText, buildPairLink, fmtDuration, sealDiagPack } = require("./ui-core.js");
+const { errorText, buildPairLink, fmtDuration, needsRestart, sealDiagPack } = require("./ui-core.js");
 
 test("errorText prefers message, then error, then output", () => {
   assert.equal(errorText({ message: "a", error: "b" }, "fb"), "a");
@@ -23,6 +23,15 @@ test("buildPairLink appends the #pair= fragment", () => {
     buildPairLink({ scheme: "https", port: "9443", code: "000111" }, "box.local"),
     "https://box.local:9443/phone#pair=000111");
   assert.equal(buildPairLink({ code: "222333" }, "box.local"), "https://box.local:8788/phone#pair=222333");
+});
+
+test("needsRestart reads the restart contract in both payload shapes", () => {
+  assert.equal(needsRestart({ ok: true, restart_required: true }), true);
+  assert.equal(needsRestart({ restart_required: "true" }), true);
+  assert.equal(needsRestart({ ok: true }), false);
+  assert.equal(needsRestart({ restart_required: false }), false);
+  assert.equal(needsRestart(null), false);
+  assert.equal(needsRestart(undefined), false);
 });
 
 test("fmtDuration rounds to the spoken units", () => {

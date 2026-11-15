@@ -739,3 +739,15 @@ body.listening .subtitle-live i { background: var(--accent); }
 .subtitle-line.partial::after {
   content: "▍"; margin-left: 2px; opacity: .8;
 }
+
+/* Global "restart the service" notice — raised whenever a save reply
+   carries restart_required. Fixed top-center so it can't be missed. */
+.restart-banner {
+  position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+  z-index: 60; display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 12px;
+  background: var(--panel); border: 1px solid var(--line);
+  box-shadow: 0 8px 28px rgba(40, 30, 10, .12);
+  font-size: 13px; color: var(--ink);
+}
+.restart-banner span { color: var(--ink); }

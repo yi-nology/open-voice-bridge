@@ -1,5 +1,5 @@
 // Pure helpers live in ui-core.js (shared with the node:test suite).
-const { errorText, buildPairLink, fmtDuration, sealDiagPack } = XiaoyaoCore;
+const { errorText, buildPairLink, fmtDuration, needsRestart, sealDiagPack } = XiaoyaoCore;
 
 const KEYS = [
   {key: "power",      chip: "电源", name: "电源键",   hid: "0x66", def: "esc"},
@@ -630,6 +630,41 @@ function deviceMessage(text, cls) {
   node.className = "msg " + (cls || "");
 }
 
+// showRestartBanner raises the one global "needs a service restart" notice
+// (restart_required contract). Call it from every save whose reply carries the
+// flag; the banner is idempotent and carries the command to run.
+function showRestartBanner() {
+  let banner = document.getElementById("restart-banner");
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = "restart-banner";
+    banner.className = "restart-banner";
+    banner.innerHTML =
+      '<span>部分设置已保存，重启 xiaoyao 服务后生效。</span>' +
+      '<button class="btn small" id="restart-copy">复制重启命令</button>' +
+      '<button class="btn small" id="restart-dismiss">知道了</button>';
+    document.body.appendChild(banner);
+    banner.querySelector("#restart-copy").addEventListener("click", () => {
+      const command = "systemctl --user restart xiaoyao";
+      const done = () => { banner.querySelector("#restart-copy").textContent = "已复制"; };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(command).then(done).catch(() => { window.prompt("复制重启命令：", command); });
+      } else {
+        window.prompt("复制重启命令：", command);
+      }
+    });
+    banner.querySelector("#restart-dismiss").addEventListener("click", () => banner.remove());
+  }
+  banner.hidden = false;
+}
+
+function subtitleMsg(text, cls) {
+  const node = document.getElementById("subtitle-msg");
+  if (!node) return;
+  node.textContent = text || "";
+  node.className = "msg " + (cls || "");
+}
+
 function populateDeviceProfiles(selected) {
   const select = document.getElementById("device-profile");
   if (!select) return;
@@ -1028,6 +1063,7 @@ async function setPhoneEnabled(enabled, btn) {
       inputsMessage("保存失败：" + (data.error || res.status), "err");
     } else {
       inputsMessage("已保存，重启服务后生效。", "ok");
+      if (needsRestart(data)) showRestartBanner();
     }
   } catch (error) {
     inputsMessage("保存失败：" + error, "err");
@@ -1515,6 +1551,7 @@ if (configImportBtn && configImportFile) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) return maintenanceMsg("导入失败：" + (data.error || res.status), "err");
       maintenanceMsg("导入成功，重启服务后生效。", "ok");
+      if (needsRestart(data)) showRestartBanner();
     } catch (error) {
       maintenanceMsg("导入失败：" + error, "err");
     }
@@ -2296,12 +2333,21 @@ async function loadStreamingToggle() {
   toggle.dataset.bound = "1";
   toggle.addEventListener("change", async () => {
     try {
-      await fetch("/api/streaming", {
+      const res = await fetch("/api/streaming", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({enabled: toggle.checked}),
       });
-    } catch (error) {}
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        subtitleMsg("边说边滚字保存失败：" + errorText(data, String(res.status)), "err");
+        return;
+      }
+      subtitleMsg("边说边滚字已" + (toggle.checked ? "开启" : "关闭"), "ok");
+      if (needsRestart(data)) showRestartBanner();
+    } catch (error) {
+      subtitleMsg("边说边滚字保存失败：" + error, "err");
+    }
   });
 }
 
@@ -2321,12 +2367,21 @@ async function loadWakeToggle() {
   toggle.dataset.bound = "1";
   const save = async () => {
     try {
-      await fetch("/api/wake", {
+      const res = await fetch("/api/wake", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({enabled: toggle.checked, word: word ? word.value.trim() : ""}),
       });
-    } catch (error) {}
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        subtitleMsg("唤醒词保存失败：" + errorText(data, String(res.status)), "err");
+        return;
+      }
+      subtitleMsg("唤醒词设置已保存", "ok");
+      if (needsRestart(data)) showRestartBanner();
+    } catch (error) {
+      subtitleMsg("唤醒词保存失败：" + error, "err");
+    }
   };
   toggle.addEventListener("change", save);
   if (word) word.addEventListener("change", save);
@@ -2351,6 +2406,7 @@ async function loadPhonePowerToggle() {
       });
       const data = await res.json();
       inputsMessage(data.ok ? "已保存，重启服务后生效。" : ("保存失败：" + errorText(data)), data.ok ? "ok" : "err");
+      if (data.ok && needsRestart(data)) showRestartBanner();
     } catch (error) {
       inputsMessage("保存失败：" + error, "err");
     }
@@ -2374,12 +2430,21 @@ async function loadLookbackToggle() {
   toggle.dataset.bound = "1";
   const save = async () => {
     try {
-      await fetch("/api/lookback", {
+      const res = await fetch("/api/lookback", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({enabled: toggle.checked, seconds: seconds ? Number(seconds.value) || 30 : 30}),
       });
-    } catch (error) {}
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        subtitleMsg("回眸保存失败：" + errorText(data, String(res.status)), "err");
+        return;
+      }
+      subtitleMsg("回眸设置已保存", "ok");
+      if (needsRestart(data)) showRestartBanner();
+    } catch (error) {
+      subtitleMsg("回眸保存失败：" + error, "err");
+    }
   };
   toggle.addEventListener("change", save);
   if (seconds) seconds.addEventListener("change", save);

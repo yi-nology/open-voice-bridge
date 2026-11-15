@@ -31,6 +31,13 @@
     return Math.floor(minutes / 60) + " 小时 " + (minutes % 60) + " 分";
   }
 
+  // needsRestart reads the server's restart_required contract. Some saves
+  // ride a raw map payload rather than the typed reply, so both shapes are
+  // accepted; anything else (undefined/false/absent) means live.
+  function needsRestart(data) {
+    return !!(data && (data.restart_required === true || data.restart_required === "true"));
+  }
+
   // sealDiagPack encrypts the diagnostics pack (R10). Format OVBDIA1 —
   // PBKDF2-HMAC-SHA256 (600k) + AES-256-GCM with the 40-byte header as
   // additional data, mirrored by internal/diagbox. The AAD binding is load-
@@ -57,5 +64,5 @@
     return out;
   }
 
-  return { errorText, buildPairLink, fmtDuration, sealDiagPack };
+  return { errorText, buildPairLink, fmtDuration, needsRestart, sealDiagPack };
 });
