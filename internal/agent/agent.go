@@ -36,7 +36,7 @@ type Agent struct {
 	asr     asr.Engine
 	asrMu   sync.RWMutex
 	llm     llm.Processor
-	llmMu   sync.RWMutex
+	llmMu   sync.RWMutex // guards llm, llmAppRules and fgClass (the LLM face)
 	text    core.TextRules
 	textMu  sync.RWMutex
 	audio   audio.Sink
@@ -46,7 +46,6 @@ type Agent struct {
 	seqMu      sync.RWMutex
 	seqActions map[int]remap.AgentAction
 
-	llmMu2      sync.RWMutex
 	llmAppRules []config.AppRewriteRule
 	fgClass     func() (string, error)
 
@@ -160,25 +159,25 @@ func (a *Agent) Speech() *speech.Pipeline { return a.pipeline }
 // SetActiveClassFunc injects the foreground-window probe the app-aware
 // rewrite rules match against (S5).
 func (a *Agent) SetActiveClassFunc(f func() (string, error)) {
-	a.llmMu2.Lock()
-	defer a.llmMu2.Unlock()
+	a.llmMu.Lock()
+	defer a.llmMu.Unlock()
 	a.fgClass = f
 }
 
 // SetRewriteRules installs the app-aware rewrite rules (S5).
 func (a *Agent) SetRewriteRules(rules []config.AppRewriteRule) {
-	a.llmMu2.Lock()
-	defer a.llmMu2.Unlock()
+	a.llmMu.Lock()
+	defer a.llmMu.Unlock()
 	a.llmAppRules = rules
 }
 
 // rewriteModeFor resolves the mode for the current foreground app: the first
 // matching rule wins, "" means the global configured mode.
 func (a *Agent) rewriteModeFor() string {
-	a.llmMu2.RLock()
+	a.llmMu.RLock()
 	rules := a.llmAppRules
 	probe := a.fgClass
-	a.llmMu2.RUnlock()
+	a.llmMu.RUnlock()
 	if len(rules) == 0 {
 		return ""
 	}
