@@ -6,8 +6,31 @@ import (
 	"testing"
 	"time"
 
+	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
 )
+
+// TestRecordTranscriptNeverBlocksOnAFullStream (P2-1): commands and partials
+// used to ride a bare channel send while dictation used the non-blocking
+// publish — a full subtitle stream (or a reader that exited) hung the
+// pipeline sink and, with it, the paste path. Everything drops instead.
+func TestRecordTranscriptNeverBlocksOnAFullStream(t *testing.T) {
+	a := New(config.Config{MaxUtterance: 30}, &fakeEngine{}, fakeSink{healthy: true})
+	for i := 0; i < cap(a.transcripts); i++ {
+		a.transcripts <- speech.Transcript{Text: "filler"}
+	}
+	done := make(chan struct{})
+	go func() {
+		a.recordTranscript(speech.Transcript{Text: "复制", Command: "复制"})
+		a.recordTranscript(speech.Transcript{Text: "片段", Partial: true})
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("recordTranscript blocked on a full transcripts stream")
+	}
+}
 
 func TestPublishTranscript(t *testing.T) {
 	agent := &Agent{transcripts: make(chan speech.Transcript, 1)}

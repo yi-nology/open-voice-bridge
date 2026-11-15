@@ -279,7 +279,9 @@ func (a *Agent) recordTranscript(transcript speech.Transcript) {
 	if transcript.Command != "" || transcript.Partial {
 		// Voice commands and partials are not dictation: they stay out of the
 		// "last text" strip even though the subtitle stream still sees them.
-		a.transcripts <- transcript
+		// Same non-blocking publish as dictation — a full stream (or a reader
+		// that exited) must never hang the pipeline sink (P2-1).
+		a.publishTranscript(transcript)
 		return
 	}
 	a.mu.Lock()
