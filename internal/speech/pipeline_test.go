@@ -596,3 +596,47 @@ func TestAudibleCaptureIsStillTranscribed(t *testing.T) {
 		t.Fatalf("ASR calls = %d, want 1", engine.calls)
 	}
 }
+
+// rateSpyEngine records what rate each request carried.
+type rateSpyEngine struct {
+	mu   sync.Mutex
+	got  []int
+	text string
+}
+
+func (r *rateSpyEngine) Name() string                { return "rate-spy" }
+func (r *rateSpyEngine) Local() bool                 { return true }
+func (r *rateSpyEngine) Close(context.Context) error { return nil }
+func (r *rateSpyEngine) Transcribe(_ context.Context, a asr.Audio) (asr.Result, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.got = append(r.got, a.SampleRate)
+	r.text = "好"
+	return asr.Result{Text: "好", Provider: "rate-spy"}, nil
+}
+
+// TestEngineGets16kWhenTheRemoteNegotiates8k (DOM-01 closing the loop): the
+// utterance keeps its honest rate through the chain, and the engine door
+// resamples — MiMo refuses anything but 16 kHz, so an 8 kHz Google TV remote
+// must not arrive as 8 kHz.
+func TestEngineGets16kWhenTheRemoteNegotiates8k(t *testing.T) {
+	engine := &rateSpyEngine{}
+	rules, err := text.New(config.TextConfig{})
+	if err != nil {
+		t.Fatalf("rules: %v", err)
+	}
+	probe := &pipelineProbe{}
+	p := buildPipeline(engine, rules, probe, true)
+	samples := make([]int16, 3200) // 0.4 s at 8 kHz — above the min floor
+	for i := range samples {
+		samples[i] = 6000
+	}
+	if _, ok := p.Transcribe(context.Background(), Utterance{Samples: samples, SampleRate: 8000}); !ok {
+		t.Fatal("8 kHz utterance was not transcribed")
+	}
+	engine.mu.Lock()
+	defer engine.mu.Unlock()
+	if len(engine.got) != 1 || engine.got[0] != core.SampleRate {
+		t.Fatalf("engine saw rates %v, want [%d]", engine.got, core.SampleRate)
+	}
+}

@@ -166,9 +166,10 @@ func (p *Pipeline) Transcribe(parent context.Context, u Utterance) (Transcript, 
 
 	ctx, cancel := context.WithTimeout(parent, p.budgetFor(u))
 	defer cancel()
+	samples, rate := engineDoor(u)
 	result, err := engine.Transcribe(ctx, asr.Audio{
-		Samples:    u.Samples,
-		SampleRate: u.Rate(),
+		Samples:    samples,
+		SampleRate: rate,
 	})
 	if oeerrors.Is(err, asr.ErrNoSpeech) {
 		return Transcript{}, false
@@ -256,11 +257,24 @@ func (p *Pipeline) TranscribePartial(parent context.Context, u Utterance) (strin
 	}
 	ctx, cancel := context.WithTimeout(parent, 8*time.Second)
 	defer cancel()
-	result, err := engine.Transcribe(ctx, asr.Audio{Samples: u.Samples, SampleRate: u.Rate()})
+	samples, rate := engineDoor(u)
+	result, err := engine.Transcribe(ctx, asr.Audio{Samples: samples, SampleRate: rate})
 	if err != nil {
 		return "", err
 	}
 	return strings.TrimSpace(result.Text), nil
+}
+
+// engineDoor is where the chain's honest rate meets the engines' geometry:
+// an 8 kHz remote keeps 8 kHz everywhere else (duration floors, diagnostics),
+// but MiMo refuses anything but 16 kHz and the other engines prefer it — so
+// the samples are resampled at the door, once.
+func engineDoor(u Utterance) ([]int16, int) {
+	rate := u.Rate()
+	if rate == core.SampleRate {
+		return u.Samples, rate
+	}
+	return core.Resample(u.Samples, rate, core.SampleRate), core.SampleRate
 }
 
 // secondsOf is the capture length rounded to a tenth, for the diagnostics

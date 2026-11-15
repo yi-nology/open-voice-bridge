@@ -238,7 +238,10 @@ func TestDisconnectDuringShutdownDropsTheCapture(t *testing.T) {
 }
 
 // TestUtteranceCarriesTheNegotiatedRate closes DOM-01 for the remote path: an
-// 8 kHz codec must be labelled 8 kHz so providers and the WAV header agree.
+// 8 kHz codec stays 8 kHz through the capture (so the duration floors stay
+// rate-relative) and reaches the engine RESAMPLED to the house 16 kHz. The
+// engine must see double the samples — the same buffer relabelled 16 kHz
+// would arrive as sped-up speech, which is exactly the trap DOM-01 names.
 func TestUtteranceCarriesTheNegotiatedRate(t *testing.T) {
 	engine := newHeardEngine()
 	a := newFinalizeAgent(engine)
@@ -250,9 +253,12 @@ func TestUtteranceCarriesTheNegotiatedRate(t *testing.T) {
 	appendDictation(a, 8000, 0x0400)
 	a.handleControl([]byte{atvv.OpAudioStop})
 
-	utterance := engine.next(t)
-	if utterance.SampleRate != 8000 {
-		t.Fatalf("rate = %d, want the negotiated 8000", utterance.SampleRate)
+	audio := engine.next(t)
+	if audio.SampleRate != core.SampleRate {
+		t.Fatalf("rate = %d, want %d at the engine door", audio.SampleRate, core.SampleRate)
+	}
+	if len(audio.Samples) != 2*8000 {
+		t.Fatalf("len = %d samples, want 16000 — resampled, not relabelled", len(audio.Samples))
 	}
 }
 

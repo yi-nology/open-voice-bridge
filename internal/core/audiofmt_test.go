@@ -101,3 +101,34 @@ func TestPeakReadsBothSigns(t *testing.T) {
 		t.Fatalf("Peak(nil) = %d, want 0", got)
 	}
 }
+
+// TestResampleDoublesThe8kRemote: the Google TV / Chromecast voice remote
+// negotiates 8 kHz over ATVV while the house geometry and the cloud engines
+// are 16 kHz — Resample bridges the last hop (linear interpolation is plenty
+// for speech ASR).
+func TestResampleDoublesThe8kRemote(t *testing.T) {
+	in := make([]int16, 80)
+	for i := range in {
+		in[i] = int16(i * 100)
+	}
+	out := Resample(in, 8000, SampleRate)
+	if len(out) != 160 {
+		t.Fatalf("len = %d, want 160", len(out))
+	}
+	if out[0] != 0 {
+		t.Fatalf("out[0] = %d, want 0", out[0])
+	}
+	if out[159] != in[79] {
+		t.Fatalf("out[159] = %d, want the last sample %d", out[159], in[79])
+	}
+	// A value between the endpoints must interpolate, not jump.
+	if out[2] <= 0 || out[2] >= 200 {
+		t.Fatalf("out[2] = %d, want something between 0 and 200", out[2])
+	}
+	if same := Resample(in, SampleRate, SampleRate); &same[0] != &in[0] {
+		t.Fatal("same-rate resample must return the input as-is")
+	}
+	if clipped := Resample([]int16{32767, -32768}, 4000, 8000); len(clipped) != 4 {
+		t.Fatalf("len = %d, want 4", len(clipped))
+	}
+}

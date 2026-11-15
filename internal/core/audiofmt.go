@@ -44,6 +44,49 @@ func MinUtterance(rate int) int {
 	return rate / 4
 }
 
+// Resample returns samples converted from fromRate to toRate by linear
+// interpolation. The Google TV / Chromecast voice remote negotiates 8 kHz
+// over ATVV while the house geometry and the cloud engines are 16 kHz
+// (DOM-01 kept the honest rate through the chain; this bridges the last hop
+// so the engines can hear the audio at all).
+func Resample(samples []int16, fromRate, toRate int) []int16 {
+	if fromRate <= 0 {
+		fromRate = SampleRate
+	}
+	if toRate <= 0 {
+		toRate = SampleRate
+	}
+	if fromRate == toRate || len(samples) == 0 {
+		return samples
+	}
+	outLen := int(float64(len(samples)) * float64(toRate) / float64(fromRate))
+	if outLen < 1 {
+		outLen = 1
+	}
+	out := make([]int16, outLen)
+	step := float64(fromRate) / float64(toRate)
+	last := len(samples) - 1
+	for i := range out {
+		pos := float64(i) * step
+		lo := int(pos)
+		if lo >= last {
+			out[i] = samples[last]
+			continue
+		}
+		frac := pos - float64(lo)
+		v := float64(samples[lo])*(1-frac) + float64(samples[lo+1])*frac
+		switch {
+		case v > 32767:
+			out[i] = 32767
+		case v < -32768:
+			out[i] = -32768
+		default:
+			out[i] = int16(v)
+		}
+	}
+	return out
+}
+
 // SpeechFloor is the peak amplitude below which a capture carries no speech.
 // Cloud engines hallucinate a short line on dead air ("你好。", "1234567890")
 // and bill for it, so a capture that never rises above this is dropped rather
