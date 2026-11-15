@@ -129,6 +129,12 @@ func ToLogical(button string) (string, bool) {
 		return "volumeup", true
 	case "voldown":
 		return "volumedown", true
+	case "settings":
+		// the 菜单键 keymap slot (RC003's menu button lives there too)
+		return "compose", true
+	case "tv":
+		// the TV键 keymap slot
+		return "grave", true
 	case "up", "down", "left", "right", "back", "home", "menu", "mute", "playpause", "power":
 		return button, true
 	default:

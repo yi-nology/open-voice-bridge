@@ -34,7 +34,7 @@ func TestKeyInjectorForwardsAllowedKey(t *testing.T) {
 func TestKeyInjectorRejectsNonWhitelist(t *testing.T) {
 	transport := &fakeTransport{}
 	injector := NewKeyInjector(transport, false)
-	for _, key := range []string{"compose", "ok", "siri", "", "UP"} {
+	for _, key := range []string{"homepage", "ok", "siri", "", "UP"} {
 		err := injector.Inject(context.Background(), key, 1)
 		if !errors.Is(err, errKeyNotAllowed) {
 			t.Fatalf("key %q: err = %v, want not-allowed", key, err)
@@ -93,7 +93,7 @@ func TestKeyInjectorAllowedMatchesWhitelist(t *testing.T) {
 			t.Fatalf("%q should be allowed", key)
 		}
 	}
-	for _, key := range []string{"ok", "homepage", "compose", "power"} {
+	for _, key := range []string{"ok", "homepage", "siri", "power"} {
 		if injector.Allowed(key) {
 			t.Fatalf("%q should not be allowed", key)
 		}

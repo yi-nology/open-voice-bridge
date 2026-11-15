@@ -105,9 +105,11 @@ func TestToLogical(t *testing.T) {
 		"mute":      {"mute", true},
 		"playpause": {"playpause", true},
 		"power":     {"power", true},
+		"settings":  {"compose", true},
+		"tv":        {"grave", true},
 		"assistant": {"", false}, // the ATVV control channel owns the mic
 		"youtube":   {"", false},
-		"settings":  {"", false},
+		"bookmark":  {"", false},
 		"":          {"", false},
 	}
 	for button, want := range cases {

@@ -157,7 +157,7 @@ func TestPhoneKeyRejectedNotWhitelisted(t *testing.T) {
 	defer func() { _ = conn.CloseNow() }()
 	readMessage(t, ctx, conn) // ready
 
-	body, _ := json.Marshal(controlMessage{Type: "key", Key: "compose", Value: intPtr(1)})
+	body, _ := json.Marshal(controlMessage{Type: "key", Key: "homepage", Value: intPtr(1)})
 	if err := conn.Write(ctx, websocket.MessageText, body); err != nil {
 		t.Fatalf("write: %v", err)
 	}

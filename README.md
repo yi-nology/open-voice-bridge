@@ -81,9 +81,12 @@ ATVV 设备可在「设备」页选择 Generic 配置。Chromecast / Google TV �
 （含 Onn 同族）配对按住 **Back + Home** 进配对模式；语音走与小米遥控器同一条
 ATVV 链路（协商 8 kHz，进入识别前自动重采样到 16 kHz）。该族遥控器的 HID
 描述符被内核 HID 栈拒收（无 `/dev/input` 设备），按键改由 GATT 直读 0x2A4D
-报告通道解码（Linux）：方向 / OK / 返回 / 主页 / 静音 / 音量 / 播放暂停走
-helper 白名单注入，电源键沿用 `phone.allow_power_key` 开关；键位映射（重映射
-到自定义动作）尚未接入，见路线图。
+报告通道解码（Linux）。解码后的按钮走 helper 注入并**吃你的键位映射**——
+root 守护进程的 `applyKey` 是 evdev 键与注入键共用的同一执行器，上键改成
+宏或常用语，GTV 的方向键同样生效。方向 / OK / 返回 / 主页 / 音量对齐同名键位
+槽，设置键 / TV 键对齐「菜单键 / TV 键」槽；静音、播放暂停走原生；电源键沿用
+`phone.allow_power_key` 开关。Assistant 键不在键位表里（ATVV 控制通道已负责
+开麦，映射它会双触发）；应用启动键（YouTube / Netflix 等）尚无键位槽。
 
 ## 环境要求
 
@@ -421,7 +424,7 @@ CI 在 Linux 上执行测试与构建，并对 macOS / Windows 做交叉编译�
 
 - 手机 / 虚拟设备作为外部输入源（阶段 1 虚拟遥控 + 阶段 2 麦克风已交付，见「配对手机」）
 - 更多本地 ASR 与真正的流式识别（边说边滚字已有节流增量识别，见 `streaming_subtitles`）
-- GATT 按键接入键位映射（今日白名单直注导航键；下一步是像 evdev 键一样吃 keymap 的自定义动作）
+- 键位图鉴扩展：把应用启动键（YouTube / Netflix 等）与输入键加进可映射键位；Assistant 键的自定义映射（需先把开麦触发与 ATVV 控制通道解耦）
 - 多遥控器并发语音会话（今日按键多设备、语音单设备）
 - Windows / macOS 的语音链路
 - 历史音频回放与更细的输入源管理

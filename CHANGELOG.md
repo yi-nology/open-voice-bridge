@@ -12,9 +12,17 @@
   helper whitelist the phone speaks (mute and playpause join the whitelist —
   media keys, same risk class as volumeup), power rides the
   `phone.allow_power_key` opt-in, and the Assistant key stays out of the way
-  (the ATVV control channel already owns the mic). Keymap remapping of these
-  buttons is the roadmap's next step; macOS stays honest — CoreBluetooth
-  hides the HID service.
+  (the ATVV control channel already owns the mic). macOS stays honest —
+  CoreBluetooth hides the HID service.
+
+- New: the GATT buttons honor the keymap. The helper's `inject` verb already
+  runs `applyKey` — one executor for evdev keys and injected keys alike — so
+  remapping 上键 to a macro or a common phrase changes what the remote's Up
+  button does (`TestInjectAppliesTheKeymap` pins it). The settings and TV
+  buttons now land on the 菜单键 / TV键 keymap slots (compose/grave join the
+  inject whitelist — plain keys, same risk class), and the pins in the
+  remap/phone tests move with them. Assistant stays unmappable by design and
+  the app-launcher keys await a keymap slot (roadmap).
 
 - New: the Google TV / Chromecast voice remote family joins (`google-tv-remote`,
   Onn 同族). It speaks the same ATVV voice service as the Xiaomi remotes

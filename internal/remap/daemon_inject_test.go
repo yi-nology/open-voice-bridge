@@ -97,6 +97,37 @@ func TestDaemonInject(t *testing.T) {
 	}
 }
 
+// TestInjectAppliesTheKeymap: the inject verb means "press this SOURCE key
+// through the user's keymap", not "press this key" — the Google TV family's
+// GATT buttons ride this path, so remapping 上键 must change what its Up
+// button does. applyKey is the one executor for evdev and injected keys.
+func TestInjectAppliesTheKeymap(t *testing.T) {
+	kb := &fakeKeyboard{}
+	d := newInjectDaemon()
+	d.kb = kb
+	d.mapping = MergeDefaults(map[string]string{"up": "esc", "home": "phrase1"})
+	conn := serveInject(t, d)
+	w := bufio.NewWriter(conn)
+	r := bufio.NewReader(conn)
+
+	for _, command := range []map[string]any{
+		{"cmd": "inject", "key": "up", "value": 1},
+		{"cmd": "inject", "key": "up", "value": 0},
+		{"cmd": "inject", "key": "home", "value": 1},
+		{"cmd": "inject", "key": "home", "value": 0},
+	} {
+		if resp := exchange(t, conn, w, r, command); resp["ok"] != true {
+			t.Fatalf("%v rejected: %+v", command, resp)
+		}
+	}
+	// esc (1) and the phrase1 slot (F13 = 183) — never KEY_UP (103) or KEY_HOME (102).
+	want := []string{"down 1", "up 1", "down 183", "up 183"}
+	got := kb.snapshot()
+	if strings.Join(got, ",") != strings.Join(want, ",") {
+		t.Fatalf("events = %v, want %v (the keymap must decide, not the source code)", got, want)
+	}
+}
+
 // ARC-12: the helper is the authoritative boundary — cmdInject is open to any
 // peer that passed the socket group check, so a group member must not be able
 // to reach KEY_POWER (logind acts on it) without an explicit opt-in.
