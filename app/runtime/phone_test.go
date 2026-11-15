@@ -33,6 +33,20 @@ func (e *stubEngine) Transcribe(_ context.Context, audio asr.Audio) (asr.Result,
 	return e.result, e.err
 }
 
+// audible is a second of square wave: real captures carry level, and an
+// all-zero buffer is digital silence the speech pipeline drops.
+func audible(n int) []int16 {
+	samples := make([]int16, n)
+	for index := range samples {
+		if index%2 == 0 {
+			samples[index] = 800
+		} else {
+			samples[index] = -800
+		}
+	}
+	return samples
+}
+
 func TestPhoneSpeechMapsTheTranscript(t *testing.T) {
 	engine := &stubEngine{result: asr.Result{
 		Text:     "帮我写个测试",
@@ -48,7 +62,7 @@ func TestPhoneSpeechMapsTheTranscript(t *testing.T) {
 	ag.SetTextRules(rules)
 	adapter := runtime.PhoneSpeech{Pipeline: ag.Speech()}
 
-	result, ok := adapter.TranscribeUtterance(context.Background(), make([]int16, 16000), phone.UtteranceMeta{
+	result, ok := adapter.TranscribeUtterance(context.Background(), audible(16000), phone.UtteranceMeta{
 		DeviceID: "phone-abc", Name: "Pixel", Address: "192.0.2.10",
 	})
 	if !ok {

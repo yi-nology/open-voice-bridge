@@ -87,7 +87,15 @@ func (c *captureSpy) paste(_ context.Context, text string) error {
 
 // testUtterance builds one second of silence at the default rate.
 func testUtterance(ref speech.SourceRef) speech.Utterance {
-	return speech.Utterance{Samples: make([]int16, core.SampleRate), SampleRate: core.SampleRate, Ref: ref}
+	samples := make([]int16, core.SampleRate)
+	for index := range samples {
+		if index%2 == 0 {
+			samples[index] = 800
+		} else {
+			samples[index] = -800
+		}
+	}
+	return speech.Utterance{Samples: samples, SampleRate: core.SampleRate, Ref: ref}
 }
 
 // testPipeline assembles the shared chain with spies for agent-side tests.

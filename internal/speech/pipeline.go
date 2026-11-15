@@ -148,6 +148,13 @@ func (p *Pipeline) Transcribe(parent context.Context, u Utterance) (Transcript, 
 	if len(u.Samples) < u.MinSamples() {
 		return Transcript{}, false
 	}
+	// A capture that never rises above room tone has nothing to transcribe.
+	// Cloud engines answer dead air with a confident short line ("你好。",
+	// "1234567890"), so a mis-tap would otherwise turn into a wrong sentence.
+	if !core.CarriesSpeech(u.Samples) {
+		log.Debug("capture is below the speech floor; not sending it to ASR")
+		return Transcript{}, false
+	}
 	engine := p.engine()
 	if engine == nil {
 		return Transcript{}, false
@@ -230,6 +237,11 @@ func (p *Pipeline) TranscribePartial(parent context.Context, u Utterance) (strin
 		parent = context.Background()
 	}
 	if len(u.Samples) < u.MinSamples() {
+		return "", asr.ErrNoSpeech
+	}
+	// Live partials run on short in-flight buffers, which is exactly where dead
+	// air turns into a hallucinated digit run; the same floor applies here.
+	if !core.CarriesSpeech(u.Samples) {
 		return "", asr.ErrNoSpeech
 	}
 	engine := p.engine()

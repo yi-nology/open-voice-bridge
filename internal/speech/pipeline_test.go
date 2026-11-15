@@ -67,7 +67,19 @@ func buildPipeline(engine asr.Engine, rules core.TextRules, probe *pipelineProbe
 	}
 }
 
-func oneSecond() []int16 { return make([]int16, core.SampleRate) }
+// oneSecond is a second of audible square wave: real captures always carry
+// some level, and an all-zero buffer is digital silence the pipeline drops.
+func oneSecond() []int16 {
+	samples := make([]int16, core.SampleRate)
+	for index := range samples {
+		if index%2 == 0 {
+			samples[index] = 800
+		} else {
+			samples[index] = -800
+		}
+	}
+	return samples
+}
 
 // utterance builds a 16 kHz capture, which is what every test here pretends the
 // source negotiated.
@@ -536,5 +548,51 @@ func TestTranscribePartialStaysOutOfTheWay(t *testing.T) {
 	transcripts, _ := probe.snapshot()
 	if len(transcripts) != 0 {
 		t.Fatalf("sink saw %+v during partial", transcripts)
+	}
+}
+
+// A capture of near-silence must not reach the model. Cloud ASR hallucinates a
+// short line on a fragment of dead air ("你好。", "1234567890"), so a mis-tap has
+// to produce nothing instead of a confident wrong sentence.
+func TestSilentCaptureIsNotTranscribed(t *testing.T) {
+	engine := &fakeEngine{result: asr.Result{Text: "1234567890", Provider: "fake"}}
+	probe := &pipelineProbe{}
+	rules, err := text.New(config.TextConfig{})
+	if err != nil {
+		t.Fatalf("rules: %v", err)
+	}
+	pipeline := buildPipeline(engine, rules, probe, false)
+	silent := make([]int16, core.MinUtterance(16000)*4)
+	if _, ok := pipeline.Transcribe(context.Background(), Utterance{Samples: silent, SampleRate: 16000}); ok {
+		t.Fatal("a silent capture must not produce a transcript")
+	}
+	if engine.calls != 0 {
+		t.Fatalf("ASR calls = %d, want 0 for silence", engine.calls)
+	}
+	if transcripts, pasted := probe.snapshot(); len(transcripts) != 0 || len(pasted) != 0 {
+		t.Fatalf("silence reached the sink/paste: %v %v", transcripts, pasted)
+	}
+}
+
+func TestAudibleCaptureIsStillTranscribed(t *testing.T) {
+	engine := &fakeEngine{result: asr.Result{Text: "ship it", Provider: "fake"}}
+	samples := make([]int16, core.MinUtterance(16000)*4)
+	for index := range samples {
+		if index%2 == 0 {
+			samples[index] = 600
+		} else {
+			samples[index] = -600
+		}
+	}
+	rules, err := text.New(config.TextConfig{})
+	if err != nil {
+		t.Fatalf("rules: %v", err)
+	}
+	pipeline := buildPipeline(engine, rules, &pipelineProbe{}, false)
+	if _, ok := pipeline.Transcribe(context.Background(), Utterance{Samples: samples, SampleRate: 16000}); !ok {
+		t.Fatal("audible audio must still be transcribed")
+	}
+	if engine.calls != 1 {
+		t.Fatalf("ASR calls = %d, want 1", engine.calls)
 	}
 }

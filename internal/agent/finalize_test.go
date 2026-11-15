@@ -30,8 +30,18 @@ func newFinalizeAgent(engine asr.Engine) *Agent {
 	return New(config.Config{PasteEnabled: false, MaxUtterance: 30}, engine, fakeSink{healthy: true})
 }
 
+// fillDictation buffers an audible square wave: an all-zero buffer is digital
+// silence, which the speech pipeline drops before it reaches ASR.
 func fillDictation(a *Agent, seconds int) {
-	a.dictation = make([]int16, seconds*core.SampleRate)
+	samples := make([]int16, seconds*core.SampleRate)
+	for index := range samples {
+		if index%2 == 0 {
+			samples[index] = 800
+		} else {
+			samples[index] = -800
+		}
+	}
+	a.dictation = samples
 }
 
 func assertNoTranscript(t *testing.T, a *Agent) {

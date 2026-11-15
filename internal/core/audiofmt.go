@@ -35,3 +35,21 @@ func MinUtterance(rate int) int {
 	}
 	return rate / 4
 }
+
+// SpeechFloor is the peak amplitude below which a capture carries no speech.
+// Cloud engines hallucinate a short line on dead air ("你好。", "1234567890")
+// and bill for it, so a capture that never rises above this is dropped rather
+// than transcribed.
+const SpeechFloor = 300
+
+// CarriesSpeech reports whether any sample is loud enough to be a word. The
+// peak is what matters, not the mean: one syllable inside a long silence is
+// still speech, while a whole capture of room tone is not.
+func CarriesSpeech(samples []int16) bool {
+	for _, sample := range samples {
+		if sample > SpeechFloor || sample < -SpeechFloor {
+			return true
+		}
+	}
+	return false
+}

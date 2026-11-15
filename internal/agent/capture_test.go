@@ -73,11 +73,11 @@ func TestInterleavedCapturesBecomeSeparateUtterances(t *testing.T) {
 	a.session = atvv.NewSession()
 
 	a.handleControl([]byte{atvv.OpAudioStart})
-	appendDictation(a, core.SampleRate, 0x11)
+	appendDictation(a, core.SampleRate, 0x1100)
 	a.handleControl([]byte{atvv.OpAudioStop})
 
 	a.handleControl([]byte{atvv.OpAudioStart})
-	appendDictation(a, 2*core.SampleRate, 0x22)
+	appendDictation(a, 2*core.SampleRate, 0x2200)
 	a.handleControl([]byte{atvv.OpAudioStop})
 
 	heard := engine.collect(t, 2)
@@ -87,10 +87,10 @@ func TestInterleavedCapturesBecomeSeparateUtterances(t *testing.T) {
 	// The reset used to rewind the same backing array and the copy used to run
 	// after the next capture had already written into it, which turned the pair
 	// into two copies of the second sentence (DOM-02).
-	if err := homogeneous(short, 0x11); err != nil {
+	if err := homogeneous(short, 0x1100); err != nil {
 		t.Fatalf("first capture: %v", err)
 	}
-	if err := homogeneous(long, 0x22); err != nil {
+	if err := homogeneous(long, 0x2200); err != nil {
 		t.Fatalf("second capture: %v", err)
 	}
 	if short.SampleRate != core.SampleRate || long.SampleRate != core.SampleRate {
@@ -179,12 +179,12 @@ func TestDrainedSamplesSurviveTheNextCapture(t *testing.T) {
 
 	a.handleControl([]byte{atvv.OpAudioStart})
 	const filled = core.SampleRate / 2
-	appendDictation(a, filled, 0x11)
+	appendDictation(a, filled, 0x1100)
 	a.handleControl([]byte{atvv.OpAudioStop})
 
 	// The request is blocked inside ASR while the next capture runs.
 	a.handleControl([]byte{atvv.OpAudioStart})
-	appendDictation(a, core.SampleRate, 0x22)
+	appendDictation(a, core.SampleRate, 0x2200)
 	close(engine.gate)
 
 	utterance := engine.next(t)
@@ -192,7 +192,7 @@ func TestDrainedSamplesSurviveTheNextCapture(t *testing.T) {
 		t.Fatalf("samples = %d, want the %d captured before the stop", len(utterance.Samples), filled)
 	}
 	for i, sample := range utterance.Samples {
-		if sample != 0x11 {
+		if sample != 0x1100 {
 			t.Fatalf("sample %d = %#x, want the drained capture untouched", i, sample)
 		}
 	}
@@ -208,7 +208,7 @@ func TestDisconnectTranscribesTheOpenCapture(t *testing.T) {
 	a.session = atvv.NewSession()
 
 	a.handleControl([]byte{atvv.OpAudioStart})
-	appendDictation(a, core.SampleRate/2, 0x11)
+	appendDictation(a, core.SampleRate/2, 0x1100)
 	a.markDisconnected()
 
 	utterance := engine.next(t)
@@ -231,7 +231,7 @@ func TestDisconnectDuringShutdownDropsTheCapture(t *testing.T) {
 	a.session = atvv.NewSession()
 
 	a.handleControl([]byte{atvv.OpAudioStart})
-	appendDictation(a, core.SampleRate/2, 0x11)
+	appendDictation(a, core.SampleRate/2, 0x1100)
 	a.markDisconnected()
 
 	engine.assertSilence(t)
@@ -247,7 +247,7 @@ func TestUtteranceCarriesTheNegotiatedRate(t *testing.T) {
 
 	a.handleControl([]byte{atvv.OpAudioStart})
 	// An 8 kHz second is half as many samples; the floor is rate-relative.
-	appendDictation(a, 8000, 0x01)
+	appendDictation(a, 8000, 0x0400)
 	a.handleControl([]byte{atvv.OpAudioStop})
 
 	utterance := engine.next(t)
