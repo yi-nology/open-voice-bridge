@@ -8,9 +8,15 @@
   was unreachable. A sidebar item owns it now (title, `?cfg=paste` and the
   loaders follow), and the hidden tablist is gone with its dead wiring.
 
-- Fixed: the wake capture claims the mic as its own source (P2-2) and every
-  transcript publish is non-blocking (P2-1) — see the agent fixes above for
-  the full story.
+- Fixed: two concurrency defects on the capture path. The wake capture now
+  claims the microphone as its own hub source (`wakeClaim`, P2-2) — it used
+  to force-acquire under the remote's id, so the voice button could not
+  preempt it (two captures interleaved text in the focused window) and a
+  wake hit could steal the mic from a phone; now a busy mic drops the hit
+  and a stronger claim preempts the capture. Commands and partials publish
+  transcripts non-blocking like dictation (P2-1) — the bare channel send
+  could hang the paste path when the subtitle stream filled or its reader
+  exited.
 
 - Changed: detail sweep on the glass console. Dead references to the
   pre-redesign chips / sidebar foot / crumb are deleted (they pointed at
