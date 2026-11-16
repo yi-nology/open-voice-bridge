@@ -17,6 +17,7 @@ import (
 
 	"github.com/oekit/concurrency/async"
 	"github.com/oekit/logx"
+	oeerrors "github.com/oekit/pkg/errors"
 )
 
 var log = logx.Delegating("audio")
@@ -148,7 +149,7 @@ func (p *pipeWireSink) ensureLoopLocked(ctx context.Context) error {
 		fmt.Sprintf("media.class=Audio/Source node.name=%s node.description=XiaoyaoMic", p.cfg.SourceName),
 	)
 	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("start pw-loopback: %w", err)
+		return oeerrors.Wrap(err, "start pw-loopback")
 	}
 	p.loop = cmd
 	// Wait briefly for the node to appear; a slow PipeWire must not fail startup,
@@ -183,7 +184,7 @@ func (p *pipeWireSink) ensurePlayerLocked(ctx context.Context) error {
 		return err
 	}
 	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("start pw-cat: %w", err)
+		return oeerrors.Wrap(err, "start pw-cat")
 	}
 	p.player = cmd
 	p.stdin = stdin

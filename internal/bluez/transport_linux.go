@@ -13,6 +13,7 @@ import (
 	"github.com/godbus/dbus/v5"
 	"github.com/oekit/concurrency/async"
 	"github.com/oekit/logx"
+	oeerrors "github.com/oekit/pkg/errors"
 
 	"github.com/yi-nology/open-voice-bridge/internal/atvv"
 )
@@ -69,7 +70,7 @@ func (t *Transport) Disconnected() <-chan struct{} { return t.disconnected }
 func (t *Transport) Connect(ctx context.Context) error {
 	conn, err := dbus.SystemBus()
 	if err != nil {
-		return fmt.Errorf("system bus: %w", err)
+		return oeerrors.Wrap(err, "system bus")
 	}
 
 	var devicePath dbus.ObjectPath
@@ -114,7 +115,7 @@ func (t *Transport) Connect(ctx context.Context) error {
 		call := device.Call("org.bluez.Device1.Connect", 0)
 		if call.Err != nil && !strings.Contains(call.Err.Error(), "AlreadyConnected") {
 			_ = conn.Close()
-			return fmt.Errorf("connect device: %w", call.Err)
+			return oeerrors.Wrap(call.Err, "connect device")
 		}
 	}
 
@@ -145,7 +146,7 @@ func (t *Transport) Connect(ctx context.Context) error {
 		dbus.WithMatchMember("PropertiesChanged"),
 	); err != nil {
 		_ = conn.Close()
-		return fmt.Errorf("subscribe D-Bus signals: %w", err)
+		return oeerrors.Wrap(err, "subscribe D-Bus signals")
 	}
 
 	// Publishing happens last and under mu: agent.Close may have run during the
@@ -185,7 +186,7 @@ func managedObjects(conn *dbus.Conn) (map[dbus.ObjectPath]map[string]map[string]
 		"org.freedesktop.DBus.ObjectManager.GetManagedObjects", 0,
 	)
 	if call.Err != nil {
-		return nil, fmt.Errorf("GetManagedObjects: %w", call.Err)
+		return nil, oeerrors.Wrap(call.Err, "GetManagedObjects")
 	}
 	if err := call.Store(&objects); err != nil {
 		return nil, err
@@ -277,7 +278,7 @@ func (t *Transport) Subscribe(audio, control func([]byte)) error {
 	for _, char := range []dbus.BusObject{audioChar, controlChar} {
 		call := char.Call("org.bluez.GattCharacteristic1.StartNotify", 0)
 		if call.Err != nil && !strings.Contains(call.Err.Error(), "Already") {
-			return fmt.Errorf("StartNotify: %w", call.Err)
+			return oeerrors.Wrap(call.Err, "StartNotify")
 		}
 	}
 	return nil
@@ -297,7 +298,7 @@ func (t *Transport) SubscribeKeys(fn func(source string, data []byte)) error {
 	for path, char := range reports {
 		call := char.Call("org.bluez.GattCharacteristic1.StartNotify", 0)
 		if call.Err != nil && !strings.Contains(call.Err.Error(), "Already") {
-			return fmt.Errorf("StartNotify %s: %w", path, call.Err)
+			return oeerrors.Wrap(call.Err, fmt.Sprintf("StartNotify %s", path))
 		}
 	}
 	return nil
@@ -320,7 +321,7 @@ func (t *Transport) WriteTX(data []byte) error {
 		call = tx.Call("org.bluez.GattCharacteristic1.WriteValue", 0, data, options)
 	}
 	if call.Err != nil {
-		return fmt.Errorf("WriteValue: %w", call.Err)
+		return oeerrors.Wrap(call.Err, "WriteValue")
 	}
 	return nil
 }

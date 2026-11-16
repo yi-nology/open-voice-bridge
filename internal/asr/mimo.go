@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	oeerrors "github.com/oekit/pkg/errors"
 	"github.com/yi-nology/open-voice-bridge/internal/atvv"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
@@ -40,7 +41,7 @@ type Mimo struct {
 func NewMimo(keyFile, model, language, baseURL string) (*Mimo, error) {
 	key, err := os.ReadFile(keyFile)
 	if err != nil {
-		return nil, fmt.Errorf("read MiMo API key: %w", err)
+		return nil, oeerrors.Wrap(err, "read MiMo API key")
 	}
 	apiKey := strings.TrimSpace(string(key))
 	if apiKey == "" {
@@ -124,7 +125,7 @@ func (m *Mimo) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := m.Client.Do(req)
 	if err != nil {
-		return Result{}, fmt.Errorf("MiMo request: %w", err)
+		return Result{}, oeerrors.Wrap(err, "MiMo request")
 	}
 	defer func() { _ = resp.Body.Close() }()
 	data, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
@@ -144,7 +145,7 @@ func (m *Mimo) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 		} `json:"choices"`
 	}
 	if err := json.Unmarshal(data, &parsed); err != nil {
-		return Result{}, fmt.Errorf("parse MiMo response: %w", err)
+		return Result{}, oeerrors.Wrap(err, "parse MiMo response")
 	}
 	if len(parsed.Choices) == 0 {
 		return Result{}, ErrNoSpeech

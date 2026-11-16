@@ -12,16 +12,17 @@ import (
 	"github.com/jezek/xgb"
 	"github.com/jezek/xgb/xproto"
 	"github.com/jezek/xgb/xtest"
+	oeerrors "github.com/oekit/pkg/errors"
 )
 
 func injectX11(ctx context.Context, text string) error {
 	if _, err := exec.LookPath("xsel"); err != nil {
-		return fmt.Errorf("xsel not installed: %w", err)
+		return oeerrors.Wrap(err, "xsel not installed")
 	}
 	set := exec.CommandContext(ctx, "xsel", "--clipboard", "--input")
 	set.Stdin = strings.NewReader(text)
 	if err := set.Run(); err != nil {
-		return fmt.Errorf("set clipboard: %w", err)
+		return oeerrors.Wrap(err, "set clipboard")
 	}
 	select {
 	case <-ctx.Done():
@@ -31,11 +32,11 @@ func injectX11(ctx context.Context, text string) error {
 
 	conn, err := xgb.NewConn()
 	if err != nil {
-		return fmt.Errorf("connect X display: %w", err)
+		return oeerrors.Wrap(err, "connect X display")
 	}
 	defer conn.Close()
 	if err := xtest.Init(conn); err != nil {
-		return fmt.Errorf("init XTEST: %w", err)
+		return oeerrors.Wrap(err, "init XTEST")
 	}
 	setup := xproto.Setup(conn)
 	screen := setup.DefaultScreen(conn)
@@ -43,7 +44,7 @@ func injectX11(ctx context.Context, text string) error {
 	count := byte(setup.MaxKeycode - setup.MinKeycode + 1)
 	reply, err := xproto.GetKeyboardMapping(conn, min, count).Reply()
 	if err != nil {
-		return fmt.Errorf("keyboard mapping: %w", err)
+		return oeerrors.Wrap(err, "keyboard mapping")
 	}
 	per := int(reply.KeysymsPerKeycode)
 	if per <= 0 {
@@ -75,7 +76,7 @@ func injectX11(ctx context.Context, text string) error {
 		{xproto.KeyRelease, ctrl},
 	} {
 		if err := xtest.FakeInputChecked(conn, event.kind, event.code, 0, screen.Root, 0, 0, 0).Check(); err != nil {
-			return fmt.Errorf("XTEST fake input: %w", err)
+			return oeerrors.Wrap(err, "XTEST fake input")
 		}
 	}
 	conn.Sync()

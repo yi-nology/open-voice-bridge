@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	oeerrors "github.com/oekit/pkg/errors"
 	"github.com/yi-nology/open-voice-bridge/internal/atvv"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
@@ -95,11 +96,11 @@ func (w *WhisperCPP) Transcribe(ctx context.Context, audio Audio) (Result, error
 	cmd.Stderr = &stderr
 	cmd.Stdout = io.Discard
 	if err := cmd.Run(); err != nil {
-		return Result{}, fmt.Errorf("whisper.cpp failed: %w (%s)", err, stderr.String())
+		return Result{}, oeerrors.Wrap(err, fmt.Sprintf("whisper.cpp failed (%s)", stderr.String()))
 	}
 	data, err := os.ReadFile(outBase + ".txt")
 	if err != nil {
-		return Result{}, fmt.Errorf("whisper.cpp output missing: %w", err)
+		return Result{}, oeerrors.Wrap(err, "whisper.cpp output missing")
 	}
 	text := strings.TrimSpace(string(data))
 	if text == "" {

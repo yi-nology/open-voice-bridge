@@ -2,6 +2,7 @@ package asr
 
 import (
 	"fmt"
+	oeerrors "github.com/oekit/pkg/errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -46,14 +47,14 @@ func guardBinary(path string) error {
 	}
 	resolved, err := filepath.EvalSymlinks(resolved)
 	if err != nil {
-		return fmt.Errorf("binary %q cannot be resolved: %w", path, err)
+		return oeerrors.Wrap(err, fmt.Sprintf("binary %q cannot be resolved", path))
 	}
 	if isInterpreterName(resolved) {
 		return fmt.Errorf("binary %q resolves to interpreter %q; the ASR command must be the recogniser itself", path, filepath.Base(resolved))
 	}
 	info, err := os.Stat(resolved)
 	if err != nil {
-		return fmt.Errorf("binary %q is not usable: %w", path, err)
+		return oeerrors.Wrap(err, fmt.Sprintf("binary %q is not usable", path))
 	}
 	if !info.Mode().IsRegular() {
 		return fmt.Errorf("binary %q is not a regular file", path)

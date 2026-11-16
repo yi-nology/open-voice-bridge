@@ -380,7 +380,7 @@ func (a *Agent) publishTranscript(transcript speech.Transcript) {
 func (a *Agent) Start(parent context.Context) error {
 	a.ctx, a.cancel = context.WithCancel(parent)
 	if err := a.watcher.Start(a.ctx); err != nil {
-		return fmt.Errorf("start voice-key watcher: %w", err)
+		return oeerrors.Wrap(err, "start voice-key watcher")
 	}
 	a.wg.Add(2)
 	async.GoSafe(func() {

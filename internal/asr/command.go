@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	oeerrors "github.com/oekit/pkg/errors"
 	"github.com/yi-nology/open-voice-bridge/internal/atvv"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
@@ -94,8 +95,7 @@ func (c *Command) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 		if logged != "" {
 			log.Debug("ASR command stderr", "binary", c.cfg.Binary, "stderr", logged)
 		}
-		return Result{}, fmt.Errorf("%s failed: %w (stderr %d bytes, see debug log)",
-			c.cfg.Binary, err, len(logged))
+		return Result{}, oeerrors.Wrap(err, fmt.Sprintf("%s failed (stderr %d bytes, see debug log)", c.cfg.Binary, len(logged)))
 	}
 	text := strings.TrimSpace(stdout.String())
 	if text == "" {

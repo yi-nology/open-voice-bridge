@@ -18,9 +18,8 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/binary"
-	"errors"
-	"fmt"
 
+	oeerrors "github.com/oekit/pkg/errors"
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -35,7 +34,7 @@ const (
 
 // ErrWrongPassphrase reports an authentication failure — a wrong passphrase
 // or a tampered ciphertext, which GCM cannot tell apart.
-var ErrWrongPassphrase = errors.New("wrong passphrase or corrupted diagnostics pack")
+var ErrWrongPassphrase = oeerrors.New("wrong passphrase or corrupted diagnostics pack")
 
 // Seal encrypts plaintext under passphrase at the default work factor.
 func Seal(plaintext []byte, passphrase string) ([]byte, error) {
@@ -44,15 +43,15 @@ func Seal(plaintext []byte, passphrase string) ([]byte, error) {
 
 func seal(plaintext []byte, passphrase string, iters int) ([]byte, error) {
 	if passphrase == "" {
-		return nil, errors.New("empty passphrase")
+		return nil, oeerrors.New("empty passphrase")
 	}
 	salt := make([]byte, saltLen)
 	if _, err := rand.Read(salt); err != nil {
-		return nil, fmt.Errorf("salt: %w", err)
+		return nil, oeerrors.Wrap(err, "salt")
 	}
 	nonce := make([]byte, nonceLen)
 	if _, err := rand.Read(nonce); err != nil {
-		return nil, fmt.Errorf("nonce: %w", err)
+		return nil, oeerrors.Wrap(err, "nonce")
 	}
 	out := make([]byte, headerLen, headerLen+len(plaintext)+16)
 	copy(out, magic)
@@ -76,13 +75,13 @@ func seal(plaintext []byte, passphrase string, iters int) ([]byte, error) {
 // stay readable after the work factor is raised.
 func Open(pack []byte, passphrase string) ([]byte, error) {
 	if len(pack) < headerLen+16 || string(pack[:8]) != magic {
-		return nil, errors.New("not an OVBDIA1 diagnostics pack")
+		return nil, oeerrors.New("not an OVBDIA1 diagnostics pack")
 	}
 	salt := pack[8:24]
 	nonce := pack[24:36]
 	iters := binary.BigEndian.Uint32(pack[36:40])
 	if iters == 0 || iters > 10_000_000 {
-		return nil, errors.New("implausible PBKDF2 iteration count")
+		return nil, oeerrors.New("implausible PBKDF2 iteration count")
 	}
 	key := pbkdf2.Key([]byte(passphrase), salt, int(iters), keyLen, sha256.New)
 	block, err := aes.NewCipher(key)

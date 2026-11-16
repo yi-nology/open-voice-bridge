@@ -4,10 +4,10 @@ package device
 import (
 	"embed"
 	"encoding/json"
-	"fmt"
 	"strings"
 	"sync"
 
+	oeerrors "github.com/oekit/pkg/errors"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
@@ -58,10 +58,10 @@ func loadBuiltin() (*Registry, error) {
 		}
 		var profile Profile
 		if err := json.Unmarshal(data, &profile); err != nil {
-			return nil, fmt.Errorf("%s: %w", entry.Name(), err)
+			return nil, oeerrors.Wrap(err, entry.Name())
 		}
 		if err := profile.Validate(); err != nil {
-			return nil, fmt.Errorf("%s: %w", entry.Name(), err)
+			return nil, oeerrors.Wrap(err, entry.Name())
 		}
 		registry.order = append(registry.order, profile.ID)
 		registry.byID[profile.ID] = profile

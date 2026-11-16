@@ -79,7 +79,7 @@ func Validate(mapping map[string]string) error {
 			return fmt.Errorf("unknown key %q", key)
 		}
 		if err := validateAction(action); err != nil {
-			return fmt.Errorf("key %q: %w", key, err)
+			return oeerrors.Wrap(err, fmt.Sprintf("key %q", key))
 		}
 	}
 	return nil
@@ -239,7 +239,7 @@ func Load(path string) (map[string]string, error) {
 	}
 	var mapping map[string]string
 	if err := json.Unmarshal(data, &mapping); err != nil {
-		return nil, fmt.Errorf("parse mapping: %w", err)
+		return nil, oeerrors.Wrap(err, "parse mapping")
 	}
 	mapping = MergeDefaults(mapping)
 	if err := Validate(mapping); err != nil {

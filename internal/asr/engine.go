@@ -2,7 +2,6 @@ package asr
 
 import (
 	"context"
-	"fmt"
 	oeerrors "github.com/oekit/pkg/errors"
 	"strings"
 	"sync"
@@ -88,7 +87,7 @@ func (c *Chain) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 		}
 		if err != nil {
 			log.Warn("ASR provider failed", "provider", engine.Name(), "err", err)
-			failures = append(failures, fmt.Errorf("%s: %w", engine.Name(), err))
+			failures = append(failures, oeerrors.Wrap(err, engine.Name()))
 			continue
 		}
 		result.Provider = engine.Name()

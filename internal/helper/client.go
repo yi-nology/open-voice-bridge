@@ -12,6 +12,7 @@ import (
 
 	"github.com/oekit/concurrency/async"
 	"github.com/oekit/logx"
+	oeerrors "github.com/oekit/pkg/errors"
 
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
@@ -57,7 +58,7 @@ func (c *Client) Call(ctx context.Context, payload core.HelperRequest) (core.Hel
 	}
 	var response core.HelperResponse
 	if err := json.Unmarshal(line, &response); err != nil {
-		return core.HelperResponse{}, fmt.Errorf("decode helper response: %w", err)
+		return core.HelperResponse{}, oeerrors.Wrap(err, "decode helper response")
 	}
 	return response, nil
 }

@@ -2,7 +2,7 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
+	oeerrors "github.com/oekit/pkg/errors"
 	"os"
 )
 
@@ -54,7 +54,7 @@ func readConfig(path string) (Config, loadState, error) {
 	cfg.Devices = nil
 	cfg.ActiveDevice = ""
 	if err := json.Unmarshal(data, &cfg); err != nil {
-		return cfg, statePresent, fmt.Errorf("parse config: %w", err)
+		return cfg, statePresent, oeerrors.Wrap(err, "parse config")
 	}
 	cfg.normalizeASR()
 	cfg.normalizeLLM()
@@ -64,7 +64,7 @@ func readConfig(path string) (Config, loadState, error) {
 	cfg.normalizeDevices()
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(data, &raw); err != nil {
-		return cfg, statePresent, fmt.Errorf("parse config: %w", err)
+		return cfg, statePresent, oeerrors.Wrap(err, "parse config")
 	}
 	_, hasASR := raw["asr"]
 	_, hasKeymap := raw["keymap"]

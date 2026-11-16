@@ -284,7 +284,7 @@ func Load(path string) (Config, error) {
 	case stateOutdated:
 		// Migrate older configs so the new sections are visible/editable.
 		if err := writeConfig(path, cfg); err != nil {
-			return cfg, fmt.Errorf("migrate config: %w", err)
+			return cfg, oeerrors.Wrap(err, "migrate config")
 		}
 	}
 	if err := cfg.Validate(); err != nil {
@@ -436,7 +436,7 @@ func (c Config) Validate() error {
 	}
 	host, port, err := net.SplitHostPort(c.UIAddr)
 	if err != nil {
-		return fmt.Errorf("invalid ui_addr: %w", err)
+		return oeerrors.Wrap(err, "invalid ui_addr")
 	}
 	switch host {
 	case "127.0.0.1", "localhost", "::1":
@@ -529,7 +529,7 @@ func (c Config) Validate() error {
 func (c Config) validatePhone() error {
 	phoneHost, phonePort, err := net.SplitHostPort(c.Phone.Addr)
 	if err != nil {
-		return fmt.Errorf("invalid phone.addr: %w", err)
+		return oeerrors.Wrap(err, "invalid phone.addr")
 	}
 	if value, err := strconv.Atoi(phonePort); err != nil || value < 1 || value > 65535 {
 		return fmt.Errorf("invalid phone.addr port %q", phonePort)

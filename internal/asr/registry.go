@@ -91,7 +91,7 @@ func Build(cfg config.ASRConfig) (Engine, error) {
 	var buildErr error
 	primary, err := buildProvider(cfg.Provider, cfg)
 	if err != nil {
-		buildErr = oeerrors.Append(buildErr, fmt.Errorf("primary ASR %q: %w", cfg.Provider, err))
+		buildErr = oeerrors.Append(buildErr, oeerrors.Wrap(err, fmt.Sprintf("primary ASR %q", cfg.Provider)))
 		log.Warn("ASR primary disabled", "provider", cfg.Provider, "err", err)
 	} else {
 		engines = append(engines, primary)
@@ -105,7 +105,7 @@ func Build(cfg config.ASRConfig) (Engine, error) {
 		seen[name] = true
 		engine, err := buildProvider(name, cfg)
 		if err != nil {
-			buildErr = oeerrors.Append(buildErr, fmt.Errorf("ASR fallback %q: %w", name, err))
+			buildErr = oeerrors.Append(buildErr, oeerrors.Wrap(err, fmt.Sprintf("ASR fallback %q", name)))
 			log.Warn("ASR fallback disabled", "provider", name, "err", err)
 			continue
 		}
@@ -115,7 +115,7 @@ func Build(cfg config.ASRConfig) (Engine, error) {
 		if buildErr == nil {
 			buildErr = oeerrors.New("no ASR providers configured")
 		}
-		return nil, fmt.Errorf("no ASR provider could be built: %w", buildErr)
+		return nil, oeerrors.Wrap(buildErr, "no ASR provider could be built")
 	}
 	log.Info("ASR chain ready", "providers", engineNames(engines))
 	return NewChain(engines...), nil
@@ -251,7 +251,7 @@ func readSecret(path string) (string, error) {
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return "", fmt.Errorf("read API key %s: %w", path, err)
+		return "", oeerrors.Wrap(err, fmt.Sprintf("read API key %s", path))
 	}
 	return strings.TrimSpace(string(data)), nil
 }
@@ -290,5 +290,5 @@ func (u *unavailable) Local() bool                 { return false }
 func (u *unavailable) Close(context.Context) error { return nil }
 
 func (u *unavailable) Transcribe(context.Context, Audio) (Result, error) {
-	return Result{}, fmt.Errorf("ASR unavailable: %w", u.err)
+	return Result{}, oeerrors.Wrap(u.err, "ASR unavailable")
 }

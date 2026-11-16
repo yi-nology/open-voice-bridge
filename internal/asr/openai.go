@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	oeerrors "github.com/oekit/pkg/errors"
 	"github.com/yi-nology/open-voice-bridge/internal/atvv"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/redact"
@@ -106,7 +107,7 @@ func (o *OpenAI) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 	}
 	resp, err := o.client.Do(req)
 	if err != nil {
-		return Result{}, fmt.Errorf("transcription request: %w", err)
+		return Result{}, oeerrors.Wrap(err, "transcription request")
 	}
 	defer func() { _ = resp.Body.Close() }()
 	data, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
@@ -120,7 +121,7 @@ func (o *OpenAI) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 		Text string `json:"text"`
 	}
 	if err := json.Unmarshal(data, &parsed); err != nil {
-		return Result{}, fmt.Errorf("parse transcription: %w", err)
+		return Result{}, oeerrors.Wrap(err, "parse transcription")
 	}
 	text := strings.TrimSpace(parsed.Text)
 	if text == "" {

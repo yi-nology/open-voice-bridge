@@ -98,7 +98,7 @@ func (o *OpenAI) processWithMode(ctx context.Context, text, mode string) (string
 	}
 	resp, err := o.client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("llm request: %w", err)
+		return "", oeerrors.Wrap(err, "llm request")
 	}
 	defer func() { _ = resp.Body.Close() }()
 	data, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
@@ -119,7 +119,7 @@ func (o *OpenAI) processWithMode(ctx context.Context, text, mode string) (string
 		} `json:"choices"`
 	}
 	if err := json.Unmarshal(data, &parsed); err != nil {
-		return "", fmt.Errorf("parse llm response: %w", err)
+		return "", oeerrors.Wrap(err, "parse llm response")
 	}
 	if len(parsed.Choices) == 0 {
 		return "", oeerrors.New("llm returned no choices")
