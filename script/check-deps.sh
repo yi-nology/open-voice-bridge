@@ -36,7 +36,9 @@ while IFS='|' read -r pkg imports; do
   pkg="${pkg#"$MOD"/}"; [ "$pkg" = "$MOD" ] && pkg=main
   srcs=0
   IFS=',' read -ra imps <<< "$imports"
-  for imp in "${imps[@]}"; do
+  # ${arr[@]+"${arr[@]}"} keeps bash 3.2 (macOS) happy under `set -u` when the
+  # package has no imports and the array stays empty.
+  for imp in ${imps[@]+"${imps[@]}"}; do
     imp="${imp#"$MOD"/}"; [ "$imp" = "$MOD" ] && imp=main
     case "$imp" in main|app/*|biz/*|edge/*|internal/*|web) ;; *) continue ;; esac
 
