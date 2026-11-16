@@ -8,7 +8,7 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/json"
-	oeerrors "github.com/oekit/pkg/errors"
+	"fmt"
 	"net"
 	"os"
 	"regexp"
@@ -96,7 +96,7 @@ func New(cfg Config) *Daemon {
 func (d *Daemon) Run(ctx context.Context) error {
 	mapping, err := Load(d.cfg.MappingPath)
 	if err != nil {
-		return oeerrors.Errorf("load mapping: %w", err)
+		return fmt.Errorf("load mapping: %w", err)
 	}
 	d.mapping = mapping
 	d.loadKeyCounts()
@@ -108,7 +108,7 @@ func (d *Daemon) Run(ctx context.Context) error {
 
 	keyboard, err := uinput.CreateKeyboard("/dev/uinput", []byte("xiaoyao virtual keyboard"))
 	if err != nil {
-		return oeerrors.Errorf("create uinput keyboard: %w", err)
+		return fmt.Errorf("create uinput keyboard: %w", err)
 	}
 	d.kb = keyboard
 	listener, err := d.listen()
@@ -167,7 +167,7 @@ func (d *Daemon) listen() (net.Listener, error) {
 	}
 	listener, err := net.Listen("unix", d.cfg.SocketPath)
 	if err != nil {
-		return nil, oeerrors.Errorf("listen %s: %w", d.cfg.SocketPath, err)
+		return nil, fmt.Errorf("listen %s: %w", d.cfg.SocketPath, err)
 	}
 	if err := os.Chmod(d.cfg.SocketPath, 0o660); err != nil {
 		_ = listener.Close()

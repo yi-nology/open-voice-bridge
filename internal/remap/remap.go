@@ -76,10 +76,10 @@ func MergeDefaults(mapping map[string]string) map[string]string {
 func Validate(mapping map[string]string) error {
 	for key, action := range mapping {
 		if _, ok := SourceCodes[key]; !ok {
-			return oeerrors.Errorf("unknown key %q", key)
+			return fmt.Errorf("unknown key %q", key)
 		}
 		if err := validateAction(action); err != nil {
-			return oeerrors.Errorf("key %q: %w", key, err)
+			return fmt.Errorf("key %q: %w", key, err)
 		}
 	}
 	return nil
@@ -96,11 +96,11 @@ func validateAction(action string) error {
 	if strings.HasPrefix(action, "macro(") && strings.HasSuffix(action, ")") {
 		tokens := macroTokens(action)
 		if len(tokens) == 0 {
-			return oeerrors.Errorf("empty macro")
+			return fmt.Errorf("empty macro")
 		}
 		for _, token := range tokens {
 			if _, ok := MacroTokens[token]; !ok {
-				return oeerrors.Errorf("unknown macro token %q", token)
+				return fmt.Errorf("unknown macro token %q", token)
 			}
 		}
 		return nil
@@ -109,7 +109,7 @@ func validateAction(action string) error {
 		_, err := ParseSeq(action)
 		return err
 	}
-	return oeerrors.Errorf("unknown action %q", action)
+	return fmt.Errorf("unknown action %q", action)
 }
 
 func macroTokens(action string) []string {
@@ -239,7 +239,7 @@ func Load(path string) (map[string]string, error) {
 	}
 	var mapping map[string]string
 	if err := json.Unmarshal(data, &mapping); err != nil {
-		return nil, oeerrors.Errorf("parse mapping: %w", err)
+		return nil, fmt.Errorf("parse mapping: %w", err)
 	}
 	mapping = MergeDefaults(mapping)
 	if err := Validate(mapping); err != nil {
@@ -358,14 +358,14 @@ func ParseSeq(action string) ([]SeqStep, error) {
 		if inner, ok := seqCall(token, "agent"); ok {
 			slot, err := strconv.Atoi(inner)
 			if err != nil || slot < 0 || slot >= AgentActionSlots {
-				return nil, oeerrors.Errorf("seq step %q: bad agent slot", token)
+				return nil, fmt.Errorf("seq step %q: bad agent slot", token)
 			}
 			steps = append(steps, SeqStep{Codes: []int{AgentActionBase + slot}})
 			continue
 		}
 		if ms, err := strconv.Atoi(token); err == nil {
 			if ms < 0 || ms > 2000 {
-				return nil, oeerrors.Errorf("seq delay %d out of range 0..2000", ms)
+				return nil, fmt.Errorf("seq delay %d out of range 0..2000", ms)
 			}
 			steps = append(steps, SeqStep{Delay: time.Duration(ms) * time.Millisecond})
 			continue
@@ -373,7 +373,7 @@ func ParseSeq(action string) ([]SeqStep, error) {
 		if strings.HasPrefix(token, "macro(") && strings.HasSuffix(token, ")") {
 			codes, ok := MacroTokenCodes(token)
 			if !ok || len(codes) == 0 {
-				return nil, oeerrors.Errorf("seq step %q: bad macro", token)
+				return nil, fmt.Errorf("seq step %q: bad macro", token)
 			}
 			steps = append(steps, SeqStep{Codes: codes})
 			continue
@@ -383,7 +383,7 @@ func ParseSeq(action string) ([]SeqStep, error) {
 			code, ok = SourceCodes[token]
 		}
 		if !ok {
-			return nil, oeerrors.Errorf("seq step %q: unknown action", token)
+			return nil, fmt.Errorf("seq step %q: unknown action", token)
 		}
 		steps = append(steps, SeqStep{Codes: []int{code}})
 	}

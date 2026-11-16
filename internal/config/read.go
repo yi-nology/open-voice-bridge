@@ -2,9 +2,8 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
-
-	oeerrors "github.com/oekit/pkg/errors"
 )
 
 // Read parses and validates without creating or migrating anything. An absent
@@ -55,7 +54,7 @@ func readConfig(path string) (Config, loadState, error) {
 	cfg.Devices = nil
 	cfg.ActiveDevice = ""
 	if err := json.Unmarshal(data, &cfg); err != nil {
-		return cfg, statePresent, oeerrors.Errorf("parse config: %w", err)
+		return cfg, statePresent, fmt.Errorf("parse config: %w", err)
 	}
 	cfg.normalizeASR()
 	cfg.normalizeLLM()
@@ -65,7 +64,7 @@ func readConfig(path string) (Config, loadState, error) {
 	cfg.normalizeDevices()
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(data, &raw); err != nil {
-		return cfg, statePresent, oeerrors.Errorf("parse config: %w", err)
+		return cfg, statePresent, fmt.Errorf("parse config: %w", err)
 	}
 	_, hasASR := raw["asr"]
 	_, hasKeymap := raw["keymap"]

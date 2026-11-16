@@ -5,6 +5,7 @@
 package appconfig
 
 import (
+	"fmt"
 	oeerrors "github.com/oekit/pkg/errors"
 
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
@@ -90,7 +91,7 @@ func Validate(cfg config.Config) error {
 	}
 	for _, item := range cfg.Devices {
 		if _, ok := device.Builtin().Get(item.Profile); !ok {
-			return oeerrors.Errorf("device %q: unknown profile %q", item.ID, item.Profile)
+			return fmt.Errorf("device %q: unknown profile %q", item.ID, item.Profile)
 		}
 	}
 	return nil

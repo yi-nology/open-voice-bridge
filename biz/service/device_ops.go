@@ -3,6 +3,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"github.com/oekit/concurrency/async"
 	oeerrors "github.com/oekit/pkg/errors"
 	"github.com/yi-nology/open-voice-bridge/internal/config"
@@ -22,17 +23,17 @@ func (s *Service) SelectDevice(ctx context.Context, id string) error {
 	}
 	if index < 0 {
 		s.cfgMu.Unlock()
-		return oeerrors.Errorf("unknown device %q", id)
+		return fmt.Errorf("unknown device %q", id)
 	}
 	item := s.cfg.Devices[index]
 	if !item.Enabled {
 		s.cfgMu.Unlock()
-		return oeerrors.Errorf("device %q is disabled", id)
+		return fmt.Errorf("device %q is disabled", id)
 	}
 	profile, ok := s.ops.Devices.Get(item.Profile)
 	if !ok || !profile.HasCapability("voice") {
 		s.cfgMu.Unlock()
-		return oeerrors.Errorf("device %q does not support voice", id)
+		return fmt.Errorf("device %q does not support voice", id)
 	}
 	snapshot := s.configSnapshotLocked()
 	snapshot.ActiveDevice = id
@@ -60,11 +61,11 @@ func (s *Service) SetDeviceEnabled(ctx context.Context, id string, enabled bool)
 	}
 	if index < 0 {
 		s.cfgMu.Unlock()
-		return oeerrors.Errorf("unknown device %q", id)
+		return fmt.Errorf("unknown device %q", id)
 	}
 	if !enabled && s.cfg.ActiveDevice == id {
 		s.cfgMu.Unlock()
-		return oeerrors.Errorf("select another device before disabling %q", id)
+		return fmt.Errorf("select another device before disabling %q", id)
 	}
 	snapshot := s.configSnapshotLocked()
 	snapshot.Devices[index].Enabled = enabled
@@ -94,17 +95,17 @@ func (s *Service) ConnectDevice(ctx context.Context, id string, connect bool) er
 	active := s.cfg.ActiveDevice == id
 	s.cfgMu.RUnlock()
 	if !found {
-		return oeerrors.Errorf("unknown device %q", id)
+		return fmt.Errorf("unknown device %q", id)
 	}
 	if !item.Enabled {
-		return oeerrors.Errorf("device %q is disabled", id)
+		return fmt.Errorf("device %q is disabled", id)
 	}
 	profile, _ := s.ops.Devices.Get(item.Profile)
 	if connect && active && profile.HasCapability("voice") {
 		return s.agent.SetAddress(item.Address)
 	}
 	if !connect && active {
-		return oeerrors.Errorf("select another device before disconnecting %q", id)
+		return fmt.Errorf("select another device before disconnecting %q", id)
 	}
 	if connect {
 		if err := s.ops.Connect(ctx, item.Address); err != nil && !strings.Contains(err.Error(), "Already Connected") {
@@ -127,7 +128,7 @@ func (s *Service) SaveDevice(ctx context.Context, item config.DeviceConfig) erro
 		item.Profile = "rc003"
 	}
 	if _, ok := s.ops.Devices.Get(item.Profile); !ok {
-		return oeerrors.Errorf("unknown device profile %q", item.Profile)
+		return fmt.Errorf("unknown device profile %q", item.Profile)
 	}
 	if item.ID == "" {
 		return oeerrors.New("device id is required")
@@ -171,7 +172,7 @@ func (s *Service) DeleteDevice(ctx context.Context, id string) error {
 	s.cfgMu.Lock()
 	if s.cfg.ActiveDevice == id {
 		s.cfgMu.Unlock()
-		return oeerrors.Errorf("select another device before deleting %q", id)
+		return fmt.Errorf("select another device before deleting %q", id)
 	}
 	if len(s.cfg.Devices) <= 1 {
 		s.cfgMu.Unlock()
@@ -186,7 +187,7 @@ func (s *Service) DeleteDevice(ctx context.Context, id string) error {
 	}
 	if !found {
 		s.cfgMu.Unlock()
-		return oeerrors.Errorf("unknown device %q", id)
+		return fmt.Errorf("unknown device %q", id)
 	}
 	snapshot := s.configSnapshotLocked()
 	for i := range snapshot.Devices {

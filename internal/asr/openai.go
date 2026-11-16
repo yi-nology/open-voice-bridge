@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	oeerrors "github.com/oekit/pkg/errors"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net"
@@ -40,7 +40,7 @@ func NewOpenAI(cfg OpenAIConfig) (*OpenAI, error) {
 	}
 	parsed, err := url.Parse(cfg.BaseURL)
 	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
-		return nil, oeerrors.Errorf("invalid OpenAI-compatible base_url %q", cfg.BaseURL)
+		return nil, fmt.Errorf("invalid OpenAI-compatible base_url %q", cfg.BaseURL)
 	}
 	cfg.BaseURL = strings.TrimRight(cfg.BaseURL, "/")
 	if cfg.Model == "" {
@@ -106,7 +106,7 @@ func (o *OpenAI) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 	}
 	resp, err := o.client.Do(req)
 	if err != nil {
-		return Result{}, oeerrors.Errorf("transcription request: %w", err)
+		return Result{}, fmt.Errorf("transcription request: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 	data, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
@@ -114,13 +114,13 @@ func (o *OpenAI) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 		return Result{}, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return Result{}, oeerrors.Errorf("transcription HTTP %d%s", resp.StatusCode, redact.ProviderSuffix(data))
+		return Result{}, fmt.Errorf("transcription HTTP %d%s", resp.StatusCode, redact.ProviderSuffix(data))
 	}
 	var parsed struct {
 		Text string `json:"text"`
 	}
 	if err := json.Unmarshal(data, &parsed); err != nil {
-		return Result{}, oeerrors.Errorf("parse transcription: %w", err)
+		return Result{}, fmt.Errorf("parse transcription: %w", err)
 	}
 	text := strings.TrimSpace(parsed.Text)
 	if text == "" {

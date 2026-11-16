@@ -5,7 +5,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	oeerrors "github.com/oekit/pkg/errors"
+	"fmt"
 	"net"
 	"sync"
 	"time"
@@ -57,7 +57,7 @@ func (c *Client) Call(ctx context.Context, payload core.HelperRequest) (core.Hel
 	}
 	var response core.HelperResponse
 	if err := json.Unmarshal(line, &response); err != nil {
-		return core.HelperResponse{}, oeerrors.Errorf("decode helper response: %w", err)
+		return core.HelperResponse{}, fmt.Errorf("decode helper response: %w", err)
 	}
 	return response, nil
 }
@@ -71,7 +71,7 @@ func (c *Client) Inject(ctx context.Context, key string, value int) error {
 		return err
 	}
 	if !response.OK {
-		return oeerrors.Errorf("inject %q rejected: %v", key, response.Error)
+		return fmt.Errorf("inject %q rejected: %v", key, response.Error)
 	}
 	return nil
 }
@@ -112,7 +112,7 @@ func (c *Client) StartCapture(ctx context.Context) (*Capture, error) {
 	}
 	if !first.OK {
 		_ = conn.Close()
-		return nil, oeerrors.Errorf("capture start failed: %v", first.Error)
+		return nil, fmt.Errorf("capture start failed: %v", first.Error)
 	}
 	if err := conn.SetDeadline(time.Time{}); err != nil {
 		_ = conn.Close()

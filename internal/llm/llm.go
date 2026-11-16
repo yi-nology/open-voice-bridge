@@ -3,6 +3,7 @@ package llm
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -35,7 +36,7 @@ func Build(cfg config.LLMConfig) (Processor, error) {
 	if path := strings.TrimSpace(cfg.APIKeyFile); path != "" {
 		data, err := os.ReadFile(path)
 		if err != nil {
-			return nil, oeerrors.Errorf("read llm API key: %w", err)
+			return nil, fmt.Errorf("read llm API key: %w", err)
 		}
 		key = strings.TrimSpace(string(data))
 		if key == "" {

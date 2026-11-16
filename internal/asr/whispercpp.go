@@ -2,7 +2,7 @@ package asr
 
 import (
 	"context"
-	oeerrors "github.com/oekit/pkg/errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -36,7 +36,7 @@ func NewWhisperCPP(cfg WhisperCPPConfig) (*WhisperCPP, error) {
 		return nil, err
 	}
 	if cfg.ModelPath == "" {
-		return nil, oeerrors.Errorf("whisper.cpp model_path is required")
+		return nil, fmt.Errorf("whisper.cpp model_path is required")
 	}
 	if cfg.Timeout <= 0 {
 		cfg.Timeout = 120 * time.Second
@@ -95,11 +95,11 @@ func (w *WhisperCPP) Transcribe(ctx context.Context, audio Audio) (Result, error
 	cmd.Stderr = &stderr
 	cmd.Stdout = io.Discard
 	if err := cmd.Run(); err != nil {
-		return Result{}, oeerrors.Errorf("whisper.cpp failed: %w (%s)", err, stderr.String())
+		return Result{}, fmt.Errorf("whisper.cpp failed: %w (%s)", err, stderr.String())
 	}
 	data, err := os.ReadFile(outBase + ".txt")
 	if err != nil {
-		return Result{}, oeerrors.Errorf("whisper.cpp output missing: %w", err)
+		return Result{}, fmt.Errorf("whisper.cpp output missing: %w", err)
 	}
 	text := strings.TrimSpace(string(data))
 	if text == "" {

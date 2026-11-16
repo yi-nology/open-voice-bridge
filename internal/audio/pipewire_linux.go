@@ -8,7 +8,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	oeerrors "github.com/oekit/pkg/errors"
 	"io"
 	"os/exec"
 	"strings"
@@ -149,7 +148,7 @@ func (p *pipeWireSink) ensureLoopLocked(ctx context.Context) error {
 		fmt.Sprintf("media.class=Audio/Source node.name=%s node.description=XiaoyaoMic", p.cfg.SourceName),
 	)
 	if err := cmd.Start(); err != nil {
-		return oeerrors.Errorf("start pw-loopback: %w", err)
+		return fmt.Errorf("start pw-loopback: %w", err)
 	}
 	p.loop = cmd
 	// Wait briefly for the node to appear; a slow PipeWire must not fail startup,
@@ -184,7 +183,7 @@ func (p *pipeWireSink) ensurePlayerLocked(ctx context.Context) error {
 		return err
 	}
 	if err := cmd.Start(); err != nil {
-		return oeerrors.Errorf("start pw-cat: %w", err)
+		return fmt.Errorf("start pw-cat: %w", err)
 	}
 	p.player = cmd
 	p.stdin = stdin
@@ -211,7 +210,7 @@ func (p *pipeWireSink) writeBoundedLocked(data []byte) error {
 	case err := <-done:
 		return err
 	case <-time.After(playerWriteTimeout):
-		return oeerrors.Errorf("pw-cat stdin write timed out after %s", playerWriteTimeout)
+		return fmt.Errorf("pw-cat stdin write timed out after %s", playerWriteTimeout)
 	}
 }
 

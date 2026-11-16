@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -155,11 +156,11 @@ func (s *Store) Revoke(id string) error {
 	item, ok := s.tokens[id]
 	if !ok {
 		s.mu.Unlock()
-		return oeerrors.Errorf("unknown token %q", id)
+		return fmt.Errorf("unknown token %q", id)
 	}
 	if item.Revoked {
 		s.mu.Unlock()
-		return oeerrors.Errorf("token %q is already revoked", id)
+		return fmt.Errorf("token %q is already revoked", id)
 	}
 	item.Revoked = true
 	items := s.snapshotLocked()

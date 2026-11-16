@@ -3,6 +3,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	oeerrors "github.com/oekit/pkg/errors"
 	"maps"
 	"net"
@@ -283,7 +284,7 @@ func Load(path string) (Config, error) {
 	case stateOutdated:
 		// Migrate older configs so the new sections are visible/editable.
 		if err := writeConfig(path, cfg); err != nil {
-			return cfg, oeerrors.Errorf("migrate config: %w", err)
+			return cfg, fmt.Errorf("migrate config: %w", err)
 		}
 	}
 	if err := cfg.Validate(); err != nil {
@@ -431,34 +432,34 @@ func (c Config) Clone() Config {
 
 func (c Config) Validate() error {
 	if !macPattern.MatchString(c.Address) {
-		return oeerrors.Errorf("invalid Bluetooth address %q", c.Address)
+		return fmt.Errorf("invalid Bluetooth address %q", c.Address)
 	}
 	host, port, err := net.SplitHostPort(c.UIAddr)
 	if err != nil {
-		return oeerrors.Errorf("invalid ui_addr: %w", err)
+		return fmt.Errorf("invalid ui_addr: %w", err)
 	}
 	switch host {
 	case "127.0.0.1", "localhost", "::1":
 	default:
-		return oeerrors.Errorf("ui_addr must bind to loopback, got %q", host)
+		return fmt.Errorf("ui_addr must bind to loopback, got %q", host)
 	}
 	if value, err := strconv.Atoi(port); err != nil || value < 1 || value > 65535 {
-		return oeerrors.Errorf("invalid ui_addr port %q", port)
+		return fmt.Errorf("invalid ui_addr port %q", port)
 	}
 	if c.MaxUtterance < core.MinUtteranceSeconds || c.MaxUtterance > core.MaxUtteranceSeconds {
-		return oeerrors.Errorf("max_utterance_seconds must be %d..%d", core.MinUtteranceSeconds, core.MaxUtteranceSeconds)
+		return fmt.Errorf("max_utterance_seconds must be %d..%d", core.MinUtteranceSeconds, core.MaxUtteranceSeconds)
 	}
 	if c.LookbackSeconds != 0 && (c.LookbackSeconds < core.MinLookbackSeconds || c.LookbackSeconds > core.MaxLookbackSeconds) {
-		return oeerrors.Errorf("lookback_seconds must be %d..%d (0 = default), got %d",
+		return fmt.Errorf("lookback_seconds must be %d..%d (0 = default), got %d",
 			core.MinLookbackSeconds, core.MaxLookbackSeconds, c.LookbackSeconds)
 	}
 	switch strings.ToLower(strings.TrimSpace(c.PasteBackend)) {
 	case "", "auto", "wayland", "x11":
 	default:
-		return oeerrors.Errorf("paste_backend must be auto, wayland or x11, got %q", c.PasteBackend)
+		return fmt.Errorf("paste_backend must be auto, wayland or x11, got %q", c.PasteBackend)
 	}
 	if strings.TrimSpace(c.HelperSocket) == "" {
-		return oeerrors.Errorf("helper_socket is required")
+		return fmt.Errorf("helper_socket is required")
 	}
 	if c.LLM.Enabled {
 		if strings.TrimSpace(c.LLM.BaseURL) == "" {
@@ -477,14 +478,14 @@ func (c Config) Validate() error {
 		}
 	}
 	if _, ok := c.Keymap.Profiles[c.Keymap.Profile]; !ok {
-		return oeerrors.Errorf("keymap profile %q is not defined", c.Keymap.Profile)
+		return fmt.Errorf("keymap profile %q is not defined", c.Keymap.Profile)
 	}
 	for _, rule := range c.Keymap.AppRules {
 		if strings.TrimSpace(rule.Class) == "" {
 			return oeerrors.New("keymap app_rules entry has empty class")
 		}
 		if _, ok := c.Keymap.Profiles[rule.Profile]; !ok {
-			return oeerrors.Errorf("keymap app_rules %q: profile %q is not defined", rule.Class, rule.Profile)
+			return fmt.Errorf("keymap app_rules %q: profile %q is not defined", rule.Class, rule.Profile)
 		}
 	}
 	if len(c.Devices) == 0 {
@@ -496,15 +497,15 @@ func (c Config) Validate() error {
 			return oeerrors.New("device id is empty")
 		}
 		if seenDevices[item.ID] {
-			return oeerrors.Errorf("duplicate device id %q", item.ID)
+			return fmt.Errorf("duplicate device id %q", item.ID)
 		}
 		seenDevices[item.ID] = true
 		if !macPattern.MatchString(item.Address) {
-			return oeerrors.Errorf("device %q: invalid Bluetooth address %q", item.ID, item.Address)
+			return fmt.Errorf("device %q: invalid Bluetooth address %q", item.ID, item.Address)
 		}
 	}
 	if !seenDevices[c.ActiveDevice] {
-		return oeerrors.Errorf("active device %q is not defined", c.ActiveDevice)
+		return fmt.Errorf("active device %q is not defined", c.ActiveDevice)
 	}
 	activeEnabled := false
 	for _, item := range c.Devices {
@@ -513,7 +514,7 @@ func (c Config) Validate() error {
 		}
 	}
 	if !activeEnabled {
-		return oeerrors.Errorf("active device %q is disabled", c.ActiveDevice)
+		return fmt.Errorf("active device %q is disabled", c.ActiveDevice)
 	}
 	if err := c.validatePhone(); err != nil {
 		return err
@@ -528,35 +529,35 @@ func (c Config) Validate() error {
 func (c Config) validatePhone() error {
 	phoneHost, phonePort, err := net.SplitHostPort(c.Phone.Addr)
 	if err != nil {
-		return oeerrors.Errorf("invalid phone.addr: %w", err)
+		return fmt.Errorf("invalid phone.addr: %w", err)
 	}
 	if value, err := strconv.Atoi(phonePort); err != nil || value < 1 || value > 65535 {
-		return oeerrors.Errorf("invalid phone.addr port %q", phonePort)
+		return fmt.Errorf("invalid phone.addr port %q", phonePort)
 	}
 	_, uiPort, err := net.SplitHostPort(c.UIAddr)
 	if err == nil && phonePort == uiPort {
-		return oeerrors.Errorf("phone.addr must use a different port than ui_addr")
+		return fmt.Errorf("phone.addr must use a different port than ui_addr")
 	}
 	switch c.Phone.TLS {
 	case "auto", "off":
 	default:
-		return oeerrors.Errorf("phone.tls must be auto or off, got %q", c.Phone.TLS)
+		return fmt.Errorf("phone.tls must be auto or off, got %q", c.Phone.TLS)
 	}
 	// SEC-03: tls=off means pairing codes and long-lived tokens travel in
 	// cleartext, which is only tolerable on loopback.
 	if c.Phone.TLS == "off" && !isLoopbackHost(phoneHost) {
-		return oeerrors.Errorf(
+		return fmt.Errorf(
 			"phone.tls=off requires a loopback phone.addr, got %q; set phone.tls to auto or bind the address to 127.0.0.1/localhost",
 			c.Phone.Addr)
 	}
 	if c.Phone.PairCodeTTLSeconds < 30 || c.Phone.PairCodeTTLSeconds > 3600 {
-		return oeerrors.Errorf("phone.pair_code_ttl_seconds must be 30..3600")
+		return fmt.Errorf("phone.pair_code_ttl_seconds must be 30..3600")
 	}
 	if c.Phone.MaxClients < 1 || c.Phone.MaxClients > 16 {
-		return oeerrors.Errorf("phone.max_clients must be 1..16")
+		return fmt.Errorf("phone.max_clients must be 1..16")
 	}
 	if c.Phone.MaxUtteranceSeconds < core.MinUtteranceSeconds || c.Phone.MaxUtteranceSeconds > core.MaxUtteranceSeconds {
-		return oeerrors.Errorf("phone.max_utterance_seconds must be %d..%d", core.MinUtteranceSeconds, core.MaxUtteranceSeconds)
+		return fmt.Errorf("phone.max_utterance_seconds must be %d..%d", core.MinUtteranceSeconds, core.MaxUtteranceSeconds)
 	}
 	return nil
 }

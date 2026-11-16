@@ -2,6 +2,7 @@ package asr
 
 import (
 	"context"
+	"fmt"
 
 	oeerrors "github.com/oekit/pkg/errors"
 	"net/url"
@@ -40,40 +41,40 @@ func referencedProviders(cfg config.ASRConfig) []string {
 
 func Validate(cfg config.ASRConfig) error {
 	if len(cfg.Providers) == 0 {
-		return oeerrors.Errorf("asr.providers is empty")
+		return fmt.Errorf("asr.providers is empty")
 	}
 	names := referencedProviders(cfg)
 	if len(names) == 0 {
-		return oeerrors.Errorf("asr.provider is empty")
+		return fmt.Errorf("asr.provider is empty")
 	}
 	for _, name := range names {
 		provider, ok := cfg.Providers[name]
 		if !ok {
-			return oeerrors.Errorf("asr provider %q is referenced but not defined", name)
+			return fmt.Errorf("asr provider %q is referenced but not defined", name)
 		}
 		if provider.Threads < 0 {
-			return oeerrors.Errorf("asr provider %q: threads must be >= 0", name)
+			return fmt.Errorf("asr provider %q: threads must be >= 0", name)
 		}
 		if provider.TimeoutSeconds < 0 {
-			return oeerrors.Errorf("asr provider %q: timeout_seconds must be >= 0", name)
+			return fmt.Errorf("asr provider %q: timeout_seconds must be >= 0", name)
 		}
 		switch providerType(name, provider) {
 		case "mimo":
 			if strings.TrimSpace(provider.APIKeyFile) == "" {
-				return oeerrors.Errorf("asr provider %q: api_key_file is required", name)
+				return fmt.Errorf("asr provider %q: api_key_file is required", name)
 			}
 		case "openai":
 			// Base URL/model have defaults in NewOpenAI.
 		case "whispercpp":
 			if strings.TrimSpace(provider.ModelPath) == "" {
-				return oeerrors.Errorf("asr provider %q: model_path is required", name)
+				return fmt.Errorf("asr provider %q: model_path is required", name)
 			}
 		case "command":
 			if strings.TrimSpace(provider.Binary) == "" {
-				return oeerrors.Errorf("asr provider %q: binary is required", name)
+				return fmt.Errorf("asr provider %q: binary is required", name)
 			}
 		default:
-			return oeerrors.Errorf("asr provider %q has unknown type %q", name, provider.Type)
+			return fmt.Errorf("asr provider %q has unknown type %q", name, provider.Type)
 		}
 	}
 	return nil
@@ -90,7 +91,7 @@ func Build(cfg config.ASRConfig) (Engine, error) {
 	var buildErr error
 	primary, err := buildProvider(cfg.Provider, cfg)
 	if err != nil {
-		buildErr = oeerrors.Append(buildErr, oeerrors.Errorf("primary ASR %q: %w", cfg.Provider, err))
+		buildErr = oeerrors.Append(buildErr, fmt.Errorf("primary ASR %q: %w", cfg.Provider, err))
 		log.Warn("ASR primary disabled", "provider", cfg.Provider, "err", err)
 	} else {
 		engines = append(engines, primary)
@@ -104,7 +105,7 @@ func Build(cfg config.ASRConfig) (Engine, error) {
 		seen[name] = true
 		engine, err := buildProvider(name, cfg)
 		if err != nil {
-			buildErr = oeerrors.Append(buildErr, oeerrors.Errorf("ASR fallback %q: %w", name, err))
+			buildErr = oeerrors.Append(buildErr, fmt.Errorf("ASR fallback %q: %w", name, err))
 			log.Warn("ASR fallback disabled", "provider", name, "err", err)
 			continue
 		}
@@ -114,7 +115,7 @@ func Build(cfg config.ASRConfig) (Engine, error) {
 		if buildErr == nil {
 			buildErr = oeerrors.New("no ASR providers configured")
 		}
-		return nil, oeerrors.Errorf("no ASR provider could be built: %w", buildErr)
+		return nil, fmt.Errorf("no ASR provider could be built: %w", buildErr)
 	}
 	log.Info("ASR chain ready", "providers", engineNames(engines))
 	return NewChain(engines...), nil
@@ -123,7 +124,7 @@ func Build(cfg config.ASRConfig) (Engine, error) {
 func buildProvider(name string, cfg config.ASRConfig) (Engine, error) {
 	provider, ok := cfg.Providers[name]
 	if !ok {
-		return nil, oeerrors.Errorf("provider not defined")
+		return nil, fmt.Errorf("provider not defined")
 	}
 	language := provider.Language
 	if language == "" {
@@ -166,7 +167,7 @@ func buildProvider(name string, cfg config.ASRConfig) (Engine, error) {
 			Timeout:   timeout,
 		})
 	default:
-		return nil, oeerrors.Errorf("unknown provider type %q", provider.Type)
+		return nil, fmt.Errorf("unknown provider type %q", provider.Type)
 	}
 }
 
@@ -250,7 +251,7 @@ func readSecret(path string) (string, error) {
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return "", oeerrors.Errorf("read API key %s: %w", path, err)
+		return "", fmt.Errorf("read API key %s: %w", path, err)
 	}
 	return strings.TrimSpace(string(data)), nil
 }
@@ -289,5 +290,5 @@ func (u *unavailable) Local() bool                 { return false }
 func (u *unavailable) Close(context.Context) error { return nil }
 
 func (u *unavailable) Transcribe(context.Context, Audio) (Result, error) {
-	return Result{}, oeerrors.Errorf("ASR unavailable: %w", u.err)
+	return Result{}, fmt.Errorf("ASR unavailable: %w", u.err)
 }

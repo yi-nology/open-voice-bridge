@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -32,7 +33,7 @@ type OpenAI struct {
 func NewOpenAI(cfg OpenAIConfig) (*OpenAI, error) {
 	parsed, err := url.Parse(cfg.BaseURL)
 	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
-		return nil, oeerrors.Errorf("invalid llm base_url %q", cfg.BaseURL)
+		return nil, fmt.Errorf("invalid llm base_url %q", cfg.BaseURL)
 	}
 	cfg.BaseURL = strings.TrimRight(cfg.BaseURL, "/")
 	if cfg.Timeout <= 0 {
@@ -97,7 +98,7 @@ func (o *OpenAI) processWithMode(ctx context.Context, text, mode string) (string
 	}
 	resp, err := o.client.Do(req)
 	if err != nil {
-		return "", oeerrors.Errorf("llm request: %w", err)
+		return "", fmt.Errorf("llm request: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 	data, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
@@ -108,7 +109,7 @@ func (o *OpenAI) processWithMode(ctx context.Context, text, mode string) (string
 		// The body is provider prose and a rejected request often quotes the
 		// text it rejected, which here is a transcript. Errors get logged, so
 		// only the status and the machine-readable codes are kept (SEC-02).
-		return "", oeerrors.Errorf("llm HTTP %d%s", resp.StatusCode, redact.ProviderSuffix(data))
+		return "", fmt.Errorf("llm HTTP %d%s", resp.StatusCode, redact.ProviderSuffix(data))
 	}
 	var parsed struct {
 		Choices []struct {
@@ -118,7 +119,7 @@ func (o *OpenAI) processWithMode(ctx context.Context, text, mode string) (string
 		} `json:"choices"`
 	}
 	if err := json.Unmarshal(data, &parsed); err != nil {
-		return "", oeerrors.Errorf("parse llm response: %w", err)
+		return "", fmt.Errorf("parse llm response: %w", err)
 	}
 	if len(parsed.Choices) == 0 {
 		return "", oeerrors.New("llm returned no choices")

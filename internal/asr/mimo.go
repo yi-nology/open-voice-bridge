@@ -6,7 +6,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	oeerrors "github.com/oekit/pkg/errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -40,11 +40,11 @@ type Mimo struct {
 func NewMimo(keyFile, model, language, baseURL string) (*Mimo, error) {
 	key, err := os.ReadFile(keyFile)
 	if err != nil {
-		return nil, oeerrors.Errorf("read MiMo API key: %w", err)
+		return nil, fmt.Errorf("read MiMo API key: %w", err)
 	}
 	apiKey := strings.TrimSpace(string(key))
 	if apiKey == "" {
-		return nil, oeerrors.Errorf("MiMo API key file is empty")
+		return nil, fmt.Errorf("MiMo API key file is empty")
 	}
 	if model == "" {
 		model = DefaultModel
@@ -91,7 +91,7 @@ func (m *Mimo) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 		rate = core.SampleRate
 	}
 	if rate != core.SampleRate {
-		return Result{}, oeerrors.Errorf("MiMo requires 16 kHz audio, got %d", rate)
+		return Result{}, fmt.Errorf("MiMo requires 16 kHz audio, got %d", rate)
 	}
 	if len(audio.Samples) < core.MinUtterance(rate) || atvv.Peak(audio.Samples) < 400 {
 		return Result{}, ErrNoSpeech
@@ -124,7 +124,7 @@ func (m *Mimo) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := m.Client.Do(req)
 	if err != nil {
-		return Result{}, oeerrors.Errorf("MiMo request: %w", err)
+		return Result{}, fmt.Errorf("MiMo request: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 	data, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
@@ -134,7 +134,7 @@ func (m *Mimo) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 	if resp.StatusCode != http.StatusOK {
 		// Only the status and the machine-readable codes are kept: a provider
 		// body is untrusted text, and errors end up in the log file (SEC-02).
-		return Result{}, oeerrors.Errorf("MiMo HTTP %d%s", resp.StatusCode, redact.ProviderSuffix(data))
+		return Result{}, fmt.Errorf("MiMo HTTP %d%s", resp.StatusCode, redact.ProviderSuffix(data))
 	}
 	var parsed struct {
 		Choices []struct {
@@ -144,7 +144,7 @@ func (m *Mimo) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 		} `json:"choices"`
 	}
 	if err := json.Unmarshal(data, &parsed); err != nil {
-		return Result{}, oeerrors.Errorf("parse MiMo response: %w", err)
+		return Result{}, fmt.Errorf("parse MiMo response: %w", err)
 	}
 	if len(parsed.Choices) == 0 {
 		return Result{}, ErrNoSpeech
