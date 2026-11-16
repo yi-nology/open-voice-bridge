@@ -128,6 +128,15 @@ func TestSameDeviceReconnectTranscribesBufferedUtterance(t *testing.T) {
 	if err := conn1.Write(ctx, websocket.MessageBinary, pcmFrame(320)); err != nil {
 		t.Fatalf("binary frame: %v", err)
 	}
+	// The server reads one message at a time on a connection, so a control
+	// frame sent after the audio is answered only once the frame has been
+	// appended. Its bad_state reply is the signal that the 320 samples are
+	// really buffered; without it the replacement below races the frame and
+	// the test fails whenever the drain wins.
+	sendJSON(t, ctx, conn1, map[string]any{"type": "start", "format": "pcm16", "rate": 16000, "channels": 1})
+	if frame := readMessage(t, ctx, conn1); frame["type"] != "error" {
+		t.Fatalf("second start = %v, want the already-in-progress error", frame)
+	}
 
 	// The same device opens a second WebSocket: the register path replaces the
 	// first session instead of the network dying first.
