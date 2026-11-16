@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Internal: the oekit family reaches latest (pkg 0.37→0.51, middleware
+  0.13→0.19, concurrency 0.28→0.38, logx 0.8→0.11, hertz 0.10→0.12,
+  bootstrap 0.6→0.7, metrics 0.1→0.4, core/registry/tracing along) — the
+  0.x jump the roadmap left over lands in one batch. The only break was
+  `errors.Errorf`, retired upstream by #378: its 138 call sites take
+  `fmt.Errorf` with byte-identical messages. All 50 `%w` wraps then join
+  the new `errors.Wrap` (nil-safe, kv-ready for structured logs); the two
+  mid-message forms in `asr/command.go` / `asr/whispercpp.go` move the
+  cause to the end — same facts, cause last. `diagbox` folds into the
+  single errors package, and `check-deps.sh` survives macOS bash 3.2 on
+  zero-import packages (it used to crash on `internal/gtvkeys` before
+  checking anything).
+
 - New: the Google TV family's buttons arrive over GATT (Linux). The family's
   HID descriptor is rejected by the kernel input stack — no `/dev/input`, no
   evdev remap — so the agent now subscribes to the HID Report characteristic
