@@ -188,3 +188,24 @@ type MCPTokenRevokedView struct {
 	Error        string `json:"error,omitempty"`
 	Disconnected bool   `json:"disconnected,omitempty"`
 }
+
+// ASRCheckView is one provider row in the diagnostics report's ASR section.
+type ASRCheckView struct {
+	Provider string `json:"provider"`
+	OK       bool   `json:"ok"`
+	Detail   string `json:"detail"`
+}
+
+// DiagnosticsView is the shareable troubleshooting report (I7). It embeds the
+// readiness and status views verbatim — the report's keys have always been
+// the views' json tags — and every string that can carry a home path arrives
+// already scrubbed (I7: a shared attachment must not leak personal paths).
+type DiagnosticsView struct {
+	OK          bool           `json:"ok"`
+	GeneratedAt string         `json:"generated_at"`
+	Version     string         `json:"version"`
+	Platform    string         `json:"platform"`
+	Ready       ReadyView      `json:"ready"`
+	Status      StatusView     `json:"status"`
+	ASR         []ASRCheckView `json:"asr"`
+}

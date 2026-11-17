@@ -159,7 +159,7 @@ func BuildDevices(ctx context.Context, in service.ViewInputs) core.DevicesView {
 
 // Diagnostics builds the redacted troubleshooting summary to attach to an
 // issue: no device addresses, no home paths, no speech, no provider bodies.
-func BuildDiagnostics(ctx context.Context, in service.ViewInputs, version string) map[string]any {
+func BuildDiagnostics(ctx context.Context, in service.ViewInputs, version string) core.DiagnosticsView {
 	status := BuildStatus(ctx, in)
 	status.Address = redact.MAC(status.Address)
 	// The report promises no speech, and the status carries the last dictated
@@ -167,32 +167,33 @@ func BuildDiagnostics(ctx context.Context, in service.ViewInputs, version string
 	// the user attaches to a public issue (I7).
 	status.LastText = ""
 	asrChecks := asr.Diagnose(in.Cfg.ASR)
-	checks := make([]any, 0, len(asrChecks))
+	checks := make([]core.ASRCheckView, 0, len(asrChecks))
 	for _, item := range asrChecks {
-		checks = append(checks, map[string]any{
-			"provider": item.Provider,
-			"ok":       item.OK,
-			"detail":   item.Detail,
+		checks = append(checks, core.ASRCheckView{
+			Provider: item.Provider,
+			OK:       item.OK,
+			Detail:   scrubHomeString(item.Detail),
 		})
 	}
 	ready := BuildReady(ctx, in)
-	// scrubHome walks maps and slices; a typed view is neither, so every string
-	// that can carry a path is scrubbed here or a helper socket path under the
-	// home directory would reach a shared report (I7).
+	// scrubHome used to walk the free-form report; with the report typed
+	// (map 棘轮第四次清偿) every string that can carry a path is scrubbed at
+	// its field instead — a helper socket path under the home directory must
+	// never reach a shared report (I7).
 	ready.HelperError = scrubHomeString(ready.HelperError)
 	ready.AsrError = scrubHomeString(ready.AsrError)
 	status.Config = scrubHomeString(status.Config)
 	status.HelperError = scrubHomeString(status.HelperError)
 	status.AsrError = scrubHomeString(status.AsrError)
-	return scrubHome(map[string]any{
-		"ok":           true,
-		"generated_at": time.Now().UTC().Format(time.RFC3339),
-		"version":      version,
-		"platform":     runtime.GOOS + "/" + runtime.GOARCH,
-		"ready":        ready,
-		"status":       status,
-		"asr":          checks,
-	}).(map[string]any)
+	return core.DiagnosticsView{
+		OK:          true,
+		GeneratedAt: time.Now().UTC().Format(time.RFC3339),
+		Version:     scrubHomeString(version),
+		Platform:    runtime.GOOS + "/" + runtime.GOARCH,
+		Ready:       ready,
+		Status:      status,
+		ASR:         checks,
+	}
 }
 
 // scrubHomeString replaces the home directory prefix with "~" so a shared
@@ -203,26 +204,6 @@ func scrubHomeString(value string) string {
 		return value
 	}
 	return strings.ReplaceAll(value, home, "~")
-}
-
-// scrubHome is scrubHomeString over the free-form parts of the report.
-func scrubHome(value any) any {
-	switch typed := value.(type) {
-	case string:
-		return scrubHomeString(typed)
-	case map[string]any:
-		for key, item := range typed {
-			typed[key] = scrubHome(item)
-		}
-		return typed
-	case []any:
-		for index, item := range typed {
-			typed[index] = scrubHome(item)
-		}
-		return typed
-	default:
-		return value
-	}
 }
 
 // BuildDiscovered lists bluetooth input devices with profile suggestions —

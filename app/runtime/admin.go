@@ -94,12 +94,14 @@ func (a Admin) deps() ui.Deps {
 		Stats:               func() history.UsageStats { return a.Stats.Snapshot() },
 		ExportConfig:        svc.ExportConfig,
 		ImportConfig:        svc.ImportConfig,
-		Diagnostics:         func(ctx context.Context) map[string]any { return BuildDiagnostics(ctx, svc.ViewInputs(), a.Version) },
-		MCPVerify:           svc.MCPVerify,
-		MCPAudit:            svc.MCPAudit,
-		MCPCreateToken:      func(label string) (core.MCPTokenView, error) { return svc.MCPCreateToken(label, a.MCPBinaryPath()) },
-		MCPListTokens:       svc.MCPListTokens,
-		MCPRevokeToken:      svc.MCPRevokeToken,
+		Diagnostics: func(ctx context.Context) core.DiagnosticsView {
+			return BuildDiagnostics(ctx, svc.ViewInputs(), a.Version)
+		},
+		MCPVerify:      svc.MCPVerify,
+		MCPAudit:       svc.MCPAudit,
+		MCPCreateToken: func(label string) (core.MCPTokenView, error) { return svc.MCPCreateToken(label, a.MCPBinaryPath()) },
+		MCPListTokens:  svc.MCPListTokens,
+		MCPRevokeToken: svc.MCPRevokeToken,
 		SnapshotState: func() map[string]any {
 			owner := a.Hub.AudioOwner()
 			active, source, name := SpeakingLabel(

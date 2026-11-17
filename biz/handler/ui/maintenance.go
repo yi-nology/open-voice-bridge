@@ -41,7 +41,7 @@ func (s *Server) ConfigImport(ctx context.Context, c *app.RequestContext) {
 // issue: no device addresses, no home paths, no speech.
 func (s *Server) Diagnostics(ctx context.Context, c *app.RequestContext) {
 	if s.deps.Diagnostics == nil {
-		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "diagnostics unavailable"})
+		c.JSON(consts.StatusServiceUnavailable, reply{Error: "diagnostics unavailable"})
 		return
 	}
 	c.JSON(consts.StatusOK, s.deps.Diagnostics(ctx))

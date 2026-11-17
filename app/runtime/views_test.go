@@ -126,8 +126,8 @@ func TestBuildDiagnosticsRedactsAddressAndHome(t *testing.T) {
 	if strings.Contains(body, home) {
 		t.Fatalf("summary leaked the home directory: %s", body)
 	}
-	if summary["version"] != "test-version" {
-		t.Fatalf("version = %v", summary["version"])
+	if summary.Version != "test-version" {
+		t.Fatalf("version = %v", summary.Version)
 	}
 }
 
@@ -170,10 +170,7 @@ func TestBuildDiagnosticsScrubsHomeFromStatusStrings(t *testing.T) {
 	if strings.Contains(string(encoded), home) {
 		t.Fatalf("summary leaked the home directory: %s", encoded)
 	}
-	status, ok := summary["status"].(core.StatusView)
-	if !ok {
-		t.Fatalf("status = %T, want core.StatusView", summary["status"])
-	}
+	status := summary.Status
 	if !strings.Contains(status.AsrError, "~/.config/xiaomi-mimo/api_key") {
 		t.Fatalf("asr error = %q", status.AsrError)
 	}
@@ -191,10 +188,7 @@ func TestBuildDiagnosticsScrubsHomeFromStatusStrings(t *testing.T) {
 	if strings.Contains(string(encoded), home) {
 		t.Fatalf("summary leaked the home directory: %s", encoded)
 	}
-	status, ok = summary["status"].(core.StatusView)
-	if !ok {
-		t.Fatalf("status = %T, want core.StatusView", summary["status"])
-	}
+	status = summary.Status
 	if !strings.Contains(status.HelperError, "~/.local/run/helper.sock") {
 		t.Fatalf("helper error = %q", status.HelperError)
 	}
@@ -217,10 +211,7 @@ func TestBuildDiagnosticsOmitsSpeech(t *testing.T) {
 	if strings.Contains(string(encoded), spoken) {
 		t.Fatalf("summary leaked the last transcript: %s", encoded)
 	}
-	status, ok := summary["status"].(core.StatusView)
-	if !ok {
-		t.Fatalf("status = %T", summary["status"])
-	}
+	status := summary.Status
 	if status.AsrProvider != "mimo" {
 		t.Fatalf("status lost its provider: %+v", status)
 	}

@@ -63,7 +63,7 @@ type Deps struct {
 	SnapshotState         func() map[string]any
 	ExportConfig          func() ([]byte, error)
 	ImportConfig          func([]byte) error
-	Diagnostics           func(context.Context) map[string]any
+	Diagnostics           func(context.Context) core.DiagnosticsView
 	MCPVerify             func(string) (mcp.TokenInfo, bool)
 	MCPAudit              func(mcp.TokenInfo, string, int)
 	MCPCreateToken        func(label string) (core.MCPTokenView, error)
