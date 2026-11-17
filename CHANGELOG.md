@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Internal: the map ratchet's fourth repayment (ARC-11 #16, 156→61). The
+  admin SSE speaks typed envelopes — one `core` struct per event the UI
+  switch knows, `Publish`/`Deps`/`events.go`/the subscribe snapshot
+  included — and the config trio, phone admin, MCP grants, agent API,
+  diagnostics and stats faces leave `map[string]any` for typed views.
+  The shared `reply` envelope absorbs the remaining literals (the three
+  legacy 503s pick up the `ok:false` the rest of the admin surface
+  already sent). Wire shapes are byte-identical throughout; what stays
+  free-format is external-protocol only (MCP JSON-RPC as a documented
+  point, the MiMo/OpenAI request bodies, the phone WS messages, the
+  system_profiler/Pactl decoders). Ratchet ceiling drops to 66.
+
 - Internal: the oekit family reaches latest (pkg 0.37→0.51, middleware
   0.13→0.19, concurrency 0.28→0.38, logx 0.8→0.11, hertz 0.10→0.12,
   bootstrap 0.6→0.7, metrics 0.1→0.4, core/registry/tracing along) — the
