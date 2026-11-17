@@ -5,18 +5,19 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
+	"github.com/oekit/pkg/ptrx"
 )
 
 // ConfigExport serves the configuration for a backup. Key material is never
 // included: providers reference key files by path only.
 func (s *Server) ConfigExport(ctx context.Context, c *app.RequestContext) {
 	if s.deps.ExportConfig == nil {
-		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "export unavailable"})
+		c.JSON(consts.StatusServiceUnavailable, reply{Error: "export unavailable"})
 		return
 	}
 	data, err := s.deps.ExportConfig()
 	if err != nil {
-		c.JSON(consts.StatusInternalServerError, map[string]any{"ok": false, "error": err.Error()})
+		c.JSON(consts.StatusInternalServerError, reply{Error: err.Error()})
 		return
 	}
 	c.Header("Content-Disposition", `attachment; filename="xiaoyao-config.json"`)
@@ -27,14 +28,14 @@ func (s *Server) ConfigExport(ctx context.Context, c *app.RequestContext) {
 // file is kept as a backup; a rejected document changes nothing.
 func (s *Server) ConfigImport(ctx context.Context, c *app.RequestContext) {
 	if s.deps.ImportConfig == nil {
-		c.JSON(consts.StatusServiceUnavailable, map[string]any{"ok": false, "error": "import unavailable"})
+		c.JSON(consts.StatusServiceUnavailable, reply{Error: "import unavailable"})
 		return
 	}
 	if err := s.deps.ImportConfig(c.Request.Body()); err != nil {
-		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		c.JSON(consts.StatusBadRequest, reply{Error: err.Error()})
 		return
 	}
-	c.JSON(consts.StatusOK, map[string]any{"ok": true, "restart_required": true})
+	c.JSON(consts.StatusOK, reply{OK: true, RestartRequired: ptrx.Of(true)})
 }
 
 // Diagnostics returns the redacted troubleshooting summary to attach to an

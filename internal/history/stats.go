@@ -22,6 +22,13 @@ type UsageStats struct {
 	Days       map[string]DayStat `json:"days"`
 }
 
+// StatsView is the admin payload for 使用统计: the counters plus the ok
+// envelope, keys unchanged (map 棘轮第四次清偿).
+type StatsView struct {
+	OK bool `json:"ok"`
+	UsageStats
+}
+
 // DayStat is one day of dictation, keyed "YYYY-MM-DD" (local time).
 type DayStat struct {
 	Utterances int   `json:"utterances"`

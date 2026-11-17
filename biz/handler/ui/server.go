@@ -152,18 +152,10 @@ func (s *Server) Security(ctx context.Context, c *app.RequestContext) {
 // and per-day numbers. Only counts and durations — never speech content.
 func (s *Server) Stats(ctx context.Context, c *app.RequestContext) {
 	if s.deps.Stats == nil {
-		c.JSON(consts.StatusServiceUnavailable, map[string]any{"error": "stats unavailable"})
+		c.JSON(consts.StatusServiceUnavailable, reply{Error: "stats unavailable"})
 		return
 	}
-	snap := s.deps.Stats()
-	c.JSON(consts.StatusOK, map[string]any{
-		"ok":         true,
-		"utterances": snap.Utterances,
-		"characters": snap.Characters,
-		"speech_ms":  snap.SpeechMS,
-		"longest_ms": snap.LongestMS,
-		"days":       snap.Days,
-	})
+	c.JSON(consts.StatusOK, history.StatsView{OK: true, UsageStats: s.deps.Stats()})
 }
 
 // UIAsset serves one embedded UI asset (ui.css / ui.js) beside the page.
