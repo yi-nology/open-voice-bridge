@@ -206,17 +206,26 @@ type TokenStore interface {
 	Validate(raw string) (TokenInfo, bool)
 }
 
+// MCPServerStanza is one stdio server entry in the MCP client config format
+// (the ecosystem's shape: command + args).
+type MCPServerStanza struct {
+	Command string   `json:"command"`
+	Args    []string `json:"args"`
+}
+
+// ClientConfig is the stdio MCP stanza a client config needs. The server
+// table is keyed by server name (the label) — the one free-format seam the
+// MCP ecosystem's config format leaves us (ARC-11 棘轮文档点位).
+type ClientConfig struct {
+	MCPServers map[string]MCPServerStanza `json:"mcpServers"`
+}
+
 // ClientConfigSnippet renders the stdio MCP stanza a client config needs.
-func ClientConfigSnippet(label, binary, token string) map[string]any {
+func ClientConfigSnippet(label, binary, token string) ClientConfig {
 	if label == "" {
 		label = "xiaoyao"
 	}
-	return map[string]any{
-		"mcpServers": map[string]any{
-			label: map[string]any{
-				"command": binary,
-				"args":    []string{"mcp", "--token", token},
-			},
-		},
-	}
+	return ClientConfig{MCPServers: map[string]MCPServerStanza{
+		label: {Command: binary, Args: []string{"mcp", "--token", token}},
+	}}
 }

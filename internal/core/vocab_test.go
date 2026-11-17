@@ -49,9 +49,11 @@ func TestDeviceProfileCapabilityAndIdentity(t *testing.T) {
 
 func TestClientConfigSnippetShape(t *testing.T) {
 	snippet := ClientConfigSnippet("", "/usr/local/bin/xiaoyao", "tok")
-	servers, _ := snippet["mcpServers"].(map[string]any)
-	entry, _ := servers["xiaoyao"].(map[string]any)
-	if entry["command"] != "/usr/local/bin/xiaoyao" {
-		t.Fatalf("command = %v", entry["command"])
+	entry, ok := snippet.MCPServers["xiaoyao"]
+	if !ok {
+		t.Fatal("xiaoyao stanza missing from the snippet")
+	}
+	if entry.Command != "/usr/local/bin/xiaoyao" {
+		t.Fatalf("command = %v", entry.Command)
 	}
 }

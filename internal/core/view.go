@@ -163,3 +163,28 @@ type PermissionsView struct {
 	Platform string           `json:"platform"`
 	Items    []PermissionItem `json:"items"`
 }
+
+// MCPTokenView is one freshly minted client grant: the raw token appears here
+// exactly once (ARC-11 map 棘轮; keys match the map shape it replaced).
+type MCPTokenView struct {
+	OK      bool         `json:"ok"`
+	ID      string       `json:"id"`
+	Label   string       `json:"label"`
+	Token   string       `json:"token"`
+	Snippet ClientConfig `json:"snippet"`
+}
+
+// MCPTokenListView is the grants table (never verifier material).
+type MCPTokenListView struct {
+	OK     bool        `json:"ok"`
+	Tokens []TokenInfo `json:"tokens"`
+}
+
+// MCPTokenRevokedView reports a revocation. Disconnected is omitted when the
+// grant was unknown (the old map carried no such key on that branch), and
+// Error is omitted on success — same union shape, now typed.
+type MCPTokenRevokedView struct {
+	OK           bool   `json:"ok"`
+	Error        string `json:"error,omitempty"`
+	Disconnected bool   `json:"disconnected,omitempty"`
+}

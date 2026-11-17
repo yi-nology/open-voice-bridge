@@ -97,7 +97,7 @@ func (a Admin) deps() ui.Deps {
 		Diagnostics:         func(ctx context.Context) map[string]any { return BuildDiagnostics(ctx, svc.ViewInputs(), a.Version) },
 		MCPVerify:           svc.MCPVerify,
 		MCPAudit:            svc.MCPAudit,
-		MCPCreateToken:      func(label string) (map[string]any, error) { return svc.MCPCreateToken(label, a.MCPBinaryPath()) },
+		MCPCreateToken:      func(label string) (core.MCPTokenView, error) { return svc.MCPCreateToken(label, a.MCPBinaryPath()) },
 		MCPListTokens:       svc.MCPListTokens,
 		MCPRevokeToken:      svc.MCPRevokeToken,
 		SnapshotState: func() map[string]any {

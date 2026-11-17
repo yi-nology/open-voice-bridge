@@ -10,6 +10,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/common/ut"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/history"
 	"github.com/yi-nology/open-voice-bridge/internal/mcp"
 )
@@ -100,17 +101,17 @@ func TestAgentHistoryRedactsAddressAndAudits(t *testing.T) {
 func TestMCPCreateAndRevokeTokenFlow(t *testing.T) {
 	var created, revoked string
 	h := agentEngine(Deps{
-		MCPCreateToken: func(label string) (map[string]any, error) {
+		MCPCreateToken: func(label string) (core.MCPTokenView, error) {
 			created = label
-			return map[string]any{"ok": true, "id": "mcp-9", "label": label, "token": "raw-once",
-				"snippet": map[string]any{"mcpServers": map[string]any{}}}, nil
+			return core.MCPTokenView{OK: true, ID: "mcp-9", Label: label, Token: "raw-once",
+				Snippet: core.ClientConfig{MCPServers: map[string]core.MCPServerStanza{}}}, nil
 		},
-		MCPListTokens: func() map[string]any {
-			return map[string]any{"ok": true, "tokens": []any{}}
+		MCPListTokens: func() core.MCPTokenListView {
+			return core.MCPTokenListView{OK: true, Tokens: []core.TokenInfo{}}
 		},
-		MCPRevokeToken: func(id string) map[string]any {
+		MCPRevokeToken: func(id string) core.MCPTokenRevokedView {
 			revoked = id
-			return map[string]any{"ok": true}
+			return core.MCPTokenRevokedView{OK: true}
 		},
 	})
 	createBody := `{"label":"Claude Code"}`

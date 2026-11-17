@@ -65,9 +65,9 @@ type Deps struct {
 	Diagnostics           func(context.Context) map[string]any
 	MCPVerify             func(string) (mcp.TokenInfo, bool)
 	MCPAudit              func(mcp.TokenInfo, string, int)
-	MCPCreateToken        func(label string) (map[string]any, error)
-	MCPListTokens         func() map[string]any
-	MCPRevokeToken        func(id string) map[string]any
+	MCPCreateToken        func(label string) (core.MCPTokenView, error)
+	MCPListTokens         func() core.MCPTokenListView
+	MCPRevokeToken        func(id string) core.MCPTokenRevokedView
 	PhonePairing          func(context.Context) map[string]any
 	PhoneDevices          func(context.Context) map[string]any
 	PhoneRevoke           func(context.Context, string) map[string]any

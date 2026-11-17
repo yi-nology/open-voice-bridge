@@ -150,12 +150,14 @@ func TestAuditRecordsCountsNotContent(t *testing.T) {
 
 func TestClientConfigSnippet(t *testing.T) {
 	snippet := core.ClientConfigSnippet("xiaoyao", "/usr/local/bin/xiaoyao", "tok-123")
-	servers, _ := snippet["mcpServers"].(map[string]any)
-	entry, _ := servers["xiaoyao"].(map[string]any)
-	if entry["command"] != "/usr/local/bin/xiaoyao" {
-		t.Fatalf("command = %v", entry["command"])
+	entry, ok := snippet.MCPServers["xiaoyao"]
+	if !ok {
+		t.Fatal("xiaoyao stanza missing from the snippet")
 	}
-	args, _ := entry["args"].([]string)
+	if entry.Command != "/usr/local/bin/xiaoyao" {
+		t.Fatalf("command = %v", entry.Command)
+	}
+	args := entry.Args
 	if len(args) != 3 || args[0] != "mcp" || args[2] != "tok-123" {
 		t.Fatalf("args = %v", args)
 	}

@@ -103,12 +103,12 @@ func (s *Server) MCPCreateToken(ctx context.Context, c *app.RequestContext) {
 		Label string `json:"label"`
 	}
 	if err := json.Unmarshal(c.Request.Body(), &body); err != nil {
-		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": "bad json"})
+		c.JSON(consts.StatusBadRequest, reply{Error: "bad json"})
 		return
 	}
 	resp, err := s.deps.MCPCreateToken(body.Label)
 	if err != nil {
-		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+		c.JSON(consts.StatusBadRequest, reply{Error: err.Error()})
 		return
 	}
 	c.JSON(consts.StatusOK, resp)
@@ -120,7 +120,7 @@ func (s *Server) MCPRevokeToken(ctx context.Context, c *app.RequestContext) {
 		ID string `json:"id"`
 	}
 	if err := json.Unmarshal(c.Request.Body(), &body); err != nil || strings.TrimSpace(body.ID) == "" {
-		c.JSON(consts.StatusBadRequest, map[string]any{"ok": false, "error": "id is required"})
+		c.JSON(consts.StatusBadRequest, reply{Error: "id is required"})
 		return
 	}
 	c.JSON(consts.StatusOK, s.deps.MCPRevokeToken(body.ID))

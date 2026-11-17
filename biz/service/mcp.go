@@ -18,35 +18,35 @@ func (s *Service) mcpPath(name string) string {
 
 // MCPCreateToken mints one client grant. The raw token is returned exactly
 // once, together with the stdio snippet to paste into the client's config.
-func (s *Service) MCPCreateToken(label, binary string) (map[string]any, error) {
+func (s *Service) MCPCreateToken(label, binary string) (core.MCPTokenView, error) {
 	label = strings.TrimSpace(label)
 	if label == "" {
-		return nil, oeerrors.New("label is required")
+		return core.MCPTokenView{}, oeerrors.New("label is required")
 	}
 	id, raw, err := s.mcpTokens.Create(label)
 	if err != nil {
-		return nil, err
+		return core.MCPTokenView{}, err
 	}
-	return map[string]any{
-		"ok":      true,
-		"id":      id,
-		"label":   label,
-		"token":   raw,
-		"snippet": core.ClientConfigSnippet("xiaoyao", binary, raw),
+	return core.MCPTokenView{
+		OK:      true,
+		ID:      id,
+		Label:   label,
+		Token:   raw,
+		Snippet: core.ClientConfigSnippet("xiaoyao", binary, raw),
 	}, nil
 }
 
 // MCPListTokens shows the grants (never verifier material).
-func (s *Service) MCPListTokens() map[string]any {
-	return map[string]any{"ok": true, "tokens": s.mcpTokens.List()}
+func (s *Service) MCPListTokens() core.MCPTokenListView {
+	return core.MCPTokenListView{OK: true, Tokens: s.mcpTokens.List()}
 }
 
 // MCPRevokeToken retires a grant; running sessions fail on their next call.
-func (s *Service) MCPRevokeToken(id string) map[string]any {
+func (s *Service) MCPRevokeToken(id string) core.MCPTokenRevokedView {
 	if err := s.mcpTokens.Revoke(id); err != nil {
-		return map[string]any{"ok": false, "error": err.Error()}
+		return core.MCPTokenRevokedView{Error: err.Error()}
 	}
-	return map[string]any{"ok": true, "disconnected": true}
+	return core.MCPTokenRevokedView{OK: true, Disconnected: true}
 }
 
 // MCPVerify checks a client token for the read-only agent endpoints.
