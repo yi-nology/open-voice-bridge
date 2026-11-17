@@ -23,10 +23,7 @@ import (
 func TestASRConfigReturnsSnapshot(t *testing.T) {
 	svc := testService(t)
 	summary := svc.ASRConfig(context.Background())
-	providers, ok := summary["providers"].(map[string]config.ASRProviderConfig)
-	if !ok {
-		t.Fatalf("providers = %T, want the typed provider table", summary["providers"])
-	}
+	providers := summary.Providers
 	provider, ok := providers["mimo"]
 	if !ok {
 		t.Fatal("default provider missing from ASRConfig")
@@ -154,8 +151,7 @@ func TestASRConfigReadAndSaveRace(t *testing.T) {
 			default:
 			}
 			summary := svc.ASRConfig(context.Background())
-			providers, _ := summary["providers"].(map[string]config.ASRProviderConfig)
-			for _, provider := range providers {
+			for _, provider := range summary.Providers {
 				_ = provider.Model
 			}
 		}

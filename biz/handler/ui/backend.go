@@ -148,16 +148,13 @@ func (s *Server) GetASRConfig(ctx context.Context) (*api.ASRConfigResp, error) {
 	if s.deps.ASRConfig == nil {
 		return nil, oeerrors.New("asr config not available")
 	}
-	data := s.deps.ASRConfig(ctx)
+	view := s.deps.ASRConfig(ctx)
 	resp := &api.ASRConfigResp{
-		Ok:        boolValue(data["ok"]),
-		Provider:  stringValue(data["provider"]),
-		Fallback:  stringSlice(data["fallback"]),
-		Language:  stringValue(data["language"]),
-		Providers: providerModels(data["providers"]),
-	}
-	if value := stringValue(data["asr_error"]); value != "" {
-		resp.AsrError = ptrx.Of(value)
+		Ok:        view.OK,
+		Provider:  view.Provider,
+		Fallback:  view.Fallback,
+		Language:  view.Language,
+		Providers: providerModels(view.Providers),
 	}
 	return resp, nil
 }
@@ -273,11 +270,7 @@ func operationResult(result core.HelperResponse) *api.OperationResp {
 	return resp
 }
 
-func providerModels(value any) map[string]*api.ProviderConfig {
-	providers, ok := value.(map[string]config.ASRProviderConfig)
-	if !ok {
-		return nil
-	}
+func providerModels(providers map[string]config.ASRProviderConfig) map[string]*api.ProviderConfig {
 	out := make(map[string]*api.ProviderConfig, len(providers))
 	for name, provider := range providers {
 		out[name] = &api.ProviderConfig{
@@ -294,33 +287,6 @@ func providerModels(value any) map[string]*api.ProviderConfig {
 		}
 	}
 	return out
-}
-
-func boolValue(value any) bool {
-	result, _ := value.(bool)
-	return result
-}
-
-func stringValue(value any) string {
-	result, _ := value.(string)
-	return result
-}
-
-func stringSlice(value any) []string {
-	switch typed := value.(type) {
-	case []string:
-		return typed
-	case []any:
-		out := make([]string, 0, len(typed))
-		for _, item := range typed {
-			if text, ok := item.(string); ok {
-				out = append(out, text)
-			}
-		}
-		return out
-	default:
-		return nil
-	}
 }
 
 func (s *Server) GetDevices(ctx context.Context) (*api.DevicesResp, error) {
@@ -459,34 +425,32 @@ func (s *Server) GetLLMConfig(ctx context.Context) (*api.LLMConfigResp, error) {
 	if s.deps.LLMConfig == nil {
 		return nil, oeerrors.New("llm config not available")
 	}
-	data := s.deps.LLMConfig(ctx)
-	cfg, _ := data["config"].(config.LLMConfig)
+	view := s.deps.LLMConfig(ctx)
 	resp := &api.LLMConfigResp{
-		Ok: boolValue(data["ok"]),
+		Ok: view.OK,
 		Config: &api.LLMConfig{
-			Enabled:        cfg.Enabled,
-			Provider:       cfg.Provider,
-			BaseURL:        cfg.BaseURL,
-			Model:          cfg.Model,
-			APIKeyFile:     cfg.APIKeyFile,
-			Mode:           cfg.Mode,
-			Prompt:         cfg.Prompt,
-			TimeoutSeconds: int32(cfg.TimeoutSeconds),
+			Enabled:        view.Config.Enabled,
+			Provider:       view.Config.Provider,
+			BaseURL:        view.Config.BaseURL,
+			Model:          view.Config.Model,
+			APIKeyFile:     view.Config.APIKeyFile,
+			Mode:           view.Config.Mode,
+			Prompt:         view.Config.Prompt,
+			TimeoutSeconds: int32(view.Config.TimeoutSeconds),
 		},
 	}
-	if presets, ok := data["presets"].([]config.LLMPreset); ok {
-		resp.Presets = make([]*api.LLMPreset, 0, len(presets))
-		for _, preset := range presets {
-			resp.Presets = append(resp.Presets, &api.LLMPreset{
-				ID:          preset.ID,
-				Name:        preset.Name,
-				BaseURL:     preset.BaseURL,
-				Model:       preset.Model,
-				ModelHint:   preset.ModelHint,
-				KeyHint:     preset.KeyHint,
-				Description: preset.Description,
-			})
-		}
+	presets := view.Presets
+	resp.Presets = make([]*api.LLMPreset, 0, len(presets))
+	for _, preset := range presets {
+		resp.Presets = append(resp.Presets, &api.LLMPreset{
+			ID:          preset.ID,
+			Name:        preset.Name,
+			BaseURL:     preset.BaseURL,
+			Model:       preset.Model,
+			ModelHint:   preset.ModelHint,
+			KeyHint:     preset.KeyHint,
+			Description: preset.Description,
+		})
 	}
 	return resp, nil
 }
@@ -574,10 +538,10 @@ func (s *Server) GetTextConfig(ctx context.Context) (*api.TextConfigResp, error)
 	if s.deps.TextConfig == nil {
 		return nil, oeerrors.New("text config not available")
 	}
-	data := s.deps.TextConfig(ctx)
-	cfg, _ := data["config"].(config.TextConfig)
+	view := s.deps.TextConfig(ctx)
+	cfg := view.Config
 	resp := &api.TextConfigResp{
-		Ok: boolValue(data["ok"]),
+		Ok: view.OK,
 		Config: &api.TextConfig{
 			Dictionary: make([]*api.TextReplacement, 0, len(cfg.Dictionary)),
 			Snippets:   make([]*api.TextSnippet, 0, len(cfg.Snippets)),

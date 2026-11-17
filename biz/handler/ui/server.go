@@ -37,10 +37,10 @@ type Deps struct {
 	ApplyKeymapProfile    func(context.Context, string) (core.HelperResponse, error)
 	SaveKeymapProfile     func(context.Context, string, map[string]string) (core.HelperResponse, error)
 	DeleteKeymapProfile   func(context.Context, string) error
-	ASRConfig             func(context.Context) map[string]any
+	ASRConfig             func(context.Context) config.ASRConfigView
 	UpdateASRConfig       func(context.Context, config.ASRConfig) error
 	TestASR               func(context.Context, string) []asr.Diagnostic
-	LLMConfig             func(context.Context) map[string]any
+	LLMConfig             func(context.Context) config.LLMConfigView
 	UpdateLLMConfig       func(context.Context, config.LLMConfig) error
 	TestLLM               func(context.Context, string, bool) []llm.Diagnostic
 	SaveLLMKey            func(context.Context, string) error
@@ -48,7 +48,7 @@ type Deps struct {
 	DeleteHistory         func(context.Context, string) error
 	ClearHistory          func(context.Context) error
 	Stats                 func() history.UsageStats
-	TextConfig            func(context.Context) map[string]any
+	TextConfig            func(context.Context) config.TextConfigView
 	UpdateTextConfig      func(context.Context, config.TextConfig) error
 	Devices               func(context.Context) core.DevicesView
 	DiscoverDevices       func(context.Context) core.DiscoveredView

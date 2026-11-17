@@ -46,25 +46,24 @@ func (s *Service) SwitchASR(ctx context.Context, name string) error {
 	return nil
 }
 
-func (s *Service) ASRConfig(ctx context.Context) map[string]any {
+func (s *Service) ASRConfig(ctx context.Context) config.ASRConfigView {
 	s.cfgMu.RLock()
 	defer s.cfgMu.RUnlock()
 	// The provider table is owned state (R6): hand out a copy, never the live
-	// map — a caller writing into the returned map would otherwise rewrite the
-	// running configuration, and readers iterating it outside cfgMu race the
-	// next save's writers (#11).
+	// map — a caller writing into the returned table would otherwise rewrite
+	// the running configuration, and readers iterating it outside cfgMu race
+	// the next save's writers (#11).
 	providers := make(map[string]config.ASRProviderConfig, len(s.cfg.ASR.Providers))
 	for name, provider := range s.cfg.ASR.Providers {
 		provider.Args = slices.Clone(provider.Args)
 		providers[name] = provider
 	}
-	fallback := slices.Clone(s.cfg.ASR.Fallback)
-	return map[string]any{
-		"ok":        true,
-		"provider":  s.cfg.ASR.Provider,
-		"fallback":  fallback,
-		"language":  s.cfg.ASR.Language,
-		"providers": providers,
+	return config.ASRConfigView{
+		OK:        true,
+		Provider:  s.cfg.ASR.Provider,
+		Fallback:  slices.Clone(s.cfg.ASR.Fallback),
+		Language:  s.cfg.ASR.Language,
+		Providers: providers,
 	}
 }
 
@@ -109,10 +108,10 @@ func (s *Service) TestASR(ctx context.Context, provider string) []core.ASRDiagno
 	return s.ops.DiagnoseASR(testCfg)
 }
 
-func (s *Service) TextConfig(ctx context.Context) map[string]any {
+func (s *Service) TextConfig(ctx context.Context) config.TextConfigView {
 	s.cfgMu.RLock()
 	defer s.cfgMu.RUnlock()
-	return map[string]any{"ok": true, "config": s.cfg.Text}
+	return config.TextConfigView{OK: true, Config: s.cfg.Text}
 }
 
 func (s *Service) UpdateTextConfig(ctx context.Context, next config.TextConfig) error {
@@ -235,13 +234,13 @@ func (s *Service) UpdateTextCommands(enabled bool, commands map[string]string) e
 	return nil
 }
 
-func (s *Service) LLMConfig(ctx context.Context) map[string]any {
+func (s *Service) LLMConfig(ctx context.Context) config.LLMConfigView {
 	s.cfgMu.RLock()
 	defer s.cfgMu.RUnlock()
-	return map[string]any{
-		"ok":      true,
-		"presets": config.LLMPresets(),
-		"config":  s.cfg.LLM,
+	return config.LLMConfigView{
+		OK:      true,
+		Presets: config.LLMPresets(),
+		Config:  s.cfg.LLM,
 	}
 }
 

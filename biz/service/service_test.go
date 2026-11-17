@@ -312,11 +312,11 @@ func TestDevicesAndSelection(t *testing.T) {
 func TestLLMConfigService(t *testing.T) {
 	svc, _, _, path := newTestService(t)
 	data := svc.LLMConfig(context.Background())
-	if data["ok"] != true {
+	if !data.OK {
 		t.Fatalf("llm config = %+v", data)
 	}
-	if presets, ok := data["presets"].([]config.LLMPreset); !ok || len(presets) < 3 {
-		t.Fatalf("presets = %+v", data["presets"])
+	if presets := data.Presets; len(presets) < 3 {
+		t.Fatalf("presets = %+v", presets)
 	}
 	next := config.LLMConfig{Enabled: false, Provider: "minimax", Mode: "cleanup", TimeoutSeconds: 20}
 	if err := svc.UpdateLLMConfig(context.Background(), next); err != nil {
@@ -398,7 +398,7 @@ func TestTextConfigService(t *testing.T) {
 		t.Fatalf("text = %+v", loaded.Text)
 	}
 	data := svc.TextConfig(context.Background())
-	if data["ok"] != true {
+	if !data.OK {
 		t.Fatalf("text config = %+v", data)
 	}
 }
