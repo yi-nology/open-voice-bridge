@@ -189,6 +189,30 @@ type MCPTokenRevokedView struct {
 	Disconnected bool   `json:"disconnected,omitempty"`
 }
 
+// AgentIdentityView tells a fresh MCP session whose grant it is using.
+type AgentIdentityView struct {
+	OK    bool   `json:"ok"`
+	ID    string `json:"id"`
+	Label string `json:"label"`
+}
+
+// AgentEntryView is one history row as the authorised AI client sees it:
+// the spoken text and its metadata, device address redacted (SEC-02).
+type AgentEntryView struct {
+	Text      string    `json:"text"`
+	At        time.Time `json:"at"`
+	Provider  string    `json:"provider"`
+	Language  string    `json:"language"`
+	Processed bool      `json:"processed"`
+	Address   string    `json:"address"`
+}
+
+// AgentHistoryView is the client-facing history list.
+type AgentHistoryView struct {
+	OK      bool             `json:"ok"`
+	Entries []AgentEntryView `json:"entries"`
+}
+
 // ASRCheckView is one provider row in the diagnostics report's ASR section.
 type ASRCheckView struct {
 	Provider string `json:"provider"`

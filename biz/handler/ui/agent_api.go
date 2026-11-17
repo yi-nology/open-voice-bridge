@@ -8,6 +8,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/history"
 	"github.com/yi-nology/open-voice-bridge/internal/redact"
 )
@@ -24,10 +25,10 @@ func bearerToken(c *app.RequestContext) string {
 func (s *Server) AgentVerify(ctx context.Context, c *app.RequestContext) {
 	info, ok := s.deps.MCPVerify(bearerToken(c))
 	if !ok {
-		c.JSON(consts.StatusUnauthorized, map[string]any{"ok": false, "error": "unknown or revoked token"})
+		c.JSON(consts.StatusUnauthorized, reply{Error: "unknown or revoked token"})
 		return
 	}
-	c.JSON(consts.StatusOK, map[string]any{"ok": true, "id": info.ID, "label": info.Label})
+	c.JSON(consts.StatusOK, core.AgentIdentityView{OK: true, ID: info.ID, Label: info.Label})
 }
 
 // AgentHistory serves dictation history to an authorised AI client. Device
@@ -36,13 +37,13 @@ func (s *Server) AgentVerify(ctx context.Context, c *app.RequestContext) {
 func (s *Server) AgentHistory(ctx context.Context, c *app.RequestContext) {
 	info, ok := s.deps.MCPVerify(bearerToken(c))
 	if !ok {
-		c.JSON(consts.StatusUnauthorized, map[string]any{"ok": false, "error": "unknown or revoked token"})
+		c.JSON(consts.StatusUnauthorized, reply{Error: "unknown or revoked token"})
 		return
 	}
 	limit := queryInt(c, "limit", 20, 200)
 	query := strings.TrimSpace(string(c.Query("q")))
 	entries := s.deps.History(ctx)
-	out := make([]map[string]any, 0, limit)
+	out := make([]core.AgentEntryView, 0, limit)
 	for _, entry := range entries {
 		if query != "" && !strings.Contains(strings.ToLower(entry.Text), strings.ToLower(query)) {
 			continue
@@ -57,38 +58,31 @@ func (s *Server) AgentHistory(ctx context.Context, c *app.RequestContext) {
 		tool = "history_search"
 	}
 	s.deps.MCPAudit(info, tool, len(out))
-	c.JSON(consts.StatusOK, map[string]any{"ok": true, "entries": out})
+	c.JSON(consts.StatusOK, core.AgentHistoryView{OK: true, Entries: out})
 }
 
 // AgentStats serves the cumulative counters (counts only, never content).
 func (s *Server) AgentStats(ctx context.Context, c *app.RequestContext) {
 	info, ok := s.deps.MCPVerify(bearerToken(c))
 	if !ok {
-		c.JSON(consts.StatusUnauthorized, map[string]any{"ok": false, "error": "unknown or revoked token"})
+		c.JSON(consts.StatusUnauthorized, reply{Error: "unknown or revoked token"})
 		return
 	}
 	snap := s.deps.Stats()
 	s.deps.MCPAudit(info, "usage_stats", 0)
-	c.JSON(consts.StatusOK, map[string]any{
-		"ok":         true,
-		"utterances": snap.Utterances,
-		"characters": snap.Characters,
-		"speech_ms":  snap.SpeechMS,
-		"longest_ms": snap.LongestMS,
-		"days":       snap.Days,
-	})
+	c.JSON(consts.StatusOK, history.StatsView{OK: true, UsageStats: snap})
 }
 
 // publicEntry is the client-facing shape: the spoken text and its metadata,
 // with the device address redacted (SEC-02).
-func publicEntry(entry history.Entry) map[string]any {
-	return map[string]any{
-		"text":      entry.Text,
-		"at":        entry.At,
-		"provider":  entry.Provider,
-		"language":  entry.Language,
-		"processed": entry.Processed,
-		"address":   redact.MAC(entry.Address),
+func publicEntry(entry history.Entry) core.AgentEntryView {
+	return core.AgentEntryView{
+		Text:      entry.Text,
+		At:        entry.At,
+		Provider:  entry.Provider,
+		Language:  entry.Language,
+		Processed: entry.Processed,
+		Address:   redact.MAC(entry.Address),
 	}
 }
 
