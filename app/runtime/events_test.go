@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/yi-nology/open-voice-bridge/internal/agent"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/history"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
 	"github.com/yi-nology/open-voice-bridge/internal/speech"
@@ -27,11 +28,11 @@ type eventRecorder struct {
 	mu        sync.Mutex
 	entries   []history.Entry
 	usage     []usageCall
-	published chan map[string]any
+	published chan core.SSEEvent
 }
 
 func newEventRecorder() *eventRecorder {
-	return &eventRecorder{published: make(chan map[string]any, 8)}
+	return &eventRecorder{published: make(chan core.SSEEvent, 8)}
 }
 
 func (r *eventRecorder) Append(entry history.Entry) error {
@@ -47,9 +48,9 @@ func (r *eventRecorder) Record(speech time.Duration, chars int) {
 	r.usage = append(r.usage, usageCall{speech, chars})
 }
 
-func (r *eventRecorder) Publish(event map[string]any) { r.published <- event }
+func (r *eventRecorder) Publish(event core.SSEEvent) { r.published <- event }
 
-func (r *eventRecorder) next(t *testing.T) map[string]any {
+func (r *eventRecorder) next(t *testing.T) core.SSEEvent {
 	t.Helper()
 	select {
 	case event := <-r.published:
@@ -110,14 +111,15 @@ func TestEventsTranscriptReachesHistoryUsageAndSubtitle(t *testing.T) {
 	}
 
 	published := recorder.next(t)
-	if published["event"] != "transcript" || published["text"] != "你好世界" {
+	final, ok := published.(core.TranscriptFinalEvent)
+	if !ok || final.Text != "你好世界" {
 		t.Fatalf("published = %v", published)
 	}
-	if published["at"] != at.Format(time.RFC3339) {
-		t.Errorf("at = %v, want RFC3339", published["at"])
+	if final.At != at.Format(time.RFC3339) {
+		t.Errorf("at = %v, want RFC3339", final.At)
 	}
-	if published["latency_ms"] != int64(300) {
-		t.Errorf("latency_ms = %v, want 300", published["latency_ms"])
+	if final.LatencyMS != 300 {
+		t.Errorf("latency_ms = %v, want 300", final.LatencyMS)
 	}
 	entries, usage := recorder.snapshot()
 	if len(entries) != 1 || entries[0].Text != "你好世界" || entries[0].Provider != "mimo" {
@@ -178,11 +180,12 @@ func TestEventsPhraseIsLiveOnly(t *testing.T) {
 	feeds.phrases <- agent.PhraseEvent{Slot: 3, Text: "收货地址", At: at}
 
 	published := recorder.next(t)
-	if published["event"] != "phrase" || published["slot"] != 3 || published["text"] != "收货地址" {
+	phrase, ok := published.(core.CommonPhraseEvent)
+	if !ok || phrase.Slot != 3 || phrase.Text != "收货地址" {
 		t.Fatalf("published = %v", published)
 	}
-	if published["at"] != at.Format(time.RFC3339) {
-		t.Errorf("at = %v, want RFC3339", published["at"])
+	if phrase.At != at.Format(time.RFC3339) {
+		t.Errorf("at = %v, want RFC3339", phrase.At)
 	}
 	entries, usage := recorder.snapshot()
 	if len(entries) != 0 {
@@ -210,17 +213,18 @@ func TestEventsListeningNamesTheOwner(t *testing.T) {
 
 	feeds.microphone <- input.AudioState{Speaking: true, Owner: "phone-abc"}
 	published := recorder.next(t)
-	if published["event"] != "listening" || published["active"] != true {
+	listening, ok := published.(core.ListeningEvent)
+	if !ok || !listening.Active {
 		t.Fatalf("published = %v", published)
 	}
-	if published["source"] != "phone" || published["source_name"] != "Pixel" {
-		t.Errorf("listening label = %v/%v, want phone/Pixel", published["source"], published["source_name"])
+	if listening.Source != "phone" || listening.SourceName != "Pixel" {
+		t.Errorf("listening label = %v/%v, want phone/Pixel", listening.Source, listening.SourceName)
 	}
 
 	feeds.microphone <- input.AudioState{}
 	published = recorder.next(t)
-	if published["active"] != false {
-		t.Errorf("an idle hub published active = %v", published["active"])
+	if idle, ok := published.(core.ListeningEvent); !ok || idle.Active {
+		t.Errorf("an idle hub published active = %v", published)
 	}
 }
 

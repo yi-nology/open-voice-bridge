@@ -60,7 +60,7 @@ type Deps struct {
 	ConnectDevice         func(context.Context, string, bool) error
 	Ready                 func(context.Context) core.ReadyView
 	Inputs                func(context.Context) phone.InputsView
-	SnapshotState         func() map[string]any
+	SnapshotState         func() core.ListeningState
 	ExportConfig          func() ([]byte, error)
 	ImportConfig          func([]byte) error
 	Diagnostics           func(context.Context) core.DiagnosticsView
@@ -236,18 +236,17 @@ func (s *Server) Events(ctx context.Context, c *app.RequestContext) {
 
 // registerClient adds a subscriber and returns the snapshot it must receive
 // first (I4).
-func (s *Server) registerClient(client *sseClient) map[string]any {
+func (s *Server) registerClient(client *sseClient) core.SnapshotEvent {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.clients[client] = struct{}{}
-	snap := map[string]any{
-		"event":     "snapshot",
-		"capturing": s.capture != nil,
+	snap := core.SnapshotEvent{
+		Event:     "snapshot",
+		Capturing: s.capture != nil,
 	}
 	if s.deps.SnapshotState != nil {
-		for key, value := range s.deps.SnapshotState() {
-			snap[key] = value
-		}
+		state := s.deps.SnapshotState()
+		snap.Listening = &state
 	}
 	return snap
 }
@@ -344,4 +343,4 @@ func (s *Server) stopCapture() (string, error) {
 }
 
 // Publish broadcasts a domain event to all connected SSE clients.
-func (s *Server) Publish(event map[string]any) { s.broadcast(event) }
+func (s *Server) Publish(event core.SSEEvent) { s.broadcast(event) }

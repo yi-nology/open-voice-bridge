@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/yi-nology/open-voice-bridge/internal/agent"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/history"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
 )
@@ -34,7 +35,7 @@ type Events struct {
 	Sources          func() []input.Status
 	History          HistorySink
 	Usage            UsageSink
-	Publish          func(map[string]any)
+	Publish          func(core.SSEEvent)
 	TranscriptsTotal prometheus.Counter
 	ASRLatency       prometheus.Histogram
 	Logger           logx.Logger
@@ -48,21 +49,21 @@ func (e Events) Run(ctx context.Context) {
 			return
 		case transcript := <-e.Transcripts:
 			if transcript.Partial {
-				e.Publish(map[string]any{
-					"event":   "transcript",
-					"partial": true,
-					"text":    transcript.Text,
-					"at":      transcript.At.Format(time.RFC3339),
+				e.Publish(core.TranscriptPartialEvent{
+					Event:   "transcript",
+					Partial: true,
+					Text:    transcript.Text,
+					At:      transcript.At.Format(time.RFC3339),
 				})
 				continue
 			}
 			if transcript.Command != "" {
-				e.Publish(map[string]any{
-					"event":  "command",
-					"text":   transcript.Text,
-					"combo":  transcript.Command,
-					"source": transcript.Source,
-					"at":     transcript.At.Format(time.RFC3339),
+				e.Publish(core.CommandEvent{
+					Event:  "command",
+					Text:   transcript.Text,
+					Combo:  transcript.Command,
+					Source: transcript.Source,
+					At:     transcript.At.Format(time.RFC3339),
 				})
 				continue
 			}
@@ -87,41 +88,43 @@ func (e Events) Run(ctx context.Context) {
 				e.Logger.Warn("append history", "err", err)
 			}
 			e.Usage.Record(transcript.Duration, len([]rune(transcript.Text)))
-			e.Publish(map[string]any{
-				"event":       "transcript",
-				"text":        transcript.Text,
-				"raw_text":    transcript.RawText,
-				"language":    transcript.Language,
-				"provider":    transcript.Provider,
-				"source":      transcript.Source,
-				"source_name": transcript.SourceName,
-				"address":     transcript.Address,
-				"processed":   transcript.Processed,
-				"truncated":   transcript.Truncated,
-				"latency_ms":  transcript.Latency.Milliseconds(),
-				"at":          transcript.At.Format(time.RFC3339),
+			e.Publish(core.TranscriptFinalEvent{
+				Event:      "transcript",
+				Text:       transcript.Text,
+				RawText:    transcript.RawText,
+				Language:   transcript.Language,
+				Provider:   transcript.Provider,
+				Source:     transcript.Source,
+				SourceName: transcript.SourceName,
+				Address:    transcript.Address,
+				Processed:  transcript.Processed,
+				Truncated:  transcript.Truncated,
+				LatencyMS:  transcript.Latency.Milliseconds(),
+				At:         transcript.At.Format(time.RFC3339),
 			})
 		case picker := <-e.Pickers:
-			e.Publish(map[string]any{
-				"event": "phrase_picker",
-				"at":    picker.At.Format(time.RFC3339),
+			e.Publish(core.PhrasePickerEvent{
+				Event: "phrase_picker",
+				At:    picker.At.Format(time.RFC3339),
 			})
 		case state := <-e.Microphone:
 			active, source, name := SpeakingLabel(state, e.Sources())
-			e.Publish(map[string]any{
-				"event":       "listening",
-				"active":      active,
-				"source":      source,
-				"source_name": name,
+			e.Publish(core.ListeningEvent{
+				Event: "listening",
+				ListeningState: core.ListeningState{
+					Active:     active,
+					Source:     source,
+					SourceName: name,
+				},
 			})
 		case phrase := <-e.Phrases:
 			// Common phrases are user-authored text, not speech: they
 			// show up live but never enter history or the log body.
-			e.Publish(map[string]any{
-				"event": "phrase",
-				"slot":  phrase.Slot,
-				"text":  phrase.Text,
-				"at":    phrase.At.Format(time.RFC3339),
+			e.Publish(core.CommonPhraseEvent{
+				Event: "phrase",
+				Slot:  phrase.Slot,
+				Text:  phrase.Text,
+				At:    phrase.At.Format(time.RFC3339),
 			})
 		}
 	}

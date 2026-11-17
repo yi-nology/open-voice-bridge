@@ -128,7 +128,7 @@ func TestStartCaptureDoesNotBlockPublish(t *testing.T) {
 	time.Sleep(150 * time.Millisecond) // the request is now inside the helper call
 
 	begin := time.Now()
-	s.Publish(map[string]any{"event": "probe"})
+	s.Publish(core.PhrasePickerEvent{})
 	if elapsed := time.Since(begin); elapsed > 200*time.Millisecond {
 		t.Fatalf("Publish blocked %v behind startCapture: the helper call runs under s.mu", elapsed)
 	}

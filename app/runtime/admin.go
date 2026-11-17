@@ -102,13 +102,11 @@ func (a Admin) deps() ui.Deps {
 		MCPCreateToken: func(label string) (core.MCPTokenView, error) { return svc.MCPCreateToken(label, a.MCPBinaryPath()) },
 		MCPListTokens:  svc.MCPListTokens,
 		MCPRevokeToken: svc.MCPRevokeToken,
-		SnapshotState: func() map[string]any {
+		SnapshotState: func() core.ListeningState {
 			owner := a.Hub.AudioOwner()
 			active, source, name := SpeakingLabel(
 				input.AudioState{Speaking: owner != "", Owner: owner}, a.Hub.Sources())
-			return map[string]any{
-				"listening": map[string]any{"active": active, "source": source, "source_name": name},
-			}
+			return core.ListeningState{Active: active, Source: source, SourceName: name}
 		},
 		Devices:               func(ctx context.Context) core.DevicesView { return BuildDevices(ctx, svc.ViewInputs()) },
 		DiscoverDevices:       func(ctx context.Context) core.DiscoveredView { return BuildDiscovered(ctx, svc.ViewInputs()) },
