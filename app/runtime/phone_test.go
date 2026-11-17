@@ -104,21 +104,21 @@ func TestPhoneAdminDisabledNeedsNoStore(t *testing.T) {
 	ctx := context.Background()
 
 	inputs := admin.Inputs(ctx)
-	if inputs["enabled"] != false {
+	if inputs.Enabled {
 		t.Fatalf("inputs = %+v", inputs)
 	}
-	if pairing := admin.Pairing(ctx); pairing["enabled"] != false {
+	if pairing := admin.Pairing(ctx); pairing.Enabled {
 		t.Fatalf("pairing = %+v", pairing)
 	}
 	devices := admin.Devices(ctx)
-	if devices["enabled"] != false {
+	if devices.Enabled {
 		t.Fatalf("devices = %+v", devices)
 	}
-	if list, ok := devices["devices"].([]phone.Device); !ok || len(list) != 0 {
-		t.Fatalf("devices list = %#v, want an empty typed slice", devices["devices"])
+	if len(devices.Devices) != 0 {
+		t.Fatalf("devices list = %#v, want an empty typed slice", devices.Devices)
 	}
 	revoked := admin.Revoke(ctx, "phone-abc")
-	if revoked["ok"] != false || revoked["error"] != "phone input disabled" {
+	if revoked.OK || revoked.Error != "phone input disabled" {
 		t.Fatalf("revoke = %+v", revoked)
 	}
 }
@@ -132,10 +132,10 @@ func TestPhoneAdminInputsSeparatesSavedIntentFromRunning(t *testing.T) {
 		Configured: func() bool { return true },
 	}
 	inputs := admin.Inputs(context.Background())
-	if inputs["enabled"] != false {
+	if inputs.Enabled {
 		t.Fatalf("running state = %+v, want the listener off", inputs)
 	}
-	if inputs["configured"] != true {
+	if !inputs.Configured {
 		t.Fatalf("saved intent lost: %+v", inputs)
 	}
 }
@@ -164,32 +164,28 @@ func newPhoneAdmin(t *testing.T, enabled bool) (runtime.PhoneAdmin, *phone.Store
 func TestPhoneAdminPairingOffersThePhoneLink(t *testing.T) {
 	admin, _ := newPhoneAdmin(t, true)
 	pairing := admin.Pairing(context.Background())
-	if pairing["enabled"] != true {
+	if !pairing.Enabled {
 		t.Fatalf("pairing = %+v", pairing)
 	}
-	code, _ := pairing["code"].(string)
-	if code == "" {
+	if pairing.Code == "" {
 		t.Fatalf("pairing must carry a code: %+v", pairing)
 	}
-	if pairing["scheme"] != "http" || pairing["port"] != "8788" {
-		t.Fatalf("scheme/port = %v/%v, want http/8788 for tls=off", pairing["scheme"], pairing["port"])
+	if pairing.Scheme != "http" || pairing.Port != "8788" {
+		t.Fatalf("scheme/port = %v/%v, want http/8788 for tls=off", pairing.Scheme, pairing.Port)
 	}
-	expires, _ := pairing["expires_at"].(string)
-	if _, err := time.Parse(time.RFC3339, expires); err != nil {
-		t.Fatalf("expires_at = %q, want RFC3339: %v", expires, err)
+	if _, err := time.Parse(time.RFC3339, pairing.ExpiresAt); err != nil {
+		t.Fatalf("expires_at = %q, want RFC3339: %v", pairing.ExpiresAt, err)
 	}
-	host, _ := pairing["host"].(string)
-	link, _ := pairing["link"].(string)
-	if host == "" {
-		if link != "" {
-			t.Fatalf("no LAN address means no link, got %q", link)
+	if pairing.Host == "" {
+		if pairing.Link != "" {
+			t.Fatalf("no LAN address means no link, got %q", pairing.Link)
 		}
 		return
 	}
-	if link != "http://"+host+":8788/phone" {
-		t.Fatalf("link = %q, want the pairing page on the LAN address", link)
+	if pairing.Link != "http://"+pairing.Host+":8788/phone" {
+		t.Fatalf("link = %q, want the pairing page on the LAN address", pairing.Link)
 	}
-	qr, _ := pairing["qr"].(string)
+	qr := pairing.QR
 	if !strings.HasPrefix(qr, "data:image/png;base64,") {
 		t.Fatalf("qr = %q, want a PNG data URI", qr[:min(30, len(qr))])
 	}
@@ -209,13 +205,13 @@ func TestPhoneAdminRevokeDropsTheToken(t *testing.T) {
 	}
 
 	revoked := admin.Revoke(ctx, deviceID)
-	if revoked["ok"] != true {
+	if !revoked.OK {
 		t.Fatalf("revoke = %+v", revoked)
 	}
 	if _, alive := store.Authenticate(token); alive {
 		t.Fatal("a revoked token must stop authenticating")
 	}
-	for _, device := range admin.Devices(ctx)["devices"].([]phone.Device) {
+	for _, device := range admin.Devices(ctx).Devices {
 		if device.ID == deviceID {
 			t.Fatalf("revoked device still listed: %+v", device)
 		}
@@ -225,10 +221,10 @@ func TestPhoneAdminRevokeDropsTheToken(t *testing.T) {
 func TestPhoneAdminRevokeReportsUnknownDevice(t *testing.T) {
 	admin, _ := newPhoneAdmin(t, true)
 	revoked := admin.Revoke(context.Background(), "phone-missing")
-	if revoked["ok"] != false {
+	if revoked.OK {
 		t.Fatalf("revoke = %+v", revoked)
 	}
-	message, _ := revoked["error"].(string)
+	message := revoked.Error
 	if !strings.Contains(message, "phone-missing") {
 		t.Fatalf("error = %q, want the device id named", message)
 	}
@@ -242,15 +238,14 @@ func TestPhoneAdminListsPairedAndConnected(t *testing.T) {
 		t.Fatalf("pair: %v", err)
 	}
 	payload := admin.Devices(context.Background())
-	if payload["enabled"] != true {
+	if !payload.Enabled {
 		t.Fatalf("devices = %+v", payload)
 	}
-	devices, ok := payload["devices"].([]phone.Device)
-	if !ok || len(devices) != 1 || devices[0].ID != deviceID {
-		t.Fatalf("devices = %#v, want the paired phone", payload["devices"])
+	devices := payload.Devices
+	if len(devices) != 1 || devices[0].ID != deviceID {
+		t.Fatalf("devices = %#v, want the paired phone", payload.Devices)
 	}
-	connected, ok := payload["connected"].([]input.Status)
-	if !ok || len(connected) != 0 {
-		t.Fatalf("connected = %#v, want an empty typed slice with no live socket", payload["connected"])
+	if payload.Connected == nil || len(*payload.Connected) != 0 {
+		t.Fatalf("connected = %#v, want an empty typed slice with no live socket", payload.Connected)
 	}
 }

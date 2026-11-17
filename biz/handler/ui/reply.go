@@ -8,6 +8,7 @@ type reply struct {
 	OK       bool              `json:"ok"`
 	Error    string            `json:"error,omitempty"`
 	Enabled  *bool             `json:"enabled,omitempty"`
+	Allow    *bool             `json:"allow,omitempty"`
 	Word     string            `json:"word,omitempty"`
 	Backend  string            `json:"backend,omitempty"`
 	Slot     *int              `json:"slot,omitempty"`

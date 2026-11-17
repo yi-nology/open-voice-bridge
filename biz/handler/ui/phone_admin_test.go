@@ -11,6 +11,8 @@ import (
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 
 	"github.com/yi-nology/open-voice-bridge/internal/history"
+	"github.com/yi-nology/open-voice-bridge/internal/input"
+	"github.com/yi-nology/open-voice-bridge/internal/phone"
 )
 
 func adminEngine(deps Deps) *server.Hertz {
@@ -28,8 +30,8 @@ func adminEngine(deps Deps) *server.Hertz {
 
 func TestAdminInputsLoopbackOK(t *testing.T) {
 	h := adminEngine(Deps{
-		Inputs: func(context.Context) map[string]any {
-			return map[string]any{"enabled": true, "sources": []any{map[string]any{"id": "remote"}}}
+		Inputs: func(context.Context) phone.InputsView {
+			return phone.InputsView{Enabled: true, Sources: []input.Status{{ID: "remote"}}}
 		},
 	})
 	resp := ut.PerformRequest(h.Engine, "GET", "http://127.0.0.1:8787/api/inputs", nil)
@@ -68,9 +70,9 @@ func TestAdminPhoneEndpointsUnavailableWhenNil(t *testing.T) {
 func TestAdminRevokeParsesDeviceID(t *testing.T) {
 	var got string
 	h := adminEngine(Deps{
-		PhoneRevoke: func(_ context.Context, deviceID string) map[string]any {
+		PhoneRevoke: func(_ context.Context, deviceID string) phone.RevokeView {
 			got = deviceID
-			return map[string]any{"ok": true}
+			return phone.RevokeView{OK: true}
 		},
 	})
 	resp := ut.PerformRequest(h.Engine, "POST", "http://127.0.0.1:8787/api/phone/revoke",
@@ -88,7 +90,7 @@ func TestAdminRevokeParsesDeviceID(t *testing.T) {
 
 func TestAdminRevokeRejectsMissingID(t *testing.T) {
 	h := adminEngine(Deps{
-		PhoneRevoke: func(context.Context, string) map[string]any { return map[string]any{"ok": true} },
+		PhoneRevoke: func(context.Context, string) phone.RevokeView { return phone.RevokeView{OK: true} },
 	})
 	resp := ut.PerformRequest(h.Engine, "POST", "http://127.0.0.1:8787/api/phone/revoke",
 		&ut.Body{Body: bytes.NewBufferString(`{}`), Len: 2},
@@ -102,7 +104,7 @@ func TestAdminRevokeRejectsMissingID(t *testing.T) {
 
 func TestAdminRejectsCrossSitePairing(t *testing.T) {
 	h := adminEngine(Deps{
-		PhonePairing: func(context.Context) map[string]any { return map[string]any{"enabled": true} },
+		PhonePairing: func(context.Context) phone.PairingView { return phone.PairingView{Enabled: true} },
 	})
 	resp := ut.PerformRequest(h.Engine, "POST", "http://127.0.0.1:8787/api/phone/pairing",
 		&ut.Body{Body: nil, Len: 0},

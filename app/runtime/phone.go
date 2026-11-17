@@ -74,46 +74,47 @@ type PhoneAdmin struct {
 	Addr       string
 }
 
-func (a PhoneAdmin) Inputs(context.Context) map[string]any {
-	return map[string]any{"enabled": a.Enabled, "configured": a.Configured(), "sources": a.Hub.Sources()}
+func (a PhoneAdmin) Inputs(context.Context) phone.InputsView {
+	return phone.InputsView{Enabled: a.Enabled, Configured: a.Configured(), Sources: a.Hub.Sources()}
 }
 
-func (a PhoneAdmin) Pairing(context.Context) map[string]any {
+func (a PhoneAdmin) Pairing(context.Context) phone.PairingView {
 	if !a.Enabled {
-		return map[string]any{"enabled": false}
+		return phone.PairingView{}
 	}
 	code, expires := a.Store.GeneratePairCode()
 	scheme, host, port := phone.PairingBase(a.TLSMode, a.Addr)
-	out := map[string]any{
-		"enabled":    true,
-		"code":       code,
-		"expires_at": expires.Format(time.RFC3339),
-		"scheme":     scheme,
-		"port":       port,
+	out := phone.PairingView{
+		Enabled:   true,
+		Code:      code,
+		ExpiresAt: expires.Format(time.RFC3339),
+		Scheme:    scheme,
+		Port:      port,
 	}
 	if host != "" {
-		out["host"] = host
-		out["link"] = scheme + "://" + host + ":" + port + "/phone"
+		out.Host = host
+		out.Link = scheme + "://" + host + ":" + port + "/phone"
 		// The QR carries the same auto-filling link the card shows — one
 		// scan on the phone lands on the pairing screen with the code in the
 		// #pair= fragment (波 3 二维码配对).
-		if png, err := qrcode.Encode(out["link"].(string)+"#pair="+code, qrcode.Medium, 256); err == nil {
-			out["qr"] = "data:image/png;base64," + base64.StdEncoding.EncodeToString(png)
+		if png, err := qrcode.Encode(out.Link+"#pair="+code, qrcode.Medium, 256); err == nil {
+			out.QR = "data:image/png;base64," + base64.StdEncoding.EncodeToString(png)
 		}
 	}
 	return out
 }
 
-func (a PhoneAdmin) Devices(context.Context) map[string]any {
+func (a PhoneAdmin) Devices(context.Context) phone.DeviceListView {
 	if !a.Enabled {
-		return map[string]any{"enabled": false, "devices": []phone.Device{}}
+		return phone.DeviceListView{Devices: []phone.Device{}}
 	}
-	return map[string]any{"enabled": true, "devices": a.Store.ListDevices(), "connected": a.Server.ConnectedDevices()}
+	connected := a.Server.ConnectedDevices()
+	return phone.DeviceListView{Enabled: true, Devices: a.Store.ListDevices(), Connected: &connected}
 }
 
-func (a PhoneAdmin) Revoke(_ context.Context, deviceID string) map[string]any {
+func (a PhoneAdmin) Revoke(_ context.Context, deviceID string) phone.RevokeView {
 	if !a.Enabled {
-		return map[string]any{"ok": false, "error": "phone input disabled"}
+		return phone.RevokeView{Error: "phone input disabled"}
 	}
 	err := a.Store.Revoke(deviceID)
 	// Revoking is a deliberate cut: the live WebSocket must die whether or not
@@ -122,7 +123,7 @@ func (a PhoneAdmin) Revoke(_ context.Context, deviceID string) map[string]any {
 	// to reconnect (#8); the operator sees ok:false and can retry.
 	disconnected := a.Server.Disconnect(deviceID)
 	if err != nil {
-		return map[string]any{"ok": false, "error": err.Error(), "disconnected": disconnected}
+		return phone.RevokeView{Error: err.Error(), Disconnected: &disconnected}
 	}
-	return map[string]any{"ok": true, "disconnected": disconnected}
+	return phone.RevokeView{OK: true, Disconnected: &disconnected}
 }

@@ -22,6 +22,7 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/history"
 	"github.com/yi-nology/open-voice-bridge/internal/llm"
 	"github.com/yi-nology/open-voice-bridge/internal/mcp"
+	"github.com/yi-nology/open-voice-bridge/internal/phone"
 	"github.com/yi-nology/open-voice-bridge/web"
 )
 
@@ -58,7 +59,7 @@ type Deps struct {
 	DeleteDevice          func(context.Context, string) error
 	ConnectDevice         func(context.Context, string, bool) error
 	Ready                 func(context.Context) core.ReadyView
-	Inputs                func(context.Context) map[string]any
+	Inputs                func(context.Context) phone.InputsView
 	SnapshotState         func() map[string]any
 	ExportConfig          func() ([]byte, error)
 	ImportConfig          func([]byte) error
@@ -68,9 +69,9 @@ type Deps struct {
 	MCPCreateToken        func(label string) (core.MCPTokenView, error)
 	MCPListTokens         func() core.MCPTokenListView
 	MCPRevokeToken        func(id string) core.MCPTokenRevokedView
-	PhonePairing          func(context.Context) map[string]any
-	PhoneDevices          func(context.Context) map[string]any
-	PhoneRevoke           func(context.Context, string) map[string]any
+	PhonePairing          func(context.Context) phone.PairingView
+	PhoneDevices          func(context.Context) phone.DeviceListView
+	PhoneRevoke           func(context.Context, string) phone.RevokeView
 	SetPhoneEnabled       func(bool) error
 	PhonePowerKey         func() bool
 	SetPhonePowerKey      func(bool) error

@@ -9,14 +9,16 @@ import (
 	"github.com/cloudwego/hertz/pkg/common/ut"
 
 	"github.com/yi-nology/open-voice-bridge/biz/handler/ui"
+	"github.com/yi-nology/open-voice-bridge/internal/input"
+	"github.com/yi-nology/open-voice-bridge/internal/phone"
 )
 
 // ARC-06: the non-IDL routes must bind the server handed to register, not a
 // package global that a second engine or a later test could overwrite.
 func TestRegisterBindsTheUIServerItIsGiven(t *testing.T) {
 	srv := ui.New(ui.Deps{
-		Inputs: func(context.Context) map[string]any {
-			return map[string]any{"enabled": false, "sources": []string{}}
+		Inputs: func(context.Context) phone.InputsView {
+			return phone.InputsView{Sources: []input.Status{}}
 		},
 	})
 	h := server.New()
