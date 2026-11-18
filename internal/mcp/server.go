@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -30,9 +31,37 @@ func NewServer(baseURL, token string, client *http.Client) *Server {
 }
 
 type rpcMessage struct {
-	ID     any            `json:"id"`
-	Method string         `json:"method"`
-	Params map[string]any `json:"params"`
+	ID     any       `json:"id"`
+	Method string    `json:"method"`
+	Params rpcParams `json:"params"`
+}
+
+// rpcParams carries the fields this server reads from the JSON-RPC params
+// object. `arguments` stays free-format on purpose: the MCP protocol defines
+// it per tool through the published schema (documented free-format seam).
+type rpcParams struct {
+	Name      string         `json:"name"`
+	Arguments map[string]any `json:"arguments"`
+}
+
+// rpcReply is the JSON-RPC success envelope; rpcFailure is its error
+// counterpart. Two shapes because the wire carries exactly one of `result`
+// or `error` — an omitempty union would drop ping's empty result (map 棘轮).
+type rpcReply struct {
+	JSONRPC string `json:"jsonrpc"`
+	ID      any    `json:"id"`
+	Result  any    `json:"result"`
+}
+
+type rpcFailure struct {
+	JSONRPC string       `json:"jsonrpc"`
+	ID      any          `json:"id"`
+	Error   rpcErrorBody `json:"error"`
+}
+
+type rpcErrorBody struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
 }
 
 // Serve runs the newline-delimited JSON-RPC loop until the input ends or the
@@ -82,73 +111,136 @@ func (s *Server) Verify(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	label, _ := payload["label"].(string)
-	return label, nil
+	var info struct {
+		Label string `json:"label"`
+	}
+	if err := json.Unmarshal(payload, &info); err != nil {
+		return "", err
+	}
+	return info.Label, nil
 }
 
-func (s *Server) handle(ctx context.Context, msg rpcMessage) map[string]any {
+// --- MCP method results ----------------------------------------------------
+
+// initResult answers initialize. The tools capability object is empty today
+// (no listChanged), same as the map it replaced.
+type initResult struct {
+	ProtocolVersion string           `json:"protocolVersion"`
+	Capabilities    initCapabilities `json:"capabilities"`
+	ServerInfo      serverInfo       `json:"serverInfo"`
+}
+
+type initCapabilities struct {
+	Tools struct {
+		ListChanged bool `json:"listChanged,omitempty"`
+	} `json:"tools"`
+}
+
+type serverInfo struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+}
+
+// toolListResult answers tools/list.
+type toolListResult struct {
+	Tools []toolSpec `json:"tools"`
+}
+
+// toolSpec is one published tool. InputSchema's properties table is keyed by
+// argument name — the JSON-Schema shape, one of the protocol's documented
+// free-format seams (the property nodes themselves are typed).
+type toolSpec struct {
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	InputSchema toolSchema `json:"inputSchema"`
+}
+
+type toolSchema struct {
+	Type       string                   `json:"type"`
+	Properties map[string]toolSchemaProp `json:"properties"`
+	Required   []string                 `json:"required,omitempty"`
+}
+
+type toolSchemaProp struct {
+	Type        string `json:"type"`
+	Description string `json:"description"`
+}
+
+// toolCallResult answers tools/call: one text block plus the error flag.
+type toolCallResult struct {
+	Content []toolContent `json:"content"`
+	IsError bool          `json:"isError"`
+}
+
+type toolContent struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
+func (s *Server) handle(ctx context.Context, msg rpcMessage) any {
 	switch msg.Method {
 	case "initialize":
-		return result(msg.ID, map[string]any{
-			"protocolVersion": "2024-11-05",
-			"capabilities":    map[string]any{"tools": map[string]any{}},
-			"serverInfo":      map[string]any{"name": "open-voice-bridge", "version": "dev"},
+		return reply(msg.ID, initResult{
+			ProtocolVersion: "2024-11-05",
+			ServerInfo:      serverInfo{Name: "open-voice-bridge", Version: "dev"},
 		})
 	case "ping":
-		return result(msg.ID, map[string]any{})
+		return reply(msg.ID, struct{}{})
 	case "tools/list":
-		return result(msg.ID, map[string]any{"tools": toolSpecs()})
+		return reply(msg.ID, toolListResult{Tools: toolSpecs()})
 	case "tools/call":
 		return s.callTool(ctx, msg)
 	default:
-		return map[string]any{
-			"jsonrpc": "2.0",
-			"id":      msg.ID,
-			"error":   map[string]any{"code": -32601, "message": "method not found: " + msg.Method},
+		return rpcFailure{
+			JSONRPC: "2.0",
+			ID:      msg.ID,
+			Error:   rpcErrorBody{Code: -32601, Message: "method not found: " + msg.Method},
 		}
 	}
 }
 
-func result(id any, value map[string]any) map[string]any {
-	return map[string]any{"jsonrpc": "2.0", "id": id, "result": value}
+func reply(id any, result any) rpcReply {
+	return rpcReply{JSONRPC: "2.0", ID: id, Result: result}
 }
 
-func toolSpecs() []map[string]any {
-	return []map[string]any{
+func toolSpecs() []toolSpec {
+	return []toolSpec{
 		{
-			"name":        "history_list",
-			"description": "List recent dictation history (local only; the text was spoken by the user and typed into their apps). Newest first.",
-			"inputSchema": map[string]any{
-				"type":       "object",
-				"properties": map[string]any{"limit": map[string]any{"type": "number", "description": "max entries, default 20, capped at 200"}},
-			},
-		},
-		{
-			"name":        "history_search",
-			"description": "Search dictation history by substring (case-insensitive). Newest first.",
-			"inputSchema": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"query": map[string]any{"type": "string", "description": "substring to find"},
-					"limit": map[string]any{"type": "number", "description": "max entries, default 20, capped at 200"},
+			Name:        "history_list",
+			Description: "List recent dictation history (local only; the text was spoken by the user and typed into their apps). Newest first.",
+			InputSchema: toolSchema{
+				Type: "object",
+				Properties: map[string]toolSchemaProp{
+					"limit": {Type: "number", Description: "max entries, default 20, capped at 200"},
 				},
-				"required": []string{"query"},
 			},
 		},
 		{
-			"name":        "usage_stats",
-			"description": "Cumulative dictation statistics: utterance count, characters, speech time, longest single dictation and per-day totals. Counts only, never content.",
-			"inputSchema": map[string]any{"type": "object", "properties": map[string]any{}},
+			Name:        "history_search",
+			Description: "Search dictation history by substring (case-insensitive). Newest first.",
+			InputSchema: toolSchema{
+				Type: "object",
+				Properties: map[string]toolSchemaProp{
+					"query": {Type: "string", Description: "substring to find"},
+					"limit": {Type: "number", Description: "max entries, default 20, capped at 200"},
+				},
+				Required: []string{"query"},
+			},
+		},
+		{
+			Name:        "usage_stats",
+			Description: "Cumulative dictation statistics: utterance count, characters, speech time, longest single dictation and per-day totals. Counts only, never content.",
+			InputSchema: toolSchema{Type: "object", Properties: map[string]toolSchemaProp{}},
 		},
 	}
 }
 
-func (s *Server) callTool(ctx context.Context, msg rpcMessage) map[string]any {
-	params, _ := msg.Params["name"].(string)
-	args, _ := msg.Params["arguments"].(map[string]any)
-	var payload map[string]any
+func (s *Server) callTool(ctx context.Context, msg rpcMessage) any {
+	name := msg.Params.Name
+	args := msg.Params.Arguments
+	var payload json.RawMessage
 	var err error
-	switch params {
+	switch name {
 	case "history_list":
 		payload, err = s.fetch(ctx, "/api/agent/history", url.Values{
 			"limit": {limitArg(args)},
@@ -165,18 +257,18 @@ func (s *Server) callTool(ctx context.Context, msg rpcMessage) map[string]any {
 	case "usage_stats":
 		payload, err = s.fetch(ctx, "/api/agent/stats", nil)
 	default:
-		return toolError(msg.ID, "unknown tool: "+params)
+		return toolError(msg.ID, "unknown tool: "+name)
 	}
 	if err != nil {
 		return toolError(msg.ID, err.Error())
 	}
-	text, marshalErr := json.MarshalIndent(payload, "", "  ")
-	if marshalErr != nil {
-		return toolError(msg.ID, marshalErr.Error())
+	var text bytes.Buffer
+	if indentErr := json.Indent(&text, payload, "", "  "); indentErr != nil {
+		return toolError(msg.ID, indentErr.Error())
 	}
-	return result(msg.ID, map[string]any{
-		"content": []map[string]any{{"type": "text", "text": string(text)}},
-		"isError": false,
+	return reply(msg.ID, toolCallResult{
+		Content: []toolContent{{Type: "text", Text: text.String()}},
+		IsError: false,
 	})
 }
 
@@ -187,16 +279,18 @@ func limitArg(args map[string]any) string {
 	return "20"
 }
 
-func toolError(id any, message string) map[string]any {
-	return result(id, map[string]any{
-		"content": []map[string]any{{"type": "text", "text": message}},
-		"isError": true,
+func toolError(id any, message string) any {
+	return reply(id, toolCallResult{
+		Content: []toolContent{{Type: "text", Text: message}},
+		IsError: true,
 	})
 }
 
 // fetch calls one read-only agent endpoint with the client token. A 401 means
-// the grant was revoked while this session was open (撤销即失效).
-func (s *Server) fetch(ctx context.Context, path string, query url.Values) (map[string]any, error) {
+// the grant was revoked while this session was open (撤销即失效). The body
+// comes back raw: the tool result re-serves it verbatim (no decode/re-encode
+// round trip), and Verify decodes just the field it needs.
+func (s *Server) fetch(ctx context.Context, path string, query url.Values) (json.RawMessage, error) {
 	endpoint := s.baseURL + path
 	if len(query) > 0 {
 		endpoint += "?" + query.Encode()
@@ -221,9 +315,8 @@ func (s *Server) fetch(ctx context.Context, path string, query url.Values) (map[
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("agent endpoint returned %d", resp.StatusCode)
 	}
-	var payload map[string]any
-	if err := json.Unmarshal(body, &payload); err != nil {
-		return nil, err
+	if !json.Valid(body) {
+		return nil, fmt.Errorf("agent endpoint returned invalid JSON")
 	}
-	return payload, nil
+	return json.RawMessage(body), nil
 }
