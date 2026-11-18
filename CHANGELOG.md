@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Internal: the ratchet's clearing sweep (61→4, target <20 met). The
+  phone WS/HTTP wire gets `phone/protocol.go` (ready/pong/key_ack/
+  listening/transcript/pair/ticket/ping bodies, matching the typed
+  receive side), the MiMo/OpenAI chat request bodies and the
+  system_profiler/Pactl decoders get typed shapes, and the MCP JSON-RPC
+  face speaks typed envelopes — tools/call's `arguments` and the
+  schema's dynamic key table stay free (the protocol defines them per
+  tool). `MCPAuditBody` turns out to be a zero-caller leftover and
+  goes; `fetch` hands tool results the endpoint body verbatim. What
+  remains is four documented seams. Release CI's `setup-go` joins v7
+  (the Actions major-bump debt closes) and the cloudwego patch line
+  follows (gopkg 0.2.1, base64x 0.1.7).
+
 - Internal: the map ratchet's fourth repayment (ARC-11 #16, 156→61). The
   admin SSE speaks typed envelopes — one `core` struct per event the UI
   switch knows, `Publish`/`Deps`/`events.go`/the subscribe snapshot

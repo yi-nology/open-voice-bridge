@@ -42,7 +42,7 @@ type mimoMessage struct {
 }
 
 type mimoContent struct {
-	Type       string        `json:"type"`
+	Type       string         `json:"type"`
 	InputAudio mimoInputAudio `json:"input_audio"`
 }
 

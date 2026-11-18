@@ -26,7 +26,11 @@ violation() { echo "deps: $*" >&2; fail=1; }
 # reply ⇒ 156→61,基线降到 66(留缓冲)。余下全是外部协议面的自由格式点:
 # mcp JSON-RPC 31(文档点,预期大部保留)、MiMo/OpenAI 请求体 8、手机 WS 11、
 # system_profiler 解析 3、helper 解码 2 等——见路线图债务盘点。
-CEILING=66
+# 2026-11-17(二): 清尾——手机 WS 九型、provider 请求体、sp 细节块、Pactl
+# props、mcp JSON-RPC 信封全数 typed,MCPAuditBody 死代码删 ⇒ 61→4,
+# 基线降到 10。终态只剩协议定义的文档点(mcp arguments 2 + helper 解码 2),
+# 目标 <20 达成。
+CEILING=10
 count=$({ grep -rn --include='*.go' 'map\[string\]any' . || true; } | { grep -v _test || true; } | wc -l | tr -d ' ')
 [ "$count" -le "$CEILING" ] || violation "map[string]any count $count exceeds the ratchet ceiling $CEILING (new state goes in core typed views; free-format maps only at the documented sites — see roadmap 债务盘点; lower the ceiling when the count drops)"
 
