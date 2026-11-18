@@ -37,16 +37,16 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	ctx := r.Context()
-	active.send(ctx, map[string]any{
-		"type":              "ready",
-		"device_id":         deviceID,
-		"name":              name,
-		"mic_available":     s.transcriber != nil,
-		"max_audio_seconds": s.maxSamples / core.SampleRate,
+	active.send(ctx, readyBody{
+		Type:            "ready",
+		DeviceID:        deviceID,
+		Name:            name,
+		MicAvailable:    s.transcriber != nil,
+		MaxAudioSeconds: s.maxSamples / core.SampleRate,
 		// Asked of the injector rather than copied from ServerConfig: the same
 		// object decides whether a press passes, so the page cannot advertise
 		// a key the channel would then deny (R5, ARC-12).
-		"allow_power": s.injector.Allowed("power"),
+		AllowPower: s.injector.Allowed("power"),
 	})
 	s.serveConn(ctx, conn, active)
 }
@@ -121,7 +121,7 @@ func (s *Server) handleControl(ctx context.Context, active *activeConn, data []b
 	case "key":
 		s.handleKey(ctx, active, msg)
 	case "ping":
-		active.send(ctx, map[string]any{"type": "pong", "t": msg.T})
+		active.send(ctx, pongBody{Type: "pong", T: msg.T})
 	case "start":
 		s.handleStart(ctx, active, msg)
 	case "end":

@@ -131,7 +131,7 @@ func (s *Server) handlePair(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Info("phone paired", "device", deviceID, "name", name)
-	writeJSON(w, http.StatusOK, map[string]any{"device_id": deviceID, "token": token})
+	writeJSON(w, http.StatusOK, pairBody{DeviceID: deviceID, Token: token})
 }
 
 func (s *Server) handleTicket(w http.ResponseWriter, r *http.Request) {
@@ -145,9 +145,9 @@ func (s *Server) handleTicket(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusInternalServerError, "ticket unavailable")
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"ticket":     ticket,
-		"expires_in": int(time.Until(expires).Seconds()),
+	writeJSON(w, http.StatusOK, ticketBody{
+		Ticket:    ticket,
+		ExpiresIn: int(time.Until(expires).Seconds()),
 	})
 }
 
@@ -157,7 +157,7 @@ func (s *Server) handlePing(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "device_id": deviceID})
+	writeJSON(w, http.StatusOK, pingBody{OK: true, DeviceID: deviceID})
 }
 
 // phoneSecurityHeaders is deliberately NOT the admin UI's policy: that page
@@ -195,16 +195,6 @@ func (s *Server) handlePhonePage(w http.ResponseWriter, r *http.Request) {
 
 // --- WebSocket key channel -------------------------------------------------
 
-type errorBody struct {
-	Type    string `json:"type"`
-	Code    string `json:"code"`
-	Message string `json:"message"`
-}
-
-func errorFrame(code, message string) errorBody {
-	return errorBody{Type: "error", Code: code, Message: message}
-}
-
 func writeJSON(w http.ResponseWriter, status int, payload any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -212,7 +202,7 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 }
 
 func writeJSONError(w http.ResponseWriter, status int, message string) {
-	writeJSON(w, status, map[string]any{"ok": false, "error": message})
+	writeJSON(w, status, errorReply{Error: message})
 }
 
 func bearerToken(r *http.Request) string {

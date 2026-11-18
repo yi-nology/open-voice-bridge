@@ -59,7 +59,7 @@ func (s *Server) keyWorker(active *activeConn) {
 				log.Warn("phone key injection denied", "device", active.deviceID, "key", job.key, "err", err)
 				active.send(sendCtx, errorFrame("denied", err.Error()))
 			} else {
-				active.send(sendCtx, map[string]any{"type": "key_ack", "key": job.key, "value": job.value})
+				active.send(sendCtx, keyAckBody{Type: "key_ack", Key: job.key, Value: job.value})
 			}
 			cancel()
 		}

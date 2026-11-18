@@ -45,7 +45,7 @@ func (s *Server) handleStart(ctx context.Context, active *activeConn, msg contro
 	}
 	active.buffer.reset()
 	active.source.setSpeaking(true)
-	active.send(ctx, map[string]any{"type": "listening", "active": true})
+	active.send(ctx, listeningBody{Type: "listening", Active: true})
 }
 
 // handleAudio buffers one PCM frame. Frames arriving outside a recording
@@ -76,7 +76,7 @@ func (s *Server) handleAudio(ctx context.Context, active *activeConn, data []byt
 func (s *Server) preempted(active *activeConn, samples []int16) {
 	sendCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	active.send(sendCtx, map[string]any{"type": "listening", "active": false})
+	active.send(sendCtx, listeningBody{Type: "listening"})
 	active.send(sendCtx, errorFrame("preempted", "another source took the microphone"))
 	if len(samples) == 0 || s.transcriber == nil {
 		return
@@ -96,7 +96,7 @@ func (s *Server) finishUtterance(ctx context.Context, active *activeConn, trunca
 	if s.hub != nil {
 		s.hub.ReleaseAudio(active.deviceID)
 	}
-	active.send(ctx, map[string]any{"type": "listening", "active": false})
+	active.send(ctx, listeningBody{Type: "listening"})
 
 	if !s.queue.offer(utteranceJob{
 		samples:   samples,
@@ -141,15 +141,15 @@ func (s *Server) processUtterance(ctx context.Context, job utteranceJob) {
 		job.notify.send(sendCtx, errorFrame("no_speech", "nothing recognised"))
 		return
 	}
-	job.notify.send(sendCtx, map[string]any{
-		"type":       "transcript",
-		"text":       result.Text,
-		"raw_text":   result.RawText,
-		"provider":   result.Provider,
-		"processed":  result.Processed,
-		"latency_ms": result.LatencyMS,
-		"at":         result.At.Format(time.RFC3339),
-		"truncated":  job.truncated,
+	job.notify.send(sendCtx, transcriptBody{
+		Type:      "transcript",
+		Text:      result.Text,
+		RawText:   result.RawText,
+		Provider:  result.Provider,
+		Processed: result.Processed,
+		LatencyMS: result.LatencyMS,
+		At:        result.At.Format(time.RFC3339),
+		Truncated: job.truncated,
 	})
 }
 
