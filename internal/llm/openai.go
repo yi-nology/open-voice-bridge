@@ -25,6 +25,20 @@ type OpenAIConfig struct {
 	Timeout time.Duration
 }
 
+// The chat-completions request body (OpenAI-compatible providers). Typed so a
+// renamed key is a compile error; the shape is the provider's wire, unchanged.
+type chatRequest struct {
+	Model       string        `json:"model"`
+	Temperature float64       `json:"temperature"`
+	MaxTokens   int           `json:"max_tokens"`
+	Messages    []chatMessage `json:"messages"`
+}
+
+type chatMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
 type OpenAI struct {
 	cfg    OpenAIConfig
 	client *http.Client
@@ -75,13 +89,13 @@ func (o *OpenAI) processWithMode(ctx context.Context, text, mode string) (string
 	if text == "" {
 		return "", nil
 	}
-	payload := map[string]any{
-		"model":       o.cfg.Model,
-		"temperature": 0.2,
-		"max_tokens":  1024,
-		"messages": []any{
-			map[string]any{"role": "system", "content": systemPrompt(mode, o.cfg.Prompt)},
-			map[string]any{"role": "user", "content": text},
+	payload := chatRequest{
+		Model:       o.cfg.Model,
+		Temperature: 0.2,
+		MaxTokens:   1024,
+		Messages: []chatMessage{
+			{Role: "system", Content: systemPrompt(mode, o.cfg.Prompt)},
+			{Role: "user", Content: text},
 		},
 	}
 	body, err := json.Marshal(payload)

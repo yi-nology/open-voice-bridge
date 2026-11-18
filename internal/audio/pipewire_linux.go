@@ -306,14 +306,16 @@ func nodeExists(ctx context.Context, name string) bool {
 	}
 	var objects []struct {
 		Info struct {
-			Props map[string]any `json:"props"`
+			Props struct {
+				NodeName string `json:"node.name"`
+			} `json:"props"`
 		} `json:"info"`
 	}
 	if err := json.Unmarshal(out, &objects); err != nil {
 		return false
 	}
 	for _, obj := range objects {
-		if value, ok := obj.Info.Props["node.name"].(string); ok && strings.EqualFold(value, name) {
+		if strings.EqualFold(obj.Info.Props.NodeName, name) {
 			return true
 		}
 	}

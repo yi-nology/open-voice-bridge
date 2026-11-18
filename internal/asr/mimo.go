@@ -28,6 +28,32 @@ const (
 	TokenPlanAMS   = "https://token-plan-ams.xiaomimimo.com/v1"
 )
 
+// The chat-completions request body (MiMo's ASR face). Typed so a renamed
+// key is a compile error; the shape is the provider's wire, unchanged.
+type mimoRequest struct {
+	Model      string         `json:"model"`
+	Messages   []mimoMessage  `json:"messages"`
+	ASROptions mimoASROptions `json:"asr_options"`
+}
+
+type mimoMessage struct {
+	Role    string        `json:"role"`
+	Content []mimoContent `json:"content"`
+}
+
+type mimoContent struct {
+	Type       string        `json:"type"`
+	InputAudio mimoInputAudio `json:"input_audio"`
+}
+
+type mimoInputAudio struct {
+	Data string `json:"data"`
+}
+
+type mimoASROptions struct {
+	Language string `json:"language"`
+}
+
 type Mimo struct {
 	APIKey   string
 	Model    string
@@ -98,18 +124,16 @@ func (m *Mimo) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 		return Result{}, ErrNoSpeech
 	}
 	encoded := base64.StdEncoding.EncodeToString(WAV(audio.Samples, rate))
-	payload := map[string]any{
-		"model": m.Model,
-		"messages": []any{map[string]any{
-			"role": "user",
-			"content": []any{map[string]any{
-				"type": "input_audio",
-				"input_audio": map[string]any{
-					"data": "data:audio/wav;base64," + encoded,
-				},
+	payload := mimoRequest{
+		Model: m.Model,
+		Messages: []mimoMessage{{
+			Role: "user",
+			Content: []mimoContent{{
+				Type:       "input_audio",
+				InputAudio: mimoInputAudio{Data: "data:audio/wav;base64," + encoded},
 			}},
 		}},
-		"asr_options": map[string]any{"language": m.Language},
+		ASROptions: mimoASROptions{Language: m.Language},
 	}
 	body, err := json.Marshal(payload)
 	if err != nil {

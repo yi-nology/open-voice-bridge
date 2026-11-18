@@ -40,20 +40,17 @@ func parseSPBluetooth(data []byte) ([]SPDevice, error) {
 		if !ok {
 			continue
 		}
-		var entries []map[string]map[string]any
+		var entries []map[string]spBluetoothDetails
 		if err := json.Unmarshal(raw, &entries); err != nil {
 			continue
 		}
 		for _, entry := range entries {
 			for name, details := range entry {
-				if details == nil {
-					continue
-				}
 				device := SPDevice{
-					Address:   spString(details, "device_address"),
+					Address:   strings.TrimSpace(details.Address),
 					Name:      strings.TrimSpace(name),
-					Vendor:    spHex(details, "device_vendorID"),
-					Product:   spHex(details, "device_productID"),
+					Vendor:    spHex(details.VendorID),
+					Product:   spHex(details.ProductID),
 					Connected: connected,
 				}
 				if device.Address == "" {
@@ -66,18 +63,20 @@ func parseSPBluetooth(data []byte) ([]SPDevice, error) {
 	return out, nil
 }
 
-func spString(item map[string]any, keys ...string) string {
-	for _, key := range keys {
-		if value, ok := item[key].(string); ok {
-			return strings.TrimSpace(value)
-		}
-	}
-	return ""
+// spBluetoothDetails is one device's detail block in system_profiler's
+// SPBluetoothDataType. The enclosing table is keyed by device name (the
+// tool's dynamic keys — a documented free-format seam); the fields we read
+// are typed. A non-string value for one of them now fails the section parse
+// instead of silently reading ""; the tool always emits strings here.
+type spBluetoothDetails struct {
+	Address   string `json:"device_address"`
+	VendorID  string `json:"device_vendorID"`
+	ProductID string `json:"device_productID"`
 }
 
 // spHex normalizes the "0x2717" style VID/PID strings to lowercase bare hex.
-func spHex(item map[string]any, keys ...string) string {
-	value := spString(item, keys...)
+func spHex(value string) string {
+	value = strings.TrimSpace(value)
 	value = strings.TrimPrefix(value, "0x")
 	value = strings.TrimPrefix(value, "0X")
 	return strings.ToLower(value)
