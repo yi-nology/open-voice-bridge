@@ -1,9 +1,6 @@
 package service
 
 import (
-	"encoding/json"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -11,10 +8,6 @@ import (
 
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
-
-func (s *Service) mcpPath(name string) string {
-	return filepath.Join(filepath.Dir(s.path), name)
-}
 
 // MCPCreateToken mints one client grant. The raw token is returned exactly
 // once, together with the stdio snippet to paste into the client's config.
@@ -67,24 +60,4 @@ func (s *Service) MCPAudit(info core.TokenInfo, tool string, items int) {
 	if err := s.ops.AppendAudit(entry); err != nil {
 		s.logger.Warn("append mcp audit", "err", err)
 	}
-}
-
-// MCPAuditBody renders the audit trail for the admin panel (counts only).
-func (s *Service) MCPAuditBody() map[string]any {
-	data, err := os.ReadFile(s.mcpPath("mcp-audit.jsonl"))
-	if err != nil {
-		return map[string]any{"ok": true, "entries": []any{}}
-	}
-	entries := []any{}
-	for _, line := range strings.Split(string(data), "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-		var entry core.AuditEntry
-		if err := json.Unmarshal([]byte(line), &entry); err == nil {
-			entries = append(entries, entry)
-		}
-	}
-	return map[string]any{"ok": true, "entries": entries}
 }
