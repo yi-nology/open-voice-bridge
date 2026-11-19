@@ -2241,9 +2241,23 @@ async function loadInputsOverview() {
 }
 
 document.querySelectorAll(".attn-card").forEach(card => {
-  card.addEventListener("click", () => {
+  // Cards navigate, so they must be reachable by keyboard: role + tabindex
+  // and Enter/Space activation (they cannot be <button> — one hosts a select).
+  card.tabIndex = 0;
+  card.setAttribute("role", "button");
+  const activate = (event) => {
+    // Controls inside the card own their clicks: the ASR "切换" dropdown
+    // used to bubble into the card and jump to the config page mid-select.
+    if (event.target.closest("select, label, button, input, a")) return;
     if (card.dataset.go) goTab(card.dataset.go);
     else if (card.dataset.cfg) openConfigPanel(card.dataset.cfg);
+  };
+  card.addEventListener("click", activate);
+  card.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      activate(event);
+    }
   });
 });
 

@@ -241,8 +241,13 @@ input[type="text"], input[type="password"], input[type="number"], input[type="se
   background: var(--panel-solid); border: 1px solid var(--line);
   border-radius: var(--radius-inner); padding: 10px 12px; width: 100%;
 }
-input:focus, select:focus, textarea:focus, .btn:focus-visible, .tab-btn:focus-visible {
+input:focus, select:focus, textarea:focus {
   outline: 2px solid var(--brand-soft); outline-offset: 1px; border-color: var(--accent);
+}
+/* Every keyboard-reachable control gets a ring (side items, hotspots,
+   figure tabs, cards…) — not just .btn/.tab-btn. */
+:focus-visible {
+  outline: 2px solid var(--brand-soft); outline-offset: 1px;
 }
 textarea { min-height: 96px; resize: vertical; }
 .model-grid {
