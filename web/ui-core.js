@@ -158,5 +158,38 @@
     };
   }
 
-  return { errorText, buildPairLink, fmtDuration, needsRestart, friendlyAsrError, sealDiagPack, createEventStream };
+  // debounce coalesces a burst of calls into one trailing invocation — the
+  // subtitle stream otherwise writes localStorage and refetches panels once
+  // per sentence. The returned function carries flush() for page-unload.
+  function debounce(fn, ms, timers) {
+    timers = timers || { setTimeout: setTimeout, clearTimeout: clearTimeout };
+    var timer = null;
+    var last = null;
+    var wrapped = function () {
+      last = arguments;
+      if (timer !== null) timers.clearTimeout(timer);
+      timer = timers.setTimeout(function () {
+        timer = null;
+        var args = last;
+        last = null;
+        fn.apply(null, args);
+      }, ms);
+    };
+    wrapped.flush = function () {
+      if (timer === null) return;
+      timers.clearTimeout(timer);
+      timer = null;
+      var args = last;
+      last = null;
+      fn.apply(null, args);
+    };
+    wrapped.cancel = function () {
+      if (timer !== null) timers.clearTimeout(timer);
+      timer = null;
+      last = null;
+    };
+    return wrapped;
+  }
+
+  return { errorText, buildPairLink, fmtDuration, needsRestart, friendlyAsrError, sealDiagPack, createEventStream, debounce };
 });

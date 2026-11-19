@@ -1,5 +1,5 @@
 // Pure helpers live in ui-core.js (shared with the node:test suite).
-const { errorText, buildPairLink, fmtDuration, needsRestart, friendlyAsrError, sealDiagPack, createEventStream } = XiaoyaoCore;
+const { errorText, buildPairLink, fmtDuration, needsRestart, friendlyAsrError, sealDiagPack, createEventStream, debounce } = XiaoyaoCore;
 
 const KEYS = [
   {key: "power",      chip: "电源", name: "电源键",   hid: "0x66", def: "esc"},
@@ -516,14 +516,22 @@ function applySubtitleFont() {
   try { localStorage.setItem("xiaomiSubtitleFont", String(subtitleFont)); } catch (error) {}
 }
 
-function persistSubtitles() {
+// A live subtitle stream used to write localStorage and refetch two panels
+// once per sentence; both are coalesced now (debounce lives in ui-core).
+const persistSubtitlesNow = () => {
   if (!subtitleLinesEl) return;
   const items = [...subtitleLinesEl.querySelectorAll(".subtitle-line")].slice(-80).map(line => ({
     text: line.querySelector(".subtitle-text")?.textContent || "",
     at: line.dataset.at || "",
   }));
   try { localStorage.setItem("xiaomiSubtitles", JSON.stringify(items)); } catch (error) {}
-}
+};
+const persistSubtitles = debounce(persistSubtitlesNow, 400);
+const schedulePanelsRefresh = debounce(() => {
+  loadOverviewRecent();
+  loadStats();
+}, 500);
+window.addEventListener("beforeunload", () => persistSubtitles.flush());
 
 // 清空/复制 only make sense with lines on the stage (UX 验收 B#8).
 function syncSubtitleActions() {
@@ -588,6 +596,7 @@ function loadSubtitles() {
 function clearSubtitles() {
   clearPartialLine();
   if (!subtitleLinesEl) return;
+  persistSubtitles.cancel();
   subtitleLinesEl.innerHTML = "";
   subtitleKeys.clear();
   if (subtitleEmpty) subtitleEmpty.style.display = "";
@@ -1825,8 +1834,7 @@ function handleEvent(data) {
     } else {
       clearPartialLine();
       addSubtitle(data.text, data.at);
-      setTimeout(loadOverviewRecent, 500);
-      setTimeout(loadStats, 500);
+      schedulePanelsRefresh();
     }
   } else if (data.event === "phrase") {
     // A common phrase is user-authored text, not speech: it shows up live

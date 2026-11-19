@@ -191,3 +191,41 @@ test("createEventStream ignores late errors from a replaced socket", () => {
   assert.equal(timers.pending(), 0, "stale errors are ignored");
   assert.equal(factory.created.length, 2);
 });
+
+// debounce coalesces bursts (a live subtitle stream writes localStorage and
+// refetches panels once per sentence otherwise). Timers are injectable so
+// the suite stays instant and deterministic.
+test("debounce runs once per quiet gap, with flush when it matters", () => {
+  const { debounce } = require("./ui-core.js");
+  const timers = manualTimers();
+  const calls = [];
+  const fn = debounce((v) => calls.push(v), 500, timers);
+
+  fn("a");
+  fn("b");
+  fn("c");
+  assert.deepEqual(calls, [], "nothing runs before the gap");
+  assert.equal(timers.pending(), 1, "a burst keeps exactly one timer");
+  timers.fire();
+  assert.deepEqual(calls, ["c"], "the last call wins the trailing edge");
+
+  fn("d");
+  fn.flush();
+  assert.deepEqual(calls, ["c", "d"], "flush runs the pending call now");
+  assert.equal(timers.pending(), 0);
+  fn.flush();
+  assert.deepEqual(calls, ["c", "d"], "flush with nothing pending is a no-op");
+});
+
+test("debounce cancel drops the pending call", () => {
+  const { debounce } = require("./ui-core.js");
+  const timers = manualTimers();
+  const calls = [];
+  const fn = debounce((v) => calls.push(v), 500, timers);
+  fn("gone");
+  fn.cancel();
+  timers.fire();
+  assert.deepEqual(calls, []);
+  fn.flush();
+  assert.deepEqual(calls, [], "a cancelled call never lands");
+});
