@@ -1027,7 +1027,7 @@ async function saveDevice() {
 async function deleteDevice() {
   const id = editingDeviceId || document.getElementById("device-id").value.trim();
   if (!id) return;
-  if (!confirm("删除设备 " + id + "？")) return;
+  if (!confirm("删除设备 " + id + "？不可恢复，该设备的键位与配对会丢失。")) return;
   await deviceRequest("/api/devices/delete", {id}, "设备已删除");
   resetDeviceForm();
 }
@@ -2492,6 +2492,12 @@ async function loadPhonePowerToggle() {
   if (toggle.dataset.bound) return;
   toggle.dataset.bound = "1";
   toggle.addEventListener("change", async () => {
+    // The power key can shut the machine down (logind reads KEY_POWER):
+    // enabling it takes an explicit yes, not a stray tap.
+    if (toggle.checked && !confirm("允许手机按电源键？可能触发关机或休眠。确定开启？")) {
+      toggle.checked = false;
+      return;
+    }
     try {
       const res = await fetch("/api/phone/power", {
         method: "POST",
@@ -2665,7 +2671,7 @@ function welcomeSteps(status) {
     },
     {
       title: "开始听写",
-      hint: "把光标放进任意输入框，按住语音键说话；字幕页可看实时歌词",
+      hint: "把光标放进任意输入框，按住语音键说话；字幕页可看实时字幕",
       done: false,
       go: () => goTab("subtitle"),
     },
@@ -3380,7 +3386,7 @@ document.getElementById("history-export").addEventListener("click", () => {
   historyMessage("已导出 " + historyEntries.length + " 条记录", "ok");
 });
 document.getElementById("history-clear").addEventListener("click", async () => {
-  if (!confirm("清空全部听写历史？")) return;
+  if (!confirm("清空全部听写历史？不可恢复，历史与统计都会清掉。")) return;
   const res = await fetch("/api/history/clear", {method: "POST", headers: {"Content-Type": "application/json"}, body: "{}"});
   const data = await res.json();
   if (!data.ok) {

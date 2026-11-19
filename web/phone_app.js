@@ -134,6 +134,8 @@
         state.allowPower = frame.allow_power === true;
         state.maxAudioSeconds = frame.max_audio_seconds || 30;
         $('talk').hidden = !state.micAvailable;
+        const talkNote = $('talk-note');
+        if (talkNote) talkNote.hidden = state.micAvailable;
         setKeysEnabled(true);
         setStatus('已连接 · ' + (frame.name || ''), 'good');
         break;
