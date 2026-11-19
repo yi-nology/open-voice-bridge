@@ -192,6 +192,23 @@
 - [x] 历史保留/大小策略与脱敏开关（`fd15c03`：`history.policy` 双开关——保留天数 + 地址脱敏，live 生效；应答面已进 typed reply）。多手机（`phone.max_clients`，默认 4）、横屏布局（`phone.css` orientation 适配）、重连体验（断线不丢半句 + 自动重连，审计批/`drop_test`）均有落地；**二维码配对已补（2026-11-15）**：配对响应带上自动填充链接（`…/phone#pair=NNNNNN`，hash 不进服务端日志）的 QR（skip2/go-qrcode 服务端出 PNG data-URI，与展示的配对码同周期同码），配对卡扫码即达手机配对屏。
 - [x] 32 位 Pi / riscv 构建面（2026-11-15：release 矩阵 `amd64/arm64/386/riscv64`，`CGO_ENABLED=0` 纯 Go 交叉编译；README 增「386/riscv64 为尽力面、先跑 doctor」限制说明）。386/riscv64 真机验证同样进「未验证」清单。
 
+## 深度优化批次（2026-11-20：三路审计 → 定向修复）
+
+工作方式照旧（一条缺陷一个提交、TDD 先写失败测试、每步三件套）。三路只读审计（性能热点带微基准、代码结构、产品体验带浏览器实测）合并成 B1–B3 三批，B1/B2 与 B3 快赢项已全部落地（见 CHANGELOG Unreleased），下面是记账与余债。
+
+**B1 · P0 行为（4 项全落地）**：SSE 连接泄漏级联（浏览器实测 10s 累积 64 连接 → 修后重启恰 1 条；`ui-core.createEventStream` + 五条 node:test）；流式字幕全量重传（30s 句 13× 上送 → 4 秒滑窗）；唤醒检查（忙麦纯浪费 + 无在途上限叠并发 → `Hub.AudioBusy` 跳过 + 单飞；红证据「3 recognitions ran concurrently」）；BLE 转写无界扇出（→ `serialQueue` 有界有序 + 单消费者，SEC-08 两侧行为对齐；顺带揪出 pipeline 空 rules 面 panic，独立提交修掉）。
+
+**B2 · 收益项（8 项全落地）**：Peak 去重（`atvv.Peak` 删，守卫 `TestNoOtherPackageRedefinesPeak`）+ 单扫描 + dictation 预分配；UI 每句三重负担（persist 去抖 400ms + 面板刷新合并 500ms）；对比度（`--brand-strong` 3.18→4.94:1，node:test 算 WCAG 比钉住；禁用态不再淡出文字）+ `:focus-visible` 全覆盖 + 卡片劫持下拉修复 + 卡片键盘可达；引导框焦点陷阱（`tabTarget` 纯函数进 ui-core）；macOS 平台诚实（systemctl 文案 → `restartHint` 按平台；键位页 darwin 置灰 + 说明）；术语统一（四名同物 → 手机输入、歌词 → 字幕、手机页品牌 → 小遥、配对提示交叉引用跟上）；危险操作后果说明 + 电源键二次确认；手机 talk 空态提示。
+
+**B3 · 清理（快赢项落地，大拆分留下一批）**：死代码束删除（`helper/coerce.go` 整文件、`OrderedKeys`、`IsNoSpeech`/`NoSpeech`、`MicCloseCommand`/`MicOpen`、`DefaultCommands`——命令表 Go 半边与 ui.js 双份真相，留 JS 单点）；`sleepCtx` 三份/签名分裂 + `hashToken`/`randomHex` 跨包复制收敛进 `core`（`Sleep`/`HashToken`/`RandomHex`，phone 的 randomHex 注入缝保留）。顺手钉死 bluez darwin pump 测试的 flaky（select 唤醒顺序竞争，8 连跑验证）。
+
+**余债（下次接）**：
+1. **超规模文件拆分**（纯搬运零行为变化，拆分计划表见 2026-11-20 会话审计报告）：`agent.go` 883（拆 transport/control/dictation/partial/view）、`remap/daemon.go` 728、`config/config.go` 608、`ui/backend.go` 583、`phone/store.go` 491、`remap/remap.go` 462、`bluez/transport_linux.go` 443、`transport_darwin.go` 412、`web/ui.js` 3379（按 `// ----` 分区拆 ES 模块，纯函数下沉 ui-core 补测）、`RunAgent` 260（拆六个接线函数）。
+2. **history 落盘出事件环**（P2，已分析未动刀）：完整修法是写后队列 + 单写者（Delete/Clear/SetPolicy 需 done 通道防「已删条目复活」），测试面要改同步断言；Publish 先行会牺牲 append-first 的持久性。当前 SD 卡 fsync 串在事件环上的实测影响未量化，动手前先在 Pi 上量。
+3. **/api/status 每次拨 helper unix socket**：短 TTL 缓存（2s）可省；`/api/inputs` 并入 StatusView 需动 typed view（15s 轮询 3 请求 → 2）。
+4. **云端 ASR 编码 5-7MB/句**（WAV+base64+JSON）：buffer 池化；partial 滑窗后放大系数已大降，剩余影响待 profiling。
+5. **本地命令 ASR 每句冷启动**（whisper 装载 0.5-3s/句，partial/wake 共用该引擎）：常驻化（server/stdin 流式单例）是产品级改造，单独立项。
+
 ## 未验证 / 需要真机
 
 - 手机硬件验收（波 0 之后必须重跑）：配对的手机按住说话 → 焦点窗口出字 + 字幕 + 历史 + 转写回显；遥控器抢占正在录音的手机。

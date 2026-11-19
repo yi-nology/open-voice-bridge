@@ -2,6 +2,62 @@
 
 ## Unreleased
 
+- Fixed: the admin's event stream held one socket instead of a growing
+  herd. The `onerror → setTimeout(connect, 3000)` pattern stacked
+  EventSources across a server restart (measured 64 live sockets in
+  10s, 512 in 18s) while the subtitles died silently. `ui-core`'s
+  `createEventStream` owns the lifecycle now — one connection, one
+  scheduled reconnect, late callbacks ignored — and the subtitle pill
+  says 连接中断 · 重连中… while the link is down.
+
+- Performance: the speech path stops re-uploading and re-scanning
+  itself. Streaming subtitles send the freshest 4-second window instead
+  of the whole capture (a 30s sentence went out ~13x over the wire);
+  wake checks pause while the microphone is taken (their hits could
+  only be dropped) and keep one recognition in flight (a slow local
+  engine used to stack); the remote/wake/lookback paths share one
+  bounded ordered transcription queue like the phone already had
+  (SEC-08 parity); the capture buffer arrives pre-sized; and `Peak` is
+  defined once (`atvv`'s copy goes, with a guard) and scanned once per
+  utterance.
+
+- Fixed: the shared chain no longer panics on a missing rules face —
+  an agent assembled before the dictionary lands treated as an empty
+  rulebook instead of dropping the sentence to a recovered panic
+  (found while the transcription queue was going in).
+
+- Performance: a burst of sentences costs one disk write and one
+  refresh pair. Subtitle persistence trails 400ms behind the last
+  line (flushed on unload, cancelled on clear) and the overview/stats
+  refetch coalesces per quiet half-second — the per-sentence triple
+  duty is gone.
+
+- Fixed: the admin earns its contrast and keyboard claims. White on
+  the brand fill measured 3.18:1 against the token comment's "AA"
+  (now #237F58 at 4.94:1, hover goes deeper, disabled stops fading its
+  labels to ~1.8:1 — pinned by a node:test that computes the WCAG
+  ratio); `:focus-visible` rings every keyboard-reachable control;
+  attention cards stop hijacking their inner dropdown and answer
+  Enter/Space; Tab stays inside the open dialog (welcome, phrase
+  picker); destructive confirms name their consequence and the phone
+  power key asks before enabling.
+
+- Fixed: the surface speaks one language per platform and one name per
+  thing. macOS users were handed `systemctl` commands that cannot work
+  and a fully editable keymap page that silently did nothing — the
+  restart hint is platform-aware and the mapping page goes inert with
+  a note there. The phone feature is 手机输入 everywhere (four names
+  retired), the live line is 字幕 (not 歌词), the phone page says 小遥,
+  and its talk key explains what to configure when no recognition
+  engine is set. Dead symbols (helper/coerce.go, `OrderedKeys`,
+  `IsNoSpeech`, `MicCloseCommand`/`MicOpen`, `DefaultCommands` — the
+  command table's Go half drifted from ui.js's) go; `sleepCtx` ×3 and
+  the token digest/entropy pairs consolidate into `core`.
+
+- Fixed: the darwin pump test stops racing its own disconnect — the
+  pump's select may wake on the event first and drop what is still
+  queued, which failed "audio frames = []" once in a while.
+
 - Internal: the ratchet's clearing sweep (61→4, target <20 met). The
   phone WS/HTTP wire gets `phone/protocol.go` (ready/pong/key_ack/
   listening/transcript/pair/ticket/ping bodies, matching the typed
