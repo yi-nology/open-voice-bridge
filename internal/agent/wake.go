@@ -222,7 +222,7 @@ func (a *Agent) desktopLoop(ctx context.Context, source miccap.FrameSource) {
 				dictation = nil
 				a.releaseWakeMic(claim)
 				claim = nil
-				async.GoSafe(func() { a.runWakeSpeech(samples) })
+				a.submitSpeech("wake", len(samples)/core.SampleRate, func() { a.runWakeSpeech(samples) })
 				continue
 			}
 			select {

@@ -1,12 +1,10 @@
 package agent
 
 import (
-	"github.com/yi-nology/open-voice-bridge/internal/speech"
 	"sync"
 
-	"github.com/oekit/concurrency/async"
-
 	"github.com/yi-nology/open-voice-bridge/internal/core"
+	"github.com/yi-nology/open-voice-bridge/internal/speech"
 )
 
 // S8 回眸: an in-memory rolling ring of the desktop microphone, so speech
@@ -113,7 +111,7 @@ func (a *Agent) RecoverLookback(seconds int) bool {
 	if len(samples) < core.MinUtterance(core.SampleRate) {
 		return false
 	}
-	async.GoSafe(func() {
+	a.submitSpeech("lookback", len(samples)/core.SampleRate, func() {
 		a.pipeline.Transcribe(a.wakeCtxLocked(), speech.Utterance{
 			Samples:    samples,
 			SampleRate: core.SampleRate,

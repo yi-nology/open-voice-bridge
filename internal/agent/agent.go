@@ -90,6 +90,7 @@ type Agent struct {
 	maxSample     int
 
 	pipeline *speech.Pipeline
+	speechQ  serialQueue
 
 	reconnectCh chan struct{}
 	transcripts chan speech.Transcript
@@ -373,7 +374,8 @@ func (a *Agent) acquireMic() {
 }
 
 // releaseMic frees the microphone when the capture closes, before ASR runs: the
-// pipeline already serializes transcription, so holding the claim across it would
+// agent-side FIFO is what orders the transcriptions now (the pipeline itself
+// takes no pipeline-wide lock), so holding the claim across recognition would
 // keep phones at "busy" for the whole recognition window and buy nothing.
 func (a *Agent) releaseMic() {
 	hub := a.currentHub()
@@ -758,9 +760,20 @@ func (a *Agent) takeDictation() ([]int16, bool) {
 	return samples, truncated
 }
 
+// submitSpeech queues one transcription task on the agent-side FIFO. A full
+// backlog drops the utterance with a warning that carries its length, never
+// its content (SEC-02).
+func (a *Agent) submitSpeech(source string, seconds int, task func()) {
+	if a.speechQ.offer(task) {
+		return
+	}
+	log.Warn("transcription backlog full; dropping an utterance", "source", source, "seconds", seconds)
+}
+
 // closeCapture ends the capture that is open now. Draining happens on the
 // dispatch goroutine, before any later audio-start can touch the buffer, and
-// only the request runs in the background (I2).
+// only the request runs in the background (I2) — through the bounded FIFO, so
+// a burst of sentences stays ordered and in-flight work stays capped (SEC-08).
 func (a *Agent) closeCapture() {
 	a.stopPartialLoop()
 	samples, truncated := a.takeDictation()
@@ -768,7 +781,7 @@ func (a *Agent) closeCapture() {
 		return
 	}
 	rate := a.currentSampleRate()
-	async.GoSafe(func() { a.runSpeech(samples, rate, truncated) })
+	a.submitSpeech("remote", len(samples)/max(rate, 1), func() { a.runSpeech(samples, rate, truncated) })
 }
 
 // finalize drains and transcribes inline; it is the synchronous form used when
