@@ -254,3 +254,20 @@ test("brand-strong keeps white label text at AA contrast", async () => {
   const ratio = contrast(strong, "#FFFFFF");
   assert.ok(ratio >= 4.5, `white on ${strong} is ${ratio.toFixed(2)}:1; AA text needs 4.5`);
 });
+
+// The modal overlays declare aria-modal but only a native <dialog> enforces
+// it — Tab escaped into the sidebar. tabTarget is the trap's decision: where
+// Tab must be sent, or null to let the browser move normally.
+test("tabTarget wraps focus inside the trap, both directions", () => {
+  const { tabTarget } = require("./ui-core.js");
+  const focusable = ["a", "b", "c"];
+
+  assert.equal(tabTarget(focusable, "c", false), "a", "Tab on the last wraps to the first");
+  assert.equal(tabTarget(focusable, "a", true), "c", "Shift+Tab on the first wraps to the last");
+  assert.equal(tabTarget(focusable, "b", false), null, "middle moves normally");
+  assert.equal(tabTarget(focusable, "b", true), null, "middle moves normally backwards");
+  assert.equal(tabTarget(focusable, "outside", false), "a", "focus outside enters at the start");
+  assert.equal(tabTarget(focusable, "outside", true), "c", "focus outside enters at the end");
+  assert.equal(tabTarget([], "a", false), null, "an empty trap is inert");
+  assert.equal(tabTarget(null, "a", true), null);
+});

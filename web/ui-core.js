@@ -191,5 +191,18 @@
     return wrapped;
   }
 
-  return { errorText, buildPairLink, fmtDuration, needsRestart, friendlyAsrError, sealDiagPack, createEventStream, debounce };
+  // tabTarget is the focus trap's decision: which element Tab must be sent to
+  // inside a modal overlay, or null to let the browser move normally.
+  function tabTarget(focusable, active, shift) {
+    if (!focusable || !focusable.length) return null;
+    var first = focusable[0];
+    var last = focusable[focusable.length - 1];
+    var inside = active != null && focusable.indexOf(active) !== -1;
+    if (shift) {
+      return (!inside || active === first) ? last : null;
+    }
+    return (!inside || active === last) ? first : null;
+  }
+
+  return { errorText, buildPairLink, fmtDuration, needsRestart, friendlyAsrError, sealDiagPack, createEventStream, debounce, tabTarget };
 });

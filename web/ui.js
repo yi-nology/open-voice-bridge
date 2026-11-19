@@ -1,5 +1,5 @@
 // Pure helpers live in ui-core.js (shared with the node:test suite).
-const { errorText, buildPairLink, fmtDuration, needsRestart, friendlyAsrError, sealDiagPack, createEventStream, debounce } = XiaoyaoCore;
+const { errorText, buildPairLink, fmtDuration, needsRestart, friendlyAsrError, sealDiagPack, createEventStream, debounce, tabTarget } = XiaoyaoCore;
 
 const KEYS = [
   {key: "power",      chip: "电源", name: "电源键",   hid: "0x66", def: "esc"},
@@ -2682,6 +2682,8 @@ function renderWelcome() {
     const go = document.createElement("button");
     go.className = "btn small";
     go.textContent = step.done ? "查看" : "去配置";
+    // Four identical labels ("去配置") are noise on a screen reader.
+    go.setAttribute("aria-label", step.title + " · " + go.textContent);
     go.addEventListener("click", () => {
       closeWelcome();
       step.go();
@@ -2725,6 +2727,22 @@ document.getElementById("welcome-start")?.addEventListener("click", () => closeW
 document.getElementById("welcome-skip")?.addEventListener("click", () => closeWelcome(true));
 document.getElementById("welcome")?.addEventListener("click", (event) => {
   if (event.target.id === "welcome") closeWelcome(true);
+});
+
+// Focus trap for the modal overlays: aria-modal promises what only a native
+// <dialog> enforces — Tab used to escape into the sidebar after two presses.
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Tab") return;
+  const dialog = document.querySelector('[role="dialog"].open');
+  if (!dialog) return;
+  const focusable = [...dialog.querySelectorAll(
+    'button, [href], select, input, textarea, [tabindex]:not([tabindex="-1"])'
+  )].filter((el) => !el.disabled && el.offsetParent !== null);
+  const target = tabTarget(focusable, document.activeElement, event.shiftKey);
+  if (target) {
+    event.preventDefault();
+    target.focus();
+  }
 });
 
 const DEFAULT_COMMANDS = {
