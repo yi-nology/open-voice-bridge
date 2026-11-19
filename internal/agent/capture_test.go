@@ -275,3 +275,38 @@ func TestSubSecondUtteranceIsDropped(t *testing.T) {
 
 	engine.assertSilence(t)
 }
+
+// The live draft line (S6) must never re-send the whole capture: each tick
+// copies at most the freshest PartialSamples, so a long utterance uploads a
+// bounded window instead of re-uploading everything once per tick (O(n²)).
+func TestPartialSnapshotKeepsOnlyTheFreshestWindow(t *testing.T) {
+	a := &Agent{}
+	budget := core.PartialSamples(core.SampleRate)
+	long := make([]int16, 3*budget)
+	for i := range long {
+		long[i] = int16(i % 1000)
+	}
+	a.dictation = long
+
+	got := a.partialSnapshot(core.SampleRate)
+	if len(got) != budget {
+		t.Fatalf("partialSnapshot carried %d samples, want the %d-sample window", len(got), budget)
+	}
+	if got[0] != long[budget] || got[len(got)-1] != long[len(long)-1] {
+		t.Fatalf("window is not the tail of the capture: head=%d tail=%d", got[0], got[len(got)-1])
+	}
+	// the snapshot is a copy: the capture path keeps its own buffer
+	got[0] = 12345
+	if a.dictation[budget] == 12345 {
+		t.Fatal("snapshot aliased the live capture buffer")
+	}
+}
+
+func TestPartialSnapshotCopiesShortCapturesWhole(t *testing.T) {
+	a := &Agent{}
+	a.dictation = []int16{1, 2, 3}
+	got := a.partialSnapshot(core.SampleRate)
+	if len(got) != 3 || got[2] != 3 {
+		t.Fatalf("short capture must pass through, got %v", got)
+	}
+}

@@ -204,8 +204,9 @@ func (a *Agent) rewriteModeFor() string {
 func (a *Agent) SetStreamingSubtitles(on bool) { a.streaming.Store(on) }
 
 // startPartialLoop begins throttled partial recognition of the capture in
-// flight (S6). Each tick copies the buffer so the capture path is never
-// disturbed (DOM-02), and at most one partial ASR call runs at a time.
+// flight (S6). Each tick copies the freshest window of the buffer so the
+// capture path is never disturbed (DOM-02), and at most one partial ASR call
+// runs at a time.
 func (a *Agent) startPartialLoop() {
 	a.stopPartialLoop()
 	if !a.streaming.Load() {
@@ -233,6 +234,21 @@ func (a *Agent) stopPartialLoop() {
 	a.partialMu.Unlock()
 }
 
+// partialSnapshot copies the freshest PartialSamples of the capture in
+// flight. The draft line only previews the last seconds of speech; copying
+// the whole capture re-uploaded the same audio once per tick (O(n²) over the
+// wire) and allocated the full buffer every 1.2s.
+func (a *Agent) partialSnapshot(rate int) []int16 {
+	a.dictMu.Lock()
+	defer a.dictMu.Unlock()
+	budget := core.PartialSamples(rate)
+	start := 0
+	if len(a.dictation) > budget {
+		start = len(a.dictation) - budget
+	}
+	return append([]int16(nil), a.dictation[start:]...)
+}
+
 func (a *Agent) partialLoop(ctx context.Context) {
 	ticker := time.NewTicker(1200 * time.Millisecond)
 	defer ticker.Stop()
@@ -246,9 +262,7 @@ func (a *Agent) partialLoop(ctx context.Context) {
 				continue
 			}
 			rate := a.currentSampleRate()
-			a.dictMu.Lock()
-			snapshot := append([]int16(nil), a.dictation...)
-			a.dictMu.Unlock()
+			snapshot := a.partialSnapshot(rate)
 			// Wait for half a second of speech so short taps stay single-call.
 			if len(snapshot) < 2*core.MinUtterance(rate) {
 				continue

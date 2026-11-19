@@ -22,6 +22,12 @@ const (
 	DefaultUtteranceSeconds = 30
 )
 
+// PartialWindowSeconds bounds what one live-streaming subtitle tick (S6)
+// sends to the recognition engine. The draft line previews the freshest
+// speech; sending the whole capture so far re-uploads the same audio once
+// per tick (a 30s sentence went out ~13x over the wire) and copies it twice.
+const PartialWindowSeconds = 4
+
 // Lookback ring window bounds in seconds (S8). One definition so the config
 // validator, the normaliser and the ring agree on what "30" means.
 const (
@@ -42,6 +48,15 @@ func MinUtterance(rate int) int {
 		rate = SampleRate
 	}
 	return rate / 4
+}
+
+// PartialSamples is the sample budget for one streaming-subtitle tick at
+// rate (S6): the freshest PartialWindowSeconds of the capture in flight.
+func PartialSamples(rate int) int {
+	if rate <= 0 {
+		rate = SampleRate
+	}
+	return PartialWindowSeconds * rate
 }
 
 // Resample returns samples converted from fromRate to toRate by linear

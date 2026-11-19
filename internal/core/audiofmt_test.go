@@ -132,3 +132,22 @@ func TestResampleDoublesThe8kRemote(t *testing.T) {
 		t.Fatalf("len = %d, want 4", len(clipped))
 	}
 }
+
+func TestPartialSamplesScalesWithRate(t *testing.T) {
+	cases := []struct {
+		name string
+		rate int
+		want int
+	}{
+		{"16k", SampleRate, PartialWindowSeconds * SampleRate},
+		{"8k negotiated", 8000, PartialWindowSeconds * 8000},
+		{"zero falls back to 16k", 0, PartialWindowSeconds * SampleRate},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := PartialSamples(tc.rate); got != tc.want {
+				t.Fatalf("PartialSamples(%d) = %d, want %d", tc.rate, got, tc.want)
+			}
+		})
+	}
+}
