@@ -271,3 +271,16 @@ test("tabTarget wraps focus inside the trap, both directions", () => {
   assert.equal(tabTarget([], "a", false), null, "an empty trap is inert");
   assert.equal(tabTarget(null, "a", true), null);
 });
+
+// The restart hint used to hardcode systemd — macOS users copied a command
+// that cannot work there (the platform runs launchd or a plain terminal
+// agent, no shipped unit).
+test("restartHint speaks the platform's service story", () => {
+  const { restartHint, restartCommand } = require("./ui-core.js");
+  assert.match(restartHint("linux"), /systemctl --user restart xiaoyao/);
+  assert.match(restartHint("darwin"), /重启 xiaoyao 进程/);
+  assert.ok(!restartHint("darwin").includes("systemctl"), "macOS never sees systemd");
+  assert.match(restartHint(undefined), /systemctl/, "unknown platforms get the Linux default");
+  assert.equal(restartCommand("darwin"), "重启 xiaoyao 进程（launchd 或终端里重新运行 xiaoyao agent）");
+  assert.equal(restartCommand("linux"), "systemctl --user restart xiaoyao.service");
+});

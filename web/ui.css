@@ -232,6 +232,13 @@ body {
   color: var(--muted);
   opacity: 1;
 }
+/* Platform-not-applicable pages (macOS keymap): the content stays visible
+   as reference but is inert — editing it does nothing there. */
+.tab.platform-na .enable-card,
+.tab.platform-na .mapping-grid {
+  pointer-events: none;
+  opacity: 0.45;
+}
 .btn.back-home { margin-bottom: 18px; }
 
 /* ---------- forms ---------- */

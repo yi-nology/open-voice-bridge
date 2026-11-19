@@ -52,6 +52,7 @@
 
   <!-- ================= KEYS ================= -->
   <section id="tab-keys" class="tab">
+    <div class="note" id="keys-platform-note" hidden></div>
     <div class="enable-card">
       <label class="check">
         <input id="enabled" type="checkbox" checked>
@@ -299,7 +300,7 @@
           </select>
         </label>
       </div>
-      <p class="note" id="paste-status">切换注入通路后需要重启服务：<code>systemctl --user restart xiaoyao.service</code></p>
+      <p class="note" id="paste-status">切换注入通路后需要重启服务：<code id="paste-restart-cmd">systemctl --user restart xiaoyao.service</code></p>
     </div>
     </div>
     <div id="cfg-text" class="cfg-panel">

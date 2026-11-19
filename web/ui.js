@@ -1,5 +1,5 @@
 // Pure helpers live in ui-core.js (shared with the node:test suite).
-const { errorText, buildPairLink, fmtDuration, needsRestart, friendlyAsrError, sealDiagPack, createEventStream, debounce, tabTarget } = XiaoyaoCore;
+const { errorText, buildPairLink, fmtDuration, needsRestart, friendlyAsrError, sealDiagPack, createEventStream, debounce, tabTarget, restartHint, restartCommand } = XiaoyaoCore;
 
 const KEYS = [
   {key: "power",      chip: "电源", name: "电源键",   hid: "0x66", def: "esc"},
@@ -306,6 +306,18 @@ function updateConnection(status) {
   syncWakeCostHint();
   renderAttention(status);
   loadInputsOverview();
+  const restartCmd = document.getElementById("paste-restart-cmd");
+  if (restartCmd) restartCmd.textContent = restartCommand(status.platform);
+  // macOS sends the remote's own HID keys (no evdev/uinput): the mapping
+  // page is reference-only there, and editing it silently did nothing.
+  const keysTab = document.getElementById("tab-keys");
+  const keysNote = document.getElementById("keys-platform-note");
+  if (keysTab && keysNote) {
+    const na = status.platform === "darwin";
+    keysTab.classList.toggle("platform-na", na);
+    keysNote.hidden = !na;
+    if (na) keysNote.textContent = "macOS 走遥控器原生 HID，按键映射不生效——本页仅作参考，无需配置。";
+  }
   const remoteConnected = remoteConnectedOf(status);
   const mapState = mapStateOf(status);
   // macOS ships no virtual microphone by design (docs/design/macos-compat.md):
@@ -643,7 +655,7 @@ function showRestartBanner() {
       '<button class="btn small" id="restart-dismiss">知道了</button>';
     document.body.appendChild(banner);
     banner.querySelector("#restart-copy").addEventListener("click", () => {
-      const command = "systemctl --user restart xiaoyao";
+      const command = restartCommand(lastStatus?.platform);
       const done = () => { banner.querySelector("#restart-copy").textContent = "已复制"; };
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(command).then(done).catch(() => { window.prompt("复制重启命令：", command); });
@@ -1505,7 +1517,7 @@ async function loadPasteConfig() {
         if (status) status.textContent = "保存失败：" + errorText(data, String(res.status));
         return;
       }
-      if (status) status.textContent = "已保存。重启服务后生效：systemctl --user restart xiaoyao.service";
+      if (status) status.textContent = "已保存。" + restartHint(lastStatus?.platform);
       if (needsRestart(data)) showRestartBanner();
     } catch (error) {
       if (status) status.textContent = "保存失败：" + error;

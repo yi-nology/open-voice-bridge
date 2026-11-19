@@ -204,5 +204,23 @@
     return (!inside || active === last) ? first : null;
   }
 
-  return { errorText, buildPairLink, fmtDuration, needsRestart, friendlyAsrError, sealDiagPack, createEventStream, debounce, tabTarget };
+  // restartHint is the "how do I make this take effect" line per platform.
+  // macOS runs launchd or a plain terminal agent with no shipped unit —
+  // systemd there is a command that cannot work (UX audit).
+  function restartHint(platform) {
+    if (platform === "darwin") {
+      return "重启 xiaoyao 进程后生效（launchd 或终端里重新运行 xiaoyao agent）";
+    }
+    return "重启服务后生效：systemctl --user restart xiaoyao.service";
+  }
+
+  // restartCommand is what the banner's copy button hands over.
+  function restartCommand(platform) {
+    if (platform === "darwin") {
+      return "重启 xiaoyao 进程（launchd 或终端里重新运行 xiaoyao agent）";
+    }
+    return "systemctl --user restart xiaoyao.service";
+  }
+
+  return { errorText, buildPairLink, fmtDuration, needsRestart, friendlyAsrError, sealDiagPack, createEventStream, debounce, tabTarget, restartHint, restartCommand };
 });
