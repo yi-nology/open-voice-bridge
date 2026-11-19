@@ -229,3 +229,28 @@ test("debounce cancel drops the pending call", () => {
   fn.flush();
   assert.deepEqual(calls, [], "a cancelled call never lands");
 });
+
+// The tokens comment used to claim white-on-brand-strong "stays AA"; the
+// pair measured 3.18:1. This pins the contract instead of trusting prose.
+test("brand-strong keeps white label text at AA contrast", async () => {
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const css = fs.readFileSync(path.join(import.meta.dirname, "tokens.css"), "utf8");
+  const hex = (name) => {
+    const m = css.match(new RegExp(name + ":\\s*(#[0-9A-Fa-f]{6})"));
+    return m ? m[1] : null;
+  };
+  const lum = (h) => {
+    const ch = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255)
+      .map((c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)));
+    return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+  };
+  const contrast = (a, b) => {
+    const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  };
+  const strong = hex("--brand-strong");
+  assert.ok(strong, "--brand-strong must exist");
+  const ratio = contrast(strong, "#FFFFFF");
+  assert.ok(ratio >= 4.5, `white on ${strong} is ${ratio.toFixed(2)}:1; AA text needs 4.5`);
+});

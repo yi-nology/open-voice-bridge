@@ -219,10 +219,19 @@ body {
 .btn.primary, .btn-primary-lg {
   background: var(--brand-strong); border-color: var(--brand-strong); color: #fff; font-weight: 500;
 }
-.btn.primary:hover, .btn-primary-lg:hover { background: var(--brand); border-color: var(--brand); }
+.btn.primary:hover, .btn-primary-lg:hover { background: var(--brand-strong-hover); border-color: var(--brand-strong-hover); }
 .btn-primary-lg { padding: 13px 26px; font-size: 15px; border-radius: 12px; border: 0; cursor: pointer; font-family: inherit; }
 .btn.warn { color: var(--bad); border-color: rgba(255, 132, 116, 0.45); }
-.btn:disabled { opacity: .5; cursor: not-allowed; }
+/* Disabled keeps the label readable: fading the whole control to .5 put
+   buttons at ~1.8:1. A muted fill and the muted ink say "off" without
+   making the words disappear. */
+.btn:disabled {
+  cursor: not-allowed;
+  background: var(--panel-2);
+  border-color: var(--line-soft);
+  color: var(--muted);
+  opacity: 1;
+}
 .btn.back-home { margin-bottom: 18px; }
 
 /* ---------- forms ---------- */

@@ -15,7 +15,8 @@
   --ink: #EAF0FA;
   --muted: #9DABC8;
   --brand: #4FC593;
-  --brand-strong: #2FA373; /* filled buttons: white text stays AA */
+  --brand-strong: #237F58; /* filled buttons: white label is 4.94:1 (AA) */
+  --brand-strong-hover: #1F7350; /* hover goes deeper, never lighter: white stays AA */
   --brand-soft: rgba(79, 197, 147, 0.16);
   --ok: #4FC593;
   --ok-soft: rgba(79, 197, 147, 0.14);
@@ -60,7 +61,8 @@ body::before {
   --ink: #EAF0FA;
   --muted: #9DABC8;
   --brand: #4FC593;
-  --brand-strong: #2FA373;
+  --brand-strong: #237F58;
+  --brand-strong-hover: #1F7350;
   --brand-soft: rgba(79, 197, 147, 0.16);
   --ok: #4FC593;
   --ok-soft: rgba(79, 197, 147, 0.14);
