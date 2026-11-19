@@ -14,8 +14,19 @@ func TestPumpRoutesFramesAndEvents(t *testing.T) {
 
 	var audio [][]byte
 	var control [][]byte
-	transport.onAudio = func(payload []byte) { audio = append(audio, payload) }
-	transport.onControl = func(payload []byte) { control = append(control, payload) }
+	// The pump's select may wake on any ready channel: a disconnect sent
+	// while audio is still queued drops the frames (the connection is gone).
+	// Signal each delivery and send the next frame only after it landed.
+	audioDelivered := make(chan struct{}, 1)
+	controlDelivered := make(chan struct{}, 1)
+	transport.onAudio = func(payload []byte) {
+		audio = append(audio, payload)
+		audioDelivered <- struct{}{}
+	}
+	transport.onControl = func(payload []byte) {
+		control = append(control, payload)
+		controlDelivered <- struct{}{}
+	}
 
 	done := make(chan struct{})
 	go func() {
@@ -24,7 +35,17 @@ func TestPumpRoutesFramesAndEvents(t *testing.T) {
 	}()
 
 	transport.audioFrames <- []byte{0x01, 0x02}
+	select {
+	case <-audioDelivered:
+	case <-time.After(2 * time.Second):
+		t.Fatal("audio frame not delivered")
+	}
 	transport.ctlFrames <- []byte{0x0A}
+	select {
+	case <-controlDelivered:
+	case <-time.After(2 * time.Second):
+		t.Fatal("control frame not delivered")
+	}
 	transport.events <- bleEvent{kind: eventSubscribed}
 	transport.events <- bleEvent{kind: eventDisconnected, message: "gone"}
 
