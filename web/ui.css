@@ -641,6 +641,8 @@ details.adv summary:hover { color: var(--text); }
 }
 .subtitle-live i { width: 8px; height: 8px; border-radius: 50%; background: var(--label); display: inline-block; }
 body.listening .subtitle-live i { background: var(--accent); }
+.subtitle-live.offline { color: var(--warn); }
+.subtitle-live.offline i { background: var(--warn); }
 .subtitle-stage { min-height: 460px; padding: 56px 52px; }
 .subtitle-toolbar { gap: 10px; margin-bottom: 4px; }
 

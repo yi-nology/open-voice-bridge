@@ -89,5 +89,74 @@
     return out;
   }
 
-  return { errorText, buildPairLink, fmtDuration, needsRestart, friendlyAsrError, sealDiagPack };
+  // createEventStream owns the admin UI's /events subscription: one live
+  // socket, one scheduled reconnect, ever. The naive
+  // `onerror -> setTimeout(connect, 3000)` pattern stacks sockets — the
+  // browser retries on its own while the handler opens another stream per
+  // error, so a server restart multiplies live EventSources (measured 64 in
+  // 10s). `open` and the timers are injectable so node:test can pin the
+  // lifecycle without a browser.
+  function createEventStream(open, handlers, timers) {
+    handlers = handlers || {};
+    timers = timers || { setTimeout: setTimeout, clearTimeout: clearTimeout };
+    var source = null;
+    var timer = null;
+    var stopped = false;
+
+    function status(name) {
+      if (handlers.onStatus) handlers.onStatus(name);
+    }
+
+    function teardown() {
+      if (timer !== null) {
+        timers.clearTimeout(timer);
+        timer = null;
+      }
+      if (source !== null) {
+        var dying = source;
+        source = null;
+        dying.onmessage = null;
+        dying.onerror = null;
+        dying.onopen = null;
+        try { dying.close(); } catch (e) {}
+      }
+    }
+
+    function start() {
+      if (stopped) return;
+      teardown();
+      status("connecting");
+      var s = open();
+      source = s;
+      s.onopen = function () {
+        if (source === s) status("open");
+      };
+      s.onmessage = function (ev) {
+        if (source === s && handlers.onMessage) handlers.onMessage(ev.data);
+      };
+      s.onerror = function () {
+        // Only the live socket may schedule a reconnect; a late callback
+        // from an already-replaced stream is ignored.
+        if (stopped || source !== s) return;
+        teardown();
+        status("reconnecting");
+        if (timer === null) {
+          timer = timers.setTimeout(function () {
+            timer = null;
+            start();
+          }, 3000);
+        }
+      };
+    }
+
+    return {
+      start: start,
+      stop: function () {
+        stopped = true;
+        teardown();
+      },
+    };
+  }
+
+  return { errorText, buildPairLink, fmtDuration, needsRestart, friendlyAsrError, sealDiagPack, createEventStream };
 });

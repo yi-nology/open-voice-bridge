@@ -1,5 +1,5 @@
 // Pure helpers live in ui-core.js (shared with the node:test suite).
-const { errorText, buildPairLink, fmtDuration, needsRestart, friendlyAsrError, sealDiagPack } = XiaoyaoCore;
+const { errorText, buildPairLink, fmtDuration, needsRestart, friendlyAsrError, sealDiagPack, createEventStream } = XiaoyaoCore;
 
 const KEYS = [
   {key: "power",      chip: "电源", name: "电源键",   hid: "0x66", def: "esc"},
@@ -1800,57 +1800,79 @@ if (["overview", "asr", "llm", "text", "paste"].includes(initialConfig)) {
   showConfigPanel(initialConfig);
 }
 
-function connectEvents() {
-  const source = new EventSource("/events");
-  source.onmessage = (event) => {
-    let data;
-    try { data = JSON.parse(event.data); } catch (error) { return; }
-    if (data.event === "key") {
-      highlight(data.key, data.value === 1);
-      logKey(data.key, data.value === 1);
-      if (data.value === 0) {
-        setTimeout(() => highlight(data.key, false), 150);
-      }
-    } else if (data.event === "listening") {
-      setListening(data.active, data.source, data.source_name);
-    } else if (data.event === "snapshot") {
-      setCaptureUi(!!data.capturing);
-      if (data.listening) setListening(!!data.listening.active, data.listening.source, data.listening.source_name);
-    } else if (data.event === "stream_gap") {
-      // Events were dropped to keep the stream live; resync (I4).
-      loadStatus(false);
-    } else if (data.event === "transcript") {
-      if (data.partial) {
-        upsertPartialLine(data.text);
-      } else {
-        clearPartialLine();
-        addSubtitle(data.text, data.at);
-        setTimeout(loadOverviewRecent, 500);
-        setTimeout(loadStats, 500);
-      }
-    } else if (data.event === "phrase") {
-      // A common phrase is user-authored text, not speech: it shows up live
-      // with its own styling and never enters the history panel.
-      addSubtitle("〔常用语 " + data.slot + "〕 " + data.text, data.at, {kind: "phrase"});
-    } else if (data.event === "phrase_picker") {
-      openPhrasePicker();
-    } else if (data.event === "command") {
-      // A voice command is a spoken act: it runs a key combo and, like a
-      // phrase, never enters history.
-      addSubtitle("〔指令〕" + data.text + " → " + data.combo, data.at, {kind: "phrase"});
-    } else if (data.event === "capture_started") {
-      setCaptureUi(true);
-    } else if (data.event === "capture_stopped" || data.event === "capture_closed") {
-      setCaptureUi(false);
-      loadStatus(false);
-      if (dirty) scheduleSave();
+// handleEvent dispatches one /events payload; the subscription lifecycle
+// itself lives in ui-core's createEventStream (single socket, single
+// scheduled reconnect — the old onerror→setTimeout pattern stacked
+// EventSources into the hundreds across one server restart).
+function handleEvent(data) {
+  if (data.event === "key") {
+    highlight(data.key, data.value === 1);
+    logKey(data.key, data.value === 1);
+    if (data.value === 0) {
+      setTimeout(() => highlight(data.key, false), 150);
     }
-  };
-  source.onerror = () => {
-    setListening(false);
-    setTimeout(connectEvents, 3000);
-  };
+  } else if (data.event === "listening") {
+    setListening(data.active, data.source, data.source_name);
+  } else if (data.event === "snapshot") {
+    setCaptureUi(!!data.capturing);
+    if (data.listening) setListening(!!data.listening.active, data.listening.source, data.listening.source_name);
+  } else if (data.event === "stream_gap") {
+    // Events were dropped to keep the stream live; resync (I4).
+    loadStatus(false);
+  } else if (data.event === "transcript") {
+    if (data.partial) {
+      upsertPartialLine(data.text);
+    } else {
+      clearPartialLine();
+      addSubtitle(data.text, data.at);
+      setTimeout(loadOverviewRecent, 500);
+      setTimeout(loadStats, 500);
+    }
+  } else if (data.event === "phrase") {
+    // A common phrase is user-authored text, not speech: it shows up live
+    // with its own styling and never enters the history panel.
+    addSubtitle("〔常用语 " + data.slot + "〕 " + data.text, data.at, {kind: "phrase"});
+  } else if (data.event === "phrase_picker") {
+    openPhrasePicker();
+  } else if (data.event === "command") {
+    // A voice command is a spoken act: it runs a key combo and, like a
+    // phrase, never enters history.
+    addSubtitle("〔指令〕" + data.text + " → " + data.combo, data.at, {kind: "phrase"});
+  } else if (data.event === "capture_started") {
+    setCaptureUi(true);
+  } else if (data.event === "capture_stopped" || data.event === "capture_closed") {
+    setCaptureUi(false);
+    loadStatus(false);
+    if (dirty) scheduleSave();
+  }
 }
+
+// setEventsLink surfaces the live-event link on the subtitle pill; on
+// reconnect the server's snapshot event restores the real listening state.
+function setEventsLink(status) {
+  const node = document.getElementById("subtitle-live");
+  if (status === "open") {
+    if (node) node.classList.remove("offline");
+    return;
+  }
+  setListening(false);
+  if (!node) return;
+  node.classList.add("offline");
+  const text = node.querySelector("span");
+  if (text) text.textContent = status === "reconnecting" ? "连接中断 · 重连中…" : "连接中…";
+}
+
+const eventsStream = createEventStream(
+  () => new EventSource("/events"),
+  {
+    onMessage: (raw) => {
+      let data;
+      try { data = JSON.parse(raw); } catch (error) { return; }
+      handleEvent(data);
+    },
+    onStatus: setEventsLink,
+  },
+);
 
 document.querySelectorAll(".tab-btn").forEach(button => {
   button.addEventListener("click", () => {
@@ -3373,7 +3395,7 @@ loadStats();
 syncNav();
 loadStatus(true);
 loadPermissions();
-connectEvents();
+eventsStream.start();
 maybeOpenWelcome();
 setInterval(() => { if (!document.hidden) loadStatus(false); }, 15000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) loadStatus(false); });

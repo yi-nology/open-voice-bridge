@@ -88,3 +88,106 @@ test("sealDiagPack round-trips only with the header as additional data", async (
   await assert.rejects(() => openPack(pack, "测试口令-42", false), "AAD-less open must fail (Go authenticates the header)");
   await assert.rejects(() => openPack(pack, "wrong", true), "wrong passphrase must fail");
 });
+
+// ---- createEventStream: the /events lifecycle ----------------------------
+// The naive `onerror -> setTimeout(connect, 3000)` pattern stacks sockets:
+// the browser retries on its own while the handler opens another stream per
+// error, so one server restart multiplies live EventSources (measured 64 in
+// 10s, 512 in 18s). These tests pin the single-connection contract.
+
+function manualTimers() {
+  let queue = [];
+  return {
+    setTimeout(fn, ms) { const task = { fn, ms }; queue.push(task); return task; },
+    clearTimeout(task) { queue = queue.filter((item) => item !== task); },
+    pending() { return queue.length; },
+    fire() { const due = queue; queue = []; due.forEach((task) => task.fn()); },
+  };
+}
+
+function fakeStreamFactory() {
+  const created = [];
+  return {
+    created,
+    open() {
+      const s = { closed: false, onmessage: null, onerror: null, onopen: null, close() { this.closed = true; } };
+      created.push(s);
+      return s;
+    },
+  };
+}
+
+test("createEventStream closes the dead socket before reconnecting", () => {
+  const { createEventStream } = require("./ui-core.js");
+  const factory = fakeStreamFactory();
+  const timers = manualTimers();
+  const statuses = [];
+  const stream = createEventStream(factory.open, { onStatus: (s) => statuses.push(s) }, timers);
+  stream.start();
+  assert.equal(factory.created.length, 1);
+  factory.created[0].onerror();
+  assert.equal(factory.created[0].closed, true, "the failed stream must be closed so the browser stops its own retry");
+  assert.equal(statuses.at(-1), "reconnecting");
+});
+
+test("createEventStream schedules exactly one reconnect under error storms", () => {
+  const { createEventStream } = require("./ui-core.js");
+  const factory = fakeStreamFactory();
+  const timers = manualTimers();
+  const stream = createEventStream(factory.open, {}, timers);
+  stream.start();
+  // an error storm = many callbacks for the same dead socket (queued events,
+  // the browser's own retry loop before close lands); capture the handler
+  // because teardown nulls the field after the first one runs.
+  const storm = factory.created[0].onerror;
+  for (let i = 0; i < 50; i += 1) storm();
+  assert.equal(timers.pending(), 1, "an error storm must not stack reconnect timers");
+  assert.equal(factory.created.length, 1, "no new stream until the one timer fires");
+  timers.fire();
+  assert.equal(factory.created.length, 2, "the timer opens exactly one replacement");
+});
+
+test("createEventStream stop() cancels the pending reconnect", () => {
+  const { createEventStream } = require("./ui-core.js");
+  const factory = fakeStreamFactory();
+  const timers = manualTimers();
+  const stream = createEventStream(factory.open, {}, timers);
+  stream.start();
+  factory.created[0].onerror();
+  stream.stop();
+  timers.fire();
+  assert.equal(factory.created.length, 1, "a stopped stream never resurrects");
+  assert.equal(factory.created[0].closed, true);
+});
+
+test("createEventStream passes messages and reports the open state", () => {
+  const { createEventStream } = require("./ui-core.js");
+  const factory = fakeStreamFactory();
+  const timers = manualTimers();
+  const messages = [];
+  const statuses = [];
+  const stream = createEventStream(factory.open, { onMessage: (d) => messages.push(d), onStatus: (s) => statuses.push(s) }, timers);
+  stream.start();
+  factory.created[0].onopen();
+  factory.created[0].onmessage({ data: '{"event":"key"}' });
+  assert.deepEqual(messages, ['{"event":"key"}']);
+  assert.deepEqual(statuses, ["connecting", "open"]);
+});
+
+test("createEventStream ignores late errors from a replaced socket", () => {
+  const { createEventStream } = require("./ui-core.js");
+  const factory = fakeStreamFactory();
+  const timers = manualTimers();
+  const stream = createEventStream(factory.open, {}, timers);
+  stream.start();
+  const first = factory.created[0];
+  const staleError = first.onerror;
+  first.onerror();
+  timers.fire();
+  assert.equal(factory.created.length, 2);
+  // a stale callback from the replaced socket must not schedule anything
+  // (teardown nulled the field, so invoke the captured handler directly)
+  staleError();
+  assert.equal(timers.pending(), 0, "stale errors are ignored");
+  assert.equal(factory.created.length, 2);
+});
