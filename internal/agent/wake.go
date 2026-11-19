@@ -124,6 +124,13 @@ func (*wakeClaim) Status() input.Status {
 
 func (w *wakeClaim) Preempt() { w.preempted.Store(true) }
 
+// wakeMicBusy reports whether a capture source holds the microphone. A nil
+// hub (detached agent) reads as idle, matching acquireWakeMic.
+func (a *Agent) wakeMicBusy() bool {
+	hub := a.currentHub()
+	return hub != nil && hub.AudioBusy()
+}
+
 // acquireWakeMic claims the microphone as the wake source — non-forcing, so a
 // wake capture can never steal the mic out of a phone's hands. Returns nil
 // when the mic is busy (the wake hit is dropped); a nil hub behaves as before.
@@ -167,6 +174,7 @@ func (a *Agent) desktopLoop(ctx context.Context, source miccap.FrameSource) {
 	window := make([]int16, 0, wakeWindow)
 	wakeHitCh := make(chan struct{}, 1)
 	lastCheck := time.Time{}
+	var inflight atomic.Bool
 	var dictation []int16
 	var silenceSince time.Time
 	var hardStop time.Time
@@ -231,6 +239,14 @@ func (a *Agent) desktopLoop(ctx context.Context, source miccap.FrameSource) {
 				continue
 			default:
 			}
+			if a.wakeMicBusy() {
+				// Someone else holds the microphone: acquireWakeMic could
+				// only drop the hit, so recognition is pure waste. Drop the
+				// window too — a wake word spoken during their capture must
+				// not fire dictation after they release.
+				window = window[:0]
+				continue
+			}
 			if rms16(frame) < wakeSilenceRMS {
 				continue
 			}
@@ -243,7 +259,13 @@ func (a *Agent) desktopLoop(ctx context.Context, source miccap.FrameSource) {
 			}
 			lastCheck = now
 			snapshot := append([]int16(nil), window...)
+			if !inflight.CompareAndSwap(false, true) {
+				// A slow recognition is still running (a local engine
+				// cold-starts per call): never stack checks.
+				continue
+			}
 			async.GoSafe(func() {
+				defer inflight.Store(false)
 				text, err := a.pipeline.TranscribePartial(ctx, speech.Utterance{Samples: snapshot, SampleRate: core.SampleRate})
 				if err != nil || !wakeHit(text, word) {
 					return

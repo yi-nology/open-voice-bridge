@@ -160,3 +160,20 @@ func TestHubWatchKeepsTheNewestStatePerWatcher(t *testing.T) {
 		t.Fatalf("second watcher = %+v", state)
 	}
 }
+
+func TestHubAudioBusy(t *testing.T) {
+	h := NewHub()
+	if h.AudioBusy() {
+		t.Fatal("idle hub must not report busy")
+	}
+	if !h.AcquireAudio("remote") {
+		t.Fatal("remote acquire")
+	}
+	if !h.AudioBusy() {
+		t.Fatal("held mic must report busy")
+	}
+	h.ReleaseAudio("remote")
+	if h.AudioBusy() {
+		t.Fatal("released mic must report idle")
+	}
+}

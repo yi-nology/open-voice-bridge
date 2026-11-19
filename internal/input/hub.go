@@ -118,6 +118,16 @@ func (h *Hub) Sources() []Status {
 	return out
 }
 
+// AudioBusy reports whether any source currently holds the microphone. The
+// wake-word loop pauses its recognition checks while this is true: a hit
+// during someone else's capture could only be dropped, so an ASR call spent
+// producing it is pure waste.
+func (h *Hub) AudioBusy() bool {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return h.audioOwner != ""
+}
+
 // AcquireAudio grants the microphone to id, or returns false when a different
 // source already owns it. Re-acquiring by the owner succeeds.
 func (h *Hub) AcquireAudio(id string) bool {

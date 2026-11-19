@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -158,5 +159,155 @@ func TestWakeLoopYieldsToTheVoiceButton(t *testing.T) {
 
 	if got := spy.snapshot(); len(got) != 0 {
 		t.Fatalf("preempted wake capture still transcribed: %+v", got)
+	}
+}
+
+// countingEngine counts recognitions and can hold one in flight.
+type countingEngine struct {
+	mu      sync.Mutex
+	calls   int
+	started chan struct{}
+	gate    chan struct{}
+}
+
+func (e *countingEngine) Name() string                { return "counting" }
+func (e *countingEngine) Local() bool                 { return true }
+func (e *countingEngine) Close(context.Context) error { return nil }
+func (e *countingEngine) Transcribe(context.Context, asr.Audio) (asr.Result, error) {
+	e.mu.Lock()
+	e.calls++
+	e.mu.Unlock()
+	if e.started != nil {
+		select {
+		case e.started <- struct{}{}:
+		default:
+		}
+	}
+	if e.gate != nil {
+		<-e.gate
+	}
+	return asr.Result{Text: "今天天气不错", Provider: "counting"}, nil
+}
+
+func (e *countingEngine) count() int {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.calls
+}
+
+func startWakeLoop(t *testing.T, engine asr.Engine) (*Agent, *scriptSource) {
+	t.Helper()
+	rules, err := text.New(config.TextConfig{})
+	if err != nil {
+		t.Fatalf("rules: %v", err)
+	}
+	spy := &captureSpy{}
+	a := New(config.Config{PasteEnabled: false, MaxUtterance: 30}, engine, fakeSink{healthy: true})
+	a.pipeline = testPipeline(engine, rules, nil, spy)
+	a.ctx = context.Background()
+	a.maxSample = 30 * 16000
+	source := &scriptSource{frames: make(chan []int16, 256)}
+	a.SetHub(input.NewHub())
+	a.wakeMu.Lock()
+	a.wakeWord = "小遥小遥"
+	a.wakeOn = true
+	a.startDesktopLocked(source)
+	a.wakeMu.Unlock()
+	return a, source
+}
+
+func voicedFrames(n int) [][]int16 {
+	voice := make([]int16, 1600)
+	for i := range voice {
+		voice[i] = 6000
+	}
+	out := make([][]int16, n)
+	for i := range out {
+		out[i] = voice
+	}
+	return out
+}
+
+// stubSource is the hub face of a competing capture (a phone holding the mic).
+type stubSource struct{ id string }
+
+func (s *stubSource) ID() string       { return s.id }
+func (s *stubSource) Kind() input.Kind { return input.KindPhone }
+func (s *stubSource) Status() input.Status {
+	return input.Status{ID: s.id, Kind: input.KindPhone, Name: s.id, Connected: true, Speaking: true}
+}
+
+// A wake hit during someone else's capture is dropped by acquireWakeMic, so
+// spending an ASR call to produce it is pure waste — the checks pause while
+// the microphone is claimed and resume when it is free.
+func TestWakeSkipsRecognitionWhileTheMicrophoneIsBusy(t *testing.T) {
+	engine := &countingEngine{}
+	a, source := startWakeLoop(t, engine)
+
+	hub := a.currentHub()
+	hub.Register(&stubSource{id: "phone"})
+	if !hub.AcquireAudio("phone") {
+		t.Fatal("phone should hold the mic")
+	}
+
+	for _, frame := range voicedFrames(20) {
+		source.frames <- frame
+		time.Sleep(10 * time.Millisecond)
+	}
+	time.Sleep(950 * time.Millisecond)
+	source.frames <- voicedFrames(1)[0]
+	time.Sleep(200 * time.Millisecond)
+
+	if got := engine.count(); got != 0 {
+		t.Fatalf("wake ran %d recognitions while the mic was busy; want 0", got)
+	}
+
+	hub.ReleaseAudio("phone")
+	for _, frame := range voicedFrames(20) {
+		source.frames <- frame
+		time.Sleep(10 * time.Millisecond)
+	}
+	time.Sleep(950 * time.Millisecond)
+	source.frames <- voicedFrames(1)[0]
+	time.Sleep(200 * time.Millisecond)
+
+	if got := engine.count(); got == 0 {
+		t.Fatal("wake checks did not resume after the mic was released")
+	}
+}
+
+// Slow recognitions must not stack: a local engine cold-starts per call, so
+// unbounded concurrent checks multiply processes and cloud bills.
+func TestWakeRunsOneRecognitionAtATime(t *testing.T) {
+	engine := &countingEngine{started: make(chan struct{}, 8), gate: make(chan struct{})}
+	_, source := startWakeLoop(t, engine)
+
+	for _, frame := range voicedFrames(20) {
+		source.frames <- frame
+		time.Sleep(10 * time.Millisecond)
+	}
+	select {
+	case <-engine.started:
+	case <-time.After(3 * time.Second):
+		t.Fatal("first wake recognition never started")
+	}
+
+	// Two more throttle windows pass while the first call is still held.
+	for i := 0; i < 24; i++ {
+		source.frames <- voicedFrames(1)[0]
+		time.Sleep(100 * time.Millisecond)
+	}
+	if got := engine.count(); got != 1 {
+		t.Fatalf("%d recognitions ran concurrently; want 1 in flight", got)
+	}
+
+	close(engine.gate)
+	time.Sleep(200 * time.Millisecond)
+	source.frames <- voicedFrames(1)[0]
+	time.Sleep(1100 * time.Millisecond)
+	source.frames <- voicedFrames(1)[0]
+	time.Sleep(300 * time.Millisecond)
+	if got := engine.count(); got < 2 {
+		t.Fatalf("checks did not resume after the first finished (calls=%d)", got)
 	}
 }
