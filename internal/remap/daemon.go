@@ -405,7 +405,7 @@ func (d *Daemon) eventLoop(ctx context.Context) {
 				log.Warn("remote released; waiting for it to reconnect", "path", path)
 			})
 		}
-		if !sleepCtx(ctx, 2*time.Second) {
+		if !core.Sleep(ctx, 2*time.Second) {
 			return
 		}
 	}
@@ -715,14 +715,4 @@ func RemoteEventPaths() []string {
 
 func defaultFinder() *Daemon {
 	return &Daemon{matchers: defaultMatchers()}
-}
-func sleepCtx(ctx context.Context, duration time.Duration) bool {
-	timer := time.NewTimer(duration)
-	defer timer.Stop()
-	select {
-	case <-ctx.Done():
-		return false
-	case <-timer.C:
-		return true
-	}
 }

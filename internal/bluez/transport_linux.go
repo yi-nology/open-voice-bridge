@@ -16,6 +16,7 @@ import (
 	oeerrors "github.com/oekit/pkg/errors"
 
 	"github.com/yi-nology/open-voice-bridge/internal/atvv"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 var log = logx.Delegating("bluez")
@@ -96,9 +97,9 @@ func (t *Transport) Connect(ctx context.Context) error {
 		if devicePath != "" {
 			break
 		}
-		if err := sleepCtx(ctx, 200*time.Millisecond); err != nil {
+		if !core.Sleep(ctx, 200*time.Millisecond) {
 			_ = conn.Close()
-			return err
+			return ctx.Err()
 		}
 	}
 	if devicePath == "" {
@@ -130,9 +131,9 @@ func (t *Transport) Connect(ctx context.Context) error {
 		if lk = findATVV(conn, objects); lk.ready() {
 			break
 		}
-		if err := sleepCtx(ctx, 200*time.Millisecond); err != nil {
+		if !core.Sleep(ctx, 200*time.Millisecond) {
 			_ = conn.Close()
-			return err
+			return ctx.Err()
 		}
 	}
 	if !lk.ready() {
@@ -429,15 +430,4 @@ func (t *Transport) Close(ctx context.Context) error {
 		}
 	}
 	return conn.Close()
-}
-
-func sleepCtx(ctx context.Context, d time.Duration) error {
-	timer := time.NewTimer(d)
-	defer timer.Stop()
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-timer.C:
-		return nil
-	}
 }

@@ -594,7 +594,7 @@ func (a *Agent) connectLoop() {
 			log.Info("BLE reconnect requested")
 		}
 		a.dropLink(transport)
-		if !sleepCtx(a.ctx, 2*time.Second) {
+		if !core.Sleep(a.ctx, 2*time.Second) {
 			return
 		}
 	}
@@ -899,15 +899,4 @@ func (a *Agent) ASRName() string {
 		return "unknown"
 	}
 	return a.asr.Name()
-}
-
-func sleepCtx(ctx context.Context, d time.Duration) bool {
-	timer := time.NewTimer(d)
-	defer timer.Stop()
-	select {
-	case <-ctx.Done():
-		return false
-	case <-timer.C:
-		return true
-	}
 }

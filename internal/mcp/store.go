@@ -5,9 +5,6 @@
 package mcp
 
 import (
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -15,8 +12,6 @@ import (
 	"sort"
 	"sync"
 	"time"
-
-	oeerrors "github.com/oekit/pkg/errors"
 
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
@@ -104,11 +99,11 @@ func (s *Store) persist(items []*storedToken) error {
 // Create mints a grant and returns the raw token exactly once; only its hash
 // is stored.
 func (s *Store) Create(label string) (id, raw string, err error) {
-	raw, err = randomHex(32)
+	raw, err = core.RandomHex(32)
 	if err != nil {
 		return "", "", err
 	}
-	suffix, err := randomHex(4)
+	suffix, err := core.RandomHex(4)
 	if err != nil {
 		return "", "", err
 	}
@@ -119,7 +114,7 @@ func (s *Store) Create(label string) (id, raw string, err error) {
 			Label:     label,
 			CreatedAt: s.now(),
 		},
-		Hash: hashToken(raw),
+		Hash: core.HashToken(raw),
 	}
 	s.mu.Lock()
 	s.tokens[id] = entry
@@ -186,7 +181,7 @@ func (s *Store) Validate(raw string) (TokenInfo, bool) {
 	if raw == "" {
 		return TokenInfo{}, false
 	}
-	hash := hashToken(raw)
+	hash := core.HashToken(raw)
 	s.mu.Lock()
 	var items []*storedToken
 	for _, item := range s.tokens {
@@ -207,17 +202,4 @@ func (s *Store) Validate(raw string) (TokenInfo, bool) {
 	}
 	s.mu.Unlock()
 	return TokenInfo{}, false
-}
-
-func hashToken(raw string) string {
-	sum := sha256.Sum256([]byte(raw))
-	return hex.EncodeToString(sum[:])
-}
-
-func randomHex(bytes int) (string, error) {
-	buf := make([]byte, bytes)
-	if _, err := rand.Read(buf); err != nil {
-		return "", oeerrors.Wrap(err, "token entropy")
-	}
-	return hex.EncodeToString(buf), nil
 }

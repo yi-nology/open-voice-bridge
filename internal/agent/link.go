@@ -6,6 +6,7 @@ import (
 
 	"github.com/yi-nology/open-voice-bridge/internal/atvv"
 	"github.com/yi-nology/open-voice-bridge/internal/bluez"
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 // Transport is the BLE link to a remote — the consumer-side slice of
@@ -74,7 +75,7 @@ func (b *linkBackoff) step() {
 // wait sleeps out the current delay and then advances the ramp. False means
 // the agent is shutting down.
 func (b *linkBackoff) wait(ctx context.Context) bool {
-	ok := sleepCtx(ctx, b.d)
+	ok := core.Sleep(ctx, b.d)
 	if ok {
 		b.step()
 	}

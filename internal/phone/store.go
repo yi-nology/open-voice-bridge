@@ -4,9 +4,7 @@ package phone
 
 import (
 	"crypto/rand"
-	"crypto/sha256"
 	"crypto/subtle"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -17,6 +15,7 @@ import (
 
 	oeerrors "github.com/oekit/pkg/errors"
 
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
 )
 
@@ -276,7 +275,7 @@ func (s *Store) Pair(code, name, ip string) (deviceID, token string, err error) 
 		return "", "", oeerrors.New("maximum paired devices reached")
 	}
 	rawToken := randomHex(32)
-	hash := hashToken(rawToken)
+	hash := core.HashToken(rawToken)
 	deviceID = "phone-" + randomHex(4)
 	for s.devices[deviceID] != nil {
 		deviceID = "phone-" + randomHex(4)
@@ -344,7 +343,7 @@ func (s *Store) allowIPLocked(ip string) bool {
 
 // Authenticate maps a bearer token to a device id and refreshes LastSeen.
 func (s *Store) Authenticate(token string) (string, bool) {
-	hash := hashToken(token)
+	hash := core.HashToken(token)
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	deviceID, ok := s.tokens[hash]
@@ -464,18 +463,14 @@ func (s *Store) ListDevices() []Device {
 	return out
 }
 
-func hashToken(token string) string {
-	sum := sha256.Sum256([]byte(token))
-	return hex.EncodeToString(sum[:])
-}
-
-// randomHex is a variable so tests can force id collisions (DOM-13).
+// randomHex is a variable so tests can force id collisions (DOM-13); the
+// entropy itself is core.RandomHex, shared with the MCP store.
 var randomHex = func(bytes int) string {
-	buf := make([]byte, bytes)
-	if _, err := rand.Read(buf); err != nil {
+	value, err := core.RandomHex(bytes)
+	if err != nil {
 		panic(err)
 	}
-	return hex.EncodeToString(buf)
+	return value
 }
 
 func randomDigits(count int) string {
