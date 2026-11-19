@@ -640,3 +640,20 @@ func TestEngineGets16kWhenTheRemoteNegotiates8k(t *testing.T) {
 		t.Fatalf("engine saw rates %v, want [%d]", engine.got, core.SampleRate)
 	}
 }
+
+// The shared chain must not crash on a missing rules face: an agent built
+// before the dictionary is configured behaves as an empty rulebook (the
+// recovered panic used to drop the sentence silently).
+func TestTranscribeTreatsMissingRulesAsAnEmptyRulebook(t *testing.T) {
+	engine := &fakeEngine{result: asr.Result{Text: "你好世界", Provider: "fake"}}
+	probe := &pipelineProbe{}
+	pipeline := buildPipeline(engine, nil, probe, false)
+
+	transcript, ok := pipeline.Transcribe(context.Background(), utterance(oneSecond(), SourceRef{Kind: "remote"}))
+	if !ok {
+		t.Fatal("utterance was dropped")
+	}
+	if transcript.Text != "你好世界" {
+		t.Fatalf("text = %q, want the recognised words untouched", transcript.Text)
+	}
+}

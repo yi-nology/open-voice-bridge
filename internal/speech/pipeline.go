@@ -122,6 +122,25 @@ func New(opts Options) *Pipeline {
 	}
 }
 
+// emptyRules is the rulebook used when none is configured yet. The shared
+// chain must not crash on a nil rules face — an agent assembled before the
+// dictionary lands used to panic here, and the async recovery dropped the
+// whole sentence silently.
+type emptyRules struct{}
+
+func (emptyRules) Command(string) (string, bool)  { return "", false }
+func (emptyRules) SnippetAt(int) (string, bool)   { return "", false }
+func (emptyRules) Snippet(string) (string, bool)  { return "", false }
+func (emptyRules) Dictionary(input string) string { return input }
+
+// textRules reads the live rules face; nil reads as the empty rulebook.
+func (p *Pipeline) textRules() core.TextRules {
+	if rules := p.rules(); rules != nil {
+		return rules
+	}
+	return emptyRules{}
+}
+
 // budgetFor scales the ASR deadline with the captured audio: a one-second tap
 // must not inherit the whole long-dictation window, and a hung provider must
 // not hold the serial chain that long (CON-03). asrTimeout is the hard cap.
@@ -185,7 +204,7 @@ func (p *Pipeline) Transcribe(parent context.Context, u Utterance) (Transcript, 
 	// 语音命令: an exact command utterance runs its key combo instead of
 	// becoming text — no rules, no rewrite, no paste, no history. The match
 	// is on the raw recognition so the dictionary cannot rewrite a command.
-	if combo, ok := p.rules().Command(rawText); ok {
+	if combo, ok := p.textRules().Command(rawText); ok {
 		if err := p.sendKeys(ctx, combo); err != nil {
 			log.Warn("voice command failed; treating as dictation", "combo", combo, "err", err)
 		} else {
@@ -289,7 +308,7 @@ func secondsOf(u Utterance) float64 {
 
 // applyText runs voice snippets, then LLM rewrite, then the user dictionary.
 func (p *Pipeline) applyText(parent context.Context, input string) string {
-	rules := p.rules()
+	rules := p.textRules()
 	if snippet, ok := rules.Snippet(input); ok {
 		log.Info("voice snippet matched")
 		return snippet
@@ -339,7 +358,7 @@ func (p *Pipeline) applyPaste(_ context.Context, processed string) {
 // window — the "one key, one sentence" path of the common-phrase feature. It
 // reports false when the slot is unbound so a stale keymap stays a no-op.
 func (p *Pipeline) InsertPhrase(slot int) (string, bool) {
-	phrase, ok := p.rules().SnippetAt(slot)
+	phrase, ok := p.textRules().SnippetAt(slot)
 	if !ok || phrase == "" {
 		return "", false
 	}
