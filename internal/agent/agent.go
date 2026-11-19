@@ -740,10 +740,13 @@ func (a *Agent) handleAudio(data []byte) {
 }
 
 // resetDictation opens a fresh capture. It must not reuse the previous backing
-// array: that array may still be on its way to the ASR request (DOM-02).
+// array: that array may still be on its way to the ASR request (DOM-02). The
+// fresh array is sized for the capture budget — growing from nil re-allocated
+// the whole dictation repeatedly (5.7MB/26 allocs for 30s against one alloc
+// when the budget is known).
 func (a *Agent) resetDictation() {
 	a.dictMu.Lock()
-	a.dictation = nil
+	a.dictation = make([]int16, 0, a.maxSample)
 	a.dictTruncated = false
 	a.dictMu.Unlock()
 }
