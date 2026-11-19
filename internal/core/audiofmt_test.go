@@ -151,3 +151,35 @@ func TestPartialSamplesScalesWithRate(t *testing.T) {
 		})
 	}
 }
+
+// Peak drifted once already (core and atvv each had a copy, and the ASR
+// providers imported the protocol package just to reach it). One definition.
+func TestNoOtherPackageRedefinesPeak(t *testing.T) {
+	root := filepath.Join("..", "..")
+	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			switch entry.Name() {
+			case ".git", "node_modules", "core":
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		if strings.Contains(string(data), "func Peak(") {
+			t.Errorf("%s redefines Peak; use internal/core instead (R5)", path)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("walk: %v", err)
+	}
+}

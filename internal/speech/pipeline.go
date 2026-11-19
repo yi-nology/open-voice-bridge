@@ -171,11 +171,13 @@ func (p *Pipeline) Transcribe(parent context.Context, u Utterance) (Transcript, 
 	// A capture that never rises above room tone has nothing to transcribe.
 	// Cloud engines answer dead air with a confident short line ("你好。",
 	// "1234567890"), so a mis-tap would otherwise turn into a wrong sentence.
-	if !core.CarriesSpeech(u.Samples) {
+	// One scan feeds both the gate and the level in the logs below.
+	peak := core.Peak(u.Samples)
+	if peak <= core.SpeechFloor {
 		// Level and duration, never the samples: this is what separates "the
 		// user tapped" from "the capture is broken".
 		log.Info("capture below the speech floor; not sending it to ASR",
-			"seconds", secondsOf(u), "peak", core.Peak(u.Samples))
+			"seconds", secondsOf(u), "peak", peak)
 		return Transcript{}, false
 	}
 	engine := p.engine()
@@ -228,7 +230,7 @@ func (p *Pipeline) Transcribe(parent context.Context, u Utterance) (Transcript, 
 	log.Info("recognized",
 		"chars", len([]rune(processed)),
 		"seconds", secondsOf(u),
-		"peak", core.Peak(u.Samples),
+		"peak", peak,
 		"language", result.Language,
 		"provider", result.Provider,
 		"source", u.Ref.Kind,

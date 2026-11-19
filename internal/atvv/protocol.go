@@ -191,21 +191,6 @@ func Smooth(samples []int16) []int16 {
 	return out
 }
 
-// Peak returns the maximum absolute sample value.
-func Peak(samples []int16) int {
-	peak := 0
-	for _, s := range samples {
-		v := int(s)
-		if v < 0 {
-			v = -v
-		}
-		if v > peak {
-			peak = v
-		}
-	}
-	return peak
-}
-
 type FrameAccumulator struct {
 	pending []byte
 	dropped int

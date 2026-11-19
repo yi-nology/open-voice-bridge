@@ -12,7 +12,6 @@ import (
 	"time"
 
 	oeerrors "github.com/oekit/pkg/errors"
-	"github.com/yi-nology/open-voice-bridge/internal/atvv"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
@@ -58,7 +57,7 @@ func (w *WhisperCPP) Transcribe(ctx context.Context, audio Audio) (Result, error
 	if rate == 0 {
 		rate = core.SampleRate
 	}
-	if len(audio.Samples) < core.MinUtterance(rate) || atvv.Peak(audio.Samples) < 400 {
+	if tooQuiet(audio.Samples, rate) {
 		return Result{}, ErrNoSpeech
 	}
 	dir, err := os.MkdirTemp("", "xiaomi-asr-")

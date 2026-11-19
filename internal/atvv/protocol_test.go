@@ -94,13 +94,7 @@ func TestADPCMZero(t *testing.T) {
 	if len(samples) != 4 {
 		t.Fatalf("samples = %d", len(samples))
 	}
-	if Peak(samples) != 0 {
-		t.Fatalf("peak = %d", Peak(samples))
-	}
-}
-
-func TestPeak(t *testing.T) {
-	if Peak([]int16{-100, 20, 99}) != 100 {
-		t.Fatal("peak mismatch")
+	if core.Peak(samples) != 0 {
+		t.Fatalf("peak = %d", core.Peak(samples))
 	}
 }

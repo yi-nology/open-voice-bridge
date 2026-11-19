@@ -18,6 +18,16 @@ var log = logx.Delegating("asr")
 // stops instead of spending money/time on fallback providers.
 var ErrNoSpeech = oeerrors.New("no speech detected")
 
+// providerSpeechFloor is the level below which a provider refuses to spend a
+// request. The pipeline has its own (lower) speech floor, but engines are
+// called directly too — this is the guard every provider shares.
+const providerSpeechFloor = 400
+
+// tooQuiet is the shared dead-air gate: too short or too flat to be words.
+func tooQuiet(samples []int16, rate int) bool {
+	return len(samples) < core.MinUtterance(rate) || core.Peak(samples) < providerSpeechFloor
+}
+
 // Audio/Result are core vocabulary (core 类型迁移): aliases keep every
 // call site in this package unchanged.
 type Audio = core.ASRAudio
