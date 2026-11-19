@@ -337,18 +337,3 @@ func (s *Session) MicOpenCommand() []byte {
 	}
 	return []byte{0x0C, 0x00, 0x00}
 }
-
-func (s *Session) MicCloseCommand() []byte {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.version >= 0x0100 {
-		return []byte{0x0D, byte(s.lastSession & 0xFF)}
-	}
-	return []byte{0x0D}
-}
-
-func (s *Session) MicOpen() bool {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.micOpen
-}

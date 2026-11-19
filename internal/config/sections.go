@@ -166,12 +166,6 @@ type TextConfig struct {
 	Commands        map[string]string `json:"commands,omitempty"`
 }
 
-// DefaultCommands is the suggested one-fill list for the 语音命令 panel.
-var DefaultCommands = map[string]string{
-	"复制": "ctrl+c", "粘贴": "ctrl+v", "撤销": "ctrl+z", "全选": "ctrl+a",
-	"保存": "ctrl+s", "回车": "enter", "退格": "backspace", "刷新": "f5",
-}
-
 // DefaultKeymap is the coding profile's starting point. The action vocabulary
 // it draws from stays in internal/remap, which validates against it.
 var DefaultKeymap = map[string]string{

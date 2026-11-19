@@ -129,11 +129,6 @@ func (c *Chain) Close(ctx context.Context) error {
 	return joinErrors(failures)
 }
 
-// NoSpeech is a helper for provider implementations.
-func NoSpeech() error { return ErrNoSpeech }
-
-func IsNoSpeech(err error) bool { return oeerrors.Is(err, ErrNoSpeech) }
-
 func joinErrors(errs []error) error {
 	var out error
 	for _, err := range errs {

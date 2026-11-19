@@ -20,12 +20,6 @@ import (
 	"github.com/yi-nology/open-voice-bridge/internal/fsutil"
 )
 
-var OrderedKeys = []string{
-	"power", "f5", "up", "down", "left", "right", "enter",
-	"back", "home", "compose", "grave", "volumeup", "volumedown",
-	"ok", "homepage", "menu", "playpause", "nextsong", "previoussong", "mute", "siri",
-}
-
 var SourceCodes = map[string]int{
 	"power": 116, "f5": 63, "up": 103, "down": 108, "left": 105,
 	"right": 106, "enter": 28, "back": 158, "home": 102,
