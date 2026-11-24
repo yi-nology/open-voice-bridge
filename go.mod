@@ -9,13 +9,13 @@ require (
 	github.com/coder/websocket v1.8.15
 	github.com/godbus/dbus/v5 v5.2.4
 	github.com/jezek/xgb v1.3.1
-	github.com/oekit/bootstrap v0.7.12
-	github.com/oekit/concurrency v0.38.0
-	github.com/oekit/hertz v0.12.4
-	github.com/oekit/logx v0.11.0
-	github.com/oekit/metrics v0.4.1
-	github.com/oekit/middleware v0.19.4
-	github.com/oekit/pkg v0.51.0
+	github.com/oekit/bootstrap v0.7.14
+	github.com/oekit/concurrency v0.40.0
+	github.com/oekit/hertz v0.14.1
+	github.com/oekit/logx v0.12.1
+	github.com/oekit/metrics v0.4.3
+	github.com/oekit/middleware v0.23.0
+	github.com/oekit/pkg v0.56.0
 	github.com/prometheus/client_golang v1.25.0
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	golang.org/x/crypto v0.59.0
@@ -36,9 +36,9 @@ require (
 	github.com/hertz-contrib/requestid v1.1.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/oekit/core v0.15.3 // indirect
-	github.com/oekit/registry v0.6.1 // indirect
-	github.com/oekit/tracing v0.4.6 // indirect
+	github.com/oekit/core v0.18.0 // indirect
+	github.com/oekit/registry v0.8.3 // indirect
+	github.com/oekit/tracing v0.4.8 // indirect
 	github.com/prometheus/client_model v0.6.3 // indirect
 	github.com/prometheus/common v0.72.0 // indirect
 	github.com/prometheus/procfs v0.22.0 // indirect
