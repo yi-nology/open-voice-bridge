@@ -8,6 +8,7 @@ import (
 	"unicode"
 
 	"github.com/oekit/concurrency/async"
+	"github.com/oekit/pkg/contextx"
 
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"github.com/yi-nology/open-voice-bridge/internal/input"
@@ -86,10 +87,7 @@ func (a *Agent) currentWakeWord() string {
 func (a *Agent) wakeCtxLocked() context.Context {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if a.ctx == nil {
-		return context.Background()
-	}
-	return a.ctx
+	return contextx.OrBackground(a.ctx)
 }
 
 func (a *Agent) startDesktopLocked(source miccap.FrameSource) {

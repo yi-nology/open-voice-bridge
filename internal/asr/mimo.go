@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -70,7 +69,7 @@ func NewMimo(keyFile, model, language, baseURL string) (*Mimo, error) {
 	}
 	apiKey := strings.TrimSpace(string(key))
 	if apiKey == "" {
-		return nil, fmt.Errorf("MiMo API key file is empty")
+		return nil, oeerrors.Newf("MiMo API key file is empty")
 	}
 	if model == "" {
 		model = DefaultModel
@@ -117,7 +116,7 @@ func (m *Mimo) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 		rate = core.SampleRate
 	}
 	if rate != core.SampleRate {
-		return Result{}, fmt.Errorf("MiMo requires 16 kHz audio, got %d", rate)
+		return Result{}, oeerrors.Newf("MiMo requires 16 kHz audio, got %d", rate)
 	}
 	if tooQuiet(audio.Samples, rate) {
 		return Result{}, ErrNoSpeech
@@ -158,7 +157,7 @@ func (m *Mimo) Transcribe(ctx context.Context, audio Audio) (Result, error) {
 	if resp.StatusCode != http.StatusOK {
 		// Only the status and the machine-readable codes are kept: a provider
 		// body is untrusted text, and errors end up in the log file (SEC-02).
-		return Result{}, fmt.Errorf("MiMo HTTP %d%s", resp.StatusCode, redact.ProviderSuffix(data))
+		return Result{}, oeerrors.Newf("MiMo HTTP %d%s", resp.StatusCode, redact.ProviderSuffix(data))
 	}
 	var parsed struct {
 		Choices []struct {

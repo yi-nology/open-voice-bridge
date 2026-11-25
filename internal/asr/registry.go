@@ -41,40 +41,40 @@ func referencedProviders(cfg config.ASRConfig) []string {
 
 func Validate(cfg config.ASRConfig) error {
 	if len(cfg.Providers) == 0 {
-		return fmt.Errorf("asr.providers is empty")
+		return oeerrors.Newf("asr.providers is empty")
 	}
 	names := referencedProviders(cfg)
 	if len(names) == 0 {
-		return fmt.Errorf("asr.provider is empty")
+		return oeerrors.Newf("asr.provider is empty")
 	}
 	for _, name := range names {
 		provider, ok := cfg.Providers[name]
 		if !ok {
-			return fmt.Errorf("asr provider %q is referenced but not defined", name)
+			return oeerrors.Newf("asr provider %q is referenced but not defined", name)
 		}
 		if provider.Threads < 0 {
-			return fmt.Errorf("asr provider %q: threads must be >= 0", name)
+			return oeerrors.Newf("asr provider %q: threads must be >= 0", name)
 		}
 		if provider.TimeoutSeconds < 0 {
-			return fmt.Errorf("asr provider %q: timeout_seconds must be >= 0", name)
+			return oeerrors.Newf("asr provider %q: timeout_seconds must be >= 0", name)
 		}
 		switch providerType(name, provider) {
 		case "mimo":
 			if strings.TrimSpace(provider.APIKeyFile) == "" {
-				return fmt.Errorf("asr provider %q: api_key_file is required", name)
+				return oeerrors.Newf("asr provider %q: api_key_file is required", name)
 			}
 		case "openai":
 			// Base URL/model have defaults in NewOpenAI.
 		case "whispercpp":
 			if strings.TrimSpace(provider.ModelPath) == "" {
-				return fmt.Errorf("asr provider %q: model_path is required", name)
+				return oeerrors.Newf("asr provider %q: model_path is required", name)
 			}
 		case "command":
 			if strings.TrimSpace(provider.Binary) == "" {
-				return fmt.Errorf("asr provider %q: binary is required", name)
+				return oeerrors.Newf("asr provider %q: binary is required", name)
 			}
 		default:
-			return fmt.Errorf("asr provider %q has unknown type %q", name, provider.Type)
+			return oeerrors.Newf("asr provider %q has unknown type %q", name, provider.Type)
 		}
 	}
 	return nil
@@ -124,7 +124,7 @@ func Build(cfg config.ASRConfig) (Engine, error) {
 func buildProvider(name string, cfg config.ASRConfig) (Engine, error) {
 	provider, ok := cfg.Providers[name]
 	if !ok {
-		return nil, fmt.Errorf("provider not defined")
+		return nil, oeerrors.Newf("provider not defined")
 	}
 	language := provider.Language
 	if language == "" {
@@ -167,7 +167,7 @@ func buildProvider(name string, cfg config.ASRConfig) (Engine, error) {
 			Timeout:   timeout,
 		})
 	default:
-		return nil, fmt.Errorf("unknown provider type %q", provider.Type)
+		return nil, oeerrors.Newf("unknown provider type %q", provider.Type)
 	}
 }
 

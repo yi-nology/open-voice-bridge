@@ -4,7 +4,6 @@ package paste
 
 import (
 	"context"
-	"fmt"
 	"os/exec"
 	"strings"
 	"time"
@@ -48,7 +47,7 @@ func injectX11(ctx context.Context, text string) error {
 	}
 	per := int(reply.KeysymsPerKeycode)
 	if per <= 0 {
-		return fmt.Errorf("invalid keyboard mapping")
+		return oeerrors.Newf("invalid keyboard mapping")
 	}
 	find := func(keysym xproto.Keysym) (byte, bool) {
 		for index, candidate := range reply.Keysyms {
@@ -60,11 +59,11 @@ func injectX11(ctx context.Context, text string) error {
 	}
 	ctrl, ok := find(0xffe3) // XK_Control_L
 	if !ok {
-		return fmt.Errorf("Control_L keycode not found")
+		return oeerrors.Newf("Control_L keycode not found")
 	}
 	keyV, ok := find(0x0076) // XK_v
 	if !ok {
-		return fmt.Errorf("v keycode not found")
+		return oeerrors.Newf("v keycode not found")
 	}
 	for _, event := range []struct {
 		kind byte

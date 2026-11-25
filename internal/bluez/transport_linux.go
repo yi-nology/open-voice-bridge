@@ -104,7 +104,7 @@ func (t *Transport) Connect(ctx context.Context) error {
 	}
 	if devicePath == "" {
 		_ = conn.Close()
-		return fmt.Errorf("device %s not found in BlueZ", t.address)
+		return oeerrors.Newf("device %s not found in BlueZ", t.address)
 	}
 
 	device := conn.Object("org.bluez", devicePath)
@@ -138,7 +138,7 @@ func (t *Transport) Connect(ctx context.Context) error {
 	}
 	if !lk.ready() {
 		_ = conn.Close()
-		return fmt.Errorf("ATVV characteristics not found; is the remote bonded?")
+		return oeerrors.Newf("ATVV characteristics not found; is the remote bonded?")
 	}
 	lk.devicePath = devicePath
 
@@ -169,7 +169,7 @@ func (t *Transport) publish(conn *dbus.Conn, lk links, signals chan *dbus.Signal
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if t.closed {
-		return fmt.Errorf("transport closed")
+		return oeerrors.Newf("transport closed")
 	}
 	t.conn = conn
 	t.links = lk
@@ -274,7 +274,7 @@ func (t *Transport) Subscribe(audio, control func([]byte)) error {
 	audioChar, controlChar := t.links.audio, t.links.control
 	t.mu.Unlock()
 	if audioChar == nil || controlChar == nil {
-		return fmt.Errorf("not connected")
+		return oeerrors.Newf("not connected")
 	}
 	for _, char := range []dbus.BusObject{audioChar, controlChar} {
 		call := char.Call("org.bluez.GattCharacteristic1.StartNotify", 0)
@@ -294,7 +294,7 @@ func (t *Transport) SubscribeKeys(fn func(source string, data []byte)) error {
 	reports := t.links.keyReports
 	t.mu.Unlock()
 	if len(reports) == 0 {
-		return fmt.Errorf("no HID report characteristic (0x2A4D)")
+		return oeerrors.Newf("no HID report characteristic (0x2A4D)")
 	}
 	for path, char := range reports {
 		call := char.Call("org.bluez.GattCharacteristic1.StartNotify", 0)
@@ -310,7 +310,7 @@ func (t *Transport) WriteTX(data []byte) error {
 	tx := t.links.tx
 	t.mu.RUnlock()
 	if tx == nil {
-		return fmt.Errorf("not connected")
+		return oeerrors.Newf("not connected")
 	}
 	options := map[string]dbus.Variant{
 		"type": dbus.MakeVariant("command"),

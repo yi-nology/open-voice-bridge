@@ -3,7 +3,7 @@ package service
 
 import (
 	"context"
-	"fmt"
+	oeerrors "github.com/oekit/pkg/errors"
 	"github.com/yi-nology/open-voice-bridge/internal/core"
 	"strings"
 )
@@ -61,7 +61,7 @@ func (s *Service) ApplyKeymapProfile(ctx context.Context, name string) (core.Hel
 	}
 	s.cfgMu.RUnlock()
 	if !ok {
-		return core.HelperResponse{}, fmt.Errorf("unknown keymap profile %q", name)
+		return core.HelperResponse{}, oeerrors.Newf("unknown keymap profile %q", name)
 	}
 	s.cfgMu.Lock()
 	snapshot := s.configSnapshotLocked()
@@ -79,10 +79,10 @@ func (s *Service) ApplyKeymapProfile(ctx context.Context, name string) (core.Hel
 func (s *Service) SaveKeymapProfile(ctx context.Context, name string, mapping map[string]string) (core.HelperResponse, error) {
 	name = strings.TrimSpace(name)
 	if !profileNamePattern.MatchString(name) {
-		return core.HelperResponse{}, fmt.Errorf("profile name must be 1-32 chars of a-z, 0-9, _ or -")
+		return core.HelperResponse{}, oeerrors.Newf("profile name must be 1-32 chars of a-z, 0-9, _ or -")
 	}
 	if builtinProfile(name) {
-		return core.HelperResponse{}, fmt.Errorf("%q is a built-in profile and cannot be overwritten", name)
+		return core.HelperResponse{}, oeerrors.Newf("%q is a built-in profile and cannot be overwritten", name)
 	}
 	cleaned := s.ops.MergeDefaults(mapping)
 	if err := s.ops.ValidateMapping(cleaned); err != nil {
@@ -112,16 +112,16 @@ func (s *Service) SaveKeymapProfile(ctx context.Context, name string, mapping ma
 func (s *Service) DeleteKeymapProfile(ctx context.Context, name string) error {
 	name = strings.TrimSpace(name)
 	if builtinProfile(name) {
-		return fmt.Errorf("%q is a built-in profile and cannot be deleted", name)
+		return oeerrors.Newf("%q is a built-in profile and cannot be deleted", name)
 	}
 	s.cfgMu.Lock()
 	if s.cfg.Keymap.Profile == name {
 		s.cfgMu.Unlock()
-		return fmt.Errorf("switch to another profile before deleting %q", name)
+		return oeerrors.Newf("switch to another profile before deleting %q", name)
 	}
 	if _, ok := s.cfg.Keymap.Profiles[name]; !ok {
 		s.cfgMu.Unlock()
-		return fmt.Errorf("unknown keymap profile %q", name)
+		return oeerrors.Newf("unknown keymap profile %q", name)
 	}
 	snapshot := s.configSnapshotLocked()
 	delete(snapshot.Keymap.Profiles, name)

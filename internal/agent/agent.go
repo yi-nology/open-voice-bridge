@@ -14,6 +14,7 @@ import (
 
 	"github.com/oekit/concurrency/async"
 	"github.com/oekit/logx"
+	"github.com/oekit/pkg/contextx"
 
 	"github.com/yi-nology/open-voice-bridge/internal/asr"
 	"github.com/yi-nology/open-voice-bridge/internal/atvv"
@@ -795,10 +796,7 @@ func (a *Agent) finalize() {
 }
 
 func (a *Agent) runSpeech(samples []int16, rate int, truncated bool) {
-	ctx := a.ctx
-	if ctx == nil {
-		ctx = context.Background()
-	}
+	ctx := contextx.OrBackground(a.ctx)
 	a.pipeline.Transcribe(ctx, speech.Utterance{
 		Samples:    samples,
 		SampleRate: rate,
@@ -850,10 +848,7 @@ func (a *Agent) RestartAudio(ctx context.Context) error {
 	// The sink's processes and watchdog live on the agent's lifetime context,
 	// not on this request's (CON-05): a restarted sink must survive the HTTP
 	// call that asked for it.
-	lifeCtx := a.ctx
-	if lifeCtx == nil {
-		lifeCtx = context.Background()
-	}
+	lifeCtx := contextx.OrBackground(a.ctx)
 	if err := sink.Start(lifeCtx); err != nil {
 		return err
 	}

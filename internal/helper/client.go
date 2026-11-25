@@ -5,7 +5,6 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net"
 	"sync"
 	"time"
@@ -72,7 +71,7 @@ func (c *Client) Inject(ctx context.Context, key string, value int) error {
 		return err
 	}
 	if !response.OK {
-		return fmt.Errorf("inject %q rejected: %v", key, response.Error)
+		return oeerrors.Newf("inject %q rejected: %v", key, response.Error)
 	}
 	return nil
 }
@@ -113,7 +112,7 @@ func (c *Client) StartCapture(ctx context.Context) (*Capture, error) {
 	}
 	if !first.OK {
 		_ = conn.Close()
-		return nil, fmt.Errorf("capture start failed: %v", first.Error)
+		return nil, oeerrors.Newf("capture start failed: %v", first.Error)
 	}
 	if err := conn.SetDeadline(time.Time{}); err != nil {
 		_ = conn.Close()

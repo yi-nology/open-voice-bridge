@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -47,7 +46,7 @@ type OpenAI struct {
 func NewOpenAI(cfg OpenAIConfig) (*OpenAI, error) {
 	parsed, err := url.Parse(cfg.BaseURL)
 	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
-		return nil, fmt.Errorf("invalid llm base_url %q", cfg.BaseURL)
+		return nil, oeerrors.Newf("invalid llm base_url %q", cfg.BaseURL)
 	}
 	cfg.BaseURL = strings.TrimRight(cfg.BaseURL, "/")
 	if cfg.Timeout <= 0 {
@@ -123,7 +122,7 @@ func (o *OpenAI) processWithMode(ctx context.Context, text, mode string) (string
 		// The body is provider prose and a rejected request often quotes the
 		// text it rejected, which here is a transcript. Errors get logged, so
 		// only the status and the machine-readable codes are kept (SEC-02).
-		return "", fmt.Errorf("llm HTTP %d%s", resp.StatusCode, redact.ProviderSuffix(data))
+		return "", oeerrors.Newf("llm HTTP %d%s", resp.StatusCode, redact.ProviderSuffix(data))
 	}
 	var parsed struct {
 		Choices []struct {

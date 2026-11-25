@@ -20,7 +20,7 @@ func (s *Service) SwitchASR(ctx context.Context, name string) error {
 	s.cfgMu.Lock()
 	if _, ok := s.cfg.ASR.Providers[name]; !ok {
 		s.cfgMu.Unlock()
-		return fmt.Errorf("unknown ASR provider %q", name)
+		return oeerrors.Newf("unknown ASR provider %q", name)
 	}
 	snapshot := s.configSnapshotLocked()
 	snapshot.ASR.Provider = name
@@ -176,7 +176,7 @@ func (s *Service) UpdateLLMAppRules(rules []config.AppRewriteRule) error {
 		switch rule.Mode {
 		case "", "off", "cleanup", "format", "translate":
 		default:
-			return fmt.Errorf("unknown rewrite mode %q", rule.Mode)
+			return oeerrors.Newf("unknown rewrite mode %q", rule.Mode)
 		}
 	}
 	s.cfgMu.Lock()

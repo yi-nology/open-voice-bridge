@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/json"
-	"fmt"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -362,7 +361,7 @@ func (s *Store) IssueTicket(deviceID string) (string, time.Time, error) {
 	defer s.mu.Unlock()
 	s.sweepLocked()
 	if _, ok := s.devices[deviceID]; !ok {
-		return "", time.Time{}, fmt.Errorf("unknown device %q", deviceID)
+		return "", time.Time{}, oeerrors.Newf("unknown device %q", deviceID)
 	}
 	if len(s.tickets) >= maxTicketEntries {
 		s.evictOldestTicketLocked()
@@ -399,7 +398,7 @@ func (s *Store) Revoke(deviceID string) error {
 	device, ok := s.devices[deviceID]
 	if !ok {
 		s.mu.Unlock()
-		return fmt.Errorf("unknown device %q", deviceID)
+		return oeerrors.Newf("unknown device %q", deviceID)
 	}
 	delete(s.tokens, device.tokenHash)
 	delete(s.devices, deviceID)
@@ -431,7 +430,7 @@ func (s *Store) Rename(deviceID, name string) error {
 	device, ok := s.devices[deviceID]
 	if !ok {
 		s.mu.Unlock()
-		return fmt.Errorf("unknown device %q", deviceID)
+		return oeerrors.Newf("unknown device %q", deviceID)
 	}
 	device.Name = name
 	items := s.snapshotLocked()

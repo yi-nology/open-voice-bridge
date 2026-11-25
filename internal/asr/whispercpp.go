@@ -36,7 +36,7 @@ func NewWhisperCPP(cfg WhisperCPPConfig) (*WhisperCPP, error) {
 		return nil, err
 	}
 	if cfg.ModelPath == "" {
-		return nil, fmt.Errorf("whisper.cpp model_path is required")
+		return nil, oeerrors.Newf("whisper.cpp model_path is required")
 	}
 	if cfg.Timeout <= 0 {
 		cfg.Timeout = 120 * time.Second

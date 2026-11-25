@@ -211,7 +211,7 @@ func (p *pipeWireSink) writeBoundedLocked(data []byte) error {
 	case err := <-done:
 		return err
 	case <-time.After(playerWriteTimeout):
-		return fmt.Errorf("pw-cat stdin write timed out after %s", playerWriteTimeout)
+		return oeerrors.Newf("pw-cat stdin write timed out after %s", playerWriteTimeout)
 	}
 }
 
