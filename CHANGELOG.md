@@ -2,6 +2,43 @@
 
 ## Unreleased
 
+- Internal: the oekit family takes the next train (pkg 0.51→0.61,
+  middleware 0.19→0.23, hertz 0.12→0.14, concurrency 0.38→0.40,
+  logx 0.11→0.12, bootstrap 0.7.12→0.7.15, metrics 0.4.1→0.4.3,
+  core/registry/tracing along) — compilation clean, and two free
+  correctness rides come with it. `lifecycle.Listen` now catches SIGTERM
+  beside SIGINT (core#231): the old default was SIGINT-only, so
+  `systemctl stop` and plain `kill` skipped the drain-and-close path this
+  systemd-installed daemon assumed and died on the runtime's default
+  disposition. logx's `Delegating` cache stops filtering component logs
+  after `SetLevel` and the SlogHandler flattens groups (third-party
+  bridges stop rendering `{"Value":{}}`); the SSE producer inherits the
+  `Event.Type` single-line seal.
+
+- Internal: the primitives the last consolidation had to hand-roll land
+  upstream (pkg v0.52/0.53 — this train carries them). `core.Sleep`
+  becomes a bool-shaped face over `timex.SleepContext` (nil-safe ctx
+  included) and `core.RandomHex` sources its entropy from
+  `stringx.RandomToken` — bodies upstream, call faces unchanged. Three
+  nil-ctx guards in the agent (`runSpeech`, `RestartAudio`,
+  `wakeCtxLocked`) collapse into `contextx.OrBackground`. Error
+  construction joins the v0.52 one-import rule: 90 `fmt.Errorf` in the
+  17 files that already speak `oeerrors` become `oeerrors.Newf` (it *is*
+  `fmt.Errorf`, messages byte-identical) and nine files drop their `fmt`
+  import; the pure-stdlib faces (mcp, vocab, the token wrap) keep
+  `fmt.Errorf` as the rule allows. What stays hand-rolled on purpose:
+  the queue's log-and-continue recover (`RecoverTo` is errp-shaped and
+  would split one log line in two), the bearer parse (net/http on the
+  phone side, grant-shaped verify plus the exact `reply{Error}` wire on
+  the agent side), the SSE hub's snapshot-on-connect (state sync, not a
+  log stream), and `MustRegister` on caller-owned registries
+  (`RegisterReuse` would hand the second runtime the first agent's
+  gauges back).
+
+- Fixed: the linux build stopped dialing a number that no longer exists —
+  `c80a3cb` folded three `sleepCtx` copies into `core.Sleep`, but the
+  linux-only `apple_loop` (darwin never compiles it) kept the old name.
+
 - Fixed: the admin's event stream held one socket instead of a growing
   herd. The `onerror → setTimeout(connect, 3000)` pattern stacked
   EventSources across a server restart (measured 64 live sockets in
