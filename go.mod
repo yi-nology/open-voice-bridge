@@ -15,7 +15,7 @@ require (
 	github.com/oekit/logx v0.11.0
 	github.com/oekit/metrics v0.4.1
 	github.com/oekit/middleware v0.19.4
-	github.com/oekit/pkg v0.51.0
+	github.com/oekit/pkg v0.61.5
 	github.com/prometheus/client_golang v1.25.0
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	golang.org/x/crypto v0.59.0
