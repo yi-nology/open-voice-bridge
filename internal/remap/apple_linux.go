@@ -11,6 +11,8 @@ import (
 	"unsafe"
 
 	"golang.org/x/sys/unix"
+
+	"github.com/yi-nology/open-voice-bridge/internal/core"
 )
 
 // Gen-1 Siri Remote (A1513/A1962): Apple vendor-defined HID report 0xFC.
@@ -35,20 +37,20 @@ var appleButtons = []struct {
 func (d *Daemon) appleLoop(ctx context.Context) {
 	for ctx.Err() == nil {
 		if !d.appleActive() {
-			if !sleepCtx(ctx, 2*time.Second) {
+			if !core.Sleep(ctx, 2*time.Second) {
 				return
 			}
 			continue
 		}
 		path := findAppleHID()
 		if path == "" {
-			if !sleepCtx(ctx, 2*time.Second) {
+			if !core.Sleep(ctx, 2*time.Second) {
 				return
 			}
 			continue
 		}
 		d.readApple(ctx, path)
-		if !sleepCtx(ctx, time.Second) {
+		if !core.Sleep(ctx, time.Second) {
 			return
 		}
 	}
